@@ -92,7 +92,7 @@ public sealed class SearchIndexTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Slow")]
     public void PreparingInPortionsIndexesEverythingOnce()
     {
         using var catalog = new CatalogRepository(Database);

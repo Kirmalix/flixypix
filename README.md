@@ -72,7 +72,8 @@ neither the system nor `PATH`.
 
 `build.ps1` builds the solution, runs the .NET and Python tests and the translation check,
 publishes the portable application to `artifacts\portable-FlixyPix` and runs a UI smoke test on a
-hidden desktop. `-SkipTests`, `-SkipUiSmoke` and `-NoMediaTools` shorten the run.
+hidden desktop. Slow tests (large catalogs, time budgets) run only with `-FullTests`;
+`-SkipTests`, `-SkipUiSmoke` and `-NoMediaTools` shorten the run.
 
 | Folder | Content |
 |---|---|

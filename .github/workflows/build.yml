@@ -9,10 +9,15 @@ on:
 permissions:
   contents: read
 
+# A new push to the same pull request replaces its running build.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
 
@@ -28,21 +33,31 @@ jobs:
             .tools/media/*.zip
           key: tools-${{ hashFiles('docs/release/toolchain-lock.json', 'docs/release/media-tools-lock.json') }}
 
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: nuget-
+
       - name: Bootstrap
         shell: powershell
         run: .\scripts\bootstrap.ps1
 
-      # The UI smoke test needs an interactive desktop session, which hosted runners do not offer.
+      # Slow tests (large catalogs, time budgets) and the UI smoke test, which needs an interactive desktop,
+      # run locally with build.ps1 -FullTests.
       - name: Build, test and publish
         shell: powershell
         run: .\scripts\build.ps1 -SkipUiSmoke
 
       - name: Package
+        if: github.event_name != 'pull_request'
         shell: powershell
         run: python scripts\release\package-portable.py
 
       - uses: actions/upload-artifact@v7
+        if: github.event_name != 'pull_request'
         with:
           name: FlixyPix-portable
           path: artifacts/FlixyPix-*-win-x64.zip
           if-no-files-found: error
+          retention-days: 14

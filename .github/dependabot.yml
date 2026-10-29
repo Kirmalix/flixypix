@@ -1,11 +1,18 @@
 version: 2
+# One pull request per ecosystem and month. Dependabot restores lock files without a runtime identifier, which drops
+# the win-x64 sections; restore them as described in CONTRIBUTING.md before merging.
 updates:
   - package-ecosystem: nuget
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
+    groups:
+      nuget:
+        patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

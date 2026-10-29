@@ -1,4 +1,5 @@
-param([switch]$SkipTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools)
+# Tests marked Category=Slow (large catalogs, time budgets) run only with -FullTests.
+param([switch]$SkipTests, [switch]$FullTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
@@ -9,8 +10,9 @@ try {
     & $dotnet build FlixyPix.slnx --configuration Release --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     if (!$SkipTests) {
+        $filter = if ($FullTests) { @() } else { @('--filter', 'Category!=Slow') }
         foreach ($project in (Get-ChildItem -Path tests -Filter '*.csproj' -Recurse)) {
-            & $dotnet test $project.FullName --configuration Release --no-build --nologo --logger 'trx;LogFileName=results.trx' --results-directory (Join-Path 'artifacts\test-results' $project.BaseName)
+            & $dotnet test $project.FullName --configuration Release --no-build --nologo @filter --logger 'trx;LogFileName=results.trx' --results-directory (Join-Path 'artifacts\test-results' $project.BaseName)
             if ($LASTEXITCODE -ne 0) { throw "Tests failed: $($project.BaseName)" }
         }
         python -m unittest discover -s scripts\tests -p 'test_*.py'

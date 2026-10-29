@@ -27,11 +27,21 @@ covers every text.
 ## Code
 
 1. Build and test with `.\scripts\bootstrap.ps1` and `.\scripts\build.ps1` (see the README).
+   `build.ps1` skips tests marked `Category=Slow` (large catalogs, time budgets); run them with
+   `-FullTests` when you change the catalog, search or import.
 2. Keep a change to one topic and match the style of the surrounding code.
 3. Add or adjust tests for changed behavior. Tests use synthetic data only.
 4. New user-visible texts go through `T("…")`; add their translations (or leave them to the
    maintainer, the check above lists what is missing).
 5. Commit messages: a short summary line in English, then a body if the reason is not obvious.
+
+## Dependencies
+
+Lock files of the desktop app and its libraries contain a `win-x64` section. After changing a
+package version, restore them with
+`dotnet restore FlixyPix.slnx --force-evaluate` followed by
+`dotnet restore src\FlixyPix.Desktop\FlixyPix.Desktop.csproj -r win-x64 --force-evaluate`
+(using `.tools\dotnet\dotnet.exe`).
 
 By contributing you agree that your contribution is licensed under the GPL-3.0-or-later, and,
 for `src/FlixyPix.LegacyExporter`, also under the MIT License.
