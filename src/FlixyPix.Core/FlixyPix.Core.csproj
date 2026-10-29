@@ -10,7 +10,7 @@
     <!-- SQLite3 Multiple Ciphers replaces e_sqlite3: unencrypted catalogs behave as before,
          optional per-library encryption uses a random key protected by the user's password. -->
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.13" />
-    <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.4.0" />
+    <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.6.1" />
     <PackageReference Include="SQLitePCLRaw.core" Version="3.0.5" />
     <PackageReference Include="System.Formats.Nrbf" Version="10.0.13" />
   </ItemGroup>

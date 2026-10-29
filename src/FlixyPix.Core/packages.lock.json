@@ -13,12 +13,12 @@
       },
       "SQLite3MC.PCLRaw.bundle": {
         "type": "Direct",
-        "requested": "[2.4.0, )",
-        "resolved": "2.4.0",
-        "contentHash": "D86SPXNYZQPLnurZnDoo6ZI3TUsw7X5JWIBAMcusAJxPiGepjd5ZvyaXWOFt/GjSfSI2H5B9oGT7P7ymUC1TBg==",
+        "requested": "[2.6.1, )",
+        "resolved": "2.6.1",
+        "contentHash": "ideIAAaHiy9OX0u2A+UFvDUPFm2BGERax3EXEhKHrLQJDuGA+pGicarhNjIoohM0a0YjFi8MdlKIZuv3ftp7Vw==",
         "dependencies": {
-          "SQLite3MC.PCLRaw.lib": "2.4.0",
-          "SQLite3MC.PCLRaw.provider": "2.4.0"
+          "SQLite3MC.PCLRaw.lib": "2.6.1",
+          "SQLite3MC.PCLRaw.provider": "2.6.1"
         }
       },
       "SQLitePCLRaw.core": {
@@ -35,23 +35,16 @@
       },
       "SQLite3MC.PCLRaw.lib": {
         "type": "Transitive",
-        "resolved": "2.4.0",
-        "contentHash": "1In6cTL5SGGVbyJh5Uf6Qq6/hf9ecP6bSIUkU7F9JaVvAiMZTwzLXwgXqm4jjWtHpjHiaVURUrjkpbDG3kTKHw=="
+        "resolved": "2.6.1",
+        "contentHash": "X1XqnN35+/53ZryMSR/ogqSBcHJ+iUwCTkXP6GDHoxWZbbGz31j1Xi1HSvfsjS5V2iRuloUBDrdev0gvhqQGJg=="
       },
       "SQLite3MC.PCLRaw.provider": {
         "type": "Transitive",
-        "resolved": "2.4.0",
-        "contentHash": "2PTNuZ/3k1Bpva0ZbEa4Q6w6hFclZQGyTi46WtQCp99rgwczOMzoxDWJlCWndIne7giMM/BK8hmHZ0ekbqPxUQ==",
+        "resolved": "2.6.1",
+        "contentHash": "JKfx7q5Gha9LGZShmB3N+4rcr816MssWR4ZGrortYTDx9G+RbWzJGItT6ZUJlDnd8ElQXjYcjXF0zNWmeTUs6g==",
         "dependencies": {
           "SQLitePCLRaw.core": "3.0.2"
         }
-      }
-    },
-    "net10.0/win-x64": {
-      "SQLite3MC.PCLRaw.lib": {
-        "type": "Transitive",
-        "resolved": "2.4.0",
-        "contentHash": "1In6cTL5SGGVbyJh5Uf6Qq6/hf9ecP6bSIUkU7F9JaVvAiMZTwzLXwgXqm4jjWtHpjHiaVURUrjkpbDG3kTKHw=="
       }
     }
   }
