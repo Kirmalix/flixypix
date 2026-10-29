@@ -31,7 +31,7 @@ public partial class MainWindow
    window.SelectPage("Privacy"); await Settled();
    Capture((FrameworkElement)window.Content, Path.Combine(directory, "settings-privacy.png"));
    window.BossKey.Value = "Escape"; window.BossGlobal.IsChecked = true;
-   Require(!window.TrySave() && window.LastError?.Contains("Ctrl, Alt") == true, "A system-wide Esc was not refused.");
+   Require(!window.TrySave() && window.LastError?.Contains(T("A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.")) == true, "A system-wide Esc was not refused.");
    window.BossKey.Value = "Ctrl+Shift+H"; window.BossGlobal.IsChecked = false; window.BossActionChoice.Value = (int)BossAction.Vanish;
    Require(!window.TrySave() && window.LastError != null, "Hiding completely without a system-wide key was not refused.");
    window.BossActionChoice.Value = (int)BossAction.Tray; window.LockOnMinimize.IsChecked = true;
@@ -43,10 +43,10 @@ public partial class MainWindow
    Require(window.TrySave() && window.Result is { BossKey: "Ctrl+Shift+H", Privacy: { BossAction: BossAction.Minimize, BossPlayback: BossPlayback.Mute, NeutralTitle: true, NeutralTitleText: "Notizen", HideRecent: true } },
     "Valid privacy options did not reach the result.");
   }
-  finally { window.Close(); }
+  finally { window.CloseDiscarding(); }
   window = new SettingsWindow(this, _repository, _settings with { Privacy = new PrivacySettings { PinHash = pinHash } }, _settings.DataDirectory, () => { }, () => { }); window.Show();
   try { window.SelectPage("Privacy"); window.LockOnMinimize.IsChecked = true; Require(window.TrySave() && window.Result?.Privacy?.PinHash == pinHash, "A lock with a PIN was refused or lost the PIN."); }
-  finally { window.Close(); }
+  finally { window.CloseDiscarding(); }
 
   var idleBefore = AppLock.IdleTime; var muted = new List<bool>(); var paused = 0;
   void Muted(bool on) => muted.Add(on); void Paused() => paused++;
