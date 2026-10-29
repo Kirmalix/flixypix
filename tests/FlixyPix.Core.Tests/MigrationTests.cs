@@ -75,7 +75,7 @@ public sealed class MigrationTests:IDisposable
  }
  // The real private catalog (122k media, 185k rows) exposed a per-media full stage scan in the description
  // lookup. With an unusable index this case visits ~1.8 billion staged rows; indexed it takes seconds.
- [Fact]public void DescriptionLookupStaysIndexedOnLargeCatalogs()
+ [Fact,Trait("Category","Slow")]public void DescriptionLookupStaysIndexedOnLargeCatalogs()
  {
   const int pictures=30000;var source=Path.Combine(root,"large-descriptions.jsonl");
   using(var output=new StreamWriter(source))
@@ -94,7 +94,7 @@ public sealed class MigrationTests:IDisposable
   Assert.Contains(db.Search(),item=>item.Description=="Beschreibung aus dem Original");
   Assert.True(timer.Elapsed<TimeSpan.FromSeconds(60),$"Legacy import of {pictures} pictures took {timer.Elapsed}.");
  }
- [Fact]public void MigrationMemoryEnvelopePreserves462MiBAndTenThousandOfflineMedia()
+ [Fact,Trait("Category","Slow")]public void MigrationMemoryEnvelopePreserves462MiBAndTenThousandOfflineMedia()
  {
   var source=BlobExport(462);var lines=File.ReadAllLines(source);const int mediaCount=10000;
   using(var output=new StreamWriter(source))

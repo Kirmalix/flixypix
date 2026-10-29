@@ -128,7 +128,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using var table = verify.CreateCommand(); table.CommandText = "SELECT count(*) FROM sqlite_master WHERE name='media_query'"; Assert.Equal(0L, table.ExecuteScalar());
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Slow")]
     public void HundredThousandItemsStayPagedAndMeetQueryBudgets()
     {
         using var catalog = Open();
@@ -215,8 +215,6 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
             var reportDirectory = Path.Combine(root.FullName, "artifacts", "test-results"); Directory.CreateDirectory(reportDirectory);
             File.WriteAllText(Path.Combine(reportDirectory, "catalog-100k-benchmark.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
         }
-        // Shared hosted runners vary too much for time budgets; there the timings are only recorded.
-        if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true") return;
         Assert.True(statisticsWarm < 1000, $"Statistics took {statisticsWarm:F0} ms warm.");
         Assert.True(firstMs < 2000, $"First page {firstMs:F1}ms exceeded 2000ms");
         Assert.True(searchMs < 1000 && warmMs < 1000 && pageP95 < 1000 && searchP95 < 1000,
