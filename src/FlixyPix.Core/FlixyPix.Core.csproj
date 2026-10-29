@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ProductIdentity.cs" Link="ProductIdentity.cs" />
+    <!-- SQLite3 Multiple Ciphers replaces e_sqlite3: unencrypted catalogs behave as before,
+         optional per-library encryption uses a random key protected by the user's password. -->
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.13" />
+    <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.4.0" />
+    <PackageReference Include="SQLitePCLRaw.core" Version="3.0.5" />
+    <PackageReference Include="System.Formats.Nrbf" Version="10.0.13" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- T("…") and Tn(…) read the texts of the current language. -->
+    <Using Include="FlixyPix.Core.Texts" Static="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- One translation file per language; the English texts in the code are the keys and need none (CONTRIBUTING.md). -->
+    <EmbeddedResource Include="Languages\*.json" LogicalName="FlixyPix.Core.Languages.%(Filename).json" />
+    <!-- Fingerprints of the original's first-run rows (scripts/original/first-run-defaults.py). -->
+    <EmbeddedResource Include="Legacy\original-first-run-defaults.json" LogicalName="FlixyPix.Core.Legacy.original-first-run-defaults.json" />
+  </ItemGroup>
+</Project>

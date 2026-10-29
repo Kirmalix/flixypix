@@ -1,0 +1,13 @@
+# One line ending everywhere: raw string literals in C# end up in the assemblies, so builds
+# only match when every checkout has the same endings.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.ico binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.ttf binary
+*.zip binary

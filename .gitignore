@@ -1,0 +1,139 @@
+# Local tools, downloaded dependencies and generated release/test output.
+/.tools/
+/.cache/
+/artifacts/
+/out/
+/publish/
+**/node_modules/
+
+# Original software and derived/private preservation evidence.
+/archive/*
+!/archive/manifest.json
+/derived/
+/evidence/raw/
+/evidence/rea-*.json
+/evidence/*.stderr.txt
+
+# Local planning, agent state, sessions and handoffs.
+/.local/
+/.claude/
+/.codex/
+/.agents/
+/sessions/
+/handoffs/
+/scratch/
+AGENTS.local.md
+CLAUDE.local.md
+
+# Internal documents stay versioned here. Publication uses a reviewed allowlist
+# and a fresh history (docs/plans/github-publication-plan.md), not ignore rules.
+
+# .NET/WPF build output and temporary projects.
+**/bin/
+**/obj/
+*_wpftmp.csproj
+*.exe
+*.dll
+*.pdb
+*.msi
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.nupkg
+*.snupkg
+
+# User-specific IDE state. Shared source configuration and lockfiles stay eligible.
+.vs/
+.idea/
+*.user
+*.suo
+*.rsuser
+*.sln.docstates
+*.code-workspace
+*.VC.db
+*.VC.opendb
+.vscode/*.local.json
+
+# Python environments, bytecode and test/analysis caches.
+/.venv/
+/venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Test, coverage and benchmark reports.
+TestResults/
+BenchmarkDotNet.Artifacts/
+*.trx
+*.coverage
+*.coveragexml
+coverage.xml
+
+# User catalogs, journals, encrypted key metadata and migration work files.
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite3-journal
+*.sdf
+*.keys.json
+*.keys.json.pending
+*.keys.json.pending.remove
+*.db.rekey
+*.flixypixbackup
+*.ezfpbackup
+*.ezl
+*.bak
+*.bak.tmp
+*.jsonl
+*.jsonl.blobs/
+
+# Only reviewed synthetic exchange fixtures may be committed.
+!tests/**/Fixtures/*.jsonl
+
+# Credentials, private signing material and machine-specific configuration.
+# The public legacy default password belongs in reviewed source, not a secret file.
+mmvdb-password.txt
+*.key
+*.pem
+*.pfx
+*.p12
+*.snk
+secrets.json
+appsettings.local.json
+/appsettings.json
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Runtime logs, editor recovery files and operating-system metadata.
+*.log
+*.log.*
+*.stderr.txt
+*.stdout.txt
+errorlog.txt
+videotools_log.txt
+*.tmp
+*.temp
+*.orig
+*.rej
+*~
+Thumbs.db
+Desktop.ini
+.DS_Store
+._*

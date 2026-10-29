@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "reviewer": "Codex; direct linguistic review, no external native-speaker approval",
+  "entries": {
+    "1": {
+      "status": "corrected",
+      "digest": "3851cd8501ba38c2105caaf3b88c33b359b879c2278b93d926216d24862a95b3"
+    },
+    "2": {
+      "status": "corrected",
+      "digest": "e6f0823072b9e39a84850e637a436cfbad71350ee9e45ec1e22ebd60e5a49bc3"
+    },
+    "3": {
+      "status": "corrected",
+      "digest": "92a78604b980e6ae40d5b12dec51146c4255a5082f1527ab62248df22df76669"
+    },
+    "4": {
+      "status": "corrected",
+      "digest": "35ecb93ed711dc5d48e3528966d03b8f1b5e3f9b9c00fe7b8fd00a58b1dd3c9a"
+    },
+    "5": {
+      "status": "corrected",
+      "digest": "a678c4c6ed2c2961c5a99e16773238d1154ee4b39f069932225ed39d2f8274d8"
+    },
+    "6": {
+      "status": "corrected",
+      "digest": "d8271a0d0240428405659bea7d05fbbb1c02e05225b7e00572189d9939f8d17e"
+    },
+    "7": {
+      "status": "corrected",
+      "digest": "6085bc8b1edba4a689ef2f65f6ed71c8677baf76bf10ae45c382e2fa6faaf977"
+    },
+    "8": {
+      "status": "corrected",
+      "digest": "1b5c2c9fb4cfe3969efe27093928290cfea3d100f4f110f7c12b17d58c9ec1a2"
+    },
+    "9": {
+      "status": "corrected",
+      "digest": "14884ccd89c38c3ed8100a343148d64ca9f96a93021a78e5079960797b2fb0bd"
+    },
+    "10": {
+      "status": "corrected",
+      "digest": "259a1e31eb8316a3ad0dedd029d246f4e4cfe1e1928c24395733f31533615c33"
+    },
+    "11": {
+      "status": "corrected",
+      "digest": "d9f6f59776bdd3b4dbb281fca5d917aab049c0a3014a383cbec8a2b272e873f3"
+    },
+    "12": {
+      "status": "corrected",
+      "digest": "a49f4d2f0099fb6a55603832ba154c52ccaa030895c2bf15a320b34b6b5aa026"
+    },
+    "13": {
+      "status": "corrected",
+      "digest": "a0bc0fd56237dfdc44fb3800a80b62b27e03576567612e048f47eca78faa52e3"
+    },
+    "14": {
+      "status": "corrected",
+      "digest": "e80774fed4c4bc709900d2957d3e4234619d46fec1ec7c21a9410cf881e4bdab"
+    },
+    "15": {
+      "status": "corrected",
+      "digest": "d201f75ff6fd25af1393a1b7b11511781b1591c6438487641ad16f2d8bc50198"
+    },
+    "16": {
+      "status": "corrected",
+      "digest": "25fab93627360804e2c7ed14e53bb7024372b27bc39df63803383d66ff2d721c"
+    },
+    "17": {
+      "status": "corrected",
+      "digest": "9890767e5cb096f857a63ddb26614951165ba2e7ab3b4d6a5ba88ec3aabe4342"
+    },
+    "18": {
+      "status": "corrected",
+      "digest": "ef0a08186cc3788460c4b96b1aedb3b9584ff05e91c4c32d4d23c81803f99bde"
+    },
+    "19": {
+      "status": "corrected",
+      "digest": "d95ea7b8e46ab5f01ecb71cc683713c3bc55e3e1cef5540aa027d2ec63c0afea"
+    },
+    "20": {
+      "status": "corrected",
+      "digest": "9aee3a1a7cbb5aa4d650fbc59aefe40a2dc0d92ab1984cead8aecf7818e0c0d0"
+    },
+    "21": {
+      "status": "corrected",
+      "digest": "05311b81923df04c9af69dd9422979cf8be1e0daa3c14d545f99b687301e0e5e"
+    },
+    "22": {
+      "status": "corrected",
+      "digest": "642e7cfd911038ffcbcb597fdd0c3eb7e7cbe8de0a6a7c50b76886f51a1a02e9"
+    },
+    "23": {
+      "status": "corrected",
+      "digest": "b432720e0afa7517b6368f5a5728c3aae97c3126121071a6aff2f480648120da"
+    },
+    "24": {
+      "status": "corrected",
+      "digest": "2c8c01d4f64306128cabde475646859f51c30ff82a57b27880e21311fb75606c"
+    },
+    "25": {
+      "status": "corrected",
+      "digest": "da6df741d5871a642056f246dfe0ce59b6b995cdfafb13cec8de4dede6353897"
+    },
+    "26": {
+      "status": "corrected",
+      "digest": "87b1a6e8597fa3e03c563f8b3ab80b47d369cd17f690bea837cf35c20c5dea30"
+    },
+    "27": {
+      "status": "corrected",
+      "digest": "931599f2dfbc021d484f1c2cf404fb76a805e462e8f7b98804c750455d3722b5"
+    },
+    "28": {
+      "status": "corrected",
+      "digest": "4c9759530b8cd15e88fbda0af8366474a67421562e6c28b00a242c01e6e29742"
+    },
+    "29": {
+      "status": "corrected",
+      "digest": "1738bfcbcad903263d35e00f55cf621765ef5e8d5f98f4926c3df76148fca082"
+    },
+    "30": {
+      "status": "corrected",
+      "digest": "5e6cfd76f03ceac3b982fe16113ec2c85d0fec1bd8b3c5f72b1f3d86ac75c54f"
+    },
+    "31": {
+      "status": "corrected",
+      "digest": "54696ccd759ed881eaa70ac58f3823c2d5b0d2e54e70f8b848bc04dceac47810"
+    },
+    "32": {
+      "status": "corrected",
+      "digest": "7071eebd3445c6070703933d7a0081a27b53b2f477887843ebf5cc1efb670705"
+    },
+    "33": {
+      "status": "corrected",
+      "digest": "db475981a810b355e18d2c95a594314da333b58800c83ad21deb62c07f2974da"
+    },
+    "34": {
+      "status": "corrected",
+      "digest": "77687d3d2626bd22b053e1dcaa4cbfeb38a3a4d23753628f40903f9bf4214f4a"
+    },
+    "35": {
+      "status": "corrected",
+      "digest": "3350cac92f0e52126ae0e2d329e725ba78cc4614b76b19778a88ad028b3e2c43"
+    },
+    "36": {
+      "status": "corrected",
+      "digest": "5b2bd23baa62eaeb3e1192333778887879bc188930a2c2bac088192f13c6b56d"
+    },
+    "37": {
+      "status": "corrected",
+      "digest": "cd410a8c61531719f7b9f905fd8927e088389be7e6371e1598797f7ac2a2c932"
+    },
+    "38": {
+      "status": "corrected",
+      "digest": "5bf8cb4736d4d7fe2680aaf62ca443f13e59f5a44d8df5c6c9958b7571b37fb3"
+    },
+    "39": {
+      "status": "corrected",
+      "digest": "8ca5e493e01d1b7d078c0df642ad3624bae613a53050a69c8f3994ff5e406391"
+    },
+    "40": {
+      "status": "corrected",
+      "digest": "1d63d9e8aaa2e2e6a0598f495218395ac7e33ae77b13ca80e6e594dbc9fdaab5"
+    },
+    "41": {
+      "status": "corrected",
+      "digest": "59b44a2ffa6c98304577d48ca1bcd18b1a0cd5014951ac54774bcae4967c4f80"
+    },
+    "42": {
+      "status": "corrected",
+      "digest": "f3a9ecc4d388a8724a65c3ed97ae655fa5ea355edfd8c0b8d457ec741899c1e3"
+    },
+    "43": {
+      "status": "corrected",
+      "digest": "40ffd3eef12b45271f704e320bb59280f07e914de84813692e091d52380211e7"
+    },
+    "44": {
+      "status": "corrected",
+      "digest": "c6289da869079a1f5d49dc6ec3e7133a79e2232a9936e6b3ef748b8d8cf669ec"
+    },
+    "45": {
+      "status": "corrected",
+      "digest": "ed814770b84606c2a9d6f1ac6e8a58453d026a61612049803ca76e9a84eea69c"
+    },
+    "46": {
+      "status": "corrected",
+      "digest": "b0b208220e50abb58e81652f692e2b2c6251596ec74735561f9915ffd4cdebd1"
+    },
+    "47": {
+      "status": "corrected",
+      "digest": "d65a905ca1e181df3fb1169062148bd5d9720b6c86c8f215a3674e7003272dac"
+    },
+    "48": {
+      "status": "corrected",
+      "digest": "940e8d2e3c414a014d1cd47fa509e4f11c5e111b9455837dfb4b87cd20070ad0"
+    },
+    "49": {
+      "status": "corrected",
+      "digest": "5070ce1dcf73f98b411711d3ab0ea583cf7551782d311a3628aaca5c339093e9"
+    },
+    "50": {
+      "status": "corrected",
+      "digest": "c19c462691b028933094c67add28d11a3906cb639c1f89b637e69827e7deda52"
+    },
+    "51": {
+      "status": "corrected",
+      "digest": "9f3d02dcbec055ce0f8b8c4f8f8ce856d76129a7eb27334f759b713011ecf701"
+    },
+    "52": {
+      "status": "corrected",
+      "digest": "511e8b6a480ee918cd7c0ed4caf6d566735f021102efeb2aa31e61aa77576177"
+    },
+    "53": {
+      "status": "corrected",
+      "digest": "90e49346f2cd51bd091f2a41d0ff8b42967d5daa6d51bfaebbce86340174382f"
+    },
+    "54": {
+      "status": "corrected",
+      "digest": "429ff8a4697a85e141c630247c7846c2c14db6bf444be64e7a6a45f24cc8a96a"
+    },
+    "55": {
+      "status": "corrected",
+      "digest": "9bf73af188dcc1cfbeb52c5dbd2558b725daf9d7d0d5077f7fb824d61c021129"
+    },
+    "56": {
+      "status": "corrected",
+      "digest": "8c48b4a9c9793ce1fb86393874dc0fd8bf699ee9f924b5701345e9426fb4544c"
+    },
+    "57": {
+      "status": "corrected",
+      "digest": "e65ae9f99e85980f41fb35cba303417a48e230f6895bf37d523165cac86d5b4c"
+    },
+    "58": {
+      "status": "corrected",
+      "digest": "e44cb4d7d612e3d4b5ad8d7fa246c563467920679317e62625b1da19617d4617"
+    },
+    "59": {
+      "status": "corrected",
+      "digest": "f27f40667544b978a64e843cf6b30285a4372db35b6a5b5c899257cf84fecc42"
+    },
+    "60": {
+      "status": "corrected",
+      "digest": "f4d762fc392382e85b2453b025f4b4a429cd6aa631aff4e22b72ee37f5e61a8c"
+    },
+    "61": {
+      "status": "corrected",
+      "digest": "7b889884428cf269663dfcbb6fb1efc955165eb44117e0e290c7e1b717a36c9b"
+    },
+    "62": {
+      "status": "corrected",
+      "digest": "92bf41fd568635fed0e183b9e34b22922dd09e536eaa0db65af52b32408fe303"
+    }
+  }
+}

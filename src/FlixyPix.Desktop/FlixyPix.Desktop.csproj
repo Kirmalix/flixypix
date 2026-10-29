@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>FlixyPix</AssemblyName>
+    <!-- Made by scripts/release/make-brand-assets.ps1 from assets/branding; also the default icon of every window. -->
+    <ApplicationIcon>Assets\flixypix.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\flixypix-mark-96.png;Assets\flixypix-mark-192.png;Assets\flixypix-tile-256.png" />
+    <!-- The tray icon loads the size that fits the screen from the file. -->
+    <Content Include="Assets\flixypix.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\assets\tag-vocabularies\*.flixytags.csv" Link="tag-vocabularies\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- T("…") and Tn(…) read the texts of the current language (src/FlixyPix.Core/Texts.cs). -->
+    <Using Include="FlixyPix.Core.Texts" Static="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../FlixyPix.Core/FlixyPix.Core.csproj" />
+    <ProjectReference Include="../FlixyPix.MediaTools/FlixyPix.MediaTools.csproj" />
+    <ProjectReference Include="../FlixyPix.Archives/FlixyPix.Archives.csproj" />
+    <ProjectReference Include="../FlixyPix.Imaging/FlixyPix.Imaging.csproj" />
+  </ItemGroup>
+</Project>

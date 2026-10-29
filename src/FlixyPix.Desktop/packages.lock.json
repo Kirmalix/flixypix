@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows7.0": {
+      "Magick.NET-Q16-x64": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "qq0tD/yKQZJCW8xbJ0R6dvzbPBKsSQi0M1688dMaj5NVt5coYV9BMqDeeSgjO7W003yIrycRPcS//s2uxgNipg==",
+        "dependencies": {
+          "Magick.NET.Core": "15.0.0"
+        }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "mP/VovMRuXBX2Rcnn1wWu0Zur6cjsf8IQhmTUCrasEk8cyAtN5sjHE7NxiH88whw8/2mjRvuphKUwj6bAZslpQ=="
+      },
+      "Microsoft.Data.Sqlite.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "Gge8XsSCOwcbkbdmt2UDAe6kIv9Q0vA6yb3wsTStjjexaMFLTWfc/1gH4kbhJ+zWiXRTRA4lG2sOQNVfir204w==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "SharpCompress": {
+        "type": "Transitive",
+        "resolved": "1.0.0",
+        "contentHash": "bdBq9V2epw7KBX3TeA+lxnKU8dD61tsqVuyuo5cAXj4d+9+fcIQObTr0705oTWnPDRhjRx3TpgOFbYYAMObpaw=="
+      },
+      "SQLite3MC.PCLRaw.bundle": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "D86SPXNYZQPLnurZnDoo6ZI3TUsw7X5JWIBAMcusAJxPiGepjd5ZvyaXWOFt/GjSfSI2H5B9oGT7P7ymUC1TBg==",
+        "dependencies": {
+          "SQLite3MC.PCLRaw.lib": "2.4.0",
+          "SQLite3MC.PCLRaw.provider": "2.4.0"
+        }
+      },
+      "SQLite3MC.PCLRaw.lib": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "1In6cTL5SGGVbyJh5Uf6Qq6/hf9ecP6bSIUkU7F9JaVvAiMZTwzLXwgXqm4jjWtHpjHiaVURUrjkpbDG3kTKHw=="
+      },
+      "SQLite3MC.PCLRaw.provider": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "2PTNuZ/3k1Bpva0ZbEa4Q6w6hFclZQGyTi46WtQCp99rgwczOMzoxDWJlCWndIne7giMM/BK8hmHZ0ekbqPxUQ==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "3.0.2"
+        }
+      },
+      "SQLitePCLRaw.core": {
+        "type": "Transitive",
+        "resolved": "3.0.5",
+        "contentHash": "k81AYXXRCw3Zj8rOhyBoCsx/U97KYDFI2CSKr/ijl5BwpsW/hX/4kBiDmerFaoust8nxBwa0IHQFw8MmSHRtnQ=="
+      },
+      "flixypix.archives": {
+        "type": "Project",
+        "dependencies": {
+          "FlixyPix.Core": "[0.5.0, )",
+          "SharpCompress": "[1.0.0, )"
+        }
+      },
+      "flixypix.core": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Data.Sqlite.Core": "[10.0.13, )",
+          "SQLite3MC.PCLRaw.bundle": "[2.4.0, )",
+          "SQLitePCLRaw.core": "[3.0.5, )"
+        }
+      },
+      "flixypix.imaging": {
+        "type": "Project",
+        "dependencies": {
+          "FlixyPix.Core": "[0.5.0, )",
+          "Magick.NET-Q16-x64": "[15.0.0, )"
+        }
+      },
+      "flixypix.mediatools": {
+        "type": "Project",
+        "dependencies": {
+          "FlixyPix.Core": "[0.5.0, )"
+        }
+      }
+    },
+    "net10.0-windows7.0/win-x64": {
+      "Magick.NET-Q16-x64": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "qq0tD/yKQZJCW8xbJ0R6dvzbPBKsSQi0M1688dMaj5NVt5coYV9BMqDeeSgjO7W003yIrycRPcS//s2uxgNipg==",
+        "dependencies": {
+          "Magick.NET.Core": "15.0.0"
+        }
+      },
+      "SQLite3MC.PCLRaw.lib": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "1In6cTL5SGGVbyJh5Uf6Qq6/hf9ecP6bSIUkU7F9JaVvAiMZTwzLXwgXqm4jjWtHpjHiaVURUrjkpbDG3kTKHw=="
+      }
+    }
+  }
+}

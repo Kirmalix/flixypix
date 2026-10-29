@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlixyPix.CatalogAudit/FlixyPix.CatalogAudit.csproj" />
+    <Project Path="src/FlixyPix.Archives/FlixyPix.Archives.csproj" />
+    <Project Path="src/FlixyPix.Core/FlixyPix.Core.csproj" />
+    <Project Path="src/FlixyPix.Desktop/FlixyPix.Desktop.csproj" />
+    <Project Path="src/FlixyPix.LegacyExporter/FlixyPix.LegacyExporter.csproj" />
+    <Project Path="src/FlixyPix.Imaging/FlixyPix.Imaging.csproj" />
+    <Project Path="src/FlixyPix.MediaTools/FlixyPix.MediaTools.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlixyPix.LegacyExporter.Tests/FlixyPix.LegacyExporter.Tests.csproj" />
+    <Project Path="tests/FlixyPix.Archives.Tests/FlixyPix.Archives.Tests.csproj" />
+    <Project Path="tests/FlixyPix.Core.Tests/FlixyPix.Core.Tests.csproj" />
+    <Project Path="tests/FlixyPix.MediaTools.Tests/FlixyPix.MediaTools.Tests.csproj" />
+    <Project Path="tests/FlixyPix.Imaging.Tests/FlixyPix.Imaging.Tests.csproj" />
+  </Folder>
+</Solution>

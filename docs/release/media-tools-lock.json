@@ -1,0 +1,23 @@
+﻿[
+    {
+        "checksumUrl":  "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.sha256",
+        "url":  "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
+        "name":  "ffmpeg",
+        "sha256":  "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+        "upstream":  "https://ffmpeg.org/download.html"
+    },
+    {
+        "upstream":  "https://mpv.io/installation/",
+        "url":  "https://github.com/mpv-player/mpv/releases/download/v0.41.0/mpv-v0.41.0-x86_64-w64-mingw32.zip",
+        "name":  "mpv",
+        "sha256":  "a49811c0752c108b8260636f9c6f6fcb97406641c98b30f1e7b500dfb20177de",
+        "releaseTag":  "v0.41.0"
+    },
+    {
+        "upstream":  "https://github.com/mpv-player/mpv/tree/v0.41.0",
+        "url":  "https://raw.githubusercontent.com/mpv-player/mpv/v0.41.0/LICENSE.GPL",
+        "name":  "mpv-license",
+        "file":  "LICENSE.GPL",
+        "sha256":  "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+]

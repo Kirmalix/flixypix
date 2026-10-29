@@ -1,0 +1,27 @@
+# German texts in the user interface code that stay untranslated on purpose (scripts/checks/i18n.py).
+# One per line: <path>: <JSON string>. Error log entries are for diagnosis and stay German like the log file name;
+# test data and file names are not shown as text.
+src/FlixyPix.Desktop/App.xaml.cs: "Oberfläche"
+src/FlixyPix.Desktop/MainWindow.xaml.cs: "Vorgang „"
+src/FlixyPix.Desktop/MainWindow.xaml.cs: "“"
+src/FlixyPix.Desktop/Library/LibraryMarkPreviews.cs: "Bild für Sprungmarke ·  bei  s"
+src/FlixyPix.Desktop/Library/LibraryMarkPreviews.cs: "Bilder für Sprungmarken · "
+src/FlixyPix.Desktop/Library/LibraryMigration.cs: "Titel aus neuem Snapshot"
+src/FlixyPix.Desktop/Library/LibraryOpenWith.cs: "Öffnen mit"
+src/FlixyPix.Desktop/Windows/TagRuleEditorWindow.cs: "Regelprüfung.mp4"
+src/FlixyPix.Core/Texts.cs: "àéîõüÀÉÎÕÜçñšýÇÑŠÝ"
+# CSV column names and values of the FlixyPix tag package: a stable file format that is German in every language.
+src/FlixyPix.Core/Tags/TagPackages.cs: "größe"
+src/FlixyPix.Core/Tags/TagPackages.cs: "Größe"
+src/FlixyPix.Core/Tags/TagPackages.cs: "maße"
+src/FlixyPix.Core/Tags/TagPackages.cs: "Maße"
+src/FlixyPix.Core/Tags/TagPackages.cs: "aktiv von"
+src/FlixyPix.Core/Tags/TagPackages.cs: "Aktiv von"
+src/FlixyPix.Core/Tags/TagPackages.cs: "gehört zu"
+src/FlixyPix.Core/Tags/TagPackages.cs: "Gehört zu"
+src/FlixyPix.Core/Tags/TagPackages.cs: "männlich"
+src/FlixyPix.Core/Tags/TagPackages.cs: "nichtbinär"
+src/FlixyPix.Core/Tags/TagPackages.cs: "natürlich"
+src/FlixyPix.Core/Tags/TagPackages.cs: "vergrößert"
+src/FlixyPix.Desktop/Library/LibraryFingerprints.cs: "Ähnliche Medien"
+src/FlixyPix.Desktop/Library/LibraryFingerprints.cs: " Dateien ohne Fingerabdruck"

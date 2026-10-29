@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+ <ItemGroup><PackageReference Include="Magick.NET-Q16-x64" Version="15.0.0" /></ItemGroup>
+ <ItemGroup><ProjectReference Include="../FlixyPix.Core/FlixyPix.Core.csproj" /></ItemGroup>
+</Project>

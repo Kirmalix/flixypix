@@ -1,0 +1,50 @@
+# Public source tree of FlixyPix: every committed file that may be published.
+# A line is a file path or a folder ending in "/"; "!" excludes. Everything else stays internal
+# (plans, reviews, status reports, analysis of the original, archive and evidence).
+# package-source.py fails when a line matches no committed file, so the list cannot go stale unnoticed.
+
+.gitattributes
+.gitignore
+.github/
+CHANGELOG.md
+CONTRIBUTING.md
+Directory.Build.props
+FlixyPix.slnx
+LICENSE
+README.md
+SECURITY.md
+THIRD-PARTY-NOTICES.md
+global.json
+
+assets/
+src/
+# Internal German notes and developer notes of the reconstruction phase; they cite the analysis of the original.
+!src/FlixyPix.Core/README.md
+!src/FlixyPix.Core/Media/PLAYER-TRANSFORMS.md
+!src/FlixyPix.Core/Media/SCENE-ORGANIZATION.md
+!src/FlixyPix.Desktop/README.md
+!src/FlixyPix.Imaging/README.md
+tests/
+
+docs/images/flixypix.png
+docs/release/media-tools-lock.json
+docs/release/portable-readme.en.md
+docs/release/portable-readme.md
+docs/release/toolchain-lock.json
+docs/reviews/localization-review/
+
+scripts/bootstrap.ps1
+scripts/build.ps1
+scripts/checks/Test-Localization.ps1
+scripts/checks/i18n-allowlist.txt
+scripts/checks/i18n.py
+scripts/checks/translation_review.py
+scripts/release/collect-notices.py
+scripts/release/make-brand-assets.ps1
+scripts/release/package-portable.py
+scripts/release/package-source.py
+scripts/release/public-files.txt
+scripts/tests/Start-HiddenDesktop.ps1
+scripts/tests/test_i18n.py
+scripts/tests/test_source_package.py
+scripts/tests/test_translation_review.py

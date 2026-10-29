@@ -1,0 +1,42 @@
+name: Bug report
+description: Something does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not attach private catalogs, media, file lists or screenshots that show your library.
+        Security problems belong in a private report (see SECURITY.md), not here.
+  - type: input
+    id: version
+    attributes:
+      label: FlixyPix version
+      description: Shown under Help → About.
+      placeholder: 0.5.0-preview
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and interface language
+      placeholder: Windows 11 23H2, German
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Error message or log excerpt
+      render: text

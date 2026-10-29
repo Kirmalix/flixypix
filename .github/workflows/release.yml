@@ -1,0 +1,45 @@
+name: Release
+
+# A tag such as v0.5.0-preview builds the portable package on GitHub and attaches it to a release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Bootstrap
+        shell: powershell
+        run: .\scripts\bootstrap.ps1
+
+      - name: Build, test and publish
+        shell: powershell
+        run: .\scripts\build.ps1 -SkipUiSmoke
+
+      - name: Package
+        shell: powershell
+        run: python scripts\release\package-portable.py
+
+      # The tag must match the version in Directory.Build.props; the notes are its CHANGELOG section.
+      - name: Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.InformationalVersion | Where-Object { $_ } | Select-Object -First 1
+          if ("v$version" -ne $env:GITHUB_REF_NAME) { throw "Tag $env:GITHUB_REF_NAME does not match version $version." }
+          python -c "import re,sys; t=open('CHANGELOG.md',encoding='utf-8').read(); m=re.search(r'^## ' + re.escape(sys.argv[1]) + r'\s*\n(.*?)(?=^## |\Z)', t, re.S | re.M); open('release-notes.md','w',encoding='utf-8').write(m.group(1).strip() + '\n')" $version
+          $assets = Get-ChildItem artifacts\FlixyPix-*-win-x64.zip, artifacts\FlixyPix-*-win-x64.zip.sha256 | ForEach-Object FullName
+          $prerelease = if ($version -like '*-*') { '--prerelease' } else { $null }
+          gh release create $env:GITHUB_REF_NAME @assets --title "FlixyPix $version" --notes-file release-notes.md $prerelease
