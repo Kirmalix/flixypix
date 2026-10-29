@@ -16,6 +16,9 @@ public sealed class MpvPlayer : IAsyncDisposable
     private bool disposed;
     private readonly string? inputConf;
     private Task delivery = Task.CompletedTask;
+    // A cancelled StreamReader.ReadLineAsync drops the part of the line it had read, so a timed-out
+    // read is left running and the next request continues with it.
+    private Task<string?>? pendingLine;
     /// <summary>Arguments of a "script-message" from mpv's bindings, such as mouse input; delivered with the next request.</summary>
     public event Action<IReadOnlyList<string>>? ClientMessage;
 
@@ -37,7 +40,10 @@ public sealed class MpvPlayer : IAsyncDisposable
             await writer.WriteLineAsync(JsonSerializer.Serialize(new { command, request_id = id }).AsMemory(), timeout.Token);
             while (true)
             {
-                var line = await reader.ReadLineAsync(timeout.Token) ?? throw new IOException("Die Verbindung zum Player wurde geschlossen.");
+                pendingLine ??= reader.ReadLineAsync();
+                var line = await pendingLine.WaitAsync(timeout.Token);
+                pendingLine = null;
+                if (line is null) throw new IOException("Die Verbindung zum Player wurde geschlossen.");
                 using var document = JsonDocument.Parse(line);
                 var root = document.RootElement;
                 if (root.TryGetProperty("event", out var name) && name.GetString() == "client-message" && root.TryGetProperty("args", out var args) && args.ValueKind == JsonValueKind.Array)
@@ -182,7 +188,7 @@ public sealed class MpvPlayer : IAsyncDisposable
         {
             if (!process.HasExited)
             {
-                try { await SendAsync("quit"); } catch (Exception ex) when (ex is IOException or OperationCanceledException or InvalidOperationException) { }
+                try { await SendAsync("quit"); } catch (Exception ex) when (ex is IOException or OperationCanceledException or InvalidOperationException or JsonException) { }
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 try { await process.WaitForExitAsync(timeout.Token); } catch (OperationCanceledException) { if (!process.HasExited) process.Kill(entireProcessTree: true); }
             }
