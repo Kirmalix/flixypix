@@ -21,7 +21,7 @@ jobs:
           python-version: '3.11'
 
       # The pinned .NET SDK, FFmpeg and mpv; bootstrap.ps1 verifies every download against the lock files.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             .tools/dotnet-sdk.zip
