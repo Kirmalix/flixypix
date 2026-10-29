@@ -5,7 +5,9 @@ using Xunit;
 
 namespace FlixyPix.MediaTools.Tests;
 
-/// <summary>Representative container/codec pairs, not an extension-only or Cartesian compatibility claim.</summary>
+/// <summary>Representative container/codec pairs, not an extension-only or Cartesian compatibility claim.
+/// Slow: every pair is played in real time, and the end position depends on the audio device of the machine.</summary>
+[Trait("Category", "Slow")]
 public sealed class FormatMatrixTests : IDisposable
 {
  private readonly string scratch = Path.Combine(Path.GetTempPath(),"flixypix-format-matrix-" + Guid.NewGuid().ToString("N"));
