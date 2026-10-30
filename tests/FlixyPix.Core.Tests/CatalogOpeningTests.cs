@@ -61,7 +61,7 @@ public sealed class CatalogOpeningTests : IDisposable
   {
    Assert.True(catalog.UpgradedOnOpen);
    var log = catalog.GetMaintenanceLog();
-   Assert.Equal(15, log.LastUpgradeFrom); Assert.Equal(16, log.LastUpgradeTo); Assert.NotNull(log.LastUpgradeAt); Assert.True(log.LastUpgradeSeconds >= 0);
+   Assert.Equal(15, log.LastUpgradeFrom); Assert.Equal(17, log.LastUpgradeTo); Assert.NotNull(log.LastUpgradeAt); Assert.True(log.LastUpgradeSeconds >= 0);
   }
   Assert.Equal(plan.Phases, steps.Select(s => s.Phase).Distinct());
   var copy = steps.Last(s => s.Phase == CatalogOpenPhase.SafetyCopy); Assert.True(copy.Total > 0 && copy.Done == copy.Total);

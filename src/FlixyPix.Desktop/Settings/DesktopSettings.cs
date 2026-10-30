@@ -106,6 +106,7 @@ internal sealed class MediaCard : INotifyPropertyChanged
  private readonly bool showExtension;
  /// <summary>What tiles show (title or file name, wrapping, progress); set by the main window before it makes tiles.</summary>
  internal static GeneralPreferences Display { get; set; } = new();
+ public Stretch ThumbnailStretch => Display.CropThumbnails?Stretch.UniformToFill:Stretch.Uniform;
  public string Title => !Display.ShowTitles ? (showExtension ? System.IO.Path.GetFileName(Item.Path) : System.IO.Path.GetFileNameWithoutExtension(Item.Path))
   : string.IsNullOrWhiteSpace(Item.Title) ? System.IO.Path.GetFileName(Item.Path) : Item.Title + (showExtension ? System.IO.Path.GetExtension(Item.Path) : "");
  public TextWrapping TitleWrapping => Display.FullTitles ? TextWrapping.Wrap : TextWrapping.NoWrap;
@@ -155,6 +156,10 @@ internal sealed class MediaCard : INotifyPropertyChanged
  public Visibility WatchLaterVisibility => Item.WatchLater ? Visibility.Visible : Visibility.Collapsed;
  /// <summary>Media in the collection key B fills; set by the main window before it makes tiles.</summary>
  internal static HashSet<Guid> TargetMembers { get; set; } = [];
+ internal static HashSet<Guid> QuickMembers { get; set; } = [];
+ public Visibility QuickVisibility => QuickMembers.Contains(Item.Id)?Visibility.Visible:Visibility.Collapsed;
+ public string QuickGlyph => QuickMembers.Contains(Item.Id)?"●":"○";
+ public string QuickHint => QuickMembers.Contains(Item.Id)?T("Remove from quick collection"):T("Add to quick collection");
  public Visibility TargetVisibility => TargetMembers.Contains(Item.Id) ? Visibility.Visible : Visibility.Collapsed;
  public string PlayGlyph => Item.Kind == MediaKind.Image ? "" : "";
  public string PlayLabel => Item.Kind == MediaKind.Image ? T("View") : T("Play");

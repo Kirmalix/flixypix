@@ -336,6 +336,8 @@ internal sealed class HotkeyBox : Border
  internal string Value { get => value; set { var changed = this.value != value; this.value = value ?? ""; Render(); if (changed) Changed?.Invoke(); } }
  /// <summary>Esc is recorded as a key (boss key) instead of leaving the field; Tab still leaves.</summary>
  internal bool AcceptsEscape { get; init; }
+ private bool shortcutActive=true;
+ internal bool ShortcutActive { get=>shortcutActive; set { shortcutActive=value; Render(); } }
  internal string? Conflict { get => conflict; set { conflict = value; Render(); } }
 
  private void Capture(object sender, KeyEventArgs e)
@@ -365,7 +367,10 @@ internal sealed class HotkeyBox : Border
     Padding = new Thickness(7, 1, 7, 1), Margin = new Thickness(0, 1, 4, 1), Child = new TextBlock { Text = SettingsUi.KeyName(part), FontSize = 12 },
    });
   }
-  AutomationProperties.SetItemStatus(this, value.Length == 0 ? T("Not assigned") : string.Join(" + ", value.Split('+').Select(SettingsUi.KeyName)));
+  caps.Opacity=shortcutActive?1:.6;
+  if(!shortcutActive)caps.Children.Add(new TextBlock { Text=T("Inactive"), Margin=new Thickness(6,0,0,0), Foreground=SettingsUi.Muted, VerticalAlignment=VerticalAlignment.Center });
+  AutomationProperties.SetHelpText(this,shortcutActive?"":T("Player shortcuts are off. Assignments stay saved and work again when switched on."));
+  AutomationProperties.SetItemStatus(this, (!shortcutActive?T("Inactive")+" · ":"") + (value.Length == 0 ? T("Not assigned") : string.Join(" + ", value.Split('+').Select(SettingsUi.KeyName))));
  }
 }
 

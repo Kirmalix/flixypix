@@ -259,7 +259,7 @@ public partial class MainWindow
  /// <summary>The context menu key and Shift+F10 open the media menu at the focused tile.</summary>
  private bool MediaMenuKey(KeyEventArgs e)
  {
-  var shiftF10 = e.Key == Key.System && e.SystemKey == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift;
+  var shiftF10 = (e.Key == Key.F10 || e.Key == Key.System && e.SystemKey == Key.F10) && Keyboard.Modifiers == ModifierKeys.Shift;
   if (e.Key != Key.Apps && !shiftF10 || !MediaList.IsKeyboardFocusWithin || SelectedMedia.Count == 0) return false;
   e.Handled = true;
   var target = Keyboard.FocusedElement as ListBoxItem ?? MediaList.ItemContainerGenerator.ContainerFromItem(MediaList.SelectedItem) as ListBoxItem;

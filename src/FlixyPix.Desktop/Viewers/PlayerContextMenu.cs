@@ -41,6 +41,7 @@ internal sealed partial class VideoPlayerWindow
 
  /// <summary>Opens the player menu at the mouse pointer. The video is a native window that WPF gets no mouse moves from,
  /// so the place comes from Windows.</summary>
+ internal ContextMenu? OpenPlayerMenu { get; private set; }
  internal ContextMenu ShowPlayerMenu()
  {
   var menu = Menus.Create(PlayerMenu(), (_, error) => status.Text = error.Message);
@@ -49,6 +50,6 @@ internal sealed partial class VideoPlayerWindow
    var point = PointFromScreen(new Point(cursor.X, cursor.Y));
    menu.PlacementTarget = this; menu.Placement = PlacementMode.Relative; menu.HorizontalOffset = point.X; menu.VerticalOffset = point.Y;
   }
-  menu.IsOpen = true; return menu;
+  OpenPlayerMenu=menu; menu.IsOpen = true; return menu;
  }
 }

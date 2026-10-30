@@ -3,6 +3,35 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
+## Unreleased
+
+- Fixed mouse-wheel routing through nested folder views, including partial wheel steps and outer-sidebar handoff.
+- Grid previews use 16:9 frames and fit the full image by default; the library remembers an optional fill/crop mode, also used by preview clips.
+- Added contextual keyboard navigation, F6 region switching, keyboard-adjustable sliders and navigation/selection beyond loaded media windows.
+- Added an application menu (F10), searchable offline help (F1), current shortcut reference (Ctrl+F1), version, bundled release/license text and local diagnostics.
+
+- Sidebar sections now use themed cards with integrated header actions. Folder navigation has its own resizable viewport, two-axis scrolling, folder icons and a compact subfolder switch; height and offsets are remembered per library.
+- High-resolution home artwork is now restricted to the visible featured video banner. Ordinary cards use standard thumbnails; hidden or replaced banner requests are cancelled.
+
+- Browse registered media folders as separate roots, with a remembered subfolder switch and collapsible sidebar sections per library.
+- Quick tags use fixed, editable shortcuts with separate badges and support Ctrl plus number-pad digits.
+- Filter unrated media and missing or unreadable thumbnails; sorting now clearly labels recently added items.
+- Media cards offer a direct quick-collection toggle, including on the home page.
+- Home banners and visible cards load larger local artwork on demand, with a bounded cache and cancellation on navigation.
+- Catalog schema 17 adds thumbnail-health state; existing libraries receive the usual migration backup.
+
+- Jump mark navigation now wraps in both directions across buttons, shortcuts and assigned mouse buttons.
+- Click the volume track to choose a level directly; the volume button toggles mute and changes its symbol.
+- Rename marks in the player with the pencil button, F2 or the row context menu. Editing keeps its position
+  during playback and preview refreshes, and updates the library list without overwriting other details.
+
+
+- Fixed mouse clicks and wheel input over embedded video on Windows, including double-click full screen,
+  configured mouse buttons, modifier keys and partial wheel steps.
+- Player shortcut settings now show when assignments are inactive; the enable switch is beside the assignments.
+- The jump mark panel remembers its visibility per library across videos and restarts. Full screen temporarily
+  hides it and restores its previous state on return.
+
 ## 0.5.0-preview
 
 First public preview.

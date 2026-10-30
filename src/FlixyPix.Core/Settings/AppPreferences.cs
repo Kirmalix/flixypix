@@ -110,7 +110,7 @@ public sealed record PlaybackPreferences
     public bool AutoHideControls { get; init; } = true;
     /// <summary>The shortcuts of the player (original "enablekeyshortcuts"); Esc and F11 always work.</summary>
     public bool KeyboardShortcuts { get; init; } = true;
-    /// <summary>The list of jump marks opens by itself when a video has bookmarks or scenes (original "showchapters").</summary>
+    /// <summary>Remembered visibility of the jump mark list (original "showchapters").</summary>
     public bool ShowMarks { get; init; } = true;
     /// <summary>A bookmark set in the player gets a name field at once (UX plan U6); otherwise it is named after its time.</summary>
     public bool NameNewBookmarks { get; init; }

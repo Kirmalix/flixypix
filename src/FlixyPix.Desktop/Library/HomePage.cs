@@ -18,6 +18,8 @@ namespace FlixyPix.Desktop;
 internal sealed class HomePage : Grid
 {
  internal Action<MediaItem>? Open { get; set; }
+ internal Action<MediaItem>? ToggleQuick { get; set; }
+ internal Func<MediaItem,CancellationToken,Task<ImageSource?>>? FeaturedVideoArtwork { get; set; }
  internal Action<MediaItem>? ToggleWatchLater { get; set; }
  internal Action<HomeRow>? ShowAll { get; set; }
  internal Action<DirectoryEntry>? ShowEntity { get; set; }
@@ -33,7 +35,8 @@ internal sealed class HomePage : Grid
  private readonly List<FrameworkElement> cards = [];
  private readonly DispatcherTimer heroTimer = new() { Interval = TimeSpan.FromSeconds(9) };
  private IReadOnlyList<HomeCard> heroes = [];
- private readonly Dictionary<Guid, ImageSource?> heroPictures = [];
+ private long artworkVersion;
+ private CancellationTokenSource? featuredRequest;
  private int heroIndex;
  private Grid? hero;
  private Border sideFade = new(), bottomFade = new();
@@ -53,13 +56,13 @@ internal sealed class HomePage : Grid
   // The theme outlives a page; subscribe only while it is in a window, so a closed library window is not kept alive.
   Loaded += (_, _) => { Theme.Changed -= PaintFades; Theme.Changed += PaintFades; PaintFades(); };
   Unloaded += (_, _) => Theme.Changed -= PaintFades;
-  IsVisibleChanged += (_, _) => { if (IsVisible && heroes.Count > 1) heroTimer.Start(); else heroTimer.Stop(); };
+  IsVisibleChanged += (_, _) => { if (IsVisible && heroes.Count > 1) heroTimer.Start(); else {heroTimer.Stop();featuredRequest?.Cancel();} };
  }
 
  /// <summary>Grey placeholders while the feed is being built.</summary>
  internal void ShowLoading()
  {
-  content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
+  featuredRequest?.Cancel();content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
   var banner = new Border { Height = 300, CornerRadius = new CornerRadius(14), Margin = new Thickness(0, 0, 0, 24) };
   banner.SetResourceReference(Border.BackgroundProperty, "CardBackground");
   content.Children.Add(banner);
@@ -79,10 +82,11 @@ internal sealed class HomePage : Grid
  {
   // A rebuilt page keeps the place it was scrolled to and the banner entry on show.
   var offset = scroller.VerticalOffset; var shownId = CurrentHero?.Item.Id;
-  content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
+  featuredRequest?.Cancel();content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
   if (libraryEmpty) { content.Children.Add(Welcome()); RowCount = 0; heroes = []; return; }
+  artworkVersion++;
   heroes = feed.Hero;
-  foreach (var gone in heroPictures.Keys.Except(heroes.Select(h => h.Item.Id)).ToList()) heroPictures.Remove(gone);
+
   if (heroes.Count > 0)
   {
    content.Children.Add(Hero());
@@ -118,6 +122,8 @@ internal sealed class HomePage : Grid
  {
   hero = new Grid { Height = 360, Margin = new Thickness(0, 0, 0, 10) };
   RoundedClip.SetRadius(hero, 14);
+  hero.Loaded+=(_,_)=> {if(CurrentHero is {} current)_=ShowHeroPictureAsync(current.Item,false);};
+  hero.IsVisibleChanged+=(_,_)=> {if(hero?.IsVisible==true&&CurrentHero is {} current)_=ShowHeroPictureAsync(current.Item,false);else featuredRequest?.Cancel();};
   hero.SetResourceReference(BackgroundProperty, "MediaBackground");
   heroPicture = new Image { Stretch = Stretch.UniformToFill, HorizontalAlignment = HorizontalAlignment.Right };
   Privacy.SetBlur(heroPicture, true); hero.Children.Add(heroPicture);
@@ -135,6 +141,7 @@ internal sealed class HomePage : Grid
   var buttons = new StackPanel { Orientation = Orientation.Horizontal }; buttons.Children.Add(heroPlay); buttons.Children.Add(heroLater);
   heroDots = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 18, 0, 0) };
   text.Children.Add(heroTitle); text.Children.Add(heroReason); text.Children.Add(buttons); text.Children.Add(heroDots);
+  var collect=QuickButton(()=>CurrentHero?.Item);collect.HorizontalAlignment=HorizontalAlignment.Right;collect.VerticalAlignment=VerticalAlignment.Top;collect.Margin=new Thickness(12);hero.Children.Add(collect);
   hero.Children.Add(text);
   OffersMenu(hero, () => CurrentHero?.Item);
   hero.MouseEnter += (_, _) => heroTimer.Stop();
@@ -180,14 +187,17 @@ internal sealed class HomePage : Grid
  /// <summary>The banner is wide, so it decodes its picture larger than a tile does; pictures stay cached while the page lives.</summary>
  private async Task ShowHeroPictureAsync(MediaItem item, bool animate)
  {
-  if (!heroPictures.TryGetValue(item.Id, out var picture))
-  {
-   var path = item.ThumbnailPath ?? (item.Kind == MediaKind.Image ? item.Path : null);
-   picture = await Task.Run(() => MediaCard.LoadBitmap(path, 1280));
-   heroPictures[item.Id] = picture;
-  }
+  featuredRequest?.Cancel();featuredRequest?.Dispose();featuredRequest=new();
+  var token=featuredRequest.Token;
+  var version=artworkVersion;
+  var path = item.ThumbnailPath ?? (item.Kind == MediaKind.Image ? item.Path : null);
+  var picture = item.Kind==MediaKind.Video && hero?.IsVisible==true && ActualHeight>=560 && FeaturedVideoArtwork!=null
+   ? await FeaturedVideoArtwork(item,token) : await Task.Run(() => MediaCard.LoadBitmap(path, MediaCard.DecodeWidth));
+  if(token.IsCancellationRequested||version!=artworkVersion)return;
   if (CurrentHero?.Item.Id != item.Id || heroPicture is null) return;
   heroPicture.Source = picture;
+  heroPicture.Stretch=picture is System.Windows.Media.Imaging.BitmapSource bitmap && bitmap.PixelWidth<960?Stretch.None:Stretch.UniformToFill;
+  if(picture is null)hero!.Height=260;
   if (animate && Motion.Enabled) heroPicture.BeginAnimation(OpacityProperty, new DoubleAnimation(.2, 1, TimeSpan.FromMilliseconds(600)));
  }
 
@@ -277,6 +287,7 @@ internal sealed class HomePage : Grid
    var bar = new Border { Background = Theme.Brush("Accent"), RenderTransformOrigin = new Point(0, .5), RenderTransform = new ScaleTransform(tile.Progress, 1) };
    picture.Children.Add(new Border { VerticalAlignment = VerticalAlignment.Bottom, Height = 4, Background = new SolidColorBrush(Color.FromArgb(0x73, 0, 0, 0)), Child = bar });
   }
+  var collect=QuickButton(()=>card.Item);collect.HorizontalAlignment=HorizontalAlignment.Right;collect.VerticalAlignment=VerticalAlignment.Top;picture.Children.Add(collect);
   var frame = new AspectBox { Ratio = .5625, Child = picture };
   var title = new TextBlock { Text = tile.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(2, 8, 2, 1) };
   var reason = new TextBlock { Text = card.Reason ?? tile.Subtitle, FontSize = 12, Foreground = SettingsUi.Muted, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(2, 0, 2, 0) };
@@ -340,16 +351,22 @@ internal sealed class HomePage : Grid
  {
   void Request(RoutedEventArgs e) { if (item() is { } media && MenuRequested != null) { e.Handled = true; MenuRequested(media); } }
   element.MouseRightButtonUp += (_, e) => Request(e);
-  element.KeyDown += (_, e) => { if (e.Key == Key.Apps || e.Key == Key.System && e.SystemKey == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) Request(e); };
+  element.KeyDown += (_, e) => { if (e.Key == Key.Apps || (e.Key == Key.F10 || e.Key == Key.System && e.SystemKey == Key.F10) && Keyboard.Modifiers == ModifierKeys.Shift) Request(e); };
  }
 
+ private Button QuickButton(Func<MediaItem?> get)
+ {
+  var button=new Button {Content="○",FontFamily=new FontFamily("Segoe UI"),Style=(Style)Application.Current.Resources["TileAction"],Width=30,Height=30,Margin=new Thickness(5)};
+  void Update() {if(get() is {} item) {button.Content=MediaCard.QuickMembers.Contains(item.Id)?"●":"○";button.ToolTip=MediaCard.QuickMembers.Contains(item.Id)?T("Remove from quick collection"):T("Add to quick collection");AutomationProperties.SetName(button,(string)button.ToolTip);} }
+  button.Loaded+=(_,_)=>Update();button.MouseEnter+=(_,_)=>Update();button.Click+=(_,e)=> {e.Handled=true;if(get() is {} item)ToggleQuick?.Invoke(item);Update();};return button;
+ }
  private static Button CardButton(FrameworkElement content, string name, Action click)
  {
   var button = new Button { Content = content, Margin = new Thickness(0, 0, 14, 0), Padding = new Thickness(0), Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Top,
    Template = (ControlTemplate)System.Windows.Markup.XamlReader.Parse("<ControlTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" TargetType=\"Button\"><ContentPresenter/></ControlTemplate>") };
   AutomationProperties.SetName(button, name);
   Motion.SetHoverLift(button, true);
-  button.Click += (_, _) => click();
+  button.Click += (_, e) => {if(!e.Handled)click();};
   return button;
  }
 

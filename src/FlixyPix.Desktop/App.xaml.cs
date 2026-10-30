@@ -9,6 +9,11 @@ public partial class App : Application
  protected override async void OnStartup(StartupEventArgs e)
  {
   base.OnStartup(e);
+  EventManager.RegisterClassHandler(typeof(Window),System.Windows.Input.Keyboard.PreviewKeyDownEvent,new System.Windows.Input.KeyEventHandler((sender,key)=>
+  {
+   if(sender is Window window && window is not (FlixyPix.Desktop.MainWindow or VideoPlayerWindow or ImageViewerWindow or HelpWindow) && key.Key==System.Windows.Input.Key.F1)
+   {key.Handled=true;new HelpWindow(window,T("Help"),HelpWindow.Guide()).ShowDialog();}
+  }));
   // "--language <code>" in front of the other arguments forces a language for test runs.
   var arguments = e.Args.Length >= 2 && e.Args[0] == "--language" ? e.Args[2..] : e.Args;
   string? forcedLanguage = arguments.Length < e.Args.Length ? e.Args[1] : null;

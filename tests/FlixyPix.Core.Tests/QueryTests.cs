@@ -108,7 +108,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using var version = backup.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(6L, version.ExecuteScalar());
         using var count = backup.CreateCommand(); count.CommandText = "SELECT count(*) FROM media"; Assert.Equal(1L, count.ExecuteScalar());
         Assert.Equal(item.Id, Assert.Single(migrated.QueryPage(new() { Text = "münchen" }).Items).Id);
-        using var verify = original.CreateCommand(); verify.CommandText = "PRAGMA user_version"; Assert.Equal(16L, verify.ExecuteScalar());
+        using var verify = original.CreateCommand(); verify.CommandText = "PRAGMA user_version"; Assert.Equal(17L, verify.ExecuteScalar());
     }
 
     [Fact]

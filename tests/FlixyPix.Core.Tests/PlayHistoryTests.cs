@@ -183,7 +183,7 @@ public sealed class PlayHistoryTests : IDisposable
             downgrade.ExecuteNonQuery();
         }
         catalog = new CatalogRepository(path);
-        Assert.Contains("before-v16-v11", catalog.MigrationBackupPath!);
+        Assert.Contains("before-v17-v11", catalog.MigrationBackupPath!);
         Assert.Equal(["Alt"], Titles(new MediaQuery { Expression = SearchExpression.Where(new() { Field = SearchField.OCount, Comparison = SearchComparison.Equals, Number = 4 }) }));
         Assert.Equal(5, catalog.AddO(video.Id, DateTimeOffset.UtcNow)!.OCount);
         Assert.Equal(1, catalog.CountHistory());

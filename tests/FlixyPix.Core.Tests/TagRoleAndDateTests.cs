@@ -131,7 +131,7 @@ public sealed class TagRoleAndDateTests : IDisposable
             downgrade.ExecuteNonQuery();
         }
         using var upgraded = new CatalogRepository(path);
-        Assert.Contains("before-v16-v9", upgraded.MigrationBackupPath!);
+        Assert.Contains("before-v17-v9", upgraded.MigrationBackupPath!);
         var before2002 = new SearchExpression { Condition = new() { Field = SearchField.FileDate, Comparison = SearchComparison.LessThan, Date = new DateTimeOffset(2002, 1, 1, 0, 0, 0, TimeSpan.Zero) } };
         Assert.Equal(id, Assert.Single(upgraded.QueryPage(new() { Expression = before2002 }).Items).Id);
         Assert.Equal(id, Assert.Single(upgraded.QueryPage(new() { Text = "sommer" }).Items).Id);

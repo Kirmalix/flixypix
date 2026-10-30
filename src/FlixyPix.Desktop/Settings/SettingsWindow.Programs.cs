@@ -33,6 +33,7 @@ internal sealed partial class SettingsWindow
    var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
    text.Children.Add(new TextBlock { Text = program.Name + (program.Hotkey.Length > 0 ? "  ·  " + string.Join(" + ", program.Hotkey.Split('+').Select(SettingsUi.KeyName)) : ""), FontWeight = FontWeights.SemiBold });
    text.Children.Add(new TextBlock { Text = program.Path + "  " + program.Arguments, FontSize = 12, Foreground = SettingsUi.Muted, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = program.Path + " " + program.Arguments });
+   if(ExternalProgramDialog.HotkeyProblem(program.Hotkey,[]) is {} conflict)text.Children.Add(SettingsUi.Hint(conflict));
    var edit = SettingsUi.SmallButton(T("Edit …")); edit.Click += (_, _) => EditProgram(program);
    var remove = SettingsUi.SmallButton(T("Remove")); remove.Click += (_, _) => { programs.Remove(program); ShowPrograms(); Touch(); };
    var row = new DockPanel { Margin = new Thickness(0, 6, 0, 6) };

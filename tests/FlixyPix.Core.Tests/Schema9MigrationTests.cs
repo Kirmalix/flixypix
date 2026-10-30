@@ -25,7 +25,7 @@ public sealed class Schema9MigrationTests
             using (var update = source.CreateCommand()) { update.CommandText = "UPDATE media SET document=json_set(document,'$.description','Committed WAL description')"; Assert.Equal(1, update.ExecuteNonQuery()); }
             using var upgraded = new CatalogRepository(path);
             Assert.Equal("Committed WAL description", upgraded.GetMedia(id)!.Description); Assert.Equal(9, upgraded.GetMedia(id)!.Rating);
-            Assert.Contains("before-v16-v8", upgraded.MigrationBackupPath!);
+            Assert.Contains("before-v17-v8", upgraded.MigrationBackupPath!);
             using var backup = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = upgraded.MigrationBackupPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString()); backup.Open();
             using var version = backup.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(8L, version.ExecuteScalar());
             using var data = backup.CreateCommand(); data.CommandText = "SELECT document FROM media";

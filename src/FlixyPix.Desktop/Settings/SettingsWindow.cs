@@ -166,7 +166,7 @@ internal sealed partial class SettingsWindow : Window
   mpv = new PathPicker(false, T("Programs (*.exe)|*.exe"), value => DescribeTool("mpv", value));
   foreach (var (action, _, _) in PlayerActions.All) { var box = new HotkeyBox(); box.Changed += () => { UpdateConflicts(); Touch(); }; hotkeys[action] = box; }
   Seek.Changed += () => { UpdateConflicts(); Touch(); };
-  PlayerDisplay.Changed += Touch; Library.Changed += Touch;
+  PlayerDisplay.Changed += () => { UpdateShortcutState(); Touch(); }; Library.Changed += Touch;
   foreach (var editor in new[] { videoTypes, imageTypes }) editor.Changed += Touch;
   foreach (var picker in new[] { videoFavorite, audioFavorite, imageFavorite }) picker.Changed += Touch;
   themePicker.Value = Theme.ParseMode(settings.Theme);

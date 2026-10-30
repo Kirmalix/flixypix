@@ -29,7 +29,7 @@ public sealed partial class CatalogRepository : IDisposable
     /// when they save), 14 technical data and further versions of a medium (query columns and the table media_files), 15 picture
     /// bytes in files beside the catalog instead of inside it (see <see cref="AssetStore"/>), 16 smaller documents (see
     /// <see cref="CompactDocuments"/>).</summary>
-    internal const long SchemaVersion = 16;
+    internal const long SchemaVersion = 17;
 
     public string DatabasePath { get; }
     /// <summary>Data key of an encrypted library; snapshots and backups reuse it.</summary>
@@ -98,6 +98,7 @@ public sealed partial class CatalogRepository : IDisposable
             // Schema 16 reads the original's dates from the medium itself; the triggers are created anew.
             if (schemaVersion is > 0 and < 16) using (var drop = Command("DROP TRIGGER IF EXISTS media_query_insert; DROP TRIGGER IF EXISTS media_query_update;", transaction)) drop.ExecuteNonQuery();
             InitializeQuerySchema(transaction, schemaVersion < 7);
+            using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id);", transaction)) health.ExecuteNonQuery();
             InitializeSearchIndexSchema(transaction);
             InitializeHistorySchema(transaction);
             InitializeMigrationSchema(transaction);

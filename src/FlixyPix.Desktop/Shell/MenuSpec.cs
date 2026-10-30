@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 
 namespace FlixyPix.Desktop;
 
@@ -40,6 +41,8 @@ internal static class Menus
  {
   var menu = Create(items, failed);
   if (target != null) { menu.PlacementTarget = target; menu.Placement = placement; menu.VerticalOffset = placement == PlacementMode.Bottom ? 4 : 0; }
+  var previous=Keyboard.FocusedElement;
+  menu.Closed+=(_,_)=> {if(previous is UIElement {IsVisible:true,IsEnabled:true} element)element.Focus();};
   menu.IsOpen = true; return menu;
  }
  /// <summary>The menu without opening it, for callers that place it themselves.</summary>

@@ -213,7 +213,7 @@ public sealed class AssetStoreTests : IDisposable
   Directory.Delete(Path.Combine(root, "catalog-assets"), true);
   using (var catalog = new CatalogRepository(Database))
   {
-   Assert.Contains("before-v16-v14", catalog.MigrationBackupPath!);
+   Assert.Contains("before-v17-v14", catalog.MigrationBackupPath!);
    Assert.Equal(Png, catalog.GetMediaAsset(assetId)!.Data); Assert.Equal(Hash(Png), catalog.GetMediaAsset(assetId)!.Sha256);
    Assert.Equal(Png, catalog.GetTagAsset(catalog.GetTagAssetSummaries().Single().Id)!.Data);
    var exported = Path.Combine(root, "blob.bin"); catalog.ExportLegacyBlob(Hash(blob), exported); Assert.Equal(blob, File.ReadAllBytes(exported));
@@ -221,7 +221,7 @@ public sealed class AssetStoreTests : IDisposable
   }
   Assert.Equal("0", Scalar("SELECT count(*) FROM pragma_table_info('legacy_blobs') WHERE name='data'"));
   Assert.Equal("0", Scalar("SELECT count(*) FROM media_assets WHERE json_type(document,'$.data') IS NOT NULL"));
-  Assert.Equal("16", Scalar("PRAGMA user_version"));
+  Assert.Equal("17", Scalar("PRAGMA user_version"));
  }
 
  public void Dispose()

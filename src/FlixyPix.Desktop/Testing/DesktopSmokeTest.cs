@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -123,7 +123,7 @@ public partial class MainWindow
     _repository.DeleteBookmark(pictured.Id); _videoWindow.RefreshMarks();
     // Mouse over the video: mpv reports the wheel; the plain wheel seeks by default, Ctrl+wheel follows its own binding (volume, 5 points).
     var volumeBefore = _videoWindow.Volume;
-    await _player!.PressAsync("Ctrl+WHEEL_DOWN"); await _player.PressAsync("Ctrl+WHEEL_DOWN");
+    await NativePlayerWheelAsync(-120, System.Windows.Input.ModifierKeys.Control); await NativePlayerWheelAsync(-120, System.Windows.Input.ModifierKeys.Control);
     for (var wait = 0; _videoWindow.Volume == volumeBefore && wait < 40; wait++) await Task.Delay(50);
     await Task.Delay(300);
     for (var wait = 0; Math.Abs(_videoWindow.Volume - (volumeBefore - 10)) > .01 && wait < 40; wait++) await Task.Delay(50);
@@ -132,7 +132,7 @@ public partial class MainWindow
      "The wheel over the control bar does not reach the wheel settings.");
     // Middle click: sound off and back to the volume before.
     var audible = _videoWindow.Volume;
-    await _videoWindow.HandleMouseAsync("MBTN_MID"); var muted = _videoWindow.Volume; await _videoWindow.HandleMouseAsync("MBTN_MID");
+    NativePlayerMessage(0x0208); await Task.Delay(100); var muted = _videoWindow.Volume; NativePlayerMessage(0x0208); await Task.Delay(100);
     Require(muted == 0 && Math.Abs(_videoWindow.Volume - audible) < .01, $"The middle click did not mute and restore the sound ({audible} → {muted} → {_videoWindow.Volume}).");
     // Right click: the small player menu with the shortcuts of the player.
     var playerMenu = _videoWindow.ShowPlayerMenu(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -143,9 +143,22 @@ public partial class MainWindow
     playerMenu.IsOpen = false;
     // A double click switches full screen only: the play state its clicks toggled comes back.
     var pausedBefore = _videoWindow.IsPaused;
-    await _videoWindow.HandleMouseAsync("MBTN_LEFT"); await _videoWindow.HandleMouseAsync("MBTN_LEFT_DBL"); await _videoWindow.HandleMouseAsync("MBTN_LEFT");
+    await CheckNativePlayerInputAsync();
+    NativePlayerMessage(0x0201); NativePlayerMessage(0x0202); NativePlayerMessage(0x0203); NativePlayerMessage(0x0202);
+    await Task.Delay(1100);
     Require(_videoWindow.IsFullscreen && _videoWindow.IsPaused == pausedBefore, "A double click in the player changed the play state or did not switch to full screen.");
     _videoWindow.ToggleFullscreen(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+    Require(_videoWindow.MarkPanelVisible,"Full screen lost the remembered panel state.");
+    _videoWindow.ToggleMarkPanel();
+    Require(!_repository.GetPreferences().Playback.ShowMarks,"Hiding the panel was not saved.");
+    _videoWindow.RefreshMarks(); Require(!_videoWindow.MarkPanelVisible,"Refreshing marks reopened the hidden panel.");
+    _videoWindow.ToggleFullscreen(); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+    _videoWindow.ToggleMarkPanel(); Require(!_repository.GetPreferences().Playback.ShowMarks,"Full screen changed the saved panel state.");
+    _videoWindow.ToggleFullscreen(); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+    Require(!_videoWindow.MarkPanelVisible,"Leaving full screen reopened the hidden panel.");
+    _videoWindow.ToggleMarkPanel();
+    await CheckPlayerEditingAndVolumeAsync();
+    await _videoWindow!.CheckKeyboardControlsAsync();
     // A click on the time line holds the clicked point although the position is polled meanwhile, then seeks there.
     var timeline = _videoWindow.Timeline; var clicked = timeline.Maximum * .6; var pressed = true; _videoWindow.PointerPressed = () => pressed;
     timeline.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent });
@@ -166,6 +179,9 @@ public partial class MainWindow
     var hwdec = await _player!.GetTextPropertyAsync("hwdec");
     Require(hwdec == "auto-safe", $"Hardware decoding did not reach mpv (hwdec={hwdec ?? "null"}, setting={_repository.GetPreferences().Playback.HardwareDecoding}).");
     Require(VideoPlayerWindow.MediaKeyAction(System.Windows.Input.Key.MediaPlayPause) == PlayerActions.PlayPause && VideoPlayerWindow.MediaKeyAction(System.Windows.Input.Key.MediaNextTrack) == PlayerActions.NextBookmark, "Media keys are not mapped.");
+    _videoWindow.ToggleMarkPanel(); await StopPlayer(); await Play(imported,0);
+    Require(!_videoWindow!.MarkPanelVisible,"Reopening the player lost the hidden panel state.");
+    _videoWindow.ToggleMarkPanel();
     await StopPlayer();Require(_videoWindow==null&&_player==null,"Embedded player did not release resources.");
     Require(!SleepGuard.Active, "The display stayed blocked after playback.");
     var playbackBefore = _repository.GetPreferences().Playback;
@@ -188,9 +204,13 @@ public partial class MainWindow
      Require(Math.Abs(_videoWindow.Volume - 40) < .01 && _videoWindow.Topmost, $"Start volume or always-on-top had no effect (volume {_videoWindow.Volume}).");
      var length = imported.DurationSeconds ?? 0;
      await _player!.PauseAsync(true); await _videoWindow.SeekToAsync(0);
-     await _player.PressAsync("Shift+WHEEL_UP");
+     await NativePlayerWheelAsync(120, System.Windows.Input.ModifierKeys.Shift);
      for (var wait = 0; _videoWindow.LastPositionSeconds < .2 * length && wait < 40; wait++) await Task.Delay(50);
      Require(length > 0 && Math.Abs(_videoWindow.LastPositionSeconds - .25 * length) < .05 * length + .05, $"Shift+wheel did not seek a quarter of the video ({_videoWindow.LastPositionSeconds:0.##} of {length:0.##} s).");
+     await NativePlayerWheelAsync(240,System.Windows.Input.ModifierKeys.Shift);
+     Require(Math.Abs(_videoWindow.LastPositionSeconds-.75*length)<.05*length+.05,"Rapid native wheel steps were lost.");
+     await NativePlayerWheelAsync(-120,System.Windows.Input.ModifierKeys.None);
+     Require(_videoWindow.LastPositionSeconds<.05,"Native wheel down did not seek backwards.");
      var nine = new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(_videoWindow)!, 0, System.Windows.Input.Key.D9) { RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent };
      _videoWindow.RaiseEvent(nine);
      for (var wait = 0; _videoWindow.LastPositionSeconds < .9 * length && wait < 40; wait++) await Task.Delay(50);
@@ -267,6 +287,8 @@ public partial class MainWindow
   SearchBox.Text = "Abendlicht"; _searchTimer.Stop(); await RefreshAsync(); Require(MediaList.Items.Count == 1, "Search did not narrow results.");
   SearchBox.Text = ""; _searchTimer.Stop();
   _tag = "Natur"; await RefreshAsync(); Require(MediaList.Items.Count == 1, "Tag filter failed."); _tag = null;
+  await RunLibraryNavigationSmokeTestAsync(directory);
+  await RunInputAccessSmokeTestAsync(directory);
   await RunTaggingSmokeTestAsync(directory, first.Id);
   _repository.UpsertPlaylist(new Playlist { Name = "Meine Erinnerungen", Kind = PlaylistKind.Slideshow, MediaIds = _repository.Search().Select(i => i.Id).ToList() });
   _repository.UpsertPlaylist(new Playlist { Name = "Für später", MediaIds = [first.Id] });
@@ -674,8 +696,15 @@ public partial class MainWindow
   {
    foreach (var (page, file) in new[] { ("Appearance", "settings-appearance-light.png"), ("Video player", "settings-player-light.png") })
    { settings.SelectPage(page); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture((FrameworkElement)settings.Content, Path.Combine(directory, file)); }
+   settings.SelectPage("Appearance"); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+   Descendants<ThemePicker>((FrameworkElement)settings.Content).Single().Value=ColorScheme.Light;
+   settings.SelectPage("Video player"); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+   settings.PlayerDisplay.Shortcuts.IsChecked=false; settings.BookmarkShortcut.BringIntoView();
+   await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+   Capture((FrameworkElement)settings.Content,Path.Combine(directory,"settings-shortcuts-off-light.png"));
+   settings.PlayerDisplay.Shortcuts.IsChecked=_repository.GetPreferences().Playback.KeyboardShortcuts;
   }
-  finally { settings.Close(); }
+  finally { settings.CloseDiscarding(); }
   Require(Theme.Mode == ColorScheme.Light, "Closing the settings without changes altered the scheme.");
   Theme.Apply(ColorScheme.Dark); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
   Require(Theme.IsDark && text.Color == Theme.Color("Text", true), "Dark scheme was not restored.");

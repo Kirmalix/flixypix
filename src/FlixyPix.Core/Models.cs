@@ -177,6 +177,8 @@ public sealed record CatalogDocument
 
 public sealed record CatalogPreferences
 {
+    public SidebarPreferences Sidebar { get; init; } = new();
+    public List<string?>? QuickTags { get; init; }
     public List<FolderFavorite> FolderFavorites { get; init; } = [];
     public List<LibraryFolder> LibraryFolders { get; init; } = [];
     public List<TagVocabularyEntry> TagVocabulary { get; init; } = [];
@@ -203,6 +205,7 @@ public enum TileBadge { Resolution, Hdr, FrameRate, Codec, Versions }
 
 public sealed record GeneralPreferences
 {
+    public bool CropThumbnails { get; init; }
     /// <summary>Original "Search hidden folders": hidden subfolders are skipped during folder imports unless enabled.</summary>
     public bool IncludeHiddenFolders { get; init; }
     /// <summary>Inverse of the original "Never prompt when deleting media"; permanent file deletion always asks.</summary>

@@ -72,7 +72,12 @@ public sealed partial class CatalogRepository
     .Select(t=>t.Profile?.ParentStudio is {} parent&&Same(parent,tag)?t with {Profile=(t.Profile with {ParentStudio=replacement}).Normalized()}:t)
     .Select(t=>t.Profile?.ParentStudio is {} parent&&Same(parent,t.Tag)?t with {Profile=(t.Profile with {ParentStudio=null}).Normalized()}:t)
     .GroupBy(t=>t.Category+"\0"+t.Tag,StringComparer.OrdinalIgnoreCase).Select(MergeEntries).ToList();
-   SaveDocument("preferences",Guid.Empty,preferences with {TagVocabulary=vocabulary},transaction);
+   SaveDocument("preferences",Guid.Empty,preferences with {TagVocabulary=vocabulary, QuickTags=RewriteQuickTags(preferences.QuickTags)},transaction);
+   List<string?>? RewriteQuickTags(List<string?>? slots)
+   {
+    if(slots==null)return null;var seen=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    return slots.Select(t=>t!=null&&Same(t,tag)?replacement:t).Select(t=>t!=null&&seen.Add(t)?t:null).ToList();
+   }
    RewriteHistoricalTagPresets(tag,replacement,transaction,cancellationToken);
    RewriteTagAssets(tag,replacement,transaction,cancellationToken);
    return new(mediaChanged,searchesChanged,rulesChanged);

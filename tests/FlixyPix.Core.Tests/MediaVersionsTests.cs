@@ -160,7 +160,7 @@ public sealed class MediaVersionsTests : IDisposable
             downgrade.ExecuteNonQuery();
         }
         catalog = new CatalogRepository(path);
-        Assert.Contains("before-v16-v13", catalog.MigrationBackupPath!);
+        Assert.Contains("before-v17-v13", catalog.MigrationBackupPath!);
         Assert.Equal(["Alt"], Filtered(new MediaFilter { VideoCodecs = ["vp9"] }));
         Assert.Equal(["Alt"], Filtered(new MediaFilter { Resolution = ResolutionClass.FullHD }));
         Assert.Equal(video.Id, catalog.GetMediaByPath(video.Path)?.Id);

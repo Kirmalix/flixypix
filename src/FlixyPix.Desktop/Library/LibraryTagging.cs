@@ -30,7 +30,8 @@ public partial class MainWindow
  private static Brush SuggestionChipBrush => Theme.Brush("ChipSuggestion");
 
  internal sealed record TagListEntry(string Tag, int Count, bool IsFavorite);
- private sealed record TagRow(string Tag, string Label, string CountLabel, Brush Foreground);
+ private sealed record TagRow(string Tag, string Label, string CountLabel, Brush Foreground, string Shortcut = "")
+ { public Visibility ShortcutVisibility => Shortcut.Length>0?Visibility.Visible:Visibility.Collapsed; public string ShortcutHint => T("Assign to selected items")+" ("+Shortcut+")"; }
 
  private string? CurrentTag => _tag ?? _requiredTags.LastOrDefault();
  private IReadOnlyList<MediaItem> SelectedMedia => MediaList.SelectedItems.Cast<MediaCard>().Select(card => card.Item).Concat(_offWindowSelection).DistinctBy(item => item.Id).ToArray();
@@ -49,9 +50,15 @@ public partial class MainWindow
  {
   get
   {
-   var chosen = _tagEntries.OrderByDescending(e => e.IsFavorite).ThenByDescending(e => e.Count).ThenBy(e => e.Tag, StringComparer.OrdinalIgnoreCase)
-    .Where(e => e.IsFavorite || e.Count > 0).Take(9);
-   return chosen.OrderByDescending(e => e.IsFavorite).ThenBy(e => e.Tag, StringComparer.OrdinalIgnoreCase).Select(e => e.Tag).ToArray();
+   var preferences=_repository.GetPreferences();
+   if(preferences.QuickTags is null)
+   {
+    var initial=_tagEntries.OrderByDescending(e=>e.IsFavorite).ThenByDescending(e=>e.Count).ThenBy(e=>e.Tag,StringComparer.OrdinalIgnoreCase).Where(e=>e.IsFavorite||e.Count>0).Take(9).OrderByDescending(e=>e.IsFavorite).ThenBy(e=>e.Tag,StringComparer.OrdinalIgnoreCase).Select(e=>(string?)e.Tag).ToList();
+    if(_tagEntries.Count==0) return [];
+    while(initial.Count<9) initial.Add(null);
+    _repository.SavePreferences(preferences with {QuickTags=initial}); preferences=_repository.GetPreferences();
+   }
+   return preferences.QuickTags!.Select(t=>t??"").ToArray();
   }
  }
 
@@ -59,7 +66,7 @@ public partial class MainWindow
  internal async Task ToggleQuickTagAsync(int number)
  {
   var tags = QuickTags; var items = SelectedMedia;
-  if (number < 1 || number > tags.Count) { Status.Text = T("Ctrl+{0} is not assigned to a tag yet · favorite tags (★) come first", number); return; }
+  if (number < 1 || number > tags.Count || string.IsNullOrEmpty(tags[number - 1])) { Status.Text = T("Ctrl+{0} is not assigned to a tag yet · favorite tags (★) come first", number); return; }
   if (items.Count == 0) { Status.Text = T("Please select items first."); return; }
   var tag = tags[number - 1]; var ids = items.Select(i => i.Id).ToArray();
   if (items.All(i => i.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase))) await ChangeTagsAsync(ids, [], [tag]); else await ChangeTagsAsync(ids, [tag], []);
@@ -67,7 +74,7 @@ public partial class MainWindow
 
  private void RenderTagList()
  {
-  var quick = QuickTags.Select((tag, index) => (tag, index)).ToDictionary(p => p.tag, p => p.index + 1, StringComparer.OrdinalIgnoreCase);
+  var quick = QuickTags.Select((tag, index) => (tag, index)).Where(p=>p.tag.Length>0).ToDictionary(p => p.tag, p => p.index + 1, StringComparer.OrdinalIgnoreCase);
   var filter = TagFilterBox.Text.Trim();
   bool Active(string tag) => _requiredTags.Contains(tag, StringComparer.OrdinalIgnoreCase) || _excludedTags.Contains(tag, StringComparer.OrdinalIgnoreCase);
   var entries = _tagEntries.Where(e => (ShowUnusedTags.IsChecked == true || e.Count > 0 || Active(e.Tag)) && (filter.Length == 0 || e.Tag.Contains(filter, StringComparison.OrdinalIgnoreCase)));
@@ -76,28 +83,35 @@ public partial class MainWindow
   Tags.ItemsSource = ordered.Select(e =>
   {
    var included = _requiredTags.Contains(e.Tag, StringComparer.OrdinalIgnoreCase); var excluded = _excludedTags.Contains(e.Tag, StringComparer.OrdinalIgnoreCase);
-   var label = (included ? "✓ " : excluded ? "⊘ " : "") + (e.IsFavorite ? "★ " : "") + e.Tag + (quick.TryGetValue(e.Tag, out var key) ? T("  · Ctrl+{0}", key) : "");
-   return new TagRow(e.Tag, label, e.Count > 0 ? e.Count.ToString("N0") : "–", included ? IncludedTagBrush : excluded ? ExcludedTagBrush : e.Count == 0 ? UnusedTagBrush : TagBrush);
+   var label = (included ? "✓ " : excluded ? "⊘ " : "") + (e.IsFavorite ? "★ " : "") + e.Tag;
+   return new TagRow(e.Tag, label, e.Count > 0 ? e.Count.ToString("N0") : "–", included ? IncludedTagBrush : excluded ? ExcludedTagBrush : e.Count == 0 ? UnusedTagBrush : TagBrush, quick.TryGetValue(e.Tag,out var key)?KeyLabel("Ctrl+"+key):"");
   }).ToArray();
  }
  private void TagFilterChanged(object sender, TextChangedEventArgs e) { if (_repository != null) RenderTagList(); }
- private void TagListOptionsChanged(object sender, RoutedEventArgs e) { if (_repository != null) RenderTagList(); }
- private void TagSortClicked(object sender, RoutedEventArgs e) { _tagsByName = !_tagsByName; TagSortButton.Content = _tagsByName ? "Name" : T("Frequency"); RenderTagList(); }
+ private void TagListOptionsChanged(object sender, RoutedEventArgs e) { if (_repository != null) { SaveSidebar(s=>s with {ShowUnusedTags=ShowUnusedTags.IsChecked==true});RenderTagList(); } }
+ private void TagSortClicked(object sender, RoutedEventArgs e) { _tagsByName = !_tagsByName; SaveSidebar(s=>s with {TagsByName=_tagsByName}); TagSortButton.Content = _tagsByName ? "Name" : T("Frequency"); RenderTagList(); }
 
  private void TagItemClicked(object sender, MouseButtonEventArgs e)
  {
   if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
+  if (IsQuickBadge(e.OriginalSource)) return;
   e.Handled = true; ToggleTagFilter(row.Tag, (Keyboard.Modifiers & ModifierKeys.Control) != 0);
  }
  private void TagItemRightClicked(object sender, MouseButtonEventArgs e)
  {
   if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
-  e.Handled = true; var tag = row.Tag; var ids = SelectedMedia.Select(i => i.Id).ToArray();
+  e.Handled = true; OpenTagMenu(row,sender as UIElement);
+ }
+ private void OpenTagMenu(TagRow row,UIElement? target)
+ {
+  var tag = row.Tag; var ids = SelectedMedia.Select(i => i.Id).ToArray();
   var actions = new List<MenuSpec> { MenuSpec.Command(T("Filter (all chosen tags)"), () => ToggleTagFilter(tag, false)), MenuSpec.Command(T("Exclude"), () => ToggleTagFilter(tag, true)) };
   if (ids.Length > 0) { actions.Add(MenuSpec.Command(T("Assign to selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [tag], []))); actions.Add(MenuSpec.Command(T("Remove from selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [], [tag]))); }
   actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Submenu(T("Search in browser"), Specs(WebSearchEntries(tag)), "\uE774"));
   actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Command(T("Rename / merge …"), () => RenameGlobalTag(tag))); actions.Add(MenuSpec.Command(T("Remove from all items …"), () => DeleteGlobalTag(tag)));
-  Menus.Open(null, actions, MenuFailed);
+  actions.Add(MenuSpec.Submenu(T("Assign shortcut"), Enumerable.Range(1,9).Select(n=>MenuSpec.Command(KeyLabel("Ctrl+"+n)+" · "+(QuickTags.ElementAtOrDefault(n-1)??""),()=>AssignQuickTag(n,tag)))));
+  actions.Add(MenuSpec.Command(T("Remove shortcut"),()=>AssignQuickTag(0,tag)));
+  Menus.Open(target, actions, MenuFailed);
  }
 
  private void ToggleTagFilter(string tag, bool exclude)
@@ -175,7 +189,13 @@ public partial class MainWindow
 
  private void UpdateTagEditor(IReadOnlyList<MediaItem> items)
  {
-  TagChips.Children.Clear(); TagInput.IsEnabled = items.Count > 0; TagCompletionPopup.IsOpen = false;
+  TagChips.Children.Clear(); QuickTagButtons.Children.Clear();
+  foreach(var slot in QuickTags.Select((tag,index)=>(tag,index)).Where(p=>p.tag.Length>0))
+  {
+   var quick=new Button {Content=KeyLabel("Ctrl+"+(slot.index+1))+" · "+slot.tag,Padding=new Thickness(6,3,6,3),FontSize=11,IsEnabled=items.Count>0,ToolTip=T("Assign to selected items")};
+   quick.Click+=async(_,_)=>await ToggleQuickTagAsync(slot.index+1);QuickTagButtons.Children.Add(quick);
+  }
+ TagInput.IsEnabled = items.Count > 0; TagCompletionPopup.IsOpen = false;
   TagEditorHint.Text = items.Count > 1 ? Tn(items.Count, "for 1 item", "for {0:N0} items") : "";
   var ids = items.Select(i => i.Id).ToArray();
   var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); var order = new List<string>();

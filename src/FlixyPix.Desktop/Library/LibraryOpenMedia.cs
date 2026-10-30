@@ -53,7 +53,7 @@ public partial class MainWindow
    };
    window.Show(); var handle = await window.ReadyTask;
    if(!window.IsLoaded)return;
-   var player = await _tools.PlayAsync(path,start??(playback.ResumePlayback?item.PlaybackPositionSeconds:0),handle,hardwareDecoding:playback.HardwareDecoding,reportMouse:true);
+   var player = await _tools.PlayAsync(path,start??(playback.ResumePlayback?item.PlaybackPositionSeconds:0),handle,hardwareDecoding:playback.HardwareDecoding,reportMouse:false);
    if(!window.IsLoaded || !ReferenceEquals(_videoWindow,window)){await player.DisposeAsync();return;}
    _player=player; _playingId=item.Id; _historyEntry=_repository.BeginPlayback(item.Id,DateTimeOffset.Now);
    await window.AttachPlayerAsync(player);

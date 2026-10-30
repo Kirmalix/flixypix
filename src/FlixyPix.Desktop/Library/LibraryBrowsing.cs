@@ -25,9 +25,16 @@ public partial class MainWindow
  private sealed record CategoryOption(string? Value, long? Count = null) { public string Label => (Value ?? T("All categories")) + CountText(Count); }
  /// <summary>A media count after a name in the sidebar; empty when counts are off.</summary>
  private static string CountText(long? count) => count is { } value ? "  " + value.ToString("N0", CultureInfo.CurrentCulture) : "";
- private sealed class BrowseNode(string label, string? path = null, string? category = null, string? tag = null) : INotifyPropertyChanged
+ private sealed class BrowseNode(string label, string? path = null, string? category = null, string? tag = null, bool root = false) : INotifyPropertyChanged
  {
   public string Label { get; } = label;
+  public string FolderName => root && Path!=null ? System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(Path)) is {Length:>0} name?name:Path : Label;
+  public string RootPath => root?Path??"":"";
+  public Visibility RootPathVisibility => root?Visibility.Visible:Visibility.Collapsed;
+  public string FolderGlyph => Path==null?"\uE8B7":IsExpanded?"\uE838":"\uE8B7";
+  private bool expanded;
+  public Action? ExpandedChanged { get; set; }
+  public bool IsExpanded { get=>expanded;set { if(value==expanded)return;expanded=value;PropertyChanged?.Invoke(this,new(nameof(IsExpanded)));PropertyChanged?.Invoke(this,new(nameof(FolderGlyph)));ExpandedChanged?.Invoke(); } }
   public string? Path { get; } = path;
   public string? Category { get; } = category;
   public string? Tag { get; } = tag;
@@ -44,12 +51,26 @@ public partial class MainWindow
   _initializingBrowsing = true;
   const string treeTemplate = "<HierarchicalDataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' ItemsSource='{Binding Children}'><TextBlock Foreground='{DynamicResource TextSoft}' ToolTip='{Binding Path}' Margin='1,4'>"
    + "<Run Text='{Binding Label, Mode=OneWay}'/><Run Text='{Binding Count, Mode=OneWay}' Foreground='{DynamicResource Muted}' FontSize='11'/></TextBlock></HierarchicalDataTemplate>";
+  var treeStyle=new Style(typeof(TreeViewItem));treeStyle.Setters.Add(new Setter(TreeViewItem.IsExpandedProperty,new System.Windows.Data.Binding("IsExpanded"){Mode=System.Windows.Data.BindingMode.TwoWay}));
+  CategorizedTags.ItemContainerStyle=treeStyle;
   Folders.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate); CategorizedTags.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate);
-  CategoryFilter.DisplayMemberPath = "Label";
+  Folders.ItemTemplate=(HierarchicalDataTemplate)XamlReader.Parse("""
+  <HierarchicalDataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ItemsSource="{Binding Children}">
+   <Grid MinHeight="28" ToolTip="{Binding Path}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBlock Text="{Binding FolderGlyph}" FontFamily="{DynamicResource IconFont}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+    <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{Binding FolderName}" Foreground="{DynamicResource TextSoft}" FontSize="12"/><TextBlock Text="{Binding RootPath}" Visibility="{Binding RootPathVisibility}" Foreground="{DynamicResource Muted}" FontSize="10" Margin="0,2,0,3"/></StackPanel>
+    <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="10"/></Border>
+   </Grid>
+  </HierarchicalDataTemplate>
+  """);
+    CategoryFilter.DisplayMemberPath = "Label";
   ViewChoice.SelectedIndex = Math.Clamp(_settings.ViewMode, 0, 2); SortChoice.SelectedIndex = Math.Clamp(_settings.SortOrder, 0, SortChoice.Items.Count - 1);
   SetSidebar(!_settings.SidebarCollapsed); SetDetails(!_settings.DetailsCollapsed); ApplyDetailsLayout();
   ViewButtonText.Text = Tc("library", "View");
+  ThumbnailFit.SelectedIndex=_repository.GetPreferences().General.CropThumbnails?1:0;
   _initializingBrowsing = false;
+  InitializeSidebarState();
+  InitializeFolderPresentation();
   ApplyViewMode();
  }
  private void ViewChanged(object sender, SelectionChangedEventArgs e) { if (_tileTemplate == null) return; ApplyViewMode(); SaveViewPreferences(); }
@@ -64,7 +85,7 @@ public partial class MainWindow
   if (ViewChoice.SelectedIndex != 1) { MediaList.ItemTemplate = _tileTemplate; MediaList.ItemsPanel = _tilePanel; return; }
   var rows = new FrameworkElementFactory(typeof(VirtualizingTilePanel)); rows.SetValue(VirtualizingTilePanel.SingleColumnProperty, true); MediaList.ItemsPanel = new ItemsPanelTemplate(rows);
   MediaList.ItemTemplate = (DataTemplate)XamlReader.Parse("""
-  <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:FlixyPix.Desktop;assembly=FlixyPix"><Border Background="{DynamicResource CardBackground}" Padding="9" CornerRadius="6"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/><ColumnDefinition Width="105"/></Grid.ColumnDefinitions><Grid Height="52" Width="68" Background="{DynamicResource MediaBackground}" ClipToBounds="True" local:Privacy.Blur="True"><TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource IconMuted}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20"/><Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/></Grid><StackPanel Grid.Column="1" Margin="10,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,5,0,0"/><TextBlock Text="{Binding Path}" Foreground="{DynamicResource Subtle}" FontSize="10" TextTrimming="CharacterEllipsis"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{Binding KindLabel}" Foreground="{DynamicResource Muted}" FontSize="10"/><TextBlock Text="{Binding DurationLabel}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,3,0,0"/><TextBlock Text="{Binding Stars}" Foreground="{DynamicResource Gold}" Margin="0,5,0,0" FontSize="11"/></StackPanel></Grid></Border></DataTemplate>
+  <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:FlixyPix.Desktop;assembly=FlixyPix"><Border Background="{DynamicResource CardBackground}" Padding="9" CornerRadius="6"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/><ColumnDefinition Width="105"/></Grid.ColumnDefinitions><Grid Height="52" Width="68" Background="{DynamicResource MediaBackground}" ClipToBounds="True" local:Privacy.Blur="True"><TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource IconMuted}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20"/><Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/></Grid><StackPanel Grid.Column="1" Margin="10,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,5,0,0"/><TextBlock Text="{Binding Path}" Foreground="{DynamicResource Subtle}" FontSize="10" TextTrimming="CharacterEllipsis"/></StackPanel><StackPanel Grid.Column="2"><Button Tag="quick-collection" Content="{Binding QuickGlyph}" ToolTip="{Binding QuickHint}" Padding="6,2"/><TextBlock Text="{Binding KindLabel}" Foreground="{DynamicResource Muted}" FontSize="10"/><TextBlock Text="{Binding DurationLabel}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,3,0,0"/><TextBlock Text="{Binding Stars}" Foreground="{DynamicResource Gold}" Margin="0,5,0,0" FontSize="11"/></StackPanel></Grid></Border></DataTemplate>
   """);
  }
  private void SortChanged(object sender, SelectionChangedEventArgs e) { if (_repository == null || _refreshing || _initializingBrowsing) return; _anchor = 0; SaveViewPreferences(); Refresh(); }
@@ -102,7 +123,7 @@ public partial class MainWindow
    .GroupBy(t=>t.Category,StringComparer.OrdinalIgnoreCase).Select(g=>(Name:g.Key,Tags:g.Select(t=>t.Tag).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray())).OrderBy(g=>g.Name,StringComparer.OrdinalIgnoreCase).ToArray();
   var roles = vocabulary.ToDictionary(g => g.Name, g => TagRoles.Of(preferences, g.Name), StringComparer.OrdinalIgnoreCase);
   var categorized = vocabulary.Select(group => { var node = new BrowseNode(group.Name, category: group.Name); node.Children.AddRange(group.Tags.Select(tag => new BrowseNode(tag, category: group.Name, tag: tag))); return node; }).ToArray();
-  return new(categories, tags, string.Join('\n', tags.Select(t => $"{t.Tag}\t{t.Count}\t{t.IsFavorite}")), string.Join('\n', directories), () => FolderTree(directories),
+  return new(categories, tags, string.Join('\n', tags.Select(t => $"{t.Tag}\t{t.Count}\t{t.IsFavorite}")), string.Join('\n', directories.Concat(preferences.LibraryFolders.Select(f=>f.Path))), () => FolderTree(directories, preferences.LibraryFolders),
    string.Join("|", vocabulary.Select(g => g.Name + ":" + string.Join(",", g.Tags))), categorized, roles, RoleNames(vocabulary, roles, preferences, tags), folderCounts, tagCategoryCounts);
  }
  /// <summary>Media of each folder with all its subfolders, from the counts of media directly in a folder; "" holds all.</summary>
@@ -117,7 +138,7 @@ public partial class MainWindow
   }
   return totals;
  }
- private static BrowseNode[] FolderTree(string[] directories)
+ private static BrowseNode[] FolderTree(string[] directories, IReadOnlyList<LibraryFolder> registered)
  {
   var root = new BrowseNode(T("All folders"));
   var index = new Dictionary<string, BrowseNode>(StringComparer.OrdinalIgnoreCase);
@@ -133,17 +154,25 @@ public partial class MainWindow
     parent = child;
    }
   }
-  // Compress common prefixes so the selected library folders stay reachable in a narrow sidebar.
-  var roots = root.Children;
-  while (roots.Count == 1 && roots[0].Children.Count == 1) roots = roots[0].Children;
-  var all = new BrowseNode(T("All folders")); all.Children.AddRange(roots); return [all];
+  var all = new BrowseNode(T("All folders"));
+  BrowseNode Build(string path,string label)
+  {
+   var node=new BrowseNode(label,path,root:true);
+   if(index.TryGetValue(Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)),out var existing)) node.Children.AddRange(existing.Children);
+   return node;
+  }
+  foreach(var source in registered) all.Children.Add(Build(source.Path,Path.GetFileName(Path.TrimEndingDirectorySeparator(source.Path))+" · "+source.Path));
+  var others=directories.Where(d=>!registered.Any(r=>IsWithinFolder(d+Path.DirectorySeparatorChar,r.Path))).ToArray();
+  if(registered.Count==0) all.Children.AddRange(root.Children);
+  else if(others.Length>0) { var other=new BrowseNode(T("Other catalog folders")); other.Children.AddRange(FolderTree(others,[]).Single().Children); all.Children.Add(other); }
+  return [all];
  }
  private void ApplyBrowsing(BrowseSnapshot browse)
  {
   CategoryFilter.ItemsSource = browse.Categories; CategoryFilter.SelectedItem = browse.Categories.FirstOrDefault(c => c.Value == _category) ?? browse.Categories[0];
   if (browse.TagListFingerprint != _tagListFingerprint) { _tagListFingerprint = browse.TagListFingerprint; _tagEntries = browse.Tags; RenderTagList(); }
-  if (browse.FolderFingerprint != _folderFingerprint) { _folderFingerprint = browse.FolderFingerprint; Folders.ItemsSource = browse.FolderTree(); }
-  if (browse.TagFingerprint != _tagFingerprint) { _tagFingerprint = browse.TagFingerprint; CategorizedTags.ItemsSource = browse.CategorizedTags; }
+  if (browse.FolderFingerprint != _folderFingerprint) { _folderFingerprint = browse.FolderFingerprint; Folders.ItemsSource = browse.FolderTree(); RestoreTreeState(Folders, "folders"); RestoreFolderViewport(); }
+  if (browse.TagFingerprint != _tagFingerprint) { _tagFingerprint = browse.TagFingerprint; CategorizedTags.ItemsSource = browse.CategorizedTags; RestoreTreeState(CategorizedTags, "categories"); }
   // Counts change with every import or removal; they are set on the nodes shown, which keeps expanded folders open.
   foreach (var node in (Folders.ItemsSource as IEnumerable<BrowseNode> ?? []).SelectMany(root => root.Descendants().Prepend(root)))
    node.Count = browse.FolderCounts.TryGetValue(node.Path ?? "", out var count) ? CountText(count) : "";

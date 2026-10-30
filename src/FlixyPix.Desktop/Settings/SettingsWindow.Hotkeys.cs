@@ -15,14 +15,27 @@ namespace FlixyPix.Desktop;
 /// <summary>Shortcut cards of the player rubric and their conflict check.</summary>
 internal sealed partial class SettingsWindow
 {
+ internal HotkeyBox BookmarkShortcut => hotkeys[PlayerActions.CreateBookmark];
+ internal bool PlayerShortcutsActive => PlayerDisplay.Shortcuts.IsChecked==true;
+ private readonly TextBlock inactiveShortcuts = new() { Text=T("Player shortcuts are off. Assignments stay saved and work again when switched on."), TextWrapping=TextWrapping.Wrap, Margin=new Thickness(16,0,16,12) };
+ private void UpdateShortcutState()
+ {
+  var active=PlayerShortcutsActive;
+  inactiveShortcuts.Visibility=active?Visibility.Collapsed:Visibility.Visible;
+  foreach(var box in hotkeys.Values)box.ShortcutActive=active;
+  Seek.ShortcutsActive=active;
+ }
  private UIElement HotkeyCards()
  {
   var panel = new StackPanel();
   var resetAll = SettingsUi.SmallButton(T("Reset all"), T("Reset all shortcuts to their defaults"));
   resetAll.Click += (_, _) => { foreach (var (action, key) in PlayerActions.Defaults()) hotkeys[action].Value = key; };
   var intro = SettingsUi.Card(T("Shortcuts"), T("Click the field and press the key you want, also with Ctrl, Shift or Alt. Backspace or Del removes the assignment. Esc and F11 stay reserved in the player for full screen and closing."),
+   new SettingRow(T("Shortcuts in the player"), T("When off, the player only reacts to Esc, F11 and the media keys."), PlayerDisplay.Shortcuts),
    new SettingRow(T("Default assignment"), T("Space, F, arrow keys, Shift+arrow keys, comma/period, B, M and L; Page↑/Page↓ for the previous and next jump mark."), resetAll));
   ((StackPanel)intro.Child).Children.Insert(1, conflictNote);
+  ((StackPanel)intro.Child).Children.Insert(1,inactiveShortcuts);
+  UpdateShortcutState();
   panel.Children.Add(intro);
   foreach (var (title, actions) in HotkeyGroups)
   {

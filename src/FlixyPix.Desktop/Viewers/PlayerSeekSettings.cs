@@ -67,9 +67,11 @@ internal sealed class PlayerSeekSettings
   ];
  }
 
+ private bool shortcutsActive=true;
+ internal bool ShortcutsActive { get=>shortcutsActive; set { shortcutsActive=value; foreach(var jump in Jumps)jump.Key.ShortcutActive=value; } }
  private void AddJump(CustomJump jump)
  {
-  var key = new HotkeyBox { Value = jump.Key };
+  var key = new HotkeyBox { Value = jump.Key, ShortcutActive=shortcutsActive };
   var amount = new NumberBox(-36000, 36000, 5, ""); amount.Value = jump.Amount; amount.SetLabel(T("Jump distance"));
   var unit = Units(); unit.Value = (int)jump.Unit;
   var remove = SettingsUi.SmallButton(T("Remove")); remove.Margin = new Thickness(0);

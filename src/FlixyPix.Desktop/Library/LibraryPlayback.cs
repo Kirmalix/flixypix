@@ -14,8 +14,14 @@ public partial class MainWindow
  /// <summary>Wires a new player window to the view it was started from. Collections and scenes play their own sequence.</summary>
  private void ConnectPlayer(VideoPlayerWindow window, MediaItem item)
  {
+  window.HelpRequested=shortcuts=>ShowHelp(shortcuts,window);
   window.Repeat = _settings.PlayerRepeat; window.Shuffle = _settings.PlayerShuffle;
   window.MarksChanged = () => _ = EnsureMarkPreviewsAsync(item);
+  window.MarkRenamed=()=>
+  {
+   if(_detailsShown?.Id!=item.Id)return;
+   Scenes.ItemsSource=_repository.GetOrderedScenes(item.Id); Bookmarks.ItemsSource=_repository.GetOrderedBookmarks(item.Id); ShowMarkTagFilters();
+  };
   window.MediaChanged = changed => { if (_detailsShown?.Id == changed.Id) Refresh(changed.Id); };
   window.PlaybackModeChanged += () =>
   {
