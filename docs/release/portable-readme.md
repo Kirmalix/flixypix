@@ -1,4 +1,6 @@
-# FlixyPix 0.5.0 — Windows-Vorabversion
+# FlixyPix 0.5.0 — Windows x64
+
+Dies ist eine portable Ausgabe für Windows 10/11 (64 Bit), ohne Installer und ohne Codesignatur. Windows SmartScreen kann beim ersten Start eine Bestätigung verlangen. Sichere Katalog und Mediendateien vor einem Update. Die Version 0.5.0 verwendet Katalogschema 17; vor einer Umstellung wird eine Migrationssicherung angelegt. Ältere Programmversionen können einen aktualisierten Katalog möglicherweise nicht mehr öffnen.
 
 Die Oberfläche folgt der Windows-Anzeigesprache. Einstellungen → Darstellung → Sprache erlaubt eine feste Wahl nach Neustart. Zahlen und Datum behalten das Windows-Regionalformat. Die Übersetzungen sind KI-gestützt entstanden und geprüft, aber nicht von Muttersprachlern; Korrekturen sind willkommen.
 
@@ -25,6 +27,8 @@ Ein anderer Bibliotheksordner wird nach Neustart wirksam. Ältere Kataloge erhal
 JSON-Version 4 enthält Katalog, gespeicherte Grafikbytes, historische Entwürfe und bewahrte Binärdaten in geprüften Abschnitten. Ältere Versionen 1, 2 und 3 bleiben lesbar. Externe Mediendateien werden nur auf ausdrückliche Auswahl im vollständigen `.flixypixbackup`-Paket mitgesichert. Wiederherstellung prüft alle Prüfsummen und benötigt einen neuen Zielordner. Der bestehende Katalog wird dabei nicht ersetzt.
 
 U: ist als schreibgeschützte Quelle voreingestellt. Ein offline geschaltetes Medienlaufwerk verhindert keine Katalogmigration. Der Import erhält seine Pfade und bereitet keine Medien automatisch vor. Historische Such-, Parser- und Auftragsentwürfe bleiben inaktiv. Tagbilder lassen sich unter Ordnen verwalten.
+
+Menü → Hilfe (F1) öffnet die Offline-Hilfe; Strg+F1 zeigt die aktuellen Tastenkürzel. Menü → Über FlixyPix zeigt die Version.
 
 Strg+O importiert, Strg+F sucht, Strg+S speichert Details, F5 prüft die Medienordner. Eingabe öffnet ein Medium; Entf entfernt den Katalogeintrag. Dateien endgültig zu löschen ist eine eigene bestätigte Aktion.
 

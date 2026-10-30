@@ -9,4 +9,4 @@ Please report such problems privately through GitHub:
 Do not open a public issue. Include the version, the steps to reproduce and, if possible, a
 synthetic file that shows the problem.
 
-Only the latest preview receives fixes. There is no bug bounty.
+Only the latest release receives fixes. There is no bug bounty.

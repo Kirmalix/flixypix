@@ -11,8 +11,8 @@ body:
     id: version
     attributes:
       label: FlixyPix version
-      description: Shown under Help → About.
-      placeholder: 0.5.0-preview
+      description: Shown under Menu → About FlixyPix.
+      placeholder: 0.5.0
     validations:
       required: true
   - type: input
