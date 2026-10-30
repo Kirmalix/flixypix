@@ -82,6 +82,14 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
 
     private static double? Number(JsonElement value) => double.TryParse(value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && double.IsFinite(number) && number >= 0 ? number : null;
 
+    public async Task<string> CreateArtworkAsync(string input,string output,double seconds,CancellationToken token=default)
+    {
+        ValidateTime(seconds,nameof(seconds));
+        string[] render=["-frames:v","1","-vf","scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease","-update","1"];
+        try { return await RenderAsync(input,output,["-ss",F(seconds)],render,token); }
+        catch(NoRenderedMediaException) when(seconds>0) { return await RenderAsync(input,output,[],["-ss",F(seconds),..render],token); }
+    }
+
     public async Task<string> CreateThumbnailAsync(string input, string output, double seconds = 0, CancellationToken cancellationToken = default)
     {
         ValidateTime(seconds, nameof(seconds));

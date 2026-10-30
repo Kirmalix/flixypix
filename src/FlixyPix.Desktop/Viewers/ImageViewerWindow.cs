@@ -105,6 +105,9 @@ internal sealed partial class ImageViewerWindow : Window
   _slideTimer.Tick+=(_,_)=>ShowNextSlide();
   PreviewKeyDown+=(_,e)=>
   {
+   if(e.Key==Key.F1){e.Handled=true;new HelpWindow(this,T("Help"),HelpWindow.Guide()).ShowDialog();return;}
+   if(MainWindow.TextEntry(e.OriginalSource))return;
+   if(Keyboard.FocusedElement is Button && e.Key is Key.Enter or Key.Space)return;
    if(HandleActionKey(e)) { e.Handled=true; return; }
    switch(e.Key)
    {

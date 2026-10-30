@@ -55,6 +55,21 @@ public sealed class JumpMarkTests
  }
 
  [Fact]
+ public void PlayerNavigationWrapsOnlyWhenRequested()
+ {
+  var marks=Sample();
+  Assert.Equal(10,JumpMarks.Next(marks,300,wrap:true)!.PositionSeconds);
+  Assert.Equal(300,JumpMarks.Previous(marks,0,wrap:true)!.PositionSeconds);
+  Assert.Equal(300,JumpMarks.Previous(marks,11,wrap:true)!.PositionSeconds);
+  Assert.Equal(120,JumpMarks.Next(marks,65.2,wrap:true)!.PositionSeconds);
+  Assert.Null(JumpMarks.Next([],0,wrap:true)); Assert.Null(JumpMarks.Previous([],0,wrap:true));
+  var one=new[]{marks[0]};
+  Assert.Equal(one[0],JumpMarks.Next(one,10,wrap:true));
+  Assert.Equal(one[0],JumpMarks.Previous(one,10,wrap:true));
+  Assert.Null(JumpMarks.Next(marks,300)); Assert.Null(JumpMarks.Previous(marks,0));
+ }
+
+ [Fact]
  public void BookmarkNavigationHasDefaultKeys()
  {
   var defaults=PlayerActions.Defaults();

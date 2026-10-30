@@ -226,6 +226,31 @@ public sealed class AppPreferencesTests : IDisposable
     }
 
     [Fact]
+    public void PlayerVisibilityAndShortcutChoicesSurviveReopening()
+    {
+        var path = Path.Combine(root, "remembered-player.db");
+        using (var catalog = new CatalogRepository(path))
+        {
+            var original = catalog.GetPreferences().Playback;
+            Assert.True(original.KeyboardShortcuts);
+            Assert.True(original.ShowMarks);
+            catalog.SavePlaybackPreferences(original with { KeyboardShortcuts = false, ShowMarks = false });
+        }
+        using (var reopened = new CatalogRepository(path))
+        {
+            var saved = reopened.GetPreferences().Playback;
+            Assert.False(saved.KeyboardShortcuts);
+            Assert.False(saved.ShowMarks);
+            Assert.Equal("B", saved.Hotkeys[PlayerActions.CreateBookmark]);
+            reopened.SavePlaybackPreferences(saved with { ShowMarks = true });
+            Assert.False(reopened.GetPreferences().Playback.KeyboardShortcuts);
+        }
+        using var again = new CatalogRepository(path);
+        Assert.True(again.GetPreferences().Playback.ShowMarks);
+        Assert.False(again.GetPreferences().Playback.KeyboardShortcuts);
+    }
+
+    [Fact]
     public void SavedPreferencesAreValidated()
     {
         using var catalog = new CatalogRepository(Path.Combine(root, "catalog.db"));

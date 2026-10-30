@@ -22,8 +22,8 @@ public partial class MainWindow
  internal ViewState CaptureViewState() => new()
  {
   View = _view, PlaylistId = _playlist?.Id, SearchText = SearchBox.Text.Length == 0 ? null : SearchBox.Text, Tag = _tag, TagCategory = _tagGroup, Category = _category,
-  Folder = _folder, RequiredTags = _requiredTags.ToList(), ExcludedTags = _excludedTags.ToList(), Expression = _advancedExpression, Filter = _filter,
-  TagsMatchAny = _tagsMatchAny, MinimumStars = Math.Max(RatingFilter.SelectedIndex, 0), SortOrder = Math.Max(SortChoice.SelectedIndex, 0),
+  Folder = _folder, IncludeSubfolders = IncludeFolderChildren.IsChecked == true, RequiredTags = _requiredTags.ToList(), ExcludedTags = _excludedTags.ToList(), Expression = _advancedExpression, Filter = _filter,
+  TagsMatchAny = _tagsMatchAny, MinimumStars = _filter.UnratedOnly ? 0 : Math.Max(RatingFilter.SelectedIndex, 0), SortOrder = Math.Max(SortChoice.SelectedIndex, 0),
   ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value), Position = Math.Max(0, _visibleFirst),
   AnchorId = _visibleFirst >= _windowStart && _visibleFirst - _windowStart < MediaList.Items.Count ? ((MediaCard)MediaList.Items[_visibleFirst - _windowStart]).Item.Id : null,
   Selection = SelectedMedia.Select(m => m.Id).ToList(),
@@ -35,6 +35,7 @@ public partial class MainWindow
   var initializing = _initializingBrowsing; _initializingBrowsing = true;
   try
   {
+   IncludeFolderChildren.IsChecked = state.Folder==null?_repository.GetPreferences().Sidebar.IncludeSubfolders:state.IncludeSubfolders;
    _view = state.View; _tag = state.Tag; _tagGroup = state.TagCategory; _category = state.Category; _folder = state.Folder;
    _playlist = state.PlaylistId is { } id ? _repository.GetPlaylists().FirstOrDefault(p => p.Id == id) : null;
    _requiredTags.Clear(); _requiredTags.AddRange(state.RequiredTags); _excludedTags.Clear(); _excludedTags.AddRange(state.ExcludedTags);
@@ -79,7 +80,7 @@ public partial class MainWindow
  private void UpdateFilterBar()
  {
   int Count(TagRole role) => _filter.Include.Count(f => f.Role == role) + _filter.Exclude.Count(f => f.Role == role);
-  Pill("\uE734", T("Rating and type"), RatingFilter.SelectedIndex > 0 ? RatingLabel(RatingFilter.SelectedIndex) : "", RatingPanel);
+  Pill("\uE734", T("Rating and type"), _filter.UnratedOnly?T("Unrated"):RatingFilter.SelectedIndex > 0 ? RatingLabel(RatingFilter.SelectedIndex) : "", RatingPanel);
   Pill("\uE8EC", T("Category"), _category ?? "", CategoryPanel);
   string Range(double? min, double? max, string unit) => (min, max) switch
   {
@@ -96,7 +97,7 @@ public partial class MainWindow
   Pill("", T("Jump marks"), _filter.MarkTags.Count > 0 ? _filter.MarkTags.Count.ToString(CultureInfo.CurrentCulture) : "", MarkTagPanel);
   var technical = _filter.VideoCodecs.Count + (_filter.Hdr is null ? 0 : 1) + (_filter.MinFrameRate is null ? 0 : 1) + (_filter.MultipleFiles is null ? 0 : 1);
   Pill("", T("Technology"), technical > 0 ? technical.ToString(CultureInfo.CurrentCulture) : "", TechnicalPanel);
-  var more = new[] { _filter.Resolution != ResolutionClass.Any ? 1 : 0, _filter.Watched is null ? 0 : 1, _filter.MinMegabytes is null && _filter.MaxMegabytes is null ? 0 : 1 }.Sum();
+  var more = new[] { _filter.HasThumbnail is null?0:1, _filter.Resolution != ResolutionClass.Any ? 1 : 0, _filter.Watched is null ? 0 : 1, _filter.MinMegabytes is null && _filter.MaxMegabytes is null ? 0 : 1 }.Sum();
   Pill("", T("More"), more > 0 ? more.ToString(CultureInfo.CurrentCulture) : "", MorePanel);
  }
 
@@ -175,13 +176,15 @@ public partial class MainWindow
  private FrameworkElement RatingPanel(Button owner)
  {
   var panel = new StackPanel();
+  var unrated=new CheckBox {Content=T("Unrated"),IsChecked=_filter.UnratedOnly};
+  unrated.Click+=(_,_)=> {if(unrated.IsChecked==true)RatingFilter.SelectedIndex=0;ApplyFilter(_filter with {UnratedOnly=unrated.IsChecked==true});};panel.Children.Add(unrated);
   panel.Children.Add(Heading(T("Minimum rating")));
   var ratings = new WrapPanel { Margin = new Thickness(0, 0, 0, 14) };
   for (var index = 0; index < RatingFilter.Items.Count; index++)
   {
    var value = index;
    var option = new RadioButton { Content = RatingLabel(index), IsChecked = RatingFilter.SelectedIndex == index, GroupName = "rating", Style = (Style)FindResource("Segment"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 4, 4) };
-   option.Checked += (_, _) => RatingFilter.SelectedIndex = value;
+   option.Checked += (_, _) => { if(value>0) { _filter=_filter with {UnratedOnly=false};unrated.IsChecked=false; } RatingFilter.SelectedIndex = value; };
    ratings.Children.Add(option);
   }
   panel.Children.Add(ratings);
@@ -424,6 +427,8 @@ public partial class MainWindow
    _filter.Resolution, value => _filter with { Resolution = value }));
   panel.Children.Add(Heading(T("Watched")));
   panel.Children.Add(Choices("watched", [(T("any"), (bool?)null), (T("already watched"), true), (T("never watched"), false)], _filter.Watched, value => _filter with { Watched = value }));
+  panel.Children.Add(Heading(T("Thumbnails")));
+  panel.Children.Add(Choices("thumbnail", [(T("any"),(bool?)null),(T("With thumbnail"),(bool?)true),(T("Without thumbnail"),(bool?)false)],_filter.HasThumbnail,value=>_filter with {HasThumbnail=value}));
   panel.Children.Add(Heading(T("File size")));
   panel.Children.Add(RangeFields("MB", _filter.MinMegabytes, _filter.MaxMegabytes, (min, max) => ApplyFilter(_filter with { MinMegabytes = min, MaxMegabytes = max })));
   return panel;
@@ -491,13 +496,15 @@ public partial class MainWindow
  /// <summary>Chips for the active filter bar parts, each removing itself; used by the tag chip row.</summary>
  private IEnumerable<(string Label, bool Excluded, Action Remove)> FilterChips()
  {
+  if(_filter.UnratedOnly)yield return (T("Unrated"),false,()=>ApplyFilter(_filter with {UnratedOnly=false}));
+  if(_filter.HasThumbnail is {} has)yield return (has?T("With thumbnail"):T("Without thumbnail"),false,()=>ApplyFilter(_filter with {HasThumbnail=null}));
   foreach (var facet in _filter.Include.ToList()) yield return (facet.Tag, false, () => ApplyFilter(_filter with { Include = _filter.Include.Where(f => f != facet).ToList() }));
   foreach (var facet in _filter.Exclude.ToList()) yield return (T("without {0}", facet.Tag), true, () => ApplyFilter(_filter with { Exclude = _filter.Exclude.Where(f => f != facet).ToList() }));
   foreach (var profile in _filter.Profiles.ToList()) yield return (MediaFilter.DescribeProfile(profile), false, () => ApplyFilter(_filter with { Profiles = _filter.Profiles.Where(p => p != profile).ToList() }));
   foreach (var tag in _filter.MarkTags.ToList()) yield return (T("Jump mark: {0}", tag), false, () => ApplyFilter(_filter with { MarkTags = _filter.MarkTags.Where(t => t != tag).ToList() }));
-  var rest = _filter with { Include = [], Exclude = [], Profiles = [], MarkTags = [] };
+  var rest = _filter with { UnratedOnly=false,HasThumbnail=null, Include = [], Exclude = [], Profiles = [], MarkTags = [] };
   if (rest.MinMinutes is not null || rest.MaxMinutes is not null) yield return (rest.Describe().First(), false, () => ApplyFilter(_filter with { MinMinutes = null, MaxMinutes = null }));
-  var size = _filter with { Include = [], Exclude = [], Profiles = [], MarkTags = [], MinMinutes = null, MaxMinutes = null, Resolution = ResolutionClass.Any, FileDate = new(), Imported = new(), Released = new(), Watched = null,
+  var size = _filter with { UnratedOnly=false,HasThumbnail=null, Include = [], Exclude = [], Profiles = [], MarkTags = [], MinMinutes = null, MaxMinutes = null, Resolution = ResolutionClass.Any, FileDate = new(), Imported = new(), Released = new(), Watched = null,
    VideoCodecs = [], Hdr = null, MinFrameRate = null, MultipleFiles = null };
   if (!size.IsEmpty) yield return (size.Describe().First(), false, () => ApplyFilter(_filter with { MinMegabytes = null, MaxMegabytes = null }));
   if (_filter.Resolution != ResolutionClass.Any) yield return ((new MediaFilter { Resolution = _filter.Resolution }).Describe().First(), false, () => ApplyFilter(_filter with { Resolution = ResolutionClass.Any }));

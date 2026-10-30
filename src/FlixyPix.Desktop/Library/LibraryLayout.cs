@@ -88,6 +88,7 @@ public partial class MainWindow
  internal void OpenSidebarAt(string section)
  {
   _sidebarAutoFolded = false; SetSidebar(true); SaveViewPreferences();
+  if(_sidebarSections.TryGetValue(section,out var expander))expander.IsExpanded=true;
   FrameworkElement target = section switch
   {
    "collections" or "searches" => CollectionsHeader, "tags" => TagsHeader, "folders" => FoldersHeader, _ => LibraryHeader,

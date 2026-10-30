@@ -62,6 +62,7 @@ public partial class MainWindow : Window
   _tools = CreateTools();
   InitializeBrowsing();
   InitializeMainView();
+  InitializeKeyboardAccess();
   InitializeHoverPreview();
   InitializeScrolling();
   UpdateFilterBar();
@@ -112,6 +113,7 @@ public partial class MainWindow : Window
  private async Task RefreshAsync(Guid? selectId = null,bool includePreviews=true)
  {
   if (_repository == null || _closing) return;
+  _keyboardIndex=_keyboardAnchor=null;
   var version = ++_refreshVersion;
   LeaveHomeWhenFiltered();
   var selectedId = selectId ?? Selected?.Id;
@@ -125,6 +127,8 @@ public partial class MainWindow : Window
   {
    // One state describes the view; saved searches and restoring the last view use the same query.
    var query = CaptureViewState().ToQuery(DateTimeOffset.Now) with { Limit = WindowSize, Offset = WindowStartFor(_anchor) };
+   if(CaptureViewState().Filter.HasThumbnail is not null) await CheckThumbnailsAsync(version);
+   if(version!=_refreshVersion||_closing)return;
    // A requested medium outside the view becomes the new top; one in view keeps the scroll position.
    var anchor = _anchor; var visibleFirst = _visibleFirst; var visibleLast = _visibleLast;
    var snapshot = await Task.Run(() =>
@@ -155,6 +159,7 @@ public partial class MainWindow : Window
    _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
    _imageCount = checked((int)(await Task.Run(() => playlist==null ? _repository.QueryPage(_imageQuery) : _repository.QueryPlaylistPage(playlist,_imageQuery,sort==5).Page)).TotalCount);
    var general = _repository.GetPreferences().General;
+   MediaCard.QuickMembers = _repository.GetPlaylists().FirstOrDefault(p=>p.Kind==PlaylistKind.Quick)?.MediaIds.ToHashSet()??[];
    MediaCard.Display = general; MediaCard.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? []; Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
    var cards = await Task.Run(() => pageItems.Select(i => new MediaCard(i,includePreviews,general.ShowExtension,general.MarkMissingFiles && includePreviews)).ToList());
    if (version != _refreshVersion || _closing) return;
@@ -266,7 +271,7 @@ public partial class MainWindow : Window
  private async void OnDrop(object sender, DragEventArgs e) { if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) await ImportPaths(paths); }
  private void CancelOperation(object sender, RoutedEventArgs e) => _operation?.Cancel();
  private void SearchChanged(object sender, TextChangedEventArgs e) { if (_repository == null) return; _anchor = 0; _searchTimer.Stop(); _searchTimer.Start(); }
- private void FilterChanged(object sender, SelectionChangedEventArgs e) { _anchor = 0; if (_repository == null) return; UpdateFilterBar(); RenderTagFilterChips(); Refresh(); }
+ private void FilterChanged(object sender, SelectionChangedEventArgs e) { if(RatingFilter.SelectedIndex>0)_filter=_filter with {UnratedOnly=false}; _anchor = 0; if (_repository == null) return; UpdateFilterBar(); RenderTagFilterChips(); Refresh(); }
  /// <summary>Enter turns short forms such as #tag, -#tag, ★4, type:video and @tag into filters; the rest stays search text.</summary>
  private void SearchKeyDown(object sender, KeyEventArgs e)
  {
@@ -369,12 +374,14 @@ public partial class MainWindow : Window
   if (_closing) return;
   e.Cancel = true;
   if (_operation != null) { _closeRequested = true; _operation.Cancel(); Status.Text = T("Finishing the operation …"); return; }
-  _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
+  _homeArtworkCancellation.Cancel(); _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
+  SaveFolderViewportState();
   SaveViewNow(); if (_persistPreferences) SaveWindowPlace();
   var queueWindow = _queueWindow; if (queueWindow != null) { queueWindow.Close(); await queueWindow.ClosedTask; }
   await StopPlayer();
   _closing = true;
   await _lastRefresh;
+  await _keyboardNavigationGate.WaitAsync();_keyboardNavigationGate.Release();
   _repository.Dispose(); _instance.Dispose();
   // Nothing of this window may run on once it is gone; switching libraries keeps the process.
   _viewSaveTimer.Stop(); _searchTimer.Stop(); AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;
@@ -386,31 +393,21 @@ public partial class MainWindow : Window
  private bool _restartAfterClose;
  private async void OnKeyDown(object sender, KeyEventArgs e)
  {
+  if(await HandleLibraryKeyboardAsync(e)) {e.Handled=true;return;}
+  if(Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down)return;
   // Back and forward like a browser; Alt arrives as a system key.
   if (e.Key == Key.System && Keyboard.Modifiers == ModifierKeys.Alt && e.SystemKey is Key.Left or Key.Right || e.Key is Key.BrowserBack or Key.BrowserForward)
   {
    e.Handled = true; await WalkHistoryAsync(e.SystemKey == Key.Left || e.Key == Key.BrowserBack ? -1 : 1); return;
   }
+  var quickNumber=e.Key is >= Key.D1 and <= Key.D9?e.Key-Key.D0:e.Key is >= Key.NumPad1 and <= Key.NumPad9?e.Key-Key.NumPad0:0;
+  if(Keyboard.Modifiers==ModifierKeys.Control && quickNumber>0 && Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox) {e.Handled=true;await ToggleQuickTagAsync(quickNumber);return;}
   if (OpenWithHotkey(e) || MediaMenuKey(e)) return;
   // Bookmarks, scenes and the collection tree handle these keys themselves (rename, open or play, remove).
   if (e.Key is Key.F2 or Key.Enter or Key.Delete && (Scenes.IsKeyboardFocusWithin || Bookmarks.IsKeyboardFocusWithin || CollectionTree.IsKeyboardFocusWithin)) return;
-  if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
-  {
-   if (e.Key == Key.F) { SearchBox.Focus(); SearchBox.SelectAll(); e.Handled = true; }
-   else if (e.Key == Key.T && TagInput.IsEnabled) { RevealTagInput(); _ = Dispatcher.BeginInvoke(() => { TagInput.Focus(); }, System.Windows.Threading.DispatcherPriority.Loaded); e.Handled = true; }
-   else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control) { ToggleDetails(); e.Handled = true; }
-   else if (e.Key == Key.O) { ImportFiles(this, new RoutedEventArgs()); e.Handled = true; }
-   else if (e.Key == Key.S) { SaveDetails(this, new RoutedEventArgs()); e.Handled = true; }
-   else if (e.Key == Key.B && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift)) { ManageLibraries(); e.Handled = true; }
-   else if (e.Key == Key.B) { ToggleSidebar(); e.Handled = true; }
-   else if (e.Key == Key.G) { FocusPageInput(); e.Handled = true; }
-   else if (e.Key == Key.I && Keyboard.Modifiers == ModifierKeys.Control && Keyboard.FocusedElement is not TextBox) { e.Handled = true; await InvertSelectionAsync(); }
-   else if (e.Key == Key.Home && Keyboard.Modifiers == ModifierKeys.Control && Keyboard.FocusedElement is not TextBox) { GoHome(); e.Handled = true; }
-   else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D1 and <= Key.D9 && Keyboard.FocusedElement is not TextBox) { e.Handled = true; await ToggleQuickTagAsync(e.Key - Key.D0); }
-   // Ctrl+Alt is also AltGr on German keyboards, so text fields keep their characters.
-   else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Alt) && e.Key is >= Key.D1 and <= Key.D9 && Keyboard.FocusedElement is not TextBox) e.Handled = OpenSavedSearchByNumber(e.Key - Key.D0);
-  }
-  else if (e.Key == Key.Escape && SearchBox.IsKeyboardFocused && SearchBox.Text.Length > 0) { SearchBox.Clear(); e.Handled = true; }
+  if(Keyboard.Modifiers==(ModifierKeys.Control|ModifierKeys.Alt)&&e.Key is >= Key.D1 and <= Key.D9&&!TextEntry(e.OriginalSource)) {e.Handled=OpenSavedSearchByNumber(e.Key-Key.D0);return;}
+  if(Keyboard.Modifiers.HasFlag(ModifierKeys.Control))return;
+  if (e.Key == Key.Escape && SearchBox.IsKeyboardFocused && SearchBox.Text.Length > 0) { SearchBox.Clear(); e.Handled = true; }
   else if (e.Key == Key.F5 && Keyboard.Modifiers == ModifierKeys.None) { e.Handled = true; Status.Text = T("Checking media folders …");
    await CheckLibraryFoldersAsync(); if (!FolderBannerShown) Status.Text = _repository.GetLibraryFolders().Count == 0
    ? T("No media folders set up · Add ▾ → Media folders …") : T("Media folders are up to date"); }
@@ -418,7 +415,7 @@ public partial class MainWindow : Window
   {
    var digit = e.Key is >= Key.D0 and <= Key.D5 ? e.Key - Key.D0 : e.Key is >= Key.NumPad0 and <= Key.NumPad5 ? e.Key - Key.NumPad0 : -1;
    if (digit >= 0 && Keyboard.Modifiers == ModifierKeys.None && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RateSelection(digit); return; }
-   if (e.Key == Key.F2 && Selected != null && SelectedMedia.Count == 1) { e.Handled = true; EditTitle.Focus(); EditTitle.SelectAll(); return; }
+   if (e.Key == Key.F2 && MediaList.IsKeyboardFocusWithin && Selected != null && SelectedMedia.Count == 1) { e.Handled = true; EditTitle.Focus(); EditTitle.SelectAll(); return; }
    if (Keyboard.Modifiers == ModifierKeys.None && MediaList.IsKeyboardFocusWithin)
    {
     // The list itself only knows the loaded window; these keys work on the whole result.
@@ -427,7 +424,7 @@ public partial class MainWindow : Window
     if (e.Key == Key.F && SelectedMedia is { Count: > 0 } chosen) { e.Handled = true; PinFavorite(chosen); return; }
     if (e.Key == Key.B && SelectedMedia.Count > 0) { e.Handled = true; ToggleTargetCollection(); return; }
    }
-   if (e.Key == Key.Enter && Selected is { } item) { e.Handled = true; StopSlideshow(); await Play(item); }
+   if (e.Key == Key.Enter && MediaList.IsKeyboardFocusWithin && Selected is { } item) { e.Handled = true; StopSlideshow(); await Play(item); }
    if (e.Key == Key.Delete && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RemoveSelected(); }
   }
  }

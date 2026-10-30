@@ -25,6 +25,7 @@ public partial class MainWindow
   {
    await Play(_repository.GetMedia(videoId)!, 0);
    var window = _videoWindow ?? throw new InvalidOperationException("The player did not open.");
+   await window.TogglePauseAsync();await window.SeekToAsync(0);await window.TogglePauseAsync();await window.SamplePlaybackAsync();
    for (var wait = 0; window.Coverage.Share < .9 && wait < 100; wait++) await Task.Delay(50);
    Require(window.Coverage.Share >= .9, $"The player did not note what was seen ({window.Coverage.Share:P0}).");
    window.ChangeO(add: true);

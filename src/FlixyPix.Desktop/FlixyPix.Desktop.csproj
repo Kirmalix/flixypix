@@ -12,6 +12,7 @@
     <ApplicationIcon>Assets\flixypix.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="../../CHANGELOG.md;../../LICENSE;../../THIRD-PARTY-NOTICES.md" Link="help/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
     <Resource Include="Assets\flixypix-mark-96.png;Assets\flixypix-mark-192.png;Assets\flixypix-tile-256.png" />
     <!-- The tray icon loads the size that fits the screen from the file. -->
     <Content Include="Assets\flixypix.ico" CopyToOutputDirectory="PreserveNewest" />

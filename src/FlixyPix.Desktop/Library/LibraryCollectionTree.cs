@@ -73,7 +73,7 @@ public partial class MainWindow
   var setIds = sets.Select(s => s.Id).ToHashSet();
   Guid? Parent(Guid? id) => id is { } parent && setIds.Contains(parent) ? parent : null;
   bool IsTarget(Guid? id) => target == null ? id == null || id == quick?.Id : id == target.Id;
-  void Expanded(CollectionNode node) { if (node.IsExpanded) _collapsedSets.Remove(node.Id); else _collapsedSets.Add(node.Id); }
+  void Expanded(CollectionNode node) { if (node.IsExpanded) _collapsedSets.Remove(node.Id); else _collapsedSets.Add(node.Id); SaveSidebar(s=>s with {CollapsedSets=_collapsedSets.ToList()}); }
   CollectionNode Collection(Playlist p) => new()
   {
    Kind = CollectionNodeKind.Collection, Name = p.Name, Collection = p, Glyph = p.Kind == PlaylistKind.Slideshow ? "" : "",

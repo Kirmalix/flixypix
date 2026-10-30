@@ -156,6 +156,16 @@ public partial class MainWindow
    window.SheetWidth.Value = 50;
    Require(!window.TrySave() && window.LastError?.Contains(T("Thumbnail width")) == true, "An out-of-range width was not rejected inline.");
    window.SheetWidth.Value = width;
+   window.PlayerDisplay.Shortcuts.IsChecked=false;
+   Require(!window.PlayerShortcutsActive && !window.BookmarkShortcut.ShortcutActive
+    && System.Windows.Automation.AutomationProperties.GetItemStatus(window.BookmarkShortcut).Contains(T("Inactive")),"Inactive shortcut state is not visible to assistive technology.");
+   var bookmarkKey=window.BookmarkShortcut.Value;
+   window.SelectPage("Video player"); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+   window.BookmarkShortcut.BringIntoView(); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+   Capture((FrameworkElement)window.Content,Path.Combine(directory,"settings-shortcuts-off.png"));
+   window.PlayerDisplay.Shortcuts.IsChecked=true;
+   Require(window.PlayerShortcutsActive && window.BookmarkShortcut.ShortcutActive && window.BookmarkShortcut.Value==bookmarkKey,
+    "Reactivating shortcuts lost the stored assignment.");
    window.AlwaysFullscreen.IsChecked = true;
    // Language: automatic first, then every language in its own name; the choice reaches appsettings.json through the result.
    var languages = window.LanguageChoice.Items.OfType<ComboBoxItem>().ToList();

@@ -55,6 +55,8 @@ public enum ResolutionClass { Any, HD, FullHD, UHD, EightK }
 /// date, resolution and watched state. It becomes one search expression next to the advanced search.</summary>
 public sealed record MediaFilter
 {
+    public bool UnratedOnly { get; init; }
+    public bool? HasThumbnail { get; init; }
     public List<TagFacet> Include { get; init; } = [];
     public List<TagFacet> Exclude { get; init; } = [];
     /// <summary>Roles whose included entries need only one match ("mindestens einer"); the others need all.</summary>
@@ -84,7 +86,7 @@ public sealed record MediaFilter
     /// <summary>true: media with further versions; false: media with one file.</summary>
     public bool? MultipleFiles { get; init; }
 
-    public bool IsEmpty => Include.Count == 0 && Exclude.Count == 0 && MinMinutes is null && MaxMinutes is null && MinMegabytes is null && MaxMegabytes is null &&
+    public bool IsEmpty => !UnratedOnly && HasThumbnail is null && Include.Count == 0 && Exclude.Count == 0 && MinMinutes is null && MaxMinutes is null && MinMegabytes is null && MaxMegabytes is null &&
         Resolution == ResolutionClass.Any && !FileDate.IsActive && !Imported.IsActive && Watched is null && Profiles.Count == 0 && !Released.IsActive && MarkTags.Count == 0 &&
         VideoCodecs.Count == 0 && Hdr is null && MinFrameRate is null && MultipleFiles is null;
 
@@ -96,6 +98,8 @@ public sealed record MediaFilter
     public SearchExpression? ToExpression(DateTimeOffset now)
     {
         var parts = new List<SearchExpression>();
+        if (UnratedOnly) parts.Add(SearchExpression.Where(new() { Field = SearchField.Rating, Comparison = SearchComparison.Equals, Number = 0 }));
+        if (HasThumbnail is { } has) parts.Add(SearchExpression.Where(new() { Field = SearchField.HasThumbnail, Comparison = SearchComparison.Equals, Flag = has }));
         foreach (var group in Include.GroupBy(f => f.Role))
         {
             var conditions = group.Select(f => IncludeSubStudios && f.Role == TagRole.Studio
@@ -136,6 +140,8 @@ public sealed record MediaFilter
     public IEnumerable<string> Describe()
     {
         static string Number(double value) => value.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture);
+        if (UnratedOnly) yield return T("Unrated");
+        if (HasThumbnail is { } has) yield return has ? T("With thumbnail") : T("Without thumbnail");
         foreach (var facet in Include) yield return facet.Tag;
         foreach (var facet in Exclude) yield return T("without {0}", facet.Tag);
         foreach (var profile in Profiles) yield return DescribeProfile(profile);

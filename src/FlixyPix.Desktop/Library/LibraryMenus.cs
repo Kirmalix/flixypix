@@ -22,16 +22,7 @@ public partial class MainWindow
  private void CatalogMenu(object sender, RoutedEventArgs e) => MenuBelow(sender, (T("Database management …"), () => ShowDatabase()),
   (T("Libraries …"), ManageLibraries), (T("Check and repair …"), () => ShowDatabase(RepairSection)), (T("Backup …"), () => ShowDatabase(BackupSection)),
   (T("Import and export …"), () => ShowDatabase(TransferSection)), (T("Legacy data …"), () => ShowDatabase(LegacySection)), (T("About FlixyPix"), ShowAbout));
- private void ShowAbout()
- {
-  var version = typeof(MainWindow).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
-   .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion.Split('+')[0] ?? "";
-  Dialogs.Text(this, "FlixyPix", string.Join("\n\n",
-   T("A new, local media library for Windows.\n\nFiles are not moved on import. Catalog and settings live in your user profile. The app shows images itself; video and audio use mpv, processing uses FFmpeg and ffprobe."),
-   T("Version {0} · {1}\n\nCopyright (C) 2026 The FlixyPix contributors. FlixyPix is free software under the GNU General Public License, version 3 or later, and comes without any warranty. Bundled components keep their own licenses; see THIRD-PARTY-NOTICES.md beside the program.", version, ProductIdentity.ProjectUrl),
-   T("FlixyPix is an independent project, not affiliated with the authors of EazyFlixPix. Online providers and live TV are not part of it."),
-   T("Keyboard: Ctrl+O import files · Ctrl+F search · Esc clear search · Ctrl+S save details · Enter open · 0–5 rate with stars · F2 edit title · Ctrl+T add tag · Ctrl+1–9 quick tags · Space large view · Home/End start/end of the list · Ctrl+B sidebar · Del remove from catalog.")));
- }
+ private void ShowAbout()=>new HelpWindow(this,T("About FlixyPix"),[("FlixyPix",AppVersion),(T("Technical information"),TechnicalInformation()),(T("Licenses"),"GPL-3.0-or-later · THIRD-PARTY-NOTICES.md"),(T("Project website"),ProductIdentity.ProjectUrl)]).ShowDialog();
  private void ExportCatalog() { var picker = new SaveFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Export catalog"), Filter = T("JSON catalog|*.json"),
   FileName = "FlixyPix-Katalog.json" }; if (picker.ShowDialog(this) == true) { _repository.Export(picker.FileName);
   Status.Text = T("Catalog exported · ") + picker.FileName; } }

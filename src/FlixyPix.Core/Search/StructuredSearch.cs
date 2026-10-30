@@ -31,7 +31,7 @@ public enum SearchField
     /// <summary>Number of files of the medium: 1 plus its further versions.</summary>
     Versions,
     /// <summary>Lines of the picture: the shorter side, as the resolution classes count.</summary>
-    Lines
+    Lines, HasThumbnail
 }
 public enum SearchComparison
 {
@@ -89,7 +89,7 @@ public sealed partial class CatalogRepository
     }
 
     private static bool NumericField(SearchField field) => field is SearchField.Rating or SearchField.Duration or SearchField.FileSize or SearchField.Width or SearchField.Height or SearchField.PlaybackPosition or SearchField.PlayCount or SearchField.ViewCount or SearchField.Bitrate or SearchField.OCount or SearchField.WatchCount or SearchField.FrameRate or SearchField.Versions or SearchField.Lines;
-    private static bool BooleanField(SearchField field) => field is SearchField.WatchLater or SearchField.Favorite or SearchField.Portrait or SearchField.Hdr;
+    private static bool BooleanField(SearchField field) => field is SearchField.HasThumbnail or SearchField.WatchLater or SearchField.Favorite or SearchField.Portrait or SearchField.Hdr;
     private static bool DateField(SearchField field) => field is SearchField.AddedAt or SearchField.FileDate or SearchField.ReleaseDate;
     private static bool SetField(SearchField field) => field is SearchField.Tag or SearchField.TagCategory;
     private static bool PresenceComparison(SearchComparison comparison) => comparison is SearchComparison.IsKnown or SearchComparison.IsUnknown;
@@ -145,6 +145,7 @@ public sealed partial class CatalogRepository
         if (condition.Field == SearchField.MarkTag) return BuildMarkTagSql(condition, parameter);
         var column = condition.Field switch
         {
+            SearchField.HasThumbnail => "(SELECT available FROM media_thumbnail_state WHERE media_id=q.id)",
             SearchField.Text => "q.search_text", SearchField.Title => "q.title", SearchField.Path => "q.path",
             SearchField.Filename => "efp_filename(q.path)", SearchField.Extension => "efp_extension(q.path)",
             SearchField.Directory => "efp_directory(q.path)",

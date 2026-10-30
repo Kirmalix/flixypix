@@ -55,11 +55,11 @@ public sealed class DocumentCompactionTests : IDisposable
    Assert.Equal("2019-05-04T10:00:00", item.OriginalAddedAt); Assert.Equal("2018-01-02T03:04:05", item.OriginalFileDate);
    Assert.False(item.Extra.ContainsKey("legacy.values")); Assert.False(item.Extra.ContainsKey("legacy.sourceSha256"));
    Assert.Equal("movies", item.Extra["legacy.table"]);
-   Assert.Contains("before-v16-v15", catalog.MigrationBackupPath!);
+   Assert.Contains("before-v17-v15", catalog.MigrationBackupPath!);
   }
   Assert.Equal(Scalar("SELECT julianday('2018-01-02T03:04:05')"), Scalar("SELECT file_date FROM media_query WHERE id=$id", id.ToString()));
   Assert.Equal(Scalar("SELECT julianday('2019-05-04T10:00:00')"), Scalar("SELECT imported FROM media_query WHERE id=$id", id.ToString()));
-  Assert.Equal(16L, Scalar("PRAGMA user_version"));
+  Assert.Equal(17L, Scalar("PRAGMA user_version"));
  }
 
  public void Dispose()

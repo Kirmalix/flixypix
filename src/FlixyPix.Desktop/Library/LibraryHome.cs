@@ -20,6 +20,8 @@ public partial class MainWindow
   _home.SetResourceReference(BackgroundProperty, "WindowBackground");
   Grid.SetRow(_home, 1); Grid.SetRowSpan(_home, 4); Panel.SetZIndex(_home, 10);
   MediaPane.Children.Add(_home);
+  _home.ToggleQuick = ToggleQuickCollection;
+  _home.FeaturedVideoArtwork = LoadFeaturedVideoArtworkAsync;
   _home.Open = async item => { StopSlideshow(); await Play(item); };
   _home.ToggleWatchLater = item =>
   {
@@ -60,8 +62,9 @@ public partial class MainWindow
   // The grid behind stays loaded for a quick way back, but does not realise tiles or load pictures while hidden.
   MediaList.Visibility = _view == "home" ? Visibility.Collapsed : Visibility.Visible;
   AdaptToWidth();
-  if (_view != "home") { _home.Visibility = Visibility.Collapsed; return; }
+  if (_view != "home") { _homeArtworkCancellation.Cancel(); _home.Visibility = Visibility.Collapsed; return; }
   var first = _home.Visibility != Visibility.Visible || _home.RowCount == 0 && _home.HeroCount == 0;
+  if(_homeArtworkCancellation.IsCancellationRequested) { _homeArtworkCancellation.Dispose();_homeArtworkCancellation=new(); }
   _home.Visibility = Visibility.Visible;
   var hour = DateTime.Now.Hour;
   CountLabel.Text = (hour < 11 ? T("Good morning") : hour < 18 ? T("Good afternoon") : T("Good evening")) + (total > 0 ? Tn(total, " · 1 item in your library", " · {0:N0} items in your library") : "");

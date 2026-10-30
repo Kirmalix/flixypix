@@ -4,11 +4,11 @@ using System.Windows.Controls;
 namespace FlixyPix.Desktop;
 
 /// <summary>Gives its child the full available width and a height of <see cref="Ratio"/> times that width, so a tile that
-/// stretches with the window keeps the 5:3 frame of its thumbnail.</summary>
+/// stretches with the window keeps the 16:9 frame of its thumbnail.</summary>
 public sealed class AspectBox : Decorator
 {
  public static readonly DependencyProperty RatioProperty = DependencyProperty.Register(nameof(Ratio), typeof(double), typeof(AspectBox),
-  new FrameworkPropertyMetadata(.6, FrameworkPropertyMetadataOptions.AffectsMeasure));
+  new FrameworkPropertyMetadata(.5625, FrameworkPropertyMetadataOptions.AffectsMeasure));
  public double Ratio { get => (double)GetValue(RatioProperty); set => SetValue(RatioProperty, value); }
 
  protected override Size MeasureOverride(Size constraint)

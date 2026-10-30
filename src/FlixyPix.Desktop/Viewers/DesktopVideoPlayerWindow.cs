@@ -15,6 +15,7 @@ namespace FlixyPix.Desktop;
 
 internal sealed partial class VideoPlayerWindow : Window
 {
+ internal Action<bool>? HelpRequested {get;set;}
  private readonly CatalogRepository repository;
  private readonly MediaItem media;
  /// <summary>Volume the player starts with (percent).</summary>
@@ -34,11 +35,12 @@ internal sealed partial class VideoPlayerWindow : Window
  private MpvPlayer? player;
  private PlayerTransformTimeline timeline=new();
  private PlayerTransform? manualTransform;
- private bool polling,closing,paused,seeking,syncing;
+ private bool polling,closing,paused,seeking,syncing,keyboardSeeking;
  private IDisposable? awake;
  internal bool KeepsAwake=>awake!=null;
  internal Task<nint> ReadyTask=>ready.Task;
  internal nint VideoHandle=>host.VideoHandle;
+ internal nint VideoOuterHandle=>host.Handle;
  internal double LastPositionSeconds { get; private set; }
  internal bool HasPlayer=>player!=null;
  internal event Action<double>? PositionTick;
@@ -47,7 +49,16 @@ internal sealed partial class VideoPlayerWindow : Window
  internal VideoPlayerWindow(Window owner,MediaItem media,CatalogRepository repository)
  {
   Owner=owner; this.media=media; this.repository=repository; Title=media.Title+T(" · Playback"); playback=repository.GetPreferences().Playback;
-  ScreenshotFolder=playback.Screenshots.Folder??ScreenshotFolder;
+  ScreenshotFolder=playback.Screenshots.Folder??ScreenshotFolder; marksWanted=playback.ShowMarks;
+  host.Input += QueueMouseInput;
+  // Some Windows wheel settings deliver to the focused WPF window instead of the native child under the pointer.
+  PreviewMouseWheel+=(_,e)=>
+  {
+   if(e.OriginalSource is DependencyObject source && IsInside(source,controlBar))return;
+   var point=e.GetPosition(host);
+   if(point.X>=0 && point.Y>=0 && point.X<host.ActualWidth && point.Y<host.ActualHeight)
+   { e.Handled=true; host.Wheel(e.Delta,Keyboard.Modifiers); }
+  };
   Width=1100; Height=760; MinWidth=650; MinHeight=460;
   WindowStartupLocation=WindowStartupLocation.CenterOwner;
   var root=new DockPanel(); var bar=BuildControlBar(); DockPanel.SetDock(bar,Dock.Bottom); root.Children.Add(bar);
@@ -62,17 +73,27 @@ internal sealed partial class VideoPlayerWindow : Window
   // The slider marks these events handled itself (IsMoveToPointEnabled), so they are subscribed with handledEventsToo.
   position.AddHandler(PreviewMouseLeftButtonDownEvent,new MouseButtonEventHandler((_,_)=>{ if(position.IsEnabled)seeking=true; }),true);
   position.ValueChanged+=(_,_)=>{ if(seeking && PointerPressed())Scrub(position.Value); };
+  position.PreviewKeyDown+=(_,e)=>{if(e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.PageUp or Key.PageDown or Key.Home or Key.End)keyboardSeeking=seeking=true;};
+  position.PreviewKeyUp+=async(_,e)=>{if(keyboardSeeking){keyboardSeeking=seeking=false;if(player!=null)await Command(()=>SeekToAsync(position.Value));}};
   position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
   timer.Tick+=async (_,_)=>await PollAsync();
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
    ready.TrySetResult(host.VideoHandle); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
    } catch(Exception error) { ready.TrySetException(error); status.Text=error.Message; } };
-  Closed+=(_,_)=>{ closing=true; timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=seekPreview.IsOpen=false; seekPreviewWork?.Cancel(); ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
+  Closed+=(_,_)=>{ closing=true; if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=seekPreview.IsOpen=false; seekPreviewWork?.Cancel(); ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
   host.SizeChanged+=(_,_)=>{ ApplyTransform(); if(overlay.IsOpen)ShowOverlay(); };
   Deactivated+=(_,_)=>{ overlay.IsOpen=false; HideSeekPreview(); };
   PreviewKeyDown+=async (_,e)=>
   {
-   if(e.OriginalSource is TextBox or ComboBox)return;
+   if(e.Key==Key.F1) {e.Handled=true;if(HelpRequested!=null)HelpRequested(Keyboard.Modifiers==ModifierKeys.Control);else new HelpWindow(this,T("Help"),HelpWindow.Guide()).ShowDialog();return;}
+   if(e.Key==Key.Tab) {ShowOverlay();return;}
+   if(e.Key==Key.Escape&&Keyboard.FocusedElement is ComboBox {IsDropDownOpen:true})return;
+   if(e.Key==Key.Escape&&Keyboard.FocusedElement is ComboBox {IsDropDownOpen:false}) {e.Handled=true;if(WindowStyle==WindowStyle.None)ToggleFullscreen();else Close();return;}
+   if(MainWindow.TextEntry(e.OriginalSource))return;
+   if(Keyboard.FocusedElement is Slider or ButtonBase or CheckBox && e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown or Key.Enter or Key.Space)return;
+   if(markList.IsKeyboardFocusWithin && e.Key is Key.Up or Key.Down or Key.Left or Key.Right)return;
+   if(markList.IsKeyboardFocusWithin && e.Key==Key.Enter && markList.SelectedItem is MarkRow markRow) {e.Handled=true;await SeekToMarkAsync(markRow.Mark);return;}
+   if(e.Key==Key.F2 && markList.IsKeyboardFocusWithin) { e.Handled=BeginRenameSelectedMark(); if(e.Handled)return; }
    var key=e.Key==Key.System?e.SystemKey:e.Key;
    if(key==Key.Escape) { e.Handled=true; if(WindowStyle==WindowStyle.None)ToggleFullscreen(); else Close(); return; }
    if(key==Key.F11) { e.Handled=true; ToggleFullscreen(); return; }
@@ -90,7 +111,6 @@ internal sealed partial class VideoPlayerWindow : Window
  {
   if(closing)return; this.player=player;
   volumeSlider.Value=Math.Clamp(InitialVolume,0,100); if(InitialVolume!=100)await player.SetVolumeAsync(volumeSlider.Value);
-  player.ClientMessage+=args=>{ if(args is [MediaToolService.MouseMessage,var input]) Dispatcher.InvokeAsync(()=>HandleMouseAsync(input)); };
   if(playback.PreventSleep)awake??=SleepGuard.Acquire();
   position.Maximum=Math.Max(1,media.DurationSeconds??1); position.IsEnabled=media.DurationSeconds>0; RenderMarkers();
   pause.Content=paused?"":"";
@@ -131,9 +151,9 @@ internal sealed partial class VideoPlayerWindow : Window
   if(polling || player==null || closing)return; polling=true;
   try
   {
-   var seconds=await player.GetPositionAsync(); if(closing || seconds==null)return;
+   var seconds=await player.GetPositionAsync(); if(closing || seconds==null || processingMouse)return;
    // A release outside the time line does not reach it: the poll ends the press and seeks where it was left.
-   if(seeking && !PointerPressed()) { seeking=false; _=Command(()=>SeekToAsync(position.Value)); }
+   if(seeking && !keyboardSeeking && !PointerPressed()) { seeking=false; _=Command(()=>SeekToAsync(position.Value)); }
    LastPositionSeconds=seconds.Value; if(!seeking)position.Value=Math.Clamp(seconds.Value,0,position.Maximum);
    status.Text=notice is { } n && n.Until>DateTime.UtcNow ? n.Text : media.Title+CurrentMarkLabel();
    if(!paused)Coverage.Observe(seconds.Value,speed.SelectedItem is double rate?rate:1);
@@ -179,7 +199,7 @@ internal sealed partial class VideoPlayerWindow : Window
     break;
    case PlayerActions.NextBookmark or PlayerActions.PreviousBookmark:
     // Follows the time line, not the display order arranged in the details panel.
-    var target=action==PlayerActions.NextBookmark ? JumpMarks.Next(Marks,LastPositionSeconds) : JumpMarks.Previous(Marks,LastPositionSeconds);
+    var target=action==PlayerActions.NextBookmark ? JumpMarks.Next(Marks,LastPositionSeconds,wrap:true) : JumpMarks.Previous(Marks,LastPositionSeconds,wrap:true);
     if(target!=null)await SeekToMarkAsync(target); break;
    case PlayerActions.NextVideo or PlayerActions.PreviousVideo:
     if(StepRequested!=null)await StepRequested(action==PlayerActions.NextVideo?1:-1); else Notify(T("Back and forward navigation is only available from a library view.")); break;
@@ -260,6 +280,60 @@ internal sealed partial class VideoPlayerWindow : Window
  }
  private sealed class NativeVideoHost : HwndHost
  {
+  internal event Action<string>? Input;
+  private const string ClassName="FlixyPix.VideoInput";
+  private static readonly Dictionary<nint,NativeVideoHost> owners=new();
+  private delegate nint WindowProc(nint hwnd,uint message,nint wParam,nint lParam);
+  private static readonly WindowProc procedure=ProcessMessage;
+  private static bool registered;
+  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)] private struct WindowClass
+  {
+   public uint Style; public WindowProc Procedure; public int ClassExtra,WindowExtra;
+   public nint Instance,Icon,Cursor,Background; public string? Menu; public string Name;
+  }
+  private static void EnsureClass()
+  {
+   if(registered)return;
+   var cls=new WindowClass { Style=8,Procedure=procedure,Instance=GetModuleHandle(null),Name=ClassName,Cursor=LoadCursor(0,32512) };
+   if(RegisterClass(ref cls)==0)throw new Win32Exception(Marshal.GetLastWin32Error()); registered=true;
+  }
+  private int wheelRemainder;
+  private ModifierKeys wheelModifiers;
+  internal void Wheel(int delta,ModifierKeys modifiers)
+  {
+   if(modifiers!=wheelModifiers) { wheelRemainder=0; wheelModifiers=modifiers; }
+   wheelRemainder+=delta;
+   while(Math.Abs(wheelRemainder)>=120)
+   {
+    int step=Math.Sign(wheelRemainder)*120; wheelRemainder-=step;
+    Input?.Invoke(WheelInput(step,modifiers));
+   }
+  }
+  private static nint ProcessMessage(nint hwnd,uint message,nint wParam,nint lParam)
+  {
+   if(owners.TryGetValue(hwnd,out var owner))
+   {
+    string? input=message switch { 0x0202=>"MBTN_LEFT",0x0203=>"MBTN_LEFT_DBL",0x0205=>"MBTN_RIGHT",0x0208=>"MBTN_MID",
+     0x020C=>((wParam.ToInt64()>>16)&0xffff)==1?"MBTN_BACK":"MBTN_FORWARD",_=>null };
+    // mpv disables its child in embedding mode. Both application-owned parents handle input instead.
+    if(message==0x0084)return 1; // HTCLIENT, including margins around a transformed picture
+    if(message==0x020A)
+    {
+     var flags=wParam.ToInt64();
+     var modifiers=((flags&8)!=0?ModifierKeys.Control:ModifierKeys.None)|((flags&4)!=0?ModifierKeys.Shift:ModifierKeys.None)
+      |(GetKeyState(0x12)<0?ModifierKeys.Alt:ModifierKeys.None);
+     owner.Wheel(unchecked((short)(flags>>16)),modifiers);
+     return 0;
+    }
+    if(input!=null) { owner.Input?.Invoke(input); return message==0x020C?1:0; }
+   }
+   return DefWindowProc(hwnd,message,wParam,lParam);
+  }
+  [DllImport("user32.dll",CharSet=CharSet.Unicode,SetLastError=true)] private static extern ushort RegisterClass(ref WindowClass cls);
+  [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] private static extern nint GetModuleHandle(string? name);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode)] private static extern nint DefWindowProc(nint hwnd,uint message,nint wParam,nint lParam);
+  [DllImport("user32.dll")] private static extern nint LoadCursor(nint instance,int name);
+  [DllImport("user32.dll")] private static extern short GetKeyState(int key);
   private nint outer;
   internal nint VideoHandle { get; private set; }
   internal (int X,int Y,int Width,int Height) LastBounds { get; private set; }
@@ -267,11 +341,15 @@ internal sealed partial class VideoPlayerWindow : Window
   protected override HandleRef BuildWindowCore(HandleRef parent)
   {
    const int style=0x40000000|0x10000000|0x02000000|0x04000000;
-   outer=CreateWindowEx(0,"STATIC","",style,0,0,1,1,parent.Handle,0,0,0);
-   VideoHandle=CreateWindowEx(0,"STATIC","",style,0,0,1,1,outer,0,0,0);
-   if(outer==0 || VideoHandle==0)throw new Win32Exception(Marshal.GetLastWin32Error()); return new(this,outer);
+   EnsureClass();
+   outer=CreateWindowEx(0,ClassName,"",style,0,0,1,1,parent.Handle,0,0,0);
+   if(outer==0)throw new Win32Exception(Marshal.GetLastWin32Error());
+   owners[outer]=this;
+   VideoHandle=CreateWindowEx(0,ClassName,"",style,0,0,1,1,outer,0,0,0);
+   if(VideoHandle==0) { var error=Marshal.GetLastWin32Error(); owners.Remove(outer); DestroyWindow(outer); outer=0; throw new Win32Exception(error); }
+   owners[VideoHandle]=this; return new(this,outer);
   }
-  protected override void DestroyWindowCore(HandleRef hwnd) { if(VideoHandle!=0)DestroyWindow(VideoHandle); if(outer!=0)DestroyWindow(outer); VideoHandle=outer=0; }
+  protected override void DestroyWindowCore(HandleRef hwnd) { owners.Remove(VideoHandle); owners.Remove(outer); if(VideoHandle!=0)DestroyWindow(VideoHandle); if(outer!=0)DestroyWindow(outer); VideoHandle=outer=0; }
   internal void Apply(PlayerTransform transform)
   {
    geometry=transform; if(outer==0 || VideoHandle==0)return; if(!GetClientRect(outer,out var rect))return;

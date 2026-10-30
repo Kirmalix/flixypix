@@ -139,7 +139,7 @@ public sealed class CollectionTreeTests : IDisposable
             downgrade.ExecuteNonQuery();
         }
         catalog = new CatalogRepository(path);
-        Assert.Contains("before-v16-v12", catalog.MigrationBackupPath!);
+        Assert.Contains("before-v17-v12", catalog.MigrationBackupPath!);
         Assert.Empty(catalog.GetBookmarks().Single().Tags);
         Assert.Empty(catalog.GetCollectionSets());
         Assert.Equal(["Drei", "Eins", "Zwei"], Titles(MarkTag(SearchComparison.IsUnknown)));

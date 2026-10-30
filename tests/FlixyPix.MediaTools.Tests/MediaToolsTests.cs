@@ -24,6 +24,14 @@ public sealed class MediaToolsTests : IDisposable
     }
 
     [Fact]
+    public async Task HomeArtworkNeverUpscalesAndKeepsSource()
+    {
+        var source=await MakeFixture();var before=File.ReadAllBytes(source);var output=Path.Combine(scratch,"home.jpg");
+        await service.CreateArtworkAsync(source,output,.5);var probe=await service.ProbeAsync(output);
+        Assert.Equal((160,90),(probe.Width,probe.Height));Assert.Equal(before,File.ReadAllBytes(source));
+    }
+
+    [Fact]
     public void ProbeParserHandlesUnknownDurationAndAudioOnly()
     {
         var parsed = MediaToolService.ParseProbe("""{"format":{"duration":"N/A"},"streams":[{"codec_type":"audio","codec_name":"flac","duration":"1.25"}]}""");

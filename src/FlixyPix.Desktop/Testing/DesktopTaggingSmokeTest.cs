@@ -30,7 +30,7 @@ public partial class MainWindow
   await Idle(); await _tagAssistReady; await Idle();
   Capture(RootContent, Path.Combine(directory, "desktop-multiselect.png"));
   // Keyboard tagging: Ctrl+n toggles the n-th quick tag on the selection.
-  var quick = QuickTags; Require(quick.Count > 0 && Tags.Items.OfType<TagRow>().Any(r => r.Label.Contains(T("  · Ctrl+{0}", 1))), "Quick tags are not numbered in the tag list.");
+  var quick = QuickTags; Require(quick.Count > 0 && Tags.Items.OfType<TagRow>().Any(r => r.Shortcut == KeyLabel("Ctrl+1")), "Quick tags are not numbered in the tag list.");
   var hadQuick = SelectedMedia.Where(i => i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase)).Select(i => i.Id).ToArray();
   await ToggleQuickTagAsync(1); var onAll = SelectedMedia.All(i => i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase));
   await ToggleQuickTagAsync(1); var offAll = SelectedMedia.All(i => !i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase));

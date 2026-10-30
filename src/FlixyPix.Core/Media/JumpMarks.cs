@@ -32,11 +32,11 @@ public static class JumpMarks
             .OrderBy(m => m.PositionSeconds).ThenBy(m => m.Kind).ThenBy(m => m.Title, StringComparer.CurrentCultureIgnoreCase).ThenBy(m => m.SourceId).ToArray();
     }
 
-    public static JumpMark? Next(IReadOnlyList<JumpMark> marks, double positionSeconds) =>
-        marks.Where(m => m.PositionSeconds > positionSeconds + NextTolerance).MinBy(m => m.PositionSeconds);
+    public static JumpMark? Next(IReadOnlyList<JumpMark> marks, double positionSeconds, bool wrap = false) =>
+        marks.Where(m => m.PositionSeconds > positionSeconds + NextTolerance).MinBy(m => m.PositionSeconds) ?? (wrap ? marks.MinBy(m => m.PositionSeconds) : null);
 
-    public static JumpMark? Previous(IReadOnlyList<JumpMark> marks, double positionSeconds) =>
-        marks.Where(m => m.PositionSeconds < positionSeconds - PreviousRestartWindow).MaxBy(m => m.PositionSeconds);
+    public static JumpMark? Previous(IReadOnlyList<JumpMark> marks, double positionSeconds, bool wrap = false) =>
+        marks.Where(m => m.PositionSeconds < positionSeconds - PreviousRestartWindow).MaxBy(m => m.PositionSeconds) ?? (wrap ? marks.MaxBy(m => m.PositionSeconds) : null);
 
     /// <summary>The mark the playback position is in, i.e. the last one at or before it.</summary>
     public static JumpMark? Current(IReadOnlyList<JumpMark> marks, double positionSeconds) =>

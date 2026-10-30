@@ -13,7 +13,7 @@ internal sealed class ExternalProgramDialog : Window
 {
  /// <summary>Shortcuts of the main window that a program must not take over.</summary>
  internal static IReadOnlyList<string> LibraryShortcuts { get; } =
-  ["Ctrl+F", "Ctrl+T", "Ctrl+O", "Ctrl+S", "Ctrl+B", "Ctrl+G", "Ctrl+Home", "Ctrl+Shift+B", "Alt+Left", "Alt+Right",
+  ["F1", "Ctrl+F1", "F6", "Shift+F6", "F10", "Ctrl+D", "Ctrl+I", "Ctrl+F", "Ctrl+T", "Ctrl+O", "Ctrl+S", "Ctrl+B", "Ctrl+G", "Ctrl+Home", "Ctrl+Shift+B", "Alt+Left", "Alt+Right",
    .. Enumerable.Range(1, 9).SelectMany(n => new[] { $"Ctrl+D{n}", $"Ctrl+Alt+D{n}" })];
 
  private readonly TextBox _name = new() { MinWidth = 420 };
@@ -79,6 +79,8 @@ internal sealed class ExternalProgramDialog : Window
  /// <summary>Null when the shortcut is free and usable.</summary>
  internal static string? HotkeyProblem(string hotkey, IEnumerable<string> taken)
  {
+  if(PlayerHotkeys.TryParse(hotkey,out var reservedModifiers,out var reservedKey)&&reservedModifiers==ModifierKeys.Control&&(reservedKey is >= Key.D1 and <= Key.D9 or >= Key.NumPad1 and <= Key.NumPad9))return T("Reserved for quick tags");
+
   if (hotkey.Length == 0) return null;
   if (!PlayerHotkeys.TryParse(hotkey, out var modifiers, out var key)) return T("The shortcut is not valid.");
   if ((modifiers & (ModifierKeys.Control | ModifierKeys.Alt)) == 0) return T("Shortcuts need Ctrl or Alt.");

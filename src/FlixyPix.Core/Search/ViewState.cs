@@ -24,6 +24,7 @@ public sealed record ViewState
     public string? TagCategory { get; init; }
     public string? Category { get; init; }
     public string? Folder { get; init; }
+    public bool IncludeSubfolders { get; init; } = true;
     public List<string> RequiredTags { get; init; } = [];
     public List<string> ExcludedTags { get; init; } = [];
     public SearchExpression? Expression { get; init; }
@@ -57,7 +58,7 @@ public sealed record ViewState
     /// <summary>Same view, filters and order; position and selection do not count (used by the history).</summary>
     public bool SameView(ViewState other) =>
         View == other.View && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
-        Tag == other.Tag && TagCategory == other.TagCategory && Category == other.Category && Folder == other.Folder &&
+        Tag == other.Tag && TagCategory == other.TagCategory && Category == other.Category && Folder == other.Folder && IncludeSubfolders == other.IncludeSubfolders &&
         RequiredTags.SequenceEqual(other.RequiredTags) && ExcludedTags.SequenceEqual(other.ExcludedTags) && MinimumStars == other.MinimumStars &&
         SortOrder == other.SortOrder && TagsMatchAny == other.TagsMatchAny &&
         JsonSerializer.Serialize(Expression, CatalogRepository.Json) == JsonSerializer.Serialize(other.Expression, CatalogRepository.Json) &&
@@ -86,7 +87,7 @@ public sealed record ViewState
             Text = SearchText, Tag = Tag, MinimumRating = Math.Clamp(MinimumStars, 0, 5) * 2,
             IsFavorite = View == "favorites" ? true : null, WatchLater = View == "watchlater" ? true : null,
             Kind = Enum.TryParse<MediaKind>(View, out var kind) ? kind : null,
-            Category = Category, TagCategory = TagCategory, Folder = Folder,
+            Category = Category, TagCategory = TagCategory, Folder = Folder, IncludeSubfolders = IncludeSubfolders,
             RequiredTags = anyTags ? [] : RequiredTags, ExcludedTags = ExcludedTags,
             Expression = parts.Count switch { 0 => null, 1 => parts[0], _ => SearchExpression.All(parts.ToArray()) },
             Sort = sort, Descending = descending,

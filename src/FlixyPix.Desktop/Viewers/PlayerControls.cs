@@ -30,28 +30,26 @@ internal sealed partial class VideoPlayerWindow
  private readonly Popup seekPreview = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, IsHitTestVisible = false };
  private readonly Image seekImage = new() { Width = 240, Stretch = Stretch.Uniform };
  private readonly TextBlock seekTime = new() { Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 2), FontSize = 13 };
- private readonly Slider volumeSlider = new() { Minimum = 0, Maximum = 100, Value = 100, Width = 96, VerticalAlignment = VerticalAlignment.Center, ToolTip = T("Volume") };
+ private readonly Slider volumeSlider = new() { Minimum = 0, Maximum = 100, Value = 100, IsMoveToPointEnabled = true, Width = 96, VerticalAlignment = VerticalAlignment.Center, ToolTip = T("Volume") };
  private PlayerWheelAction? wheelOverride;
  internal double Volume => volumeSlider.Value;
  internal PlayerWheelAction WheelMode => wheelOverride ?? playback.Wheel;
  /// <summary>Asks the library for a random video of the current view (mouse action "play random").</summary>
  internal Func<Task>? RandomRequested { get; set; }
 
- /// <summary>Mouse input reported by mpv for the video area, handled with the mouse settings (original "ezfpleftclick" and its siblings, "ezfpwheelposition").</summary>
+ /// <summary>Mouse input from the native host for the video area, handled with the mouse settings (original "ezfpleftclick" and its siblings, "ezfpwheelposition").</summary>
  internal async Task HandleMouseAsync(string input)
  {
+  if(closing || player==null)return;
   switch (input)
   {
    case "MBTN_LEFT_DBL":
-    // A double click only switches full screen: what its single clicks toggled is taken back.
-    lastDoubleClick = DateTime.UtcNow; ToggleFullscreen();
-    if (playback.LeftClick == PlayerMouseAction.PlayPause && player != null && paused != pausedBeforeClicks) await Command(TogglePauseAsync);
-    return;
+    clickTimer?.Stop(); suppressLeftRelease=true; ToggleFullscreen(); return;
    case "MBTN_LEFT":
-    var now = DateTime.UtcNow;
-    if (now - lastDoubleClick < DoubleClickTime) return;
-    if (now - lastLeftClick > DoubleClickTime) pausedBeforeClicks = paused;
-    lastLeftClick = now; await RunMouseAsync(playback.LeftClick); return;
+    if(suppressLeftRelease) { suppressLeftRelease=false; return; }
+    clickTimer?.Stop();
+    clickTimer=new DispatcherTimerLike(TimeSpan.FromMilliseconds(GetDoubleClickTime()),()=>QueueMouseInput("LEFT_SINGLE")); return;
+   case "LEFT_SINGLE": await RunMouseAsync(playback.LeftClick); return;
    case "MBTN_RIGHT": await RunMouseAsync(playback.RightClick); return;
    case "MBTN_MID": await RunMouseAsync(playback.MiddleClick); return;
    case "MBTN_BACK": await RunMouseAsync(playback.BackClick); return;
@@ -112,16 +110,40 @@ internal sealed partial class VideoPlayerWindow
   };
   await Command(() => RunActionAsync(mapped));
  }
- private DateTime lastLeftClick = DateTime.MinValue, lastDoubleClick = DateTime.MinValue;
- private bool pausedBeforeClicks;
- private double? volumeBeforeMute;
+ private DispatcherTimerLike? clickTimer;
+ private bool suppressLeftRelease, processingMouse;
+ private readonly Queue<string> mouseInputs=new();
+ private void QueueMouseInput(string input)
+ {
+  if(closing || player==null)return;
+  if(input.StartsWith("MBTN_",StringComparison.Ordinal)) { Focus(); Keyboard.Focus(this); }
+  mouseInputs.Enqueue(input);
+  if(!processingMouse)_=DrainMouseAsync();
+ }
+ private async Task DrainMouseAsync()
+ {
+  processingMouse=true;
+  try { while(!closing && player!=null && mouseInputs.TryDequeue(out var input))await Command(()=>HandleMouseAsync(input)); }
+  finally { processingMouse=false; }
+ }
+ private double lastPositiveVolume=100;
+ private readonly Button volumeButton=Symbol("",T("Sound off"));
+ internal Slider VolumeControl=>volumeSlider;
+ internal Button MuteControl=>volumeButton;
+ private void UpdateVolumeState()
+ {
+  if(volumeSlider.Value>0)lastPositiveVolume=volumeSlider.Value;
+  volumeButton.Content=volumeSlider.Value==0?"":"";
+  volumeButton.ToolTip=volumeSlider.Value==0?T("Sound on"):T("Sound off");
+  AutomationProperties.SetName(volumeButton,(string)volumeButton.ToolTip);
+ }
  [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
  private static TimeSpan DoubleClickTime => TimeSpan.FromMilliseconds(Math.Clamp(GetDoubleClickTime(), 200, 900) + 100);
  /// <summary>Sound off and back to the volume before; moving the volume in between ends the muting.</summary>
  internal void ToggleMute()
  {
-  if (volumeBeforeMute is { } before && volumeSlider.Value == 0) { volumeSlider.Value = before; volumeBeforeMute = null; Notify(T("Volume {0:0} %", before)); return; }
-  volumeBeforeMute = volumeSlider.Value; volumeSlider.Value = 0; Notify(T("Sound off"));
+  volumeSlider.Value=volumeSlider.Value>0?0:lastPositiveVolume;
+  Notify(volumeSlider.Value==0?T("Sound off"):T("Volume {0:0} %",volumeSlider.Value));
  }
  /// <summary>The plain wheel switches between seeking and volume until the player closes (mouse button or shortcut).</summary>
  internal void SwitchWheel()
@@ -175,6 +197,7 @@ internal sealed partial class VideoPlayerWindow
 
  private StackPanel BuildControlBar()
  {
+  AutomationProperties.SetName(volumeSlider,T("Volume"));AutomationProperties.SetName(position,T("Position"));AutomationProperties.SetName(speed,T("Speed"));
   controlBar.Children.Add(BuildTimeline());
   var row = new DockPanel { LastChildFill = false };
   var left = new StackPanel { Orientation = Orientation.Horizontal };
@@ -194,11 +217,13 @@ internal sealed partial class VideoPlayerWindow
   var right = new StackPanel { Orientation = Orientation.Horizontal };
   repeat.Click += (_, _) => PlaybackModeChanged?.Invoke(); shuffle.Click += (_, _) => PlaybackModeChanged?.Invoke();
   right.Children.Add(repeat); right.Children.Add(shuffle);
-  var volumeIcon = new TextBlock { Text = "", FontFamily = SettingsUi.Icons, FontSize = 15, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 4, 0), Foreground = SettingsUi.Muted };
+  volumeButton.Margin=new Thickness(6,0,2,0);
+  volumeButton.Click+=(_,_)=>ToggleMute();
+  UpdateVolumeState();
   var volume = volumeSlider;
   AutomationProperties.SetName(volume, T("Volume"));
-  volume.ValueChanged += async (_, _) => { if (player != null) await Command(() => player.SetVolumeAsync(volume.Value)); };
-  right.Children.Add(volumeIcon); right.Children.Add(volume);
+  volume.ValueChanged += async (_, _) => { UpdateVolumeState(); if (player != null) await Command(() => player.SetVolumeAsync(volume.Value)); };
+  right.Children.Add(volumeButton); right.Children.Add(volume);
   speed.Margin = new Thickness(10, 0, 2, 0); speed.VerticalAlignment = VerticalAlignment.Center; speed.ToolTip = T("Playback speed"); speed.ItemStringFormat = "0.##×";
   // xml:lang follows the UI language; numeric items follow the user's regional format.
   speed.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
@@ -227,12 +252,12 @@ internal sealed partial class VideoPlayerWindow
   overlay.MouseMove += (_, _) => lastMovement = DateTime.UtcNow;
   // The bar lies outside mpv's picture, so its wheel arrives here: it does what the wheel over the video does,
   // except over the volume slider (volume) and the speed list (its own wheel).
-  controlBar.PreviewMouseWheel += async (_, e) =>
+  controlBar.PreviewMouseWheel += (_, e) =>
   {
    if (e.OriginalSource is not DependencyObject source || IsInside(source, speed)) return;
    e.Handled = true;
    if (IsInside(source, volumeSlider)) { volumeSlider.Value = Math.Clamp(volumeSlider.Value + Math.Sign(e.Delta) * 5, 0, 100); return; }
-   await HandleMouseAsync(WheelInput(e.Delta, Keyboard.Modifiers));
+   host.Wheel(e.Delta,Keyboard.Modifiers);
   };
   return controlBar;
  }
@@ -335,13 +360,13 @@ internal sealed partial class VideoPlayerWindow
  private void EnterOverlayMode()
  {
   if (controlBar.Parent is Panel parent) parent.Children.Remove(controlBar);
-  overlayFrame.Child = controlBar; ShowMarkPanel(false);
+  overlayFrame.Child = controlBar; ShowMarkPanel(false); marksButton.IsEnabled=false;
   fullscreenButton.Content = ""; fullscreenButton.ToolTip = T("Leave full screen (Esc)");
   ShowOverlay();
  }
  private void LeaveOverlayMode()
  {
-  overlay.IsOpen = false; overlayFrame.Child = null;
+  overlay.IsOpen = false; overlayFrame.Child = null; marksButton.IsEnabled=true; ShowMarkPanel(marksWanted);
   if (Content is DockPanel root && !root.Children.Contains(controlBar)) { DockPanel.SetDock(controlBar, Dock.Bottom); root.Children.Insert(0, controlBar); }
   fullscreenButton.Content = ""; fullscreenButton.ToolTip = T("Full screen (F11)");
  }
@@ -371,7 +396,7 @@ internal sealed partial class VideoPlayerWindow
 
  private void HideIdleControls(bool mouseOverControls)
  {
-  if (overlayFrame.Child != null && playback.AutoHideControls && overlay.IsOpen && !mouseOverControls && !paused && DateTime.UtcNow - lastMovement > TimeSpan.FromSeconds(2.5)) overlay.IsOpen = false;
+  if (overlayFrame.Child != null && playback.AutoHideControls && overlay.IsOpen && !mouseOverControls && !controlBar.IsKeyboardFocusWithin && !paused && DateTime.UtcNow - lastMovement > TimeSpan.FromSeconds(2.5)) overlay.IsOpen = false;
  }
 
  [StructLayout(LayoutKind.Sequential)] private struct CursorPoint { public int X, Y; }

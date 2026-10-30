@@ -125,12 +125,16 @@ public sealed partial class CatalogRepository
     /// <summary>Path keys of further versions under a folder (folder sync counts them as known).</summary>
     internal IReadOnlyList<string> VersionKeysUnder(string folder)
     {
+        lock(gate)
+        {
+        ThrowIfDisposed();
         var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
         using var command = Command("SELECT path_key FROM media_files WHERE substr(path_key,1,length($prefix))=$prefix", null, ("$prefix", prefix));
         var keys = new List<string>();
         using var reader = command.ExecuteReader();
         while (reader.Read()) keys.Add(reader.GetString(0));
         return keys;
+        }
     }
 
     /// <summary>Makes the other media versions of <paramref name="mainId"/>: their files join its versions, tags and categories

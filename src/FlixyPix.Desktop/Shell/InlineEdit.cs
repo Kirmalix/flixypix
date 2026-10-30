@@ -14,8 +14,11 @@ internal static class InlineEdit
  internal static TextBox? Current { get; private set; }
 
  /// <returns>False when the row is not shown, for example in a hidden list.</returns>
- internal static bool Begin(ListBox list, object item, string text, Action<string> commit)
+ private static Action? cancel;
+ internal static void Cancel()=>cancel?.Invoke();
+ internal static bool Begin(ListBox list, object item, string text, Action<string> commit, Action? finished = null)
  {
+  Cancel();
   list.ScrollIntoView(item); list.UpdateLayout();
   if (list.ItemContainerGenerator.ContainerFromItem(item) is not ListBoxItem row || Title(row) is not { } title || !title.IsVisible) return false;
   var left = title.TranslatePoint(new Point(), list).X;
@@ -26,10 +29,10 @@ internal static class InlineEdit
   void Finish(bool keep)
   {
    if (done) return;
-   done = true; Current = null; popup.IsOpen = false;
+   done = true; Current = null; cancel=null; popup.IsOpen = false;
    var name = box.Text.Trim();
-   if (keep && name.Length > 0 && name != text) commit(name);
-   list.Focus();
+   try { if (keep && name.Length > 0 && name != text) commit(name); }
+   finally { list.Focus(); finished?.Invoke(); }
   }
   box.PreviewKeyDown += (_, e) =>
   {
@@ -38,6 +41,7 @@ internal static class InlineEdit
   };
   box.LostKeyboardFocus += (_, _) => Finish(true);
   popup.Closed += (_, _) => Finish(true);
+  cancel=()=>Finish(false);
   popup.IsOpen = true; Current = box;
   box.Focus(); Keyboard.Focus(box); box.SelectAll();
   return true;
