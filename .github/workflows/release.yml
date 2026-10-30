@@ -1,6 +1,6 @@
 name: Release
 
-# A tag such as v0.5.0-preview builds the portable package on GitHub and attaches it to a release.
+# A tag such as v0.5.0 builds the portable package on GitHub and attaches it to a release.
 on:
   push:
     tags: ['v*']

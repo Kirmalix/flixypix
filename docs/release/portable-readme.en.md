@@ -1,4 +1,6 @@
-# FlixyPix 0.5.0 — Windows preview
+# FlixyPix 0.5.0 — Windows x64
+
+This portable release supports Windows 10/11 (64-bit) and has no installer or code signature. Windows SmartScreen may ask for confirmation on first start. Back up the catalog and media files before updating. Version 0.5.0 uses catalog schema 17; an upgrade creates a migration backup. Older application versions may not be able to open an upgraded catalog.
 
 Run `FlixyPix.exe` to open your local media library. The .NET runtime is included. Keep the `tools` folder, containing FFmpeg, ffprobe and mpv, beside the application.
 
@@ -36,6 +38,8 @@ A change of library folder takes effect after restart. Older catalogs receive a 
 JSON format 4 includes the catalog, saved artwork, historical drafts and preserved binary data in checked sections. Versions 1–3 remain readable. External media is included in a complete `.flixypixbackup` only when explicitly selected. Restore verifies checksums and requires a new destination folder; it does not replace the current catalog.
 
 An offline media drive does not prevent catalog migration. Paths are preserved without preparing media automatically. Historical searches, parsers and job drafts remain inactive until explicitly adopted. Tag artwork is managed under Organize.
+
+Menu → Help (F1) opens the offline help; Ctrl+F1 shows current keyboard shortcuts. Menu → About FlixyPix shows the version.
 
 Ctrl+O imports, Ctrl+F searches, Ctrl+S saves details and F5 checks media folders. Enter opens an item. Delete removes the catalog entry; permanently deleting a file is a separate, confirmed action.
 

@@ -9,9 +9,10 @@ no longer maintained, and can take over its catalogs.
 
 ![FlixyPix with a library of sample images, filters and the details of the selected item](docs/images/flixypix.png)
 
-> **Status: preview (0.x).** FlixyPix is usable but young. Formats and behavior may still change
-> between previews, and there is no installer or code signing yet. Back up your catalog
-> (Catalog → Database management → Backup) before you update.
+> **Release: 0.5.0.** FlixyPix is distributed as a portable Windows application.
+> Versions before 1.0 may change catalog formats and behavior; release notes describe those changes.
+> Catalog upgrades create a migration backup. Back up your catalog and media files before updating;
+> older application versions may not be able to open an upgraded catalog.
 
 ## Features
 
