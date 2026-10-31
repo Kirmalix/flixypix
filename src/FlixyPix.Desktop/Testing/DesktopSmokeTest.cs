@@ -718,17 +718,19 @@ public partial class MainWindow
    foreach (var nested in Descendants<T>(child)) yield return nested;
   }
  }
- private static void Capture(FrameworkElement element, string path)
+ private static void Capture(FrameworkElement element, string path, double scale = 1)
  {
   // The brush draws the element at its layout offset, so its margin belongs to the picture; without it the right and
   // bottom edges were cut off by exactly the margin and buttons looked as if they lay outside the window.
+  if (!double.IsFinite(scale) || scale <= 0) throw new ArgumentOutOfRangeException(nameof(scale));
   element.UpdateLayout(); var width = element.ActualWidth + element.Margin.Left + element.Margin.Right; var height = element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
-  var screenshot = new RenderTargetBitmap((int)width, (int)height, 96, 96, PixelFormats.Pbgra32);
+  var screenshot = new RenderTargetBitmap((int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
   var visual = new DrawingVisual();
-  var bounds=new Rect(0,0,width,height);
+  // Cover even the fractional final device pixel, so no transparent edge remains.
+  var bounds=new Rect(0,0,screenshot.PixelWidth / scale,screenshot.PixelHeight / scale);
   // Explicit source bounds also retain the space occupied by a native HwndHost.
   // Paint the window background first so contrast problems show as they do on screen.
-  using (var drawing = visual.RenderOpen()) { drawing.DrawRectangle(Window.GetWindow(element)?.Background,null,bounds); drawing.DrawRectangle(new VisualBrush(element) { ViewboxUnits=BrushMappingMode.Absolute,Viewbox=bounds },null,bounds); }
+  using (var drawing = visual.RenderOpen()) { drawing.DrawRectangle(Window.GetWindow(element)?.Background ?? Theme.Brush("WindowBackground"),null,bounds); drawing.DrawRectangle(new VisualBrush(element) { ViewboxUnits=BrushMappingMode.Absolute,Viewbox=new Rect(0,0,width,height) },null,new Rect(0,0,width,height)); }
   screenshot.Render(visual);
   var output = new PngBitmapEncoder(); output.Frames.Add(BitmapFrame.Create(screenshot)); using var file = File.Create(path); output.Save(file);
  }

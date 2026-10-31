@@ -33,6 +33,34 @@ public partial class MainWindow
    if (await RemoveMissingFolderFilesAsync(_folderPlan,_folderPlan.Changes) != 1) throw new InvalidOperationException("Explicit removal failed.");
   } finally { _repository.SaveLibraryFolders([]); RestartFolderWatcher(); HideFolderBanner(); }
  }
+ private static void CheckFolderTabLayout(LibraryFoldersWindow window)
+ {
+  var tabs = window.ReviewTabs!;
+  var band = (FrameworkElement)tabs.Template.FindName("HeaderBand", tabs);
+  var bandBounds = new Rect(band.TranslatePoint(new Point(), tabs), band.RenderSize);
+  foreach (System.Windows.Controls.TabItem tab in tabs.Items) {
+   var bounds = new Rect(tab.TranslatePoint(new Point(), tabs), tab.RenderSize);
+   // Long translations can scroll horizontally, but no header may leave its row vertically.
+   if (bounds.Top < bandBounds.Top || bounds.Bottom > bandBounds.Bottom)
+    throw new InvalidOperationException("A tab is clipped by its header band.");
+   var label = (FrameworkElement)tab.Template.FindName("Header",tab);
+   var labelBounds = new Rect(label.TranslatePoint(new Point(),tab),label.RenderSize);
+   if (Math.Abs(labelBounds.Top + labelBounds.Height / 2 - tab.ActualHeight / 2) > 1)
+    throw new InvalidOperationException("A tab label is not vertically centered.");
+  }
+  var page = (FrameworkElement)tabs.Template.FindName("PART_SelectedContentHost", tabs);
+  if (page.HorizontalAlignment != HorizontalAlignment.Stretch || page.VerticalAlignment != VerticalAlignment.Stretch)
+   throw new InvalidOperationException("Header alignment leaked into the selected page.");
+ }
+ private static void CheckOpaqueFolderScreenshot(string path)
+ {
+  using var file = File.OpenRead(path);
+  var decoder = new System.Windows.Media.Imaging.PngBitmapDecoder(file, System.Windows.Media.Imaging.BitmapCreateOptions.PreservePixelFormat, System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+  var frame = new System.Windows.Media.Imaging.FormatConvertedBitmap(decoder.Frames[0], System.Windows.Media.PixelFormats.Bgra32,null,0);
+  var pixels = new byte[frame.PixelWidth * frame.PixelHeight * 4]; frame.CopyPixels(pixels,frame.PixelWidth * 4,0);
+  for (var index = 3; index < pixels.Length; index += 4)
+   if (pixels[index] != 255) throw new InvalidOperationException("Transparent pixel in scaled screenshot: " + path);
+ }
  /// <summary>Library folders: only watched folders are watched, a new file shows the banner, the window lists it and
  /// taking it over imports it; a removed file is not offered again.</summary>
  private async Task RunLibraryFolderSmokeTestAsync(string directory, string fixtureDirectory)
@@ -66,20 +94,25 @@ public partial class MainWindow
    Require(item.Category == "Ordnertest" && _repository.GetMediaByPath(Path.Combine(unwatched, "Unbeobachtet.png")) == null, "Folder category or the declined row was not honoured.");
    foreach (var scheme in new[] { ColorScheme.Light, ColorScheme.Dark }) {
     Theme.Apply(scheme); window.Width = 980; window.UpdateLayout();
+    CheckFolderTabLayout(window);
     Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-" + scheme + ".png"));
     foreach (var tab in new[] { 1, 2 }) {
      window.ReviewTabs!.SelectedIndex = tab; window.UpdateLayout();
      Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-" + scheme + "-tab-" + tab + ".png"));
     }
     window.ReviewTabs!.SelectedIndex = 0;
-    window.Width = 760; window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-" + scheme + "-compact.png"));
+    window.Width = 760; window.UpdateLayout(); CheckFolderTabLayout(window); Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-" + scheme + "-compact.png"));
    }
-   foreach (var scale in new[] { 1.0, 1.5, 2.0 }) {
-    window.Width = 980; window.ReviewTabs!.SelectedIndex = 0; window.UpdateLayout();
-    var element = (FrameworkElement)window.Content;
-    var image = new System.Windows.Media.Imaging.RenderTargetBitmap((int)(element.ActualWidth * scale), (int)(element.ActualHeight * scale), 96 * scale, 96 * scale, System.Windows.Media.PixelFormats.Pbgra32);
-    image.Render(element); var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
-    using var output = File.Create(Path.Combine(directory, "folder-scale-" + scale.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".png")); png.Save(output);
+   foreach (var scheme in new[] { ColorScheme.Light, ColorScheme.Dark }) {
+    Theme.Apply(scheme);
+    foreach (var scale in new[] { 1.0, 1.5, 2.0 }) {
+     window.Width = 980; window.ReviewTabs!.SelectedIndex = 0; window.UpdateLayout();
+     var suffix = scale.ToString(System.Globalization.CultureInfo.InvariantCulture);
+     Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-" + scheme + "-scale-" + suffix + ".png"), scale);
+     CheckOpaqueFolderScreenshot(Path.Combine(directory, "folder-" + scheme + "-scale-" + suffix + ".png"));
+     if (scheme == ColorScheme.Dark)
+      Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-scale-" + suffix + ".png"), scale);
+    }
    }
    var originalPlan = window.Plan!;
    window.ShowPlan(originalPlan with { Changes = [] }); window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory,"folder-up-to-date.png"));

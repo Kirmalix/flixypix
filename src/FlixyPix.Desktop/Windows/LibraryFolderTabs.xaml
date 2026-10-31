@@ -1,0 +1,82 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Own the entire header layout: the native TabPanel reserves space for
+       overlapping tabs and clips the rounded buttons used by this window. -->
+  <Style x:Key="LibraryFolderTabs" TargetType="TabControl">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TabControl">
+          <Grid UseLayoutRounding="True" SnapsToDevicePixels="True"
+                KeyboardNavigation.TabNavigation="Local">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Border x:Name="HeaderBand" Background="{DynamicResource SidebarBackground}"
+                    BorderBrush="{DynamicResource DividerSoft}" BorderThickness="1"
+                    CornerRadius="10" Padding="4" Margin="0,0,0,20"
+                    HorizontalAlignment="Left">
+              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                            CanContentScroll="False" Focusable="False">
+                <StackPanel Orientation="Horizontal" IsItemsHost="True" KeyboardNavigation.TabIndex="0"/>
+              </ScrollViewer>
+            </Border>
+            <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1"
+                              ContentSource="SelectedContent"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                              KeyboardNavigation.TabIndex="1"/>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="TabItem">
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="16,10"/>
+    <Setter Property="Margin" Value="2"/>
+    <Setter Property="MinHeight" Value="40"/>
+    <!-- TabControl copies these alignments to the selected page as well. -->
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TabItem">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  Padding="{TemplateBinding Padding}" CornerRadius="6"
+                  SnapsToDevicePixels="True">
+            <ContentPresenter x:Name="Header" ContentSource="Header" RecognizesAccessKey="True"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter Property="Background" Value="{DynamicResource ButtonHover}"/>
+              <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+              <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+              <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter Property="BorderBrush" Value="{DynamicResource Focus}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>
