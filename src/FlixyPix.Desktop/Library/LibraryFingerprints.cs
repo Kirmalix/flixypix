@@ -45,11 +45,11 @@ internal sealed class FingerprintRun(CatalogRepository repository, MediaToolServ
 
  /// <summary>Media of the given kind whose file exists and has no fingerprint for its current size and time. Videos only
  /// with FFmpeg.</summary>
- internal List<MediaItem> Missing(MediaKind? kind, CancellationToken token)
+ internal List<MediaItem> Missing(MediaKind? kind, CancellationToken token, IReadOnlyList<MediaItem>? scope = null)
  {
   var stamps = repository.GetFingerprintStamps();
   var result = new List<MediaItem>();
-  foreach (var item in repository.Search())
+  foreach (var item in scope ?? repository.Search())
   {
    token.ThrowIfCancellationRequested();
    if (item.Kind == MediaKind.Audio || kind is { } only && item.Kind != only || item.Kind == MediaKind.Video && tools == null) continue;

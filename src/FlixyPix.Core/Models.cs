@@ -9,6 +9,7 @@ public sealed record MediaItem
     public string Title { get; init; } = "";
     public MediaKind Kind { get; init; }
     public long? FileSize { get; init; }
+    public DateTimeOffset? FileModifiedAtUtc { get; init; }
     public int? Width { get; init; }
     public int? Height { get; init; }
     public double? DurationSeconds { get; init; }
@@ -72,6 +73,7 @@ public sealed record MediaFile
 {
     public required string Path { get; init; }
     public long? FileSize { get; init; }
+    public DateTimeOffset? FileModifiedAtUtc { get; init; }
     public int? Width { get; init; }
     public int? Height { get; init; }
     public double? DurationSeconds { get; init; }

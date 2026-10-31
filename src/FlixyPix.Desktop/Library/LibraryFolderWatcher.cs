@@ -39,9 +39,10 @@ internal sealed class LibraryFolderWatcher : IDisposable
 
  private void Noticed(object sender, FileSystemEventArgs e)
  {
-  if (e.FullPath.StartsWith(_library, StringComparison.OrdinalIgnoreCase)) return;
+  if (CatalogRepository.LibraryWorkFolders.Any(name => e.FullPath.StartsWith(Path.Combine(_library, name) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))) return;
+  if (e.FullPath.StartsWith(Path.Combine(_library, LibraryCatalogs.CatalogFileName), StringComparison.OrdinalIgnoreCase)) return;
   // Media files and anything without an extension, which is usually a folder being moved or deleted.
-  if (Relevant(e.FullPath) || e is RenamedEventArgs renamed && Relevant(renamed.OldFullPath)) Poke();
+  Poke();
  }
 
  private static bool Relevant(string path) => Path.GetExtension(path).Length == 0 || MediaFormats.GetKind(path) != null;

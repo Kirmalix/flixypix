@@ -203,4 +203,89 @@ public sealed class LibraryFolderTests : IDisposable
         var folder = Assert.Single(other.GetLibraryFolders());
         Assert.Equal((Media, MediaKind.Video, false, "Filme", 1), (folder.Path, folder.Kind!.Value, folder.Watch, folder.Category!, folder.IgnoredPaths.Count));
     }
+    [Fact]
+    public void ModificationUsesSizeAndTimeAndPreservesPersonalData()
+    {
+        var path = Fixture("change.jpg"); using var catalog = Open();
+        Watch(catalog, new LibraryFolder { Path = Media }); ApplyAll(catalog, catalog.PlanFolderSync());
+        var item = catalog.GetMediaByPath(path)!; catalog.Upsert(item with { Tags = ["Keep"], Rating = 8 });
+        File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(1));
+        var plan = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(plan.Changes).Kind);
+        Assert.Equal(1, ApplyAll(catalog, plan).Updated);
+        Assert.Equal(["Keep"], catalog.GetMedia(item.Id)!.Tags); Assert.Equal(8, catalog.GetMedia(item.Id)!.Rating);
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+    }
+    [Fact]
+    public void ChangedAfterPlanningIsSkippedAndReportSurvivesReopen()
+    {
+        var path = Fixture("race.jpg"); using (var catalog = Open()) {
+        Watch(catalog, new LibraryFolder { Path = Media }); var plan = catalog.PlanFolderSync();
+        File.AppendAllText(path, "changed"); var result = ApplyAll(catalog, plan);
+        Assert.Single(result.Skipped); Assert.Empty(catalog.Search()); catalog.SaveFolderSyncReport(plan, result); }
+        using var reopened = Open(); Assert.Single(reopened.GetFolderSyncReport()!.Result.Skipped);
+    }
+    [Fact]
+    public void MissingVersionRemovalKeepsTheMedium()
+    {
+        var main = Fixture("main.mp4"); var version = Fixture("other.mp4"); using var catalog = Open();
+        var item = catalog.Upsert(new MediaItem { Path = main, Kind = MediaKind.Video, Files = [new MediaFile { Path = version, FileSize = 32 }] });
+        Watch(catalog, new LibraryFolder { Path = Media }); File.Delete(version);
+        var plan = catalog.PlanFolderSync(); Assert.Equal(version, Assert.Single(plan.Changes).Path);
+        Assert.Equal(1, catalog.RemoveMissingFolderFiles(plan, plan.Changes)); Assert.Empty(catalog.GetMedia(item.Id)!.Files);
+    }
+    [Fact]
+    public void CancellationRollsBackTheEntireApply()
+    {
+        Fixture("cancel.jpg"); using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
+        var plan = catalog.PlanFolderSync(); using var cancel = new CancellationTokenSource(); cancel.Cancel();
+        Assert.Throws<OperationCanceledException>(() => catalog.ApplyFolderSync(plan, plan.Actionable, cancellationToken: cancel.Token));
+        Assert.Empty(catalog.Search());
+    }
+
+    [Fact]
+    public void VersionModificationAndRenameKeepTheOwner()
+    {
+        var main = Fixture("primary.mp4"); var other = Fixture("version.mp4", (int)CatalogRepository.RenameMinimumBytes);
+        using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
+        var item = catalog.Upsert(new MediaItem { Path = main, Kind = MediaKind.Video, Files = [new MediaFile { Path = other, FileSize = CatalogRepository.RenameMinimumBytes }] });
+        catalog.InitializeFolderReferences(catalog.GetLibraryFolders());
+        File.SetLastWriteTimeUtc(other, File.GetLastWriteTimeUtc(other).AddHours(1));
+        var changed = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(changed.Changes).Kind);
+        Assert.Equal(1, ApplyAll(catalog, changed).Updated);
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+        var renamed = Path.Combine(Media, "renamed.mp4"); File.Move(other,renamed);
+        Assert.Equal(1, ApplyAll(catalog,catalog.PlanFolderSync()).Relinked);
+        Assert.Equal(renamed, Assert.Single(catalog.GetMedia(item.Id)!.Files).Path);
+    }
+    [Fact]
+    public void FirstReferenceDoesNotHideAnExistingSizeChange()
+    {
+        var path = Fixture("baseline.jpg"); using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
+        catalog.Upsert(new MediaItem { Path = path, Kind = MediaKind.Image, FileSize = 1 });
+        catalog.InitializeFolderReferences(catalog.GetLibraryFolders());
+        Assert.Equal(FolderChangeKind.Modified,Assert.Single(catalog.PlanFolderSync().Changes).Kind);
+    }
+    [Fact]
+    public void BusyFileIsDeferredAndOfflineRemovalDoesNothing()
+    {
+        var path = Fixture("busy.jpg"); using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
+        var plan = catalog.PlanFolderSync();
+        using(var writer = new FileStream(path,FileMode.Open,FileAccess.Write,FileShare.Read)) Assert.Single(ApplyAll(catalog,plan).Skipped);
+        ApplyAll(catalog,catalog.PlanFolderSync()); File.Delete(path); var missing = catalog.PlanFolderSync();
+        Directory.Delete(Media); Assert.Equal(0,catalog.RemoveMissingFolderFiles(missing,missing.Changes)); Assert.Single(catalog.Search());
+    }
+
+    private sealed class SyncProgress(Action<FolderSyncProgress> report) : IProgress<FolderSyncProgress>
+    { public void Report(FolderSyncProgress step) => report(step); }
+    [Fact]
+    public void LargeScanReportsProgressAndCancelsWithoutCatalogWrites()
+    {
+        for(int n = 0; n < 1024; n++) Fixture($"bulk/{n}.jpg");
+        using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
+        using var cancel = new CancellationTokenSource(); int observed = 0;
+        var progress = new SyncProgress(step => { observed = step.Done; if(step.Done >= 128) cancel.Cancel(); });
+        Assert.Throws<OperationCanceledException>(() => catalog.PlanFolderSync(cancellationToken:cancel.Token, progress:progress));
+        Assert.True(observed >= 128); Assert.Empty(catalog.Search());
+    }
+
 }

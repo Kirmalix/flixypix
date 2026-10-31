@@ -56,6 +56,7 @@
      <Button Content="&#xE711;" Click="ClearSearch" HorizontalAlignment="Right" Margin="0,0,4,0" Padding="7" FontSize="11" ToolTip="{local:T 'Clear search (Esc)'}" AutomationProperties.Name="{local:T 'Clear search'}"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource IconButton}"><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
     </Grid>
     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+     <Button Click="SyncFoldersClicked" Content="{local:T 'Sync folders'}" ToolTip="{local:T 'Media folders'}" Margin="0,0,8,0"/>
      <Button Click="AddMenu" Style="{StaticResource Primary}" Margin="0,0,10,0" ToolTip="{local:T 'Import files, folders or archives (Ctrl+O: files)'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/><TextBlock Text="{local:T 'Add'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
      <Button Content="&#xE9D5;" Click="QueueClicked" Style="{StaticResource IconButton}" ToolTip="{local:T 'Media jobs'}" AutomationProperties.Name="{local:T 'Media jobs'}"/>
      <Button Content="&#xE8CB;" Click="OrganizeMenu" Style="{StaticResource IconButton}" ToolTip="{local:T 'Organize: searches, rules, vocabulary, duplicates'}" AutomationProperties.Name="{local:T 'Organize'}"/>
@@ -160,7 +161,7 @@ Kept for the future.'}" Foreground="{DynamicResource Subtle}" FontSize="11" Marg
      <Border x:Name="FolderBanner" Visibility="Collapsed" Background="{DynamicResource Chip}" BorderBrush="{DynamicResource SelectionBorder}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
       <DockPanel>
        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-        <Button Content="{local:T 'Apply'}" Click="FolderBannerApply" Style="{StaticResource Primary}" Margin="8,0,0,0" ToolTip="{local:T 'Add new files and reassign moved ones'}"/>
+        <Button x:Name="FolderBannerApplyAction" Content="{local:T 'Apply'}" Click="FolderBannerApply" Style="{StaticResource Primary}" Margin="8,0,0,0" ToolTip="{local:T 'Add new files and reassign moved ones'}"/>
         <Button Content="{local:T 'View …'}" Click="FolderBannerReview" Margin="8,0,0,0" ToolTip="{local:T 'Choose changes individually'}"/>
         <Button Content="&#xE711;" Click="FolderBannerDismiss" Style="{StaticResource IconButton}" Padding="7" FontSize="11" Margin="4,0,0,0" ToolTip="{local:T 'Later'}" AutomationProperties.Name="{local:T 'Close note'}"/>
        </StackPanel>

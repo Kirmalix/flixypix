@@ -14,17 +14,18 @@ public sealed record LibraryFolder
     public bool IncludeSubfolders { get; init; } = true;
     /// <summary>Watch the folder while FlixyPix runs; folders without it are checked only on request.</summary>
     public bool Watch { get; init; } = true;
+    public bool AutoApply { get; init; }
     /// <summary>Category given to files imported from this folder.</summary>
     public string? Category { get; init; }
     /// <summary>Files the user removed from the catalog or declined; they are not offered again.</summary>
     public List<string> IgnoredPaths { get; init; } = [];
 }
 
-public enum FolderChangeKind { Moved, Renamed, New, Missing }
+public enum FolderChangeKind { Moved, Renamed, New, Missing, Modified }
 
 /// <param name="PreviousPath">Catalog path before a move or rename.</param>
 public sealed record FolderChange(FolderChangeKind Kind, string Path, MediaKind MediaKind, long? Size, Guid FolderId,
-    Guid? MediaId = null, string? PreviousPath = null);
+    Guid? MediaId = null, string? PreviousPath = null, DateTimeOffset? ModifiedAtUtc = null);
 
 /// <param name="Unreachable">Folders whose root does not exist (drive offline, share disconnected); their media are not reported missing.</param>
 public sealed record FolderSyncPlan(IReadOnlyList<LibraryFolder> Folders, IReadOnlyList<FolderChange> Changes,
@@ -35,7 +36,12 @@ public sealed record FolderSyncPlan(IReadOnlyList<LibraryFolder> Folders, IReadO
     public IReadOnlyList<FolderChange> Actionable => Changes.Where(c => c.Kind != FolderChangeKind.Missing).ToList();
 }
 
-public sealed record FolderSyncResult(int Imported, int Relinked, int Ignored, IReadOnlyList<string> Skipped);
+public sealed record FolderSyncProgress(string Phase, int Done, int? Total, string Path);
+public sealed record FolderSyncResult(int Imported, int Relinked, int Ignored, IReadOnlyList<string> Skipped)
+{
+    public int Updated { get; init; }
+    public int Removed { get; init; }
+}
 
 public sealed partial class CatalogRepository
 {
@@ -96,13 +102,14 @@ public sealed partial class CatalogRepository
     }
 
     /// <summary>Compares the folders with the catalog. Reads the file system only; nothing is changed.</summary>
-    public FolderSyncPlan PlanFolderSync(IReadOnlyList<LibraryFolder>? folders = null, CancellationToken cancellationToken = default)
+    public FolderSyncPlan PlanFolderSync(IReadOnlyList<LibraryFolder>? folders = null, CancellationToken cancellationToken = default, IProgress<FolderSyncProgress>? progress = null)
     {
+        int scanned = 0;
         var preferences = GetPreferences();
         var chosen = (folders ?? preferences.LibraryFolders).Select(NormalizeLibraryFolder).ToList();
         var kindOf = MediaScanner.FolderKinds(preferences.Previews);
-        var found = new Dictionary<string, (string Path, MediaKind Kind, long Size, LibraryFolder Folder)>();
-        var cataloged = new Dictionary<string, (Guid Id, string Path, MediaKind Kind, long? Size, LibraryFolder Folder)>();
+        var found = new Dictionary<string, (string Path, MediaKind Kind, long Size, DateTimeOffset Modified, LibraryFolder Folder)>();
+        var cataloged = new Dictionary<string, (Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified, LibraryFolder Folder)>();
         var unreachable = new List<LibraryFolder>();
         var known = new HashSet<string>();
         var unscanned = new List<string>();
@@ -126,6 +133,8 @@ public sealed partial class CatalogRepository
                 {
                     foreach (var entry in new DirectoryInfo(directory).EnumerateFileSystemInfos())
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        progress?.Report(new("Checking folders ?", ++scanned, null, entry.FullName));
                         if (entry is DirectoryInfo child)
                         {
                             if (!folder.IncludeSubfolders || child.Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
@@ -135,7 +144,7 @@ public sealed partial class CatalogRepository
                         }
                         else if (entry is FileInfo file && kindOf(file.FullName) is { } kind && (folder.Kind is null || folder.Kind == kind) && !InLibrary(directory) &&
                                  !(kind == MediaKind.Image && preferences.General.SkipsImage(file.FullName)))
-                            found.TryAdd(PathKey(file.FullName), (file.FullName, kind, file.Length, folder));
+                            found.TryAdd(PathKey(file.FullName), (file.FullName, kind, file.Length, new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero), folder));
                     }
                 }
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -151,7 +160,7 @@ public sealed partial class CatalogRepository
                 var key = PathKey(item.Path);
                 known.Add(key);
                 if (folder.IncludeSubfolders || string.Equals(System.IO.Path.GetDirectoryName(item.Path), folder.Path, StringComparison.OrdinalIgnoreCase))
-                    cataloged.TryAdd(key, (item.Id, item.Path, item.Kind, item.Size, folder));
+                    cataloged.TryAdd(key, (item.Id, item.Path, item.Kind, item.Size, item.Modified, folder));
             }
         }
         var added = found.Where(f => !ignored.Contains(f.Key) && !known.Contains(f.Key)).Select(f => f.Value).ToList();
@@ -159,6 +168,14 @@ public sealed partial class CatalogRepository
         var missing = cataloged.Where(c => !found.ContainsKey(c.Key) && !unscanned.Any(u => c.Key.StartsWith(u + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal)) && !File.Exists(c.Value.Path))
             .Select(c => c.Value).ToList();
         var changes = new List<FolderChange>();
+        foreach (var entry in found)
+        {
+            if (!cataloged.TryGetValue(entry.Key, out var old)) continue;
+
+            var stamp = entry.Value.Modified;
+            if (old.Size is { } size && size != entry.Value.Size || old.Modified is { } previous && previous != stamp)
+                changes.Add(new(FolderChangeKind.Modified, entry.Value.Path, entry.Value.Kind, entry.Value.Size, entry.Value.Folder.Id, old.Id, old.Path, stamp));
+        }
         void Pair(FolderChangeKind kind, Func<string, long?, MediaKind, string?> key)
         {
             var targets = added.GroupBy(a => key(a.Path, a.Size, a.Kind)).Where(g => g.Key != null && g.Count() == 1).ToDictionary(g => g.Key!, g => g.Single());
@@ -166,14 +183,14 @@ public sealed partial class CatalogRepository
             {
                 if (!targets.TryGetValue(group.Key!, out var target)) continue;
                 var source = group.Single();
-                changes.Add(new(kind, target.Path, target.Kind, target.Size, target.Folder.Id, source.Id, source.Path));
+                changes.Add(new(kind, target.Path, target.Kind, target.Size, target.Folder.Id, source.Id, source.Path, target.Modified));
                 added.Remove(target); missing.Remove(source);
             }
         }
         // Moved keeps name and size; a rename keeps only a size that is large and unique on both sides.
         Pair(FolderChangeKind.Moved, (path, size, kind) => size is { } bytes ? $"{kind}|{System.IO.Path.GetFileName(path).ToUpperInvariant()}|{bytes}" : null);
         Pair(FolderChangeKind.Renamed, (path, size, kind) => size is >= RenameMinimumBytes ? $"{kind}|{System.IO.Path.GetExtension(path).ToUpperInvariant()}|{size}" : null);
-        changes.AddRange(added.Select(a => new FolderChange(FolderChangeKind.New, a.Path, a.Kind, a.Size, a.Folder.Id)));
+        changes.AddRange(added.Select(a => new FolderChange(FolderChangeKind.New, a.Path, a.Kind, a.Size, a.Folder.Id, ModifiedAtUtc: a.Modified)));
         changes.AddRange(missing.Select(m => new FolderChange(FolderChangeKind.Missing, m.Path, m.Kind, m.Size, m.Folder.Id, m.Id)));
         return new(chosen, changes.OrderBy(c => c.Kind).ThenBy(c => c.Path, StringComparer.OrdinalIgnoreCase).ToList(), unreachable, errors);
     }
@@ -181,41 +198,69 @@ public sealed partial class CatalogRepository
     /// <summary>Takes over the chosen changes in one transaction. Each change is checked again against the file system and
     /// the catalog; a change that no longer holds is skipped and reported, never forced.</summary>
     /// <param name="ignoreDeclined">New files of the plan that were not chosen are not offered again.</param>
-    public FolderSyncResult ApplyFolderSync(FolderSyncPlan plan, IReadOnlyCollection<FolderChange> chosen, bool ignoreDeclined = false, CancellationToken cancellationToken = default)
+    public FolderSyncResult ApplyFolderSync(FolderSyncPlan plan, IReadOnlyCollection<FolderChange> chosen, bool ignoreDeclined = false, CancellationToken cancellationToken = default, IProgress<FolderSyncProgress>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(chosen);
         if (chosen.Any(c => !plan.Changes.Contains(c))) throw new ArgumentException("Only changes of this plan can be applied.", nameof(chosen));
         var folders = plan.Folders.ToDictionary(f => f.Id);
         var skipped = new List<string>();
-        int imported = 0, relinked = 0, ignored = 0;
+        int imported = 0, relinked = 0, ignored = 0, updated = 0, done = 0;
         var general = GetPreferences().General;
         lock (gate)
         {
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
-            bool Cataloged(string path) { using var lookup = Command("SELECT 1 FROM media WHERE path_key=$path", transaction, ("$path", PathKey(path))); return lookup.ExecuteScalar() is not null; }
+            bool Cataloged(string path) { using var lookup = Command("SELECT 1 FROM media WHERE path_key=$path", transaction, ("$path", PathKey(path))); if (lookup.ExecuteScalar() is not null) return true; using var version = Command("SELECT 1 FROM media_files WHERE path_key=$path", transaction, ("$path", PathKey(path))); return version.ExecuteScalar() is not null; }
             foreach (var change in chosen.Where(c => c.Kind != FolderChangeKind.Missing))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!File.Exists(change.Path)) { skipped.Add(T("{0}: the file no longer exists.", change.Path)); continue; }
+                progress?.Report(new("Apply selected", ++done, chosen.Count, change.Path));
+                try { using var stable = new FileStream(change.Path, FileMode.Open, FileAccess.Read, FileShare.Read); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { skipped.Add(change.Path + ": " + error.Message); continue; }
+                var file = new FileInfo(change.Path);
+                if (file.Length != change.Size || change.ModifiedAtUtc is { } expected && expected.UtcDateTime != file.LastWriteTimeUtc)
+                { skipped.Add(change.Path + ": changed since the check"); continue; }
+                if (change.Kind == FolderChangeKind.Modified)
+                {
+                    using var lookup = Command("SELECT document FROM media WHERE id=$id", transaction, ("$id", change.MediaId.ToString()!));
+                    var current = lookup.ExecuteScalar() is string data ? JsonSerializer.Deserialize<MediaItem>(data, Json) : null;
+                    if (current == null) { skipped.Add(change.Path); continue; }
+                    if (current.Path != change.Path)
+                    {
+                        if (!current.Files.Any(v => v.Path == change.Path)) { skipped.Add(change.Path); continue; }
+                        UpsertCore(current with { Files = current.Files.Select(v => v.Path == change.Path ? v with { FileSize = file.Length, FileModifiedAtUtc = change.ModifiedAtUtc, Width = null, Height = null, DurationSeconds = null, Technical = null } : v).ToList() }, transaction);
+                        updated++; continue;
+                    }
+                    UpsertCore(current with { FileSize = file.Length, FileModifiedAtUtc = change.ModifiedAtUtc,
+                        Width = null, Height = null, DurationSeconds = null, Technical = null,
+                        Extra = new(current.Extra) { ["folders.previewStale"] = "true" } }, transaction);
+                    updated++; continue;
+                }
                 if (Cataloged(change.Path)) { skipped.Add(T("{0}: the file is now in the catalog.", change.Path)); continue; }
                 if (change.Kind == FolderChangeKind.New)
                 {
                     var category = folders.TryGetValue(change.FolderId, out var folder) ? folder.Category : null;
                     UpsertCore(new MediaItem { Path = change.Path, Title = general.ImportTitle(change.Path), Kind = change.MediaKind, FileSize = change.Size, Category = category,
-                        FileCreatedAt = MediaScanner.FileDate(new FileInfo(change.Path)) }, transaction);
+                        FileModifiedAtUtc = change.ModifiedAtUtc, FileCreatedAt = MediaScanner.FileDate(new FileInfo(change.Path)) }, transaction);
                     imported++;
                     continue;
                 }
                 using var read = Command("SELECT document FROM media WHERE id=$id", transaction, ("$id", change.MediaId.ToString()!));
                 var item = read.ExecuteScalar() is string json ? JsonSerializer.Deserialize<MediaItem>(json, Json) : null;
+                if (item != null && item.Path != change.PreviousPath && item.Files.Any(v => v.Path == change.PreviousPath))
+                {
+                    if (File.Exists(change.PreviousPath)) { skipped.Add(change.Path); continue; }
+                    UpsertCore(item with { Files = item.Files.Select(v => v.Path == change.PreviousPath ? v with { Path = change.Path, FileSize = change.Size, FileModifiedAtUtc = change.ModifiedAtUtc } : v).ToList() }, transaction);
+                    relinked++; continue;
+                }
                 if (item is null || !string.Equals(item.Path, change.PreviousPath, StringComparison.Ordinal)) { skipped.Add(T("{0}: the catalog entry changed since the check.", change.PreviousPath)); continue; }
                 if (File.Exists(item.Path)) { skipped.Add(T("{0}: the file is back in its old place.", item.Path)); continue; }
                 // A title the user never changed follows the new file name.
                 var title = item.Title == System.IO.Path.GetFileNameWithoutExtension(item.Path) || item.Title == general.ImportTitle(item.Path) ? general.ImportTitle(change.Path) : item.Title;
                 var extra = new Dictionary<string, string?>(item.Extra) { ["folders.previousPath"] = item.Path };
-                UpsertCore(item with { Path = change.Path, Title = title, FileSize = change.Size, Extra = extra }, transaction);
+                UpsertCore(item with { Path = change.Path, Title = title, FileSize = change.Size, FileModifiedAtUtc = change.ModifiedAtUtc, Extra = extra }, transaction);
                 relinked++;
             }
             if (ignoreDeclined)
@@ -225,9 +270,10 @@ public sealed partial class CatalogRepository
                 ignored = IgnoreCore(current, plan.Changes.Where(c => c.Kind == FolderChangeKind.New && !chosen.Contains(c)).Select(c => c.Path));
                 if (ignored > 0) SaveDocument("preferences", Guid.Empty, preferences with { LibraryFolders = current }, transaction);
             }
+            cancellationToken.ThrowIfCancellationRequested();
             transaction.Commit();
         }
-        return new(imported, relinked, ignored, skipped);
+        return new(imported, relinked, ignored, skipped) { Updated = updated };
     }
 
     private static int IgnoreCore(List<LibraryFolder> folders, IEnumerable<string> paths)
@@ -247,20 +293,20 @@ public sealed partial class CatalogRepository
     private static bool IsInside(string key, string folderKey) => key.StartsWith(folderKey + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal);
 
     /// <summary>Catalog entries below a folder, read through the path index without loading whole documents.</summary>
-    private List<(Guid Id, string Path, MediaKind Kind, long? Size)> MediaUnder(string folder)
+    private List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> MediaUnder(string folder)
     {
         var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
-        // ']' follows '\' in the code table, so the range covers exactly the keys below the folder.
-        var end = prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1);
         lock (gate)
         {
-            ThrowIfDisposed();
-            using var command = Command("SELECT id,json_extract(document,'$.path'),json_extract(document,'$.kind'),json_extract(document,'$.fileSize') FROM media WHERE path_key>=$start AND path_key<$end",
-                null, ("$start", prefix), ("$end", end));
+            using var command = Command("SELECT document FROM media WHERE (path_key >= $prefix AND path_key < $end) OR id IN (SELECT media_id FROM media_files WHERE path_key >= $prefix AND path_key < $end)", null, ("$prefix", prefix), ("$end", prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1)));
             using var reader = command.ExecuteReader();
-            var result = new List<(Guid, string, MediaKind, long?)>();
+            var result = new List<(Guid, string, MediaKind, long?, DateTimeOffset?)>();
             while (reader.Read())
-                result.Add((Guid.Parse(reader.GetString(0)), reader.GetString(1), Enum.Parse<MediaKind>(reader.GetString(2)), reader.IsDBNull(3) ? null : reader.GetInt64(3)));
+            {
+                var item = JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!;
+                foreach (var file in MediaVersions.All(item))
+                    if (PathKey(file.Path).StartsWith(prefix, StringComparison.Ordinal)) result.Add((item.Id, file.Path, item.Kind, file.FileSize, file.FileModifiedAtUtc));
+            }
             return result;
         }
     }

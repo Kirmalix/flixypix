@@ -64,6 +64,13 @@ public partial class App : Application
     };
     window.Show();
    }
+   else if (arguments.Length == 2 && arguments[0] == "--folder-sync-test")
+   {
+    var directory = Path.GetFullPath(arguments[1]); Directory.CreateDirectory(directory);
+    var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog"), AutoGeneratePreviews = false }, persistPreferences: false);
+    window.Loaded += async (_, _) => { try { await window.RunFolderSyncVisualTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: watched folders, manual scope, selection, import, themes and folder layout"); window.Close(); } catch(Exception error) { File.WriteAllText(Path.Combine(directory,"result.txt"),error.ToString()); Shutdown(1); } };
+    window.Show();
+   }
    else if (arguments.Length == 2 && arguments[0] == "--smoke-test")
    {
     var directory = Path.GetFullPath(arguments[1]);

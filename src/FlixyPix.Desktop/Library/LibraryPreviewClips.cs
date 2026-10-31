@@ -14,7 +14,7 @@ public partial class MainWindow
 
  internal static PreviewClipSpec ClipSpec(PreviewPreferences previews) => new(previews.ClipSegments, previews.ClipSegmentMilliseconds / 1000.0, previews.ClipWidth);
 
- internal string PreviewClipPath(MediaItem item, PreviewClipSpec spec) => Path.Combine(ClipFolder, item.Id.ToString("N") + "-" + spec.Key + ".mp4");
+ internal string PreviewClipPath(MediaItem item, PreviewClipSpec spec) => Path.Combine(ClipFolder, item.Id.ToString("N") + "-" + spec.Key + "-" + item.FileModifiedAtUtc?.UtcTicks.ToString() + ".mp4");
 
  /// <summary>Makes the clips that are missing: for the chosen videos, otherwise for every video of the library. A
  /// stopped run goes on where it ended, because finished clips stay.</summary>

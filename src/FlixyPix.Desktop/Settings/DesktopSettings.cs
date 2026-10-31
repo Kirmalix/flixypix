@@ -122,7 +122,7 @@ internal sealed class MediaCard : INotifyPropertyChanged
  public string Stars => Item.Rating > 0 ? new string('★', Math.Clamp(Item.Rating, 0, 10) / 2) + (Item.Rating % 2 == 1 ? "½" : "") : "";
  public string Subtitle => string.Join(" · ", new[] { Item.Width.HasValue ? $"{Item.Width} × {Item.Height}" : null,
   Item.Kind != MediaKind.Image && Item.DurationSeconds.HasValue ? DurationText(Item.DurationSeconds.Value) : null,
-  Item.FileSize.HasValue ? SizeText(Item.FileSize.Value) : null }.Where(x => x != null));
+  Item.FileSize.HasValue ? SizeText(Item.FileSize.Value) : null, Item.Extra.ContainsKey("folders.previewStale") ? T("Changed") : null }.Where(x => x != null));
  public string DurationLabel => Item.Kind != MediaKind.Image && Item.DurationSeconds is > 0 and var seconds ? DurationText(seconds) : "";
  /// <summary>Resolution class like 720p, 1080p, 4K or 8K, for videos and images from 720 lines up (the original's overlays said HD/FHD/UHD).</summary>
  public string Quality => QualityOf(Item.Width, Item.Height);

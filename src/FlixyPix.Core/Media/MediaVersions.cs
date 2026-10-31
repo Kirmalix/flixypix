@@ -47,7 +47,7 @@ public static class MediaVersions
     /// <summary>The main file with what is stored for it.</summary>
     public static MediaFile Main(MediaItem item) => new()
     {
-        Path = item.Path, FileSize = item.FileSize, Width = item.Width, Height = item.Height, DurationSeconds = item.DurationSeconds, Technical = item.Technical,
+        Path = item.Path, FileSize = item.FileSize, FileModifiedAtUtc = item.FileModifiedAtUtc, Width = item.Width, Height = item.Height, DurationSeconds = item.DurationSeconds, Technical = item.Technical,
     };
 
     /// <summary>Main file first, then the further versions in their order.</summary>
@@ -246,7 +246,7 @@ public sealed partial class CatalogRepository
             var file = item.Files.FirstOrDefault(f => PathKey(f.Path) == key) ?? throw new ArgumentException(T("The file is no further version of this item."));
             var saved = UpsertCore(item with
             {
-                Path = file.Path, FileSize = file.FileSize, Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical,
+                Path = file.Path, FileSize = file.FileSize, FileModifiedAtUtc = file.FileModifiedAtUtc, Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical,
                 Files = [MediaVersions.Main(item), .. item.Files.Where(f => f != file)],
             }, transaction);
             transaction.Commit();

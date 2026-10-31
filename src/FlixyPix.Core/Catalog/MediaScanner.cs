@@ -68,7 +68,7 @@ public sealed class MediaScanner(CatalogRepository repository)
                 else
                 {
                     var info = new FileInfo(path);
-                    var item = new MediaItem { Path = path, Title = preferences.General.ImportTitle(path), Kind = kind.Value, FileSize = info.Length, FileCreatedAt = FileDate(info) };
+                    var item = new MediaItem { Path = path, Title = preferences.General.ImportTitle(path), Kind = kind.Value, FileSize = info.Length, FileModifiedAtUtc = new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), FileCreatedAt = FileDate(info) };
                     if (repository.AddScannedItem(item)) imported++; else skipped++;
                 }
                 progress?.Report(new ScanProgress(path, processed, imported));

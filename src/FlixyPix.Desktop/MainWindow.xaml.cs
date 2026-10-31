@@ -267,7 +267,16 @@ public partial class MainWindow : Window
  }
  internal bool ImportReportWanted(ImportResult result) => result.Errors.Count > 0 || result.Warnings.Count > 0 || _repository.GetPreferences().General.AlwaysShowImportReport;
  private async void ImportFiles(object sender, RoutedEventArgs e) { var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Multiselect = true, Title = T("Import media"), Filter = MediaFormats.MediaDialogFilter }; if (picker.ShowDialog(this) == true) await ImportPaths(picker.FileNames); }
- private async void ImportFolder(object sender, RoutedEventArgs e) { var picker = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Import media folder (including subfolders)"), Multiselect = true }; if (picker.ShowDialog(this) == true) await ImportPaths(picker.FolderNames); }
+ private async void ImportFolder(object sender, RoutedEventArgs e) { var picker = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Import media folder (including subfolders)"), Multiselect = true }; if (picker.ShowDialog(this) == true) {
+   var watch = new CheckBox { Content = T("Monitor these folders after import"), IsChecked = true, Margin = new Thickness(0, 16, 0, 0) };
+   var panel = new StackPanel(); panel.Children.Add(new TextBlock { Text = string.Join("\n", picker.FolderNames), TextWrapping = TextWrapping.Wrap }); panel.Children.Add(watch);
+   var dialog = new Window { Owner = this, Title = T("Import media"), Width = 620, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+   var frame = new WindowFrame(T("Import media"), T("Your files stay where they are. Your library grows here."), panel, "\uE8F7");
+   frame.Add(T("Cancel"), () => dialog.DialogResult = false, cancel: true); frame.Add(T("Import"), () => dialog.DialogResult = true, primary: true); dialog.Content = frame;
+   if (dialog.ShowDialog() != true) return;
+   await ImportPaths(picker.FolderNames);
+   if (watch.IsChecked == true) { var folders = _repository.GetLibraryFolders().ToList(); foreach (var path in picker.FolderNames) if (!folders.Any(f => string.Equals(Path.GetFullPath(f.Path).TrimEnd(Path.DirectorySeparatorChar), Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))) folders.Add(new LibraryFolder { Path = path }); _repository.SaveLibraryFolders(folders); RestartFolderWatcher(); }
+  } }
  private async void OnDrop(object sender, DragEventArgs e) { if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) await ImportPaths(paths); }
  private void CancelOperation(object sender, RoutedEventArgs e) => _operation?.Cancel();
  private void SearchChanged(object sender, TextChangedEventArgs e) { if (_repository == null) return; _anchor = 0; _searchTimer.Stop(); _searchTimer.Start(); }

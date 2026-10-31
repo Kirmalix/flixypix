@@ -11,7 +11,8 @@ public partial class MainWindow
  private bool ToolExists(string? configured, string name) => File.Exists(string.IsNullOrWhiteSpace(configured)
   ? Path.Combine(AppContext.BaseDirectory, "tools", name + ".exe") : configured);
 
- private async Task PrepareMediaAsync(CancellationToken token)
+ private Task PrepareMediaAsync(CancellationToken token) => PrepareMediaAsync(token, null);
+ private async Task PrepareMediaAsync(CancellationToken token, IReadOnlyList<MediaItem>? chosen, Action<IReadOnlyList<string>>? reportErrors = null)
  {
   var canProbe = ToolExists(_settings.Ffprobe, "ffprobe"); var canRender = ToolExists(_settings.Ffmpeg, "ffmpeg");
   var previews = _repository.GetPreferences().Previews;
@@ -19,25 +20,38 @@ public partial class MainWindow
   var toolsWarned = 0;
   var index = 0;
   // Up to the configured number of preview processes run side by side, as in the original thumbnail generator.
-  await Parallel.ForEachAsync(StreamCatalogForImages(token), new ParallelOptions { MaxDegreeOfParallelism = previews.GeneratorProcesses, CancellationToken = token }, async (item, itemToken) =>
+  await Parallel.ForEachAsync(chosen == null ? StreamCatalogForImages(token) : ChosenItems(chosen, token), new ParallelOptions { MaxDegreeOfParallelism = previews.GeneratorProcesses, CancellationToken = token }, async (item, itemToken) =>
   {
-   if(!File.Exists(item.Path) || !(item.Width==null || item.Kind!=MediaKind.Image && item.DurationSeconds==null ||
+   if(!File.Exists(item.Path) || !(item.Extra.ContainsKey("folders.previewStale") || item.Width==null || item.Kind!=MediaKind.Image && item.DurationSeconds==null ||
       item.Kind!=MediaKind.Audio && (string.IsNullOrEmpty(item.ThumbnailPath) || !File.Exists(item.ThumbnailPath))))return;
    if(item.Kind!=MediaKind.Image && (!canProbe || !canRender) && Interlocked.Exchange(ref toolsWarned,1)==0)
     lock(errors)errors.Add(T("Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings."));
    var number = Interlocked.Increment(ref index);
    _ = Dispatcher.InvokeAsync(() => Status.Text = T("Preview · {0} · {1}", number, Path.GetFileName(item.Path)));
-   try { _repository.Upsert(await PrepareItemAsync(item, previews, canProbe, canRender, itemToken)); }
+   try {
+    var stamp = PerceptualHash.Stamp(new FileInfo(item.Path));
+    var prepared = await PrepareItemAsync(item, previews, canProbe, canRender, itemToken);
+    if (PerceptualHash.Stamp(new FileInfo(item.Path)) != stamp) { lock(errors) errors.Add(item.Path + ": changed during preparation"); return; }
+    if (_repository.GetMedia(item.Id) is not { } current || current.Path != item.Path || current.FileModifiedAtUtc != item.FileModifiedAtUtc) return;
+    var extra = new Dictionary<string,string?>(current.Extra);
+    if (prepared.Extra.TryGetValue(SheetStyleKey, out var style)) extra[SheetStyleKey] = style;
+    if (!prepared.Extra.ContainsKey("folders.previewStale")) extra.Remove("folders.previewStale");
+    var customChanged = current.Extra.GetValueOrDefault("thumbnail.assetId") != item.Extra.GetValueOrDefault("thumbnail.assetId");
+    _repository.Upsert(current with { Width = prepared.Width, Height = prepared.Height, DurationSeconds = prepared.DurationSeconds,
+     Technical = prepared.Technical, Kind = prepared.Kind, ThumbnailPath = customChanged ? current.ThumbnailPath : prepared.ThumbnailPath, Extra = extra });
+   }
    catch (OperationCanceledException) { throw; }
    catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or UnauthorizedAccessException)
    { lock(errors)errors.Add(Path.GetFileName(item.Path) + ": " + error.Message); }
   });
-  if (errors.Count > 0) Dialogs.Text(this, T("Preview and analysis report"), string.Join(Environment.NewLine, errors.Take(30)) +
+  if (errors.Count > 0 && reportErrors != null) reportErrors(errors);
+  else if (errors.Count > 0) Dialogs.Text(this, T("Preview and analysis report"), string.Join(Environment.NewLine, errors.Take(30)) +
    (errors.Count > 30 ? Environment.NewLine + Tn(errors.Count - 30, "1 more file could not be prepared.", "{0} more files could not be prepared.") : ""));
  }
 
  private async Task<MediaItem> PrepareItemAsync(MediaItem item, PreviewPreferences previews, bool canProbe, bool canRender, CancellationToken token)
  {
+  var stale = item.Extra.ContainsKey("folders.previewStale");
   var updated = item;
   if (item.Kind == MediaKind.Image)
   {
@@ -52,16 +66,18 @@ public partial class MainWindow
    if (item.Kind == MediaKind.Audio && probe.VideoCodec != null && Path.GetExtension(item.Path).ToLowerInvariant() is ".ogg" or ".oga")
     updated = updated with { Kind = MediaKind.Video };
   }
-  if (updated.Kind == MediaKind.Audio || !string.IsNullOrEmpty(item.ThumbnailPath) && File.Exists(item.ThumbnailPath)) return updated;
+  if (updated.Kind == MediaKind.Audio || !stale && !string.IsNullOrEmpty(item.ThumbnailPath) && File.Exists(item.ThumbnailPath)) return updated;
   // A chosen custom thumbnail is restored from its stored asset instead of being replaced.
   if (previews.SkipWhenCustomThumbnail && item.Extra.ContainsKey("thumbnail.assetId")) return updated;
   if (item.Kind == MediaKind.Image)
-   return updated with { ThumbnailPath = await DesktopImaging.Service.GetPreviewPathAsync(item.Path,390,390,token) };
+   return ClearStale(updated with { ThumbnailPath = await DesktopImaging.Service.GetPreviewPathAsync(item.Path,390,390,token) });
   if (!canRender) return updated;
   Directory.CreateDirectory(ThumbnailFolder);
-  return await RenderVideoThumbnailAsync(updated, previews, token);
+  return ClearStale(await RenderVideoThumbnailAsync(updated, previews, token));
  }
 
+ private static MediaItem ClearStale(MediaItem item) { var extra = new Dictionary<string,string?>(item.Extra); extra.Remove("folders.previewStale"); return item with { Extra = extra }; }
+ private static async IAsyncEnumerable<MediaItem> ChosenItems(IReadOnlyList<MediaItem> items, [EnumeratorCancellation] CancellationToken token) { foreach(var item in items) { token.ThrowIfCancellationRequested(); yield return item; } await Task.CompletedTask; }
  private IAsyncEnumerable<MediaItem> StreamCatalogForImages(CancellationToken token) => StreamCatalog(new MediaQuery(), token);
 
  private async IAsyncEnumerable<MediaItem> StreamCatalog(MediaQuery query, [EnumeratorCancellation] CancellationToken token)
