@@ -114,6 +114,20 @@ public sealed class StashExportTests:IDisposable
   await Assert.ThrowsAsync<IOException>(()=>snapshot.VerifySourceAsync());Assert.Equal("Original",Assert.Single(snapshot.ReadPage(0)).Document!.Value.GetProperty("name").GetString());
  }
  [Fact]
+ public async Task RepeatedRevalidationSkipsOnlySettledUnchangedFilesAndStillSeesLaterWrites()
+ {
+  var old=Add("tags/old.json","{\"name\":\"Settled\"}");File.SetLastWriteTimeUtc(old,new DateTime(2001,2,3,4,5,6,DateTimeKind.Utc));
+  var fresh=Add("tags/fresh.json","{\"name\":\"Fresh\"}");
+  using var snapshot=await StashExport.ReadDirectoryAsync(Source,Stage);await snapshot.VerifySourceAsync();await snapshot.VerifySourceAsync();
+  // A settled file that is rewritten with the same length gets a new time stamp and is hashed again.
+  File.WriteAllText(old,"{\"name\":\"Changed\"}");
+  await Assert.ThrowsAsync<IOException>(()=>snapshot.VerifySourceAsync());
+  File.WriteAllText(old,"{\"name\":\"Settled\"}");File.SetLastWriteTimeUtc(old,new DateTime(2001,2,3,4,5,6,DateTimeKind.Utc));await snapshot.VerifySourceAsync();
+  // A file written just before its hash is never trusted by its time stamp, even when the stamp is unchanged.
+  var stamp=File.GetLastWriteTimeUtc(fresh);File.WriteAllText(fresh,"{\"name\":\"Frash\"}");File.SetLastWriteTimeUtc(fresh,stamp);
+  await Assert.ThrowsAsync<IOException>(()=>snapshot.VerifySourceAsync());
+ }
+ [Fact]
  public async Task InvalidUtf8AndNestedSectionDirectoriesNeverBecomeValidSourceRecords()
  {
   var path=Add("tags/a.json","{}");File.WriteAllBytes(path,[255,254,0]);

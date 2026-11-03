@@ -52,7 +52,12 @@ public sealed partial class StashExportSnapshot:IDisposable
   return new(reader.GetInt64(0),(StashEntityKind)reader.GetInt32(1),reader.GetString(2),reader.GetString(3),reader.IsDBNull(4)?null:reader.GetString(4),bytes,json,
    JsonSerializer.Deserialize<StashReadIssue[]>(reader.GetString(6))!);
  }
- /// <summary>Rechecks the selected JSON inventory and hashes before a later preview can be applied.</summary>
+ /// <summary>Size and modification time of each file when its content last matched, and when that hash began.</summary>
+ private readonly Dictionary<string,(long Length,long Written,long Hashed)> verified=new(StringComparer.Ordinal);
+ /// <summary>A file written this close to its hash could still change within the same time stamp (FAT keeps 2 seconds), so it is hashed again.</summary>
+ private static readonly long RacyTicks=TimeSpan.FromSeconds(3).Ticks;
+ /// <summary>Rechecks the selected JSON inventory and hashes before a later preview can be applied. A file whose size and time stamp are
+ /// unchanged since an earlier hash, and that was not written shortly before that hash, is not read again; any other file is hashed.</summary>
  public Task VerifySourceAsync(CancellationToken token=default)=>Task.Run(()=>
  {
   lock(gate)
@@ -63,11 +68,17 @@ public sealed partial class StashExportSnapshot:IDisposable
     token.ThrowIfCancellationRequested();if(++seen>Count)throw new IOException("Stash export files were added after the preview.");
     using var query=connection.CreateCommand();query.CommandText="SELECT sha256,length(original) FROM documents WHERE path=$path";query.Parameters.AddWithValue("$path",relative);
     using var reader=query.ExecuteReader();if(!reader.Read())throw new IOException("Stash export file names changed after the preview.");var hash=reader.GetString(0);var length=reader.GetInt64(1);
+    if(file.Length!=length)throw new IOException("Stash export contents changed after the preview.");
+    var written=file.LastWriteTimeUtc.Ticks;
+    if(verified.TryGetValue(relative,out var stamp)&&stamp.Length==length&&stamp.Written==written&&stamp.Hashed-written>RacyTicks)continue;
+    var hashed=DateTime.UtcNow.Ticks;
     StashExport.PlainSourcePath(file.FullName);using var input=new FileStream(file.FullName,FileMode.Open,FileAccess.Read,FileShare.Read);
     if(input.Length!=length)throw new IOException("Stash export contents changed after the preview.");
     using var digest=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);var buffer=new byte[81920];long bytes=0;int count;
     while((count=input.Read(buffer))!=0){token.ThrowIfCancellationRequested();bytes+=count;if(bytes>length)throw new IOException("Stash export grew while being rechecked.");digest.AppendData(buffer.AsSpan(0,count));}
     if(bytes!=length||!Convert.ToHexStringLower(digest.GetHashAndReset()).Equals(hash,StringComparison.Ordinal))throw new IOException("Stash export contents changed after the preview.");
+    // The time stamp is remembered only when it did not change while the file was read.
+    file.Refresh();if(file.Exists&&file.Length==length&&file.LastWriteTimeUtc.Ticks==written)verified[relative]=(length,written,hashed);else verified.Remove(relative);
    }
    if(seen!=Count)throw new IOException("Stash export files were removed after the preview.");
   }

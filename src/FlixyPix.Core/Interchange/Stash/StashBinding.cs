@@ -39,6 +39,8 @@ public sealed partial class CatalogRepository
  private sealed class StashTargetLookup(CatalogRepository repository,SqliteTransaction transaction)
  {
   private CatalogPreferences? preferences;private HashSet<TagKey>? directory;
+  /// <summary>Tag keys already looked up in media_tags; one indexed query per key instead of reading the whole table.</summary>
+  private readonly Dictionary<TagKey,bool> used=new(TagAssetTagComparer.Instance);
   public bool Exists(StashTargetReference target,StashEntityKind sourceKind)
   {
    if(target.Kind==StashTargetKind.ProvenanceOnly)return true;
@@ -50,11 +52,17 @@ public sealed partial class CatalogRepository
    if(directory==null)
    {
     directory=new(TagAssetTagComparer.Instance);foreach(var entry in preferences.TagVocabulary)directory.Add(new(entry.Category,entry.Tag));
-    using var command=repository.Command("SELECT DISTINCT category,tag FROM media_tags",transaction);using var reader=command.ExecuteReader();while(reader.Read())directory.Add(new(reader.GetString(0),reader.GetString(1)));
     foreach(var edge in repository.ReadTagHierarchy(transaction).Edges){directory.Add(edge.Parent);directory.Add(edge.Child);}
    }
    var role=sourceKind==StashEntityKind.Performer?TagRole.Performer:sourceKind==StashEntityKind.Studio?TagRole.Studio:TagRole.Tag;
-   return directory.Contains(target.Tag!)&&TagRoles.Of(preferences,target.Tag!.Category)==role;
+   var key=target.Tag!;if(TagRoles.Of(preferences,key.Category)!=role)return false;
+   if(directory.Contains(key))return true;
+   if(!used.TryGetValue(key,out var found))
+   {
+    using var command=repository.Command("SELECT 1 FROM media_tags WHERE tag=$tag COLLATE EFP_ORDINAL AND category=$category COLLATE EFP_ORDINAL LIMIT 1",transaction,("$tag",key.Value),("$category",key.Category));
+    used[key]=found=command.ExecuteScalar()!=null;
+   }
+   return found;
   }
  }
  public StashBinding? GetStashBinding(Guid identityId)
