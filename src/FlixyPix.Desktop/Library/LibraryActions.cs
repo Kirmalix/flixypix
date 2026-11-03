@@ -7,7 +7,7 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
  private void OrganizeMenu(object sender, RoutedEventArgs e) => MenuBelow(sender, [.. Specs([(T("Directory: tags, performers, studios …"),
-  () => ShowDirectory()), (T("Scene wall: all scenes and bookmarks"), () => ShowSceneWall()), (T("Statistics"), () => ShowStatistics()), (T("Read technical data"), () => ReadTechnicalData())]),
+  () => ShowDirectory()), (T("Scene wall: all scenes and bookmarks"), () => ShowSceneWall()), (T("Find duplicates"), () => ShowDuplicates()), (T("Statistics"), () => ShowStatistics()), (T("Read technical data"), () => ReadTechnicalData())]),
   MenuSpec.Submenu(T("Search / vocabulary / folder favorites"), Specs(OrganizationEntries())), MenuSpec.Separator, .. Specs([(T("Create tag group rule"), NewGroupRule),
   (T("Import original tag rules"), ImportOriginalRules), (T("Import binary original tag rule …"), ImportBinaryRule),
   (T("Export original tag rules"), ExportOriginalRules), (T("Save as smart collection …"), SaveSearch), (T("Open smart collection …"),
@@ -58,18 +58,5 @@ public partial class MainWindow
  {
   await RunOperation(T("Tags from file names"), async token => { var count = await Task.Run(() => _repository.ApplyFilenameTagRules(cancellationToken: token), token); Message.Show(this, Tn(count, "Tags added to 1 item.", "Tags added to {0} items."), T("File name rules")); });
  }
- private async void FindDuplicates()
- {
-  await RunOperation(T("Search for identical files"), async token =>
-  {
-   var items = await Task.Run(() => _repository.Search(), token);
-   var progress = new Progress<DuplicateScanProgress>(p => Status.Text = T("SHA-256 · {0}/{1} · {2}", p.Processed, p.Total, Path.GetFileName(p.Path)));
-   var result = await DuplicateFinder.FindAsync(items, progress, token);
-   var report = Tn(result.Groups.Count, "1 group with identical file content.\nNo files were changed or removed.\n\n",
-    "{0} groups with identical file content.\nNo files were changed or removed.\n\n") + string.Join("\n\n", result.Groups.Select((g,
-    index) => T("Group {0} · {1:N0} bytes\nSHA-256: {2}\n", index + 1, g.FileSize, g.Sha256) + string.Join("\n", g.Items.Select(i => i.Path))));
-   if (result.Errors.Count > 0) report += T("\n\nNot checked:\n") + string.Join("\n", result.Errors);
-   Dialogs.Text(this, T("Identical files"), report);
-  });
- }
+ private void FindDuplicates()=>ShowDuplicates();
 }

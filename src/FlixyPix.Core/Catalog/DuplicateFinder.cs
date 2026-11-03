@@ -49,6 +49,20 @@ public static class DuplicateFinder
             { errors.Add($"{item.Path}: {ex.Message}"); }
             progress?.Report(new DuplicateScanProgress(item.Path, ++processed, potential.Length));
         }
+        // A previously hashed file may change while later candidates are being read.
+        var stamps=candidates.ToDictionary(c=>c.Item.Path,c=>c,StringComparer.OrdinalIgnoreCase);
+        foreach(var group in hashes.Values)
+        foreach(var item in group.ToArray())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var before=stamps[item.Path];
+            try
+            {
+                var current=new FileInfo(item.Path);
+                if(current.Length!=before.Size||current.LastWriteTimeUtc!=before.Modified)throw new IOException("File changed during duplicate scan; result discarded.");
+            }
+            catch(Exception error)when(error is IOException or UnauthorizedAccessException){group.Remove(item);errors.Add($"{item.Path}: {error.Message}");}
+        }
         return new DuplicateScanResult(hashes.Where(x => x.Value.Count > 1)
             .Select(x => new DuplicateGroup(x.Key.Hash, x.Key.Size, x.Value.ToArray())).ToArray(), errors);
     }

@@ -117,10 +117,9 @@ internal sealed class HistoricalFunctionsWindow : Window
     {
         if (activeParsers.SelectedItem is not HistoricalParserDefinition parser || selected.Count == 0) return;
         var plan = await Task.Run(() => catalog.PreviewHistoricalParser(parser.Id, selected));
-        var body = string.Join("\n\n", plan.Changes.Select(change => change.Before.Path + T("\nTitle: ") + change.Before.Title + " → " + change.After.Title +
-            T("\nTags before: ") + string.Join(", ", change.Before.Tags) + T("\nTags after: ") + string.Join(", ", change.After.Tags)));
-        if (Review(T("Check parser changes"), body, T("Apply changes"), plan.Changes.Count > 0))
-        { await Task.Run(() => catalog.ApplyHistoricalParser(plan)); await refresh(); }
+        var review = new ParserChangesWindow(this, plan, selection => Task.Run(() => catalog.ApplyHistoricalParserSelected(plan, selection)));
+        if (review.ShowDialog() == true && review.Selected.Count > 0)
+        { await refresh(); }
     }
     private string? NewOutput()
     {

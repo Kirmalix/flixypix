@@ -30,6 +30,16 @@ public sealed class SimilarMediaTests : IDisposable
         Enumerable.Range(0, PerceptualHash.VideoFrames).Select(i => (seed * (ulong)(i + 3) * 0x9E3779B97F4A7C15UL) ^ ((1UL << flip) - 1)).ToArray();
 
     [Fact]
+    public void ScopeIsAppliedBeforeTransitiveGroupingAndRetainsNegativePairs()
+    {
+        var a=Add("a.png",MediaKind.Image,[0]);var bridge=Add("bridge.png",MediaKind.Image,[7]);var b=Add("b.png",MediaKind.Image,[63]);
+        Assert.Single(catalog.FindSimilarMedia(SimilarityLevel.Exact));
+        Assert.Empty(catalog.FindSimilarMedia(SimilarityLevel.Exact,scope:new HashSet<Guid>{a.Id,b.Id}));
+        Assert.Empty(catalog.FindSimilarMedia(SimilarityLevel.Exact,scope:new HashSet<Guid>()));
+        var group=Assert.Single(catalog.FindSimilarMedia(SimilarityLevel.Exact,scope:new HashSet<Guid>{a.Id,bridge.Id}));Assert.Equal(2,group.Items.Count);
+        catalog.MarkNotDuplicates([a.Id,bridge.Id]);Assert.Empty(catalog.FindSimilarMedia(SimilarityLevel.Exact,scope:new HashSet<Guid>{a.Id,bridge.Id}));
+    }
+    [Fact]
     public void HashOfAPictureIsStableAndMeasuresBits()
     {
         var pixels = Enumerable.Range(0, 1024).Select(i => (byte)(128 + 60 * Math.Sin(i % 32 / 5d) + 50 * Math.Cos(i / 32 / 7d))).ToArray();

@@ -12,9 +12,9 @@ public partial class MainWindow
 {
  /// <summary>Opens "Ähnliche Medien"; removed versions leave the catalog, and with "Datei löschen" also the disk. With
  /// <paramref name="only"/> the search starts by itself and shows only the groups of that medium.</summary>
- internal void ShowSimilarMedia(MediaItem? only = null)
+ internal void ShowSimilarMedia(MediaItem? only = null,IReadOnlyList<MediaItem>? scope=null,Window? owner=null)
  {
-  var window = new SimilarMediaWindow(this, _repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null, RemoveDuplicate, only) { Combine = CombineAsVersions };
+  var window = new SimilarMediaWindow(owner??this, _repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null, RemoveDuplicate, only,scope) { Combine = CombineAsVersions };
   window.ShowDialog();
   if (window.Changed) Refresh();
  }
@@ -45,6 +45,8 @@ internal sealed class SimilarMediaWindow : Window
  private readonly ListBox groupList = new() { Width = 300, Margin = new Thickness(0, 0, 16, 0) };
  private readonly WrapPanel cards = new();
  private readonly TextBlock groupInfo = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) };
+ private readonly TextBlock scanErrors=new(){TextWrapping=TextWrapping.Wrap};
+ private readonly Expander errorDetails=new(){Header=T("Not checked:"),Visibility=Visibility.Collapsed};
  private readonly CheckBox carry = new() { Content = T("Carry tags, rating and counters over to the kept version"), IsChecked = true, Margin = new Thickness(0, 10, 0, 6) };
  private readonly StackPanel actions = new() { Visibility = Visibility.Collapsed };
  private readonly ProgressBar progress = new() { Height = 4, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
@@ -60,10 +62,11 @@ internal sealed class SimilarMediaWindow : Window
  internal int Computed => Volatile.Read(ref computed);
 
  private readonly MediaItem? only;
+ private readonly IReadOnlyList<MediaItem>? scope;
 
- internal SimilarMediaWindow(Window owner, CatalogRepository repository, MediaToolService? tools, Action<MediaItem, bool> remove, MediaItem? only = null)
+ internal SimilarMediaWindow(Window owner, CatalogRepository repository, MediaToolService? tools, Action<MediaItem, bool> remove, MediaItem? only = null,IReadOnlyList<MediaItem>? scope=null)
  {
-  Owner = owner; this.repository = repository; this.tools = tools; this.remove = remove; this.only = only;
+  Owner = owner; this.repository = repository; this.tools = tools; this.remove = remove; this.only = only;this.scope=scope;
   Title = T("Similar items · FlixyPix"); Width = 1180; Height = 760; MinWidth = 860; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner; ShowInTaskbar = false;
   StackPanel Segments(RadioButton[] options, int chosen)
   {
@@ -72,7 +75,7 @@ internal sealed class SimilarMediaWindow : Window
    for (var i = 0; i < options.Length; i++) { options[i].Style = (Style)Application.Current.Resources["Segment"]; options[i].GroupName = group; options[i].IsChecked = i == chosen; options[i].Padding = new Thickness(12, 5, 12, 5); bar.Children.Add(options[i]); }
    return bar;
   }
-  levels[0].ToolTip = T("Only re-encoded or rescaled copies of the same picture.");
+  levels[0].ToolTip = T("Only re-encoded or rescaled copies of the same picture.")+" "+T("Visual similarity does not prove identical file content.");
   levels[1].ToolTip = T("Also copies with other quality, small crops or a logo.");
   levels[2].ToolTip = T("Finds more, including some that only look alike; check before removing.");
   search = SettingsUi.SmallButton(T("Search")); search.Style = (Style)Application.Current.Resources["Primary"]; search.Click += (_, _) => Searching = SearchAsync();
@@ -80,6 +83,7 @@ internal sealed class SimilarMediaWindow : Window
   var top = new WrapPanel();
   top.Children.Add(Segments(kinds, 0)); top.Children.Add(Segments(levels, 1)); top.Children.Add(search); top.Children.Add(cancel);
   var header = new StackPanel(); header.Children.Add(top); header.Children.Add(progress);
+  errorDetails.Content=new ScrollViewer{Content=scanErrors,MaxHeight=100,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};header.Children.Add(errorDetails);
   groupList.SelectionChanged += (_, _) => ShowGroup();
   var keepAndRemove = new Button { Content = T("Keep the chosen one, remove the others from the catalog"), Style = (Style)Application.Current.Resources["Primary"] };
   keepAndRemove.Click += (_, _) => Resolve(deleteFiles: false);
@@ -89,13 +93,14 @@ internal sealed class SimilarMediaWindow : Window
   different.Click += (_, _) => MarkDifferent();
   var combine = new Button { Content = T("Combine as versions"), ToolTip = T("Keeps all files as versions of one item, with the chosen one as main file. Videos only.") };
   combine.Click += (_, _) => CombineVersions();
-  actions.Children.Add(carry); actions.Children.Add(SettingsUi.Buttons(keepAndRemove, keepAndDelete, combine, different));
+  var resolveActions=new WrapPanel();foreach(var button in new[]{keepAndRemove,keepAndDelete,combine,different}){button.Margin=new Thickness(0,0,8,8);resolveActions.Children.Add(button);}
+  actions.Children.Add(carry); actions.Children.Add(resolveActions);
   var detail = new DockPanel(); DockPanel.SetDock(groupInfo, Dock.Top); DockPanel.SetDock(actions, Dock.Bottom);
   detail.Children.Add(groupInfo); detail.Children.Add(actions);
   detail.Children.Add(new ScrollViewer { Content = cards, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
   var body = new DockPanel(); DockPanel.SetDock(header, Dock.Top); header.Margin = new Thickness(0, 0, 0, 12);
   body.Children.Add(header); DockPanel.SetDock(groupList, Dock.Left); body.Children.Add(groupList); body.Children.Add(detail);
-  frame = new WindowFrame(T("Similar items"), T("Finds videos and images that look alike, also in another resolution or quality. Fingerprints are computed once and kept; files are only read."),
+  frame = new WindowFrame(T("Similar items"), T("Finds videos and images that look alike, also in another resolution or quality. Fingerprints are computed once and kept; files are only read.")+(scope==null?"":"\n"+Tn(scope.Count,"Selection (1 item)","Selection ({0:N0} items)")),
    body, "", scroll: false);
   frame.Add(T("Close"), Close, primary: true, cancel: true);
   Content = frame;
@@ -129,21 +134,41 @@ internal sealed class SimilarMediaWindow : Window
   using var source = running = new CancellationTokenSource();
   var token = source.Token;
   search.IsEnabled = false; cancel.Visibility = progress.Visibility = Visibility.Visible; progress.Value = 0;
+  foreach(var option in kinds.Concat(levels))option.IsEnabled=false;
+  groups=[];Fill();scanErrors.Text="";errorDetails.Visibility=Visibility.Collapsed;
   var kind = Kind; var level = Level;
   try
   {
    frame.Status.Text = T("Checking which fingerprints are missing …");
    var run = new FingerprintRun(repository, tools);
-   var work = await Task.Run(() => run.Missing(kind, token), token);
+   var candidates=await Task.Run(()=>scope??repository.Search(),token);
+   var work = await Task.Run(() => run.Missing(kind, token,candidates), token);
    if (work.Count > 0) await ComputeAsync(run, work, token);
    frame.Status.Text = T("Comparing …");
-   groups = (await Task.Run(() => repository.FindSimilarMedia(level, kind, token), token)).Where(g => only == null || g.Items.Any(i => i.Id == only.Id)).ToList();
+   var failures=new List<string>();
+   var valid=await Task.Run(()=>
+   {
+    var stamps=repository.GetFingerprintStamps();var ids=new HashSet<Guid>();
+    foreach(var item in candidates.Where(i=>i.Kind!=MediaKind.Audio&&(kind==null||i.Kind==kind)))
+    {
+     token.ThrowIfCancellationRequested();if(item.Kind==MediaKind.Video&&tools==null)continue;
+     try
+     {
+      var file=new FileInfo(item.Path);
+      if(!file.Exists||!stamps.TryGetValue(item.Id,out var stamp)||stamp!=PerceptualHash.Stamp(file))failures.Add(item.Path);else ids.Add(item.Id);
+     }
+     catch(Exception error)when(error is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException){failures.Add(item.Path+": "+error.Message);}
+    }
+    return ids;
+   },token);
+   scanErrors.Text=string.Join("\n",failures);errorDetails.Visibility=failures.Count>0?Visibility.Visible:Visibility.Collapsed;
+   groups = (await Task.Run(() => repository.FindSimilarMedia(level, kind, token,valid), token)).Where(g => only == null || g.Items.Any(i => i.Id == only.Id)).ToList();
    Fill();
    frame.Status.Text = groups.Count == 0 ? T("No similar items found.") : Tn(groups.Count, "1 group of similar items", "{0:N0} groups of similar items")
     + (tools == null && kind != MediaKind.Image ? T(" · videos skipped: FFmpeg is missing") : "");
   }
   catch (OperationCanceledException) { frame.Status.Text = T("Cancelled. Fingerprints computed so far are kept; the next search goes on from there."); }
-  finally { running = null; search.IsEnabled = true; cancel.Visibility = progress.Visibility = Visibility.Collapsed; }
+  finally { running = null; search.IsEnabled = true;foreach(var option in kinds.Concat(levels))option.IsEnabled=true; cancel.Visibility = progress.Visibility = Visibility.Collapsed; }
  }
 
  private async Task ComputeAsync(FingerprintRun run, List<MediaItem> work, CancellationToken token)

@@ -33,6 +33,13 @@ public enum CatalogFindingKind
     /// <summary>Scene images, artwork, tag images or binary values of the original whose file beside the catalog is
     /// missing or damaged; only a backup brings them back.</summary>
     MissingPictures,
+    /// <summary>Image-set documents with unreadable or inconsistent confirmed data; kept unchanged.</summary>
+    ImageSetDocuments,
+    /// <summary>Derived image-set membership differs from valid source documents.</summary>
+    ImageSetMembership,
+    PublicationGroupDocuments,
+    PublicationGroupMembership,
+    TagHierarchyDocuments,
 }
 
 /// <summary>One kind of finding. <paramref name="Examples"/> are raw paths or SQLite messages, at most
@@ -41,7 +48,7 @@ public sealed record CatalogFinding(CatalogFindingKind Kind, int Count, IReadOnl
 {
     /// <summary>Whether the check repairs it itself; the others need the user (backup, path mapping, preparing media).</summary>
     public bool Repairable => Kind is CatalogFindingKind.OrphanRows or CatalogFindingKind.QueryTable or CatalogFindingKind.SearchIndex
-        or CatalogFindingKind.PathKeys or CatalogFindingKind.SamePath or CatalogFindingKind.MissingFiles or CatalogFindingKind.OrphanFiles;
+        or CatalogFindingKind.PathKeys or CatalogFindingKind.SamePath or CatalogFindingKind.MissingFiles or CatalogFindingKind.OrphanFiles or CatalogFindingKind.ImageSetMembership or CatalogFindingKind.PublicationGroupMembership;
     /// <summary>Offline drives are expected; everything else counts as a problem.</summary>
     public bool IsProblem => Kind != CatalogFindingKind.OfflineFiles && Count > 0;
 }
@@ -162,6 +169,28 @@ public sealed partial class CatalogRepository
         Add(CatalogFindingKind.QueryTable, queryProblems, stale);
         Add(CatalogFindingKind.SearchIndex, searchProblems, searchMessages);
         Add(CatalogFindingKind.PathKeys, pathKeys.Count, pathKeys.Select(p => p.Path));
+        progress?.Report(new(CatalogFindingKind.ImageSetDocuments, 0, 1));
+        lock (gate)
+        {
+            ThrowIfDisposed();using var transaction=connection.BeginTransaction();
+            var audit=AuditImageSets(transaction,token);transaction.Commit();
+            Add(CatalogFindingKind.ImageSetDocuments,audit.InvalidDocuments.Count,audit.InvalidDocuments);
+            Add(CatalogFindingKind.ImageSetMembership,audit.MembershipProblems,audit.Rebuild.Select(s=>s.Name).Concat(audit.OrphanSets));
+        }
+        progress?.Report(new(CatalogFindingKind.PublicationGroupDocuments,0,1));
+        lock(gate)
+        {
+            ThrowIfDisposed();using var transaction=connection.BeginTransaction();var audit=AuditPublicationGroups(transaction,token);transaction.Commit();
+            Add(CatalogFindingKind.PublicationGroupDocuments,audit.InvalidDocuments.Count,audit.InvalidDocuments);
+            Add(CatalogFindingKind.PublicationGroupMembership,audit.MembershipProblems,audit.Rebuild.Select(g=>g.Name).Concat(audit.OrphanGroups));
+        }
+
+        progress?.Report(new(CatalogFindingKind.TagHierarchyDocuments,0,1));
+        lock(gate)
+        {
+            ThrowIfDisposed();using var transaction=connection.BeginTransaction();var invalid=AuditTagHierarchy(transaction,token);transaction.Commit();
+            Add(CatalogFindingKind.TagHierarchyDocuments,invalid.Count,invalid);
+        }
 
         // 4. The same file under several spellings: equal after Unicode normalization.
         var samePath = media.GroupBy(item => SamePathKey(item.Path)).Where(group => group.Count() > 1)
@@ -375,10 +404,14 @@ public sealed partial class CatalogRepository
             using var transaction = connection.BeginTransaction();
             int Execute(string sql, params (string, object)[] parameters) { using var command = Command(sql, transaction, parameters); return command.ExecuteNonQuery(); }
             if (kinds.Contains(CatalogFindingKind.OrphanRows))
-                repaired[CatalogFindingKind.OrphanRows] = new[] { "scenes", "bookmarks", "media_assets", "media_tags", "media_fingerprints", "play_history" }
+                repaired[CatalogFindingKind.OrphanRows] = new[] { "scenes", "bookmarks", "media_assets", "media_tags", "media_fingerprints", "play_history", "wall_marks" }
                     .Where(table => { using var exists = Command("SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name", transaction, ("$name", table)); return exists.ExecuteScalar() is not null; })
                     .Sum(table => Execute($"DELETE FROM {table} WHERE NOT EXISTS(SELECT 1 FROM media m WHERE m.id={table}.media_id)"))
-                    + Execute("DELETE FROM media_query WHERE NOT EXISTS(SELECT 1 FROM media m WHERE m.id=media_query.id)");
+                    + Execute("DELETE FROM media_query WHERE NOT EXISTS(SELECT 1 FROM media m WHERE m.id=media_query.id)")
+                    + Execute("DELETE FROM wall_media WHERE NOT EXISTS(SELECT 1 FROM media m WHERE m.id=wall_media.id)")
+                    + Execute("DELETE FROM image_set_members WHERE NOT EXISTS(SELECT 1 FROM image_sets s WHERE s.id=image_set_members.set_id) OR NOT EXISTS(SELECT 1 FROM media m WHERE m.id=image_set_members.media_id)")
+                    + Execute("DELETE FROM publication_group_members WHERE NOT EXISTS(SELECT 1 FROM publication_groups g WHERE g.id=publication_group_members.group_id) OR (video_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM media m WHERE m.id=publication_group_members.video_id)) OR (image_set_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM image_sets s WHERE s.id=publication_group_members.image_set_id))")
+                    + Execute("DELETE FROM wall_tags WHERE NOT EXISTS(SELECT 1 FROM wall_marks w WHERE w.kind=wall_tags.kind AND w.id=wall_tags.id)");
             if (kinds.Contains(CatalogFindingKind.PathKeys))
             {
                 var fixedKeys = 0;
@@ -402,7 +435,9 @@ public sealed partial class CatalogRepository
                 repaired[CatalogFindingKind.MissingFiles] = gone.Length;
             }
             var rebuild = kinds.Contains(CatalogFindingKind.QueryTable) || kinds.Contains(CatalogFindingKind.SearchIndex);
-            if (rebuild) { RebuildIndexesCore(transaction); repaired[CatalogFindingKind.QueryTable] = report[CatalogFindingKind.QueryTable].Count; repaired[CatalogFindingKind.SearchIndex] = report[CatalogFindingKind.SearchIndex].Count; }
+            if(kinds.Contains(CatalogFindingKind.ImageSetMembership))repaired[CatalogFindingKind.ImageSetMembership]=RepairImageSetMembers(transaction,token);
+            if(kinds.Contains(CatalogFindingKind.PublicationGroupMembership))repaired[CatalogFindingKind.PublicationGroupMembership]=RepairPublicationGroupMembers(transaction,token);
+            if (rebuild) { RebuildIndexesCore(transaction); InitializeWallSchema(transaction, rebuild: true); repaired[CatalogFindingKind.QueryTable] = report[CatalogFindingKind.QueryTable].Count; repaired[CatalogFindingKind.SearchIndex] = report[CatalogFindingKind.SearchIndex].Count; }
             transaction.Commit();
             cachedMedia = null;
         }
@@ -468,6 +503,8 @@ public sealed partial class CatalogRepository
     {
         if (ids.Count == 0) return;
         var gone = ids.ToHashSet();
+        RemoveImageSetMedia(gone,transaction);
+        RemovePublicationGroupMembers(PublicationGroupMemberKind.Video,gone,transaction);
         using (var command = Command("DELETE FROM media WHERE id=$id", transaction, ("$id", "")))
             foreach (var id in gone) { command.Parameters["$id"].Value = id.ToString(); command.ExecuteNonQuery(); }
         foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
@@ -521,6 +558,8 @@ public sealed partial class CatalogRepository
             history.ExecuteNonQuery();
         }
         var removed = others.Select(item => item.Id).ToHashSet();
+        MoveImageSetMedia(removed,keep.Id,transaction);
+        RedirectPublicationGroupVideos(removed,keep.Id,transaction);
         foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
             if (playlist.MediaIds.Any(removed.Contains) || playlist.Entries.Any(entry => removed.Contains(entry.MediaId)))
                 SavePlaylist(playlist with

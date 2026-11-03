@@ -8,11 +8,12 @@ namespace FlixyPix.Desktop;
 internal sealed class WindowFrame : DockPanel
 {
  internal TextBlock Status { get; }
- internal StackPanel Buttons { get; } = new() { Orientation = Orientation.Horizontal };
+ internal Panel Buttons { get; }
 
  /// <param name="status">A status line the window already updates; otherwise the frame makes one.</param>
- internal WindowFrame(string title, string? hint, UIElement body, string? glyph = null, bool scroll = true, TextBlock? status = null)
+ internal WindowFrame(string title, string? hint, UIElement body, string? glyph = null, bool scroll = true, TextBlock? status = null, bool wrapActions = false)
  {
+  Buttons = wrapActions ? new WrapPanel() : new StackPanel { Orientation = Orientation.Horizontal };
   Status = status ?? new TextBlock { Foreground = SettingsUi.Muted };
   Status.VerticalAlignment = VerticalAlignment.Center; Status.TextTrimming = TextTrimming.CharacterEllipsis; Status.TextWrapping = TextWrapping.NoWrap; Status.Margin = new Thickness(0, 0, 12, 0);
   var header = new StackPanel { Margin = new Thickness(24, 20, 24, 12) };
@@ -22,7 +23,7 @@ internal sealed class WindowFrame : DockPanel
   header.Children.Add(heading);
   if (hint != null) header.Children.Add(SettingsUi.Hint(hint));
   var footer = new DockPanel { Margin = new Thickness(24, 12, 24, 18) };
-  DockPanel.SetDock(Buttons, Dock.Right); footer.Children.Add(Buttons); footer.Children.Add(Status);
+  DockPanel.SetDock(Buttons, wrapActions ? Dock.Bottom : Dock.Right); footer.Children.Add(Buttons); footer.Children.Add(Status);
   var divider = new Border { Height = 1, Background = SettingsUi.CardBorder };
   foreach (var (element, dock) in new (UIElement, Dock)[] { (header, Dock.Top), (footer, Dock.Bottom), (divider, Dock.Bottom) }) { SetDock(element, dock); Children.Add(element); }
   var content = new Border { Padding = new Thickness(24, 0, 24, 12), Child = body };

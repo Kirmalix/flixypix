@@ -54,6 +54,8 @@ public sealed partial class CatalogRepository
                     };
                     using(var lookup=Command("SELECT target_id FROM legacy_mappings WHERE source_id=$source AND legacy_key=$key",transaction,("$source",legacySession!.SourceId),("$key",table+":"+id)))
                     if(lookup.ExecuteScalar() is string priorId)item=item with { Id=Guid.Parse(priorId) };
+                    var prior = ReadMediaDocument(item.Id, transaction) ?? ReadImportedPath(item.Path, transaction);
+                    item = item with { ReviewState = prior?.ReviewState ?? ReviewState.Unreviewed };
                     var saved = UpsertCore(item, transaction);
                     AuditLegacy(table,id,"partially-projected","media-supported-fields",transaction,saved.Id);
                     mapped[table + ":" + id] = saved;

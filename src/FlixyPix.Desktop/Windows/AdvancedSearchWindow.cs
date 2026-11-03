@@ -74,7 +74,7 @@ internal sealed class AdvancedSearchWindow : Window
 
  private sealed record Choice<T>(T Value, string Label) { public override string ToString() => Label; }
  private enum GroupMode { All, Any, None }
- private enum ValueKind { Text, Number, Date, Flag, MediaKind, None }
+ private enum ValueKind { Text, Number, Date, Flag, MediaKind, ReviewState, None }
 
  /// <summary>One field with its label, input kind and the factor from the shown unit to the stored base unit.</summary>
  private sealed record FieldSpec(SearchField Field, string Label, ValueKind Kind, string Unit = "", double Factor = 1, bool Suggestions = false);
@@ -85,6 +85,7 @@ internal sealed class AdvancedSearchWindow : Window
   new(SearchField.Directory, T("Folder"), ValueKind.Text), new(SearchField.Path, T("File path"), ValueKind.Text), new(SearchField.Description, T("Description"), ValueKind.Text),
   new(SearchField.Tag, T("Tag"), ValueKind.Text, Suggestions: true), new(SearchField.CategorizedTag, T("Tag in category"), ValueKind.Text, Suggestions: true),
   new(SearchField.TagCategory, T("Tag category"), ValueKind.Text), new(SearchField.Category, T("Media category"), ValueKind.Text, Suggestions: true),
+  new(SearchField.ReviewState, T("Review status"), ValueKind.ReviewState),
   new(SearchField.Kind, T("Media type"), ValueKind.MediaKind), new(SearchField.Favorite, T("Favorite"), ValueKind.Flag), new(SearchField.WatchLater, T("Watch later"), ValueKind.Flag),
   new(SearchField.Rating, T("Rating"), ValueKind.Number, T("Stars"), 2), new(SearchField.Duration, T("Duration"), ValueKind.Number, "min", 60),
   new(SearchField.FileSize, T("File size"), ValueKind.Number, "MB", 1024 * 1024), new(SearchField.Width, T("Width"), ValueKind.Number, "px"), new(SearchField.Height, T("Height"), ValueKind.Number, "px"),
@@ -103,6 +104,7 @@ internal sealed class AdvancedSearchWindow : Window
    new(SearchComparison.NotEquals, T("not")), new(SearchComparison.GreaterThan, T("more than")), new(SearchComparison.LessThan, T("less than")), new(SearchComparison.IsKnown, T("is set")), new(SearchComparison.IsUnknown, T("missing"))],
   _ => [new(SearchComparison.Equals, T("is")), new(SearchComparison.NotEquals, T("is not"))],
  };
+ private static string ReviewStatusLabel(ReviewState state) => state switch { ReviewState.Unspecified => T("Review unspecified"), ReviewState.Unreviewed => T("Unreviewed"), ReviewState.NeedsAttention => T("Needs attention"), _ => T("Reviewed") };
  private static string Format(double value) => value.ToString("0.##", CultureInfo.CurrentCulture);
 
  internal sealed class ConditionGroup : Border
@@ -224,7 +226,8 @@ internal sealed class AdvancedSearchWindow : Window
   {
    fieldChoice.SelectedItem = Fields.First(f => f.Field == chosen);
    comparison.SelectedItem = ((Choice<SearchComparison>[])comparison.ItemsSource).First(c => c.Value == compare);
-   if (Spec.Kind == ValueKind.Number) number.Text = value; else text.Text = value;
+   if (Spec.Kind is ValueKind.MediaKind or ValueKind.ReviewState) kind.SelectedItem = ((Choice<string>[])kind.ItemsSource).First(k => k.Value.Equals(value, StringComparison.OrdinalIgnoreCase));
+   else if (Spec.Kind == ValueKind.Number) number.Text = value; else text.Text = value;
   }
 
   /// <summary>Up to 30 tags or categories of the library that contain the typed text, most used first.</summary>
@@ -244,6 +247,10 @@ internal sealed class AdvancedSearchWindow : Window
    var choices = Comparisons(Spec.Kind);
    comparison.ItemsSource = choices; comparison.SelectedItem = choices.FirstOrDefault(c => c.Value == previous) ?? choices[0];
    suggestions = Spec.Field switch { SearchField.Tag or SearchField.CategorizedTag => Tags, SearchField.Category => Categories, _ => [] };
+   kind.ItemsSource = Spec.Kind == ValueKind.ReviewState
+    ? Enum.GetValues<ReviewState>().Select(state => new Choice<string>(state.ToString(), ReviewStatusLabel(state))).ToArray()
+    : new[] { new Choice<string>("Image", T("Image")), new("Video", T("VIDEO")), new("Audio", T("Audio")) };
+   kind.SelectedIndex = 0;
    unit.Text = Spec.Unit;
   }
   private void UpdateInputs()
@@ -255,7 +262,7 @@ internal sealed class AdvancedSearchWindow : Window
    category.Visibility = spec.Field == SearchField.CategorizedTag ? Visibility.Visible : Visibility.Collapsed;
    number.Visibility = unit.Visibility = !presence && spec.Kind == ValueKind.Number ? Visibility.Visible : Visibility.Collapsed;
    date.Visibility = !presence && spec.Kind == ValueKind.Date ? Visibility.Visible : Visibility.Collapsed;
-   kind.Visibility = spec.Kind == ValueKind.MediaKind ? Visibility.Visible : Visibility.Collapsed;
+   kind.Visibility = spec.Kind is ValueKind.MediaKind or ValueKind.ReviewState ? Visibility.Visible : Visibility.Collapsed;
   }
 
   /// <summary>The condition in base units; throws with a readable message when the input is incomplete.</summary>
@@ -279,6 +286,7 @@ internal sealed class AdvancedSearchWindow : Window
      if (date.SelectedDate is not { } day) throw new ArgumentException(T("“Import date”: please choose a date."));
      return SearchExpression.Where(condition with { Date = new DateTimeOffset(day.Date, TimeZoneInfo.Local.GetUtcOffset(day.Date)) });
     case ValueKind.Flag: return SearchExpression.Where(condition with { Flag = true });
+    case ValueKind.ReviewState:
     case ValueKind.MediaKind: return SearchExpression.Where(condition with { Text = (kind.SelectedItem as Choice<string>)?.Value ?? "Video" });
     default:
      if (text.Text.Trim().Length == 0) throw new ArgumentException(T("“{0}”: please enter a value.", spec.Label));

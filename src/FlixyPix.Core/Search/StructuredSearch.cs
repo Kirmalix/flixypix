@@ -31,7 +31,7 @@ public enum SearchField
     /// <summary>Number of files of the medium: 1 plus its further versions.</summary>
     Versions,
     /// <summary>Lines of the picture: the shorter side, as the resolution classes count.</summary>
-    Lines, HasThumbnail
+    Lines, HasThumbnail, ReviewState
 }
 public enum SearchComparison
 {
@@ -101,6 +101,12 @@ public sealed partial class CatalogRepository
         if (condition.Profile is not null) throw new ArgumentException("Only profile conditions name a profile property.");
         if(condition.TagCategory!=null)throw new ArgumentException("Only categorized tag conditions accept a category value.");
         var values = (condition.Text is null ? 0 : 1) + (condition.Number is null ? 0 : 1) + (condition.Date is null ? 0 : 1) + (condition.Flag is null ? 0 : 1);
+        if (condition.Field == SearchField.ReviewState)
+        {
+            if (values != 1 || condition.Text == null || !Enum.TryParse<ReviewState>(condition.Text, true, out var review) || !Enum.IsDefined(review) || condition.Comparison is not (SearchComparison.Equals or SearchComparison.NotEquals))
+                throw new ArgumentException("Review status requires a defined review state and equality comparison.");
+            return;
+        }
         if (PresenceComparison(condition.Comparison))
         {
             if (values != 0) throw new ArgumentException("Known/unknown conditions have no value.");
@@ -136,6 +142,8 @@ public sealed partial class CatalogRepository
 
     private string BuildExpressionSql(SearchExpression expression, Func<object, string> parameter, SqliteTransaction? transaction)
     {
+        if (expression.Condition is { Field: SearchField.ReviewState } review)
+            return "q.review_state" + (review.Comparison == SearchComparison.NotEquals ? "<>" : "=") + parameter((int)Enum.Parse<ReviewState>(review.Text!, true));
         if (expression.Operator == SearchOperator.Not) return "NOT (" + BuildExpressionSql(expression.Children[0], parameter, transaction) + ")";
         if (expression.Operator is SearchOperator.All or SearchOperator.Any)
             return "(" + string.Join(expression.Operator == SearchOperator.All ? " AND " : " OR ", expression.Children.Select(child => BuildExpressionSql(child, parameter, transaction))) + ")";

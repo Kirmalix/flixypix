@@ -19,6 +19,7 @@ public sealed record MediaQuery
     public string? Category { get; init; }
     public int MinimumRating { get; init; }
     public bool? IsFavorite { get; init; }
+    public IReadOnlyList<ReviewState> ReviewStates { get; init; } = [];
     public bool? WatchLater { get; init; }
     public MediaKind? Kind { get; init; }
     public string? Folder { get; init; }
@@ -140,15 +141,16 @@ public sealed partial class CatalogRepository
                 THEN json_extract(NEW.document,'$.fileSize')*8.0/json_extract(NEW.document,'$.durationSeconds')/1000 END),
             CASE WHEN json_type(NEW.document,'$.technical')='object' THEN coalesce(json_extract(NEW.document,'$.technical.hdr'),0) END,
             1 + coalesce(json_array_length(NEW.document,'$.files'),0),
-            min(json_extract(NEW.document,'$.width'),json_extract(NEW.document,'$.height'))
+            min(json_extract(NEW.document,'$.width'),json_extract(NEW.document,'$.height')),
+            CASE json_extract(NEW.document,'$.reviewState') WHEN 'Unreviewed' THEN 1 WHEN 'NeedsAttention' THEN 2 WHEN 'Reviewed' THEN 3 WHEN 'Unspecified' THEN 0 ELSE coalesce(json_extract(NEW.document,'$.reviewState'),0) END
             """;
         // Columns are named: added columns sit at the end of an upgraded table, in the order they were added.
-        const string QueryColumns = "id,title,path,kind,rating,pinned,watch_later,category,added,duration,file_size,search_text,file_date,imported,progress,last_played,o_count,video_codec,frame_rate,bit_rate,hdr,versions,lines";
+        const string QueryColumns = "id,title,path,kind,rating,pinned,watch_later,category,added,duration,file_size,search_text,file_date,imported,progress,last_played,o_count,video_codec,frame_rate,bit_rate,hdr,versions,lines,review_state";
         // Older libraries lack later columns (10: file date and import date; 11: progress and last playback for the start
         // page; 12: the O counter; 14: technical data, number of versions and the shorter picture side): add them, recreate the
         // triggers that fill them and fill them once. Sorting by "added" uses the import date, so the old paging index goes;
         // sorting by file date is rare and needs no index. Bit rate falls back to file size and duration, as the search did before.
-        string[] added = ["file_date", "imported", "progress", "last_played", "o_count", "video_codec", "frame_rate", "bit_rate", "hdr", "versions", "lines"];
+        string[] added = ["file_date", "imported", "progress", "last_played", "o_count", "video_codec", "frame_rate", "bit_rate", "hdr", "versions", "lines", "review_state"];
         var present = new HashSet<string>(StringComparer.Ordinal); var hasTable = false;
         using (var probe = Command("SELECT name FROM pragma_table_info('media_query')", transaction))
         using (var reader = probe.ExecuteReader()) while (reader.Read()) { hasTable = true; present.Add(reader.GetString(0)); }
@@ -167,7 +169,7 @@ public sealed partial class CatalogRepository
                 id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, title TEXT NOT NULL, path TEXT NOT NULL,
                 kind TEXT NOT NULL, rating INTEGER NOT NULL, pinned INTEGER NOT NULL, watch_later INTEGER NOT NULL,
                 category TEXT, added REAL, duration REAL, file_size INTEGER, search_text TEXT NOT NULL, file_date REAL, imported REAL, progress REAL, last_played REAL, o_count REAL,
-                video_codec TEXT, frame_rate REAL, bit_rate REAL, hdr REAL, versions REAL, lines REAL);
+                video_codec TEXT, frame_rate REAL, bit_rate REAL, hdr REAL, versions REAL, lines REAL, review_state INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS media_tags(
                 media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE, tag TEXT NOT NULL, category TEXT NOT NULL DEFAULT '');
             CREATE INDEX IF NOT EXISTS media_query_title_page ON media_query(title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
@@ -179,6 +181,7 @@ public sealed partial class CatalogRepository
             CREATE INDEX IF NOT EXISTS media_query_category ON media_query(category COLLATE EFP_ORDINAL);
             CREATE INDEX IF NOT EXISTS media_query_started ON media_query(progress) WHERE progress > 0;
             CREATE INDEX IF NOT EXISTS media_query_last_played ON media_query(last_played) WHERE last_played IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS media_query_review ON media_query(review_state,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_kind ON media_query(kind);
             CREATE INDEX IF NOT EXISTS media_query_o_page ON media_query(o_count,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_lines_page ON media_query(lines,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
@@ -271,6 +274,8 @@ public sealed partial class CatalogRepository
         var parameters = new List<(string Name, object Value)>();
         string Parameter(object value) { var name = "$q" + parameters.Count; parameters.Add((name, value)); return name; }
         if (query.MinimumRating != 0) conditions.Add("q.rating >= " + Parameter(query.MinimumRating));
+        if (query.ReviewStates == null || query.ReviewStates.Any(state => !Enum.IsDefined(state))) throw new ArgumentException("Invalid review-state filter.");
+        if (query.ReviewStates.Count > 0) conditions.Add("q.review_state IN(" + string.Join(",", query.ReviewStates.Distinct().Select(state => Parameter((int)state))) + ")");
         if (query.WatchLater is { } later) conditions.Add("q.watch_later=" + Parameter(later ? 1 : 0));
         if (query.Kind is { } kind)
         {

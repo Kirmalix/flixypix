@@ -13,6 +13,76 @@ public sealed class HistoricalParserExecutionTests : IDisposable
     public HistoricalParserExecutionTests() => Directory.CreateDirectory(root);
     public void Dispose() => Directory.Delete(root, true);
 
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void SelectiveCategoryAndPropertyChangesAreAtomicAndKeepDrafts(bool encrypted)
+    {
+        var path=Path.Combine(root,"matrix.db"); using(var empty=new CatalogRepository(path)) { }
+        if(encrypted) CatalogEncryption.EnableEncryption(path,"synthetic-parser-secret");
+        using var key=encrypted?CatalogEncryption.Unlock(path,"synthetic-parser-secret"):null;
+        using var catalog=new CatalogRepository(path,key);
+        var draft=Draft(mode:1,strings:new(){["_regexTemplate"]="_",["_titleTemplate"]="$1"},numbers:new(){["_mode"]=1},
+            templates:[new(0,"People","$1",false,0,false),new(1,null,"$2",false,10,true)]);
+        catalog.UpsertLegacyParserDraft(draft);
+        var definition=catalog.ActivateLegacyParserTranslation(catalog.PreviewLegacyParserTranslation(draft.Id,Reviewed,propertyBindings:[new(10,"Score",HistoricalParserPropertyType.Number)]));
+        var first=catalog.Upsert(new MediaItem {Path=@"U:\media\Alice_12.mp4",Title="Manual",Tags=["manual"],Extra=new(){["manual"]="keep"},ReviewState=ReviewState.Reviewed});
+        var second=catalog.Upsert(new MediaItem {Path=@"U:\media\Bob_24.mp4",Title="Second"});
+        var savedDraft=new MetadataDraft(first.Id,"Draft","","Preserve","",MetadataValues.From(first));catalog.SaveMetadataDrafts([savedDraft]);
+        var preview=catalog.PreviewHistoricalParser(definition.Id,[first.Id,second.Id]);
+        var rows=CatalogRepository.ParserChanges(preview);
+        var selected=rows.Where(r=>r.Key.MediaId==first.Id && r.Key.Kind is ParserChangeKind.CategoryTag or ParserChangeKind.Property).Select(r=>r.Key).ToArray();
+        Assert.Contains(selected,k=>k.Kind==ParserChangeKind.Property);
+        Assert.Equal(1,catalog.ApplyHistoricalParserSelected(preview,selected));
+        var saved=catalog.GetMedia(first.Id)!;Assert.Equal("Manual",saved.Title);Assert.Equal(["manual"],saved.Tags);
+        Assert.Equal("keep",saved.Extra["manual"]);Assert.Equal(ReviewState.Reviewed,saved.ReviewState);Assert.Equal(savedDraft,Assert.Single(catalog.GetMetadataDrafts()));Assert.Empty(catalog.GetMedia(second.Id)!.Tags);
+        var categoryDefinition=Activate(catalog,Draft(mode:1,strings:new(){["_regexTemplate"]="_"},numbers:new(){["_mode"]=0},templates:[new(0,"People","$1",false,0,false)],sourceKey:"18"));
+        var categoryPreview=catalog.PreviewHistoricalParser(categoryDefinition.Id,[first.Id,second.Id]);
+        var categoryKey=CatalogRepository.ParserChanges(categoryPreview).Single(row=>row.Key.MediaId==first.Id && row.Key.Kind==ParserChangeKind.CategoryTag).Key;
+        Assert.Equal(1,catalog.ApplyHistoricalParserSelected(categoryPreview,[categoryKey]));
+        Assert.Contains("Alice",catalog.GetMedia(first.Id)!.TagCategories["People"]);Assert.Contains("Alice",catalog.GetMedia(first.Id)!.Tags);
+        var next=catalog.PreviewHistoricalParser(categoryDefinition.Id,[first.Id,second.Id]);
+        Assert.Throws<OperationCanceledException>(()=>catalog.ApplyHistoricalParserSelected(next,[],new CancellationToken(true)));
+        using(var sql=new Microsoft.Data.Sqlite.SqliteConnection(CatalogEncryption.ConnectionString(path,key).ToString()))
+        {sql.Open();using var trigger=sql.CreateCommand();trigger.CommandText="CREATE TRIGGER parser_fail BEFORE UPDATE ON media WHEN OLD.id='"+second.Id+"' BEGIN SELECT RAISE(ABORT,'injected parser failure'); END;";trigger.ExecuteNonQuery();}
+        var before=System.Text.Json.JsonSerializer.Serialize(catalog.GetMedia(first.Id));
+        Assert.Throws<Microsoft.Data.Sqlite.SqliteException>(()=>catalog.ApplyHistoricalParserSelected(next,null));
+        Assert.Equal(before,System.Text.Json.JsonSerializer.Serialize(catalog.GetMedia(first.Id)));Assert.Empty(catalog.GetMedia(second.Id)!.Tags);
+    }
+
+    [Fact]
+    public void SelectiveApplyRejectsChangedVocabularyAndDefinitionBeforeAnyWrite()
+    {
+        using var catalog=new CatalogRepository(Path.Combine(root,"stale-selective.db"));
+        var definition=Activate(catalog,Draft());
+        var item=catalog.Upsert(new MediaItem {Path=@"U:\media\Alice Bob.mp4"});
+        var preview=catalog.PreviewHistoricalParser(definition.Id,[item.Id]);
+        var keys=CatalogRepository.ParserChanges(preview).Select(row=>row.Key).Take(1).ToArray();
+        catalog.UpsertVocabularyTag(new("Other","People"));
+        Assert.Throws<InvalidOperationException>(()=>catalog.ApplyHistoricalParserSelected(preview,keys));
+        preview=catalog.PreviewHistoricalParser(definition.Id,[item.Id]);
+        using(var sql=new Microsoft.Data.Sqlite.SqliteConnection("Data Source="+catalog.DatabasePath+";Pooling=False"))
+        {sql.Open();using var command=sql.CreateCommand();command.CommandText="UPDATE historical_parser_definitions SET document=json_set(document,'$.name','Changed') WHERE id=$id";command.Parameters.AddWithValue("$id",definition.Id.ToString());command.ExecuteNonQuery();}
+        Assert.Throws<InvalidOperationException>(()=>catalog.ApplyHistoricalParserSelected(preview,keys));
+        Assert.Empty(catalog.GetMedia(item.Id)!.Tags);
+    }
+
+    [Fact]
+    public void SelectiveApplyUsesValidatedKeysAndLeavesOtherMediaAndFieldsUntouched()
+    {
+        using var catalog = new CatalogRepository(Path.Combine(root,"selected.db"));
+        var definition = Activate(catalog,Draft());
+        var first = catalog.Upsert(new MediaItem { Path = @"U:\media\Alice Bob.mp4", Rating=9, ReviewState=ReviewState.Reviewed });
+        var second = catalog.Upsert(new MediaItem { Path = @"U:\media\Carol.mp4" });
+        var preview = catalog.PreviewHistoricalParser(definition.Id,[first.Id,second.Id]);
+        var key = CatalogRepository.ParserChanges(preview).Single(row=>row.Key.MediaId==first.Id && row.Key.Value=="Alice").Key;
+        Assert.Equal(0,catalog.ApplyHistoricalParserSelected(preview,[]));
+        Assert.Throws<ArgumentException>(()=>catalog.ApplyHistoricalParserSelected(preview,[key with {Value="Forged"}]));
+        Assert.Equal(1,catalog.ApplyHistoricalParserSelected(preview,[key]));
+        Assert.Equal(["Alice"],catalog.GetMedia(first.Id)!.Tags); Assert.Empty(catalog.GetMedia(second.Id)!.Tags);
+        Assert.Equal(9,catalog.GetMedia(first.Id)!.Rating); Assert.Equal(ReviewState.Reviewed,catalog.GetMedia(first.Id)!.ReviewState);
+        Assert.Throws<InvalidOperationException>(()=>catalog.ApplyHistoricalParserSelected(preview,[key]));
+    }
+
     [Fact]
     public void TranslationRequiresReviewedFormattingAndLeavesSourceDraftInactive()
     {
