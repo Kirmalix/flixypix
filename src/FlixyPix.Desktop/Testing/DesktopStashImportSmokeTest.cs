@@ -10,11 +10,15 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
  /// <summary>Drives the Stash wizard through all steps against its own catalog: first import with an archive image, an unchanged
- /// repeat that proposes nothing, and a changed title that is only taken once its field is chosen.</summary>
+ /// repeat that proposes nothing, and a changed title that is only taken once its field is chosen; plain and encrypted.</summary>
  private async Task RunStashImportSmokeAsync(string directory)
  {
+  foreach(var encrypted in new[]{false,true})await RunStashImportSmokeAsync(Path.Combine(directory,"stash-import",encrypted?"encrypted":"plain"),encrypted);
+ }
+ private async Task RunStashImportSmokeAsync(string root,bool encrypted)
+ {
   static void Require(bool condition,string message){if(!condition)throw new InvalidOperationException(message);}
-  var root=Path.Combine(directory,"stash-import");var export=Path.Combine(root,"export");var media=Path.Combine(root,"media");
+  var export=Path.Combine(root,"export");var media=Path.Combine(root,"media");
   Directory.CreateDirectory(media);
   void Add(string relative,string json){var path=Path.Combine(export,relative);Directory.CreateDirectory(Path.GetDirectoryName(path)!);File.WriteAllText(path,json);}
   File.WriteAllText(Path.Combine(media,"a.mp4"),"synthetic video");
@@ -25,7 +29,9 @@ public partial class MainWindow
   Add("galleries/photos.json","""{"title":"Photos","zip_files":["/library/photos.zip"]}""");
   Add("images/a.json","""{"title":"Zipped","files":["/library/photos.zip/inner/a.png"],"galleries":[{"zip_files":["/library/photos.zip"]}]}""");
   Add("files/a.json",$$"""{"type":"image","path":"/library/photos.zip/inner/a.png","size":{{new FileInfo(picture).Length}},"zip_file":"/library/photos.zip"}""");
-  var path=Path.Combine(root,"catalog.db");using var db=new CatalogRepository(path);
+  var path=Path.Combine(root,"catalog.db");using(var empty=new CatalogRepository(path)){}
+  if(encrypted)CatalogEncryption.EnableEncryption(path,"synthetic-stash-import-password");
+  using var key=encrypted?CatalogEncryption.Unlock(path,"synthetic-stash-import-password"):null;using var db=new CatalogRepository(path,key);
   async Task<StashImportWindow> Prepare()
   {
    var window=OpenStashImport(db);window.Show();
@@ -65,6 +71,7 @@ public partial class MainWindow
    Require(db.Search().Single(m=>m.Kind==MediaKind.Video).Title=="Renamed in Stash","The chosen Stash title was not taken.");
   }
   finally{chosen.Close();}
+  File.WriteAllText(Path.Combine(root,"result.txt"),"PASS: wizard first import with archive image and gallery, unchanged repeat, kept and later chosen title.");
   static Guid Assert(IReadOnlyList<ImageSet> sets)=>sets is [{MediaIds:[var only]}]?only:Guid.Empty;
  }
 }
