@@ -10,6 +10,7 @@ $workspaceRoot = Join-Path ([IO.Path]::GetTempPath()) 'FlixyPix-test-runs'
 if ((Test-Path -LiteralPath $workspaceRoot) -and ((Get-Item -LiteralPath $workspaceRoot).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Test workspace root cannot be a link.' }
 New-Item -ItemType Directory -Path $workspaceRoot -Force | Out-Null
 . (Join-Path $PSScriptRoot 'TestWorkspace.ps1')
+try { & (Join-Path $PSScriptRoot '..\clean-workspace.ps1') | ForEach-Object { Write-Host $_ } } catch { Write-Warning "Workspace cleanup: $($_.Exception.Message)" }
 foreach ($old in Get-ChildItem -LiteralPath $workspaceRoot -Directory) {
     try { Remove-OwnedRun $old.FullName } catch { Write-Warning "Test cleanup: $($_.Exception.Message)" }
 }

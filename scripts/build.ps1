@@ -1,5 +1,7 @@
 # Tests marked Category=Slow (large catalogs, time budgets) run only with -FullTests.
-param([switch]$BuildOnly, [switch]$KeepTestArtifacts, [switch]$SkipTests, [switch]$FullTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools, [string]$OutputDirectory)
+# -InformationalVersion overrides the version shown in the application and readmes (test builds, see
+# scripts\release\new-test-build.ps1); without it the value of Directory.Build.props applies.
+param([switch]$BuildOnly, [switch]$KeepTestArtifacts, [switch]$SkipTests, [switch]$FullTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools, [string]$OutputDirectory, [string]$InformationalVersion)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
@@ -9,7 +11,10 @@ $priorCapture = $env:FLIXYPIX_TEST_CAPTURE
 $env:FLIXYPIX_TEST_CAPTURE = if ($KeepTestArtifacts) { "1" } else { "0" }
 Push-Location $projectRoot
 try {
-    & $dotnet build FlixyPix.slnx --configuration Release --nologo
+    # Old build, test and tool output would otherwise fill the disk over time.
+    try { & (Join-Path $PSScriptRoot 'clean-workspace.ps1') | ForEach-Object { Write-Host $_ } } catch { Write-Warning "Workspace cleanup: $($_.Exception.Message)" }
+    $versionArguments = if ($InformationalVersion) { @("-p:InformationalVersion=$InformationalVersion") } else { @() }
+    & $dotnet build FlixyPix.slnx --configuration Release --nologo @versionArguments
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     if ($BuildOnly) { return }
     if (!$SkipTests) {
@@ -35,7 +40,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Translation files or untranslated texts need attention (CONTRIBUTING.md, Translations).' }
     $portable = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $projectRoot 'artifacts\portable-FlixyPix' }
     if (Test-Path -LiteralPath $portable) { throw 'Publish directory already exists. Preserve its data and move it aside before creating a fresh release.' }
-    & $dotnet publish src\FlixyPix.Desktop\FlixyPix.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false --output $portable --nologo
+    & $dotnet publish src\FlixyPix.Desktop\FlixyPix.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false --output $portable --nologo @versionArguments
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     if (!$NoMediaTools) {
         $tools = Join-Path $portable 'tools'
@@ -66,6 +71,14 @@ try {
     Copy-Item -LiteralPath 'THIRD-PARTY-NOTICES.md' -Destination $portable -Force
     Copy-Item -LiteralPath 'docs\release\portable-readme.en.md' -Destination (Join-Path $portable 'README.md') -Force
     Copy-Item -LiteralPath 'docs\release\portable-readme.md' -Destination (Join-Path $portable 'README.de.md') -Force
+    # The readmes name the version actually built.
+    $shownVersion = if ($InformationalVersion) { $InformationalVersion } else { @(([xml](Get-Content -LiteralPath 'Directory.Build.props' -Raw)).Project.PropertyGroup.InformationalVersion | Where-Object { $_ })[0] }
+    foreach ($readme in @('README.md', 'README.de.md')) {
+        $path = Join-Path $portable $readme
+        $lines = [IO.File]::ReadAllLines($path)
+        $lines[0] = $lines[0] -replace '^# FlixyPix \S+', "# FlixyPix $shownVersion"
+        [IO.File]::WriteAllLines($path, $lines, [Text.UTF8Encoding]::new($false))
+    }
     python scripts\release\collect-notices.py --publish-directory $portable --output (Join-Path $portable 'tools\notices\dependencies')
     if ($LASTEXITCODE -ne 0) { throw 'Dependency notice collection failed.' }
     [IO.File]::WriteAllText((Join-Path $portable 'portable.flag'), '')

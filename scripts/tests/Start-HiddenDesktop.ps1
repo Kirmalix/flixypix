@@ -45,6 +45,9 @@ public static class HiddenDesktop {
 }
 '@
 }
+# UI runs leave catalogs, captures and copies behind; old ones are removed before a new run (only the exit code is output).
+$cleanup = Join-Path $PSScriptRoot '..\clean-workspace.ps1'
+if (Test-Path -LiteralPath $cleanup) { try { & $cleanup | ForEach-Object { Write-Host $_ } } catch { Write-Warning "Workspace cleanup: $($_.Exception.Message)" } }
 $application = (Resolve-Path -LiteralPath $FilePath).Path
 $commandLine = '"' + $application + '"' + $(if ($ArgumentList.Count) { ' ' + ($ArgumentList -join ' ') } else { '' })
 [FlixyPix.HiddenDesktop]::Run($application, $commandLine, (Split-Path $application), $TimeoutSeconds)

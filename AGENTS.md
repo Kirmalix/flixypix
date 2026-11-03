@@ -7,6 +7,16 @@
 - Task data stays local and is absent from fresh clones. Do not reinitialize existing storage, publish it, enable remote sync, or commit/push code unless the user asks. Git hooks are intentionally not installed.
 - Preserve unrelated working-tree changes. Use `bd <command> --help` for command details.
 
+# Test builds
+
+- Make every test build with `scripts\release\new-test-build.ps1` (see CONTRIBUTING.md, "Versions and test builds"); do not edit the version for it and do not hand-copy packages. It needs a committed state; commit (when the user asked for it) or ask first.
+- The user's working installation is `C:\Projekte\FlixyPix-App` (program files replaced, `Data` kept). The script refuses while FlixyPix runs from there; ask the user to close it rather than stopping their process.
+
+# Local test and build output
+
+- Put manual smoke runs, captures and logs under `artifacts/<name>` (ASCII path) or `%TEMP%\flixypix-<name>`. `scripts/clean-workspace.ps1` removes them automatically (artifacts after 3 days, temp after 1 day); it runs with `build.ps1`, `Invoke-Tests.ps1` and `Start-HiddenDesktop.ps1`.
+- Never place library data in those locations. Portable installations with a `Data` folder and anything a running FlixyPix uses are kept; check a cleanup with `-WhatIf` before forcing it.
+
 # Chrome DevTools MCP test tabs
 
 - At the start of browser work, list the existing pages. Preserve pre-existing pages and pages used by other ongoing tasks. Create separate pages for temporary tests unless the user explicitly asks you to work in an existing page.

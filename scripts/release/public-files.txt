@@ -35,6 +35,7 @@ docs/reviews/localization-review/
 
 scripts/bootstrap.ps1
 scripts/build.ps1
+scripts/clean-workspace.ps1
 scripts/checks/Test-Localization.ps1
 scripts/checks/Test-PortableStorageTrace.ps1
 scripts/checks/i18n-allowlist.txt
@@ -42,6 +43,7 @@ scripts/checks/i18n.py
 scripts/checks/translation_review.py
 scripts/release/collect-notices.py
 scripts/release/make-brand-assets.ps1
+scripts/release/new-test-build.ps1
 scripts/release/package-portable.py
 scripts/release/package-source.py
 scripts/release/public-files.txt

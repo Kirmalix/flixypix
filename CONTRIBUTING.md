@@ -35,6 +35,16 @@ covers every text.
    maintainer, the check above lists what is missing).
 5. Commit messages: a short summary line in English, then a body if the reason is not obvious.
 
+## Versions and test builds
+
+`Directory.Build.props` names the next version with `-dev` (for example `0.6.0-dev`). Test builds come
+from `.\scripts\release\new-test-build.ps1`: only from a committed state, versioned
+`<next version>-dev.<commits since the last release tag>+<commit>`, checked with the UI smoke test
+(unit tests too unless CI passed for that commit), packaged under `artifacts\releases` and installed
+into a working installation whose `Data` folder stays. A release sets the plain version and its
+`CHANGELOG.md` heading, then pushes the tag `v<version>`. Old build and test output is removed by
+`.\scripts\clean-workspace.ps1`, which the build and test scripts run on their own.
+
 ## Dependencies
 
 Lock files of the desktop app and its libraries contain a `win-x64` section. After changing a

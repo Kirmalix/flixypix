@@ -18,8 +18,8 @@ def validate_runtime_path(name):
         raise ValueError('Runtime configuration excluded from portable ZIP: ' + name)
 
 
-def package(source=None, output=None):
-    version = ET.parse(ROOT / 'Directory.Build.props').findtext('.//InformationalVersion')
+def package(source=None, output=None, version=None):
+    version = version or ET.parse(ROOT / 'Directory.Build.props').findtext('.//InformationalVersion')
     source = Path(source) if source is not None else ROOT / 'artifacts/portable-FlixyPix'
     custom_output = output is not None
     if not (source / 'FlixyPix.exe').is_file() or not (source / 'tools/notices/dependencies/dependencies.json').is_file():
@@ -70,5 +70,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source',type=Path)
     parser.add_argument('--output',type=Path)
+    parser.add_argument('--version',help='Version for the manifest; default: InformationalVersion of Directory.Build.props')
     args=parser.parse_args()
-    package(args.source,args.output)
+    package(args.source,args.output,args.version)

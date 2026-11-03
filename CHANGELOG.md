@@ -5,6 +5,27 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 ## Unreleased
 
+The catalog format changes; libraries opened with this version
+are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept before the upgrade).
+
+- Import from Stash: a wizard for scenes, images, galleries, groups, performers, studios and
+  tag parents, with explicit version confirmation, images inside archives and guarded
+  transactions, fast also for large exports.
+- Organize: review inbox, selective parser apply, image sets, publication groups, tag
+  hierarchy, a duplicate hub, performer and studio views and a paged scene wall.
+- Player: A–B loops, playback preferences per video, seek previews from memory and times on
+  contact sheets. A compact bar with symbol groups for loop, bookmark and scene marking, one
+  symbol for audio and subtitle tracks, grouped jump marks and a star rating.
+- Sidebar: library entries in foldable groups with icons, scrolling together with the cards.
+  The review inbox appears once reviewing is in use (setting: automatic, always, never), audio
+  only with audio media. Favorites and Watch later are fixed rows of the collection card; tags
+  and tag categories share one card with a list/categories switch and visible sorting.
+- Boss key: system-wide by default, also with Esc; the program in front still receives the
+  key. Hidden windows return with a separate shortcut.
+- Portable storage with safe switching between portable and profile mode. Libraries taken over
+  before their location was recorded find their thumbnails again after a move.
+- Folder synchronization, media folder tabs and undo of immediate edits per field.
+
 ## 0.5.0
 
 First public release for Windows 10/11 (64-bit), distributed as a portable ZIP.
