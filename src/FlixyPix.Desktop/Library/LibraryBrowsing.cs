@@ -29,8 +29,8 @@ public partial class MainWindow
  {
   public string Label { get; } = label;
   public string FolderName => root && Path!=null ? System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(Path)) is {Length:>0} name?name:Path : Label;
-  public string RootPath => root?Path??"":"";
-  public Visibility RootPathVisibility => root?Visibility.Visible:Visibility.Collapsed;
+  /// <summary>A media folder shows its full path as a tooltip; the row itself keeps to the folder name.</summary>
+  public string? RootTip => root?Path:null;
   public string FolderGlyph => Path==null?"\uE8B7":IsExpanded?"\uE838":"\uE8B7";
   private bool expanded;
   public Action? ExpandedChanged { get; set; }
@@ -58,7 +58,7 @@ public partial class MainWindow
   <HierarchicalDataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ItemsSource="{Binding Children}">
    <Grid MinHeight="28" ToolTip="{Binding Path}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding FolderGlyph}" FontFamily="{DynamicResource IconFont}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
-    <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{Binding FolderName}" Foreground="{DynamicResource TextSoft}" FontSize="12"/><TextBlock Text="{Binding RootPath}" Visibility="{Binding RootPathVisibility}" Foreground="{DynamicResource Muted}" FontSize="10" Margin="0,2,0,3"/></StackPanel>
+    <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding FolderName}" ToolTip="{Binding RootTip}" Foreground="{DynamicResource TextSoft}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2"/>
     <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="10"/></Border>
    </Grid>
   </HierarchicalDataTemplate>

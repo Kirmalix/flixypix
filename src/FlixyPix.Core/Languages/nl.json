@@ -460,6 +460,7 @@
   "Catalog {0} · {1}": "Catalogus {0} · {1}",
   "Catalog: backup, export, import, encryption": "Catalogus: back-up, export, overname, versleuteling",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Catalogi en oude gegevens|*.json;*.jsonl|JSON-catalogus|*.json|Legacy-JSONL|*.jsonl",
+  "Categories": "Categorieën",
   "Categories and folders": "Categorieën en mappen",
   "Category": "Categorie",
   "Category for entries without a category": "Categorie voor items zonder categorie",
@@ -955,6 +956,7 @@
   "Favorite unpinned": "Favoriet losgemaakt",
   "Favorites": "Favorieten",
   "Favorites by rating": "Favorieten op basis van beoordeling",
+  "Favorites: drag items here to pin them": "Favorieten: sleep items hierheen om ze vast te pinnen",
   "Female": "Vrouw",
   "FFmpeg is missing.": "FFmpeg ontbreekt.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg ontbreekt. Het pad kan worden ingesteld onder Instellingen → Gereedschappen.",
@@ -1044,6 +1046,7 @@
   "Folder with subfolders …": "Map met submappen …",
   "Folder “{0}”": "Map ‘{0}’",
   "Folders": "Mappen",
+  "Folders also show the items of their subfolders": "Mappen tonen ook de items van hun submappen",
   "Follow Windows": "Windows volgen",
   "Follow Windows ({0})": "Windows volgen ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Windows volgen gebruikt de weergavetaal van Windows en kiest Engels als FlixyPix die taal niet ondersteunt. Getallen en datums volgen altijd de regionale instellingen van Windows.",
@@ -3147,6 +3150,7 @@
   "Wait briefly before starting": "Wacht kort voordat je begint",
   "Waiting": "Wacht",
   "Watch later": "Later bekijken",
+  "Watch later: drag items here to mark them": "Later bekijken: sleep items hierheen om ze te markeren",
   "Watched": "Bekeken",
   "watched": "bekeken",
   "Watched (history)": "Bekeken (geschiedenis)",
@@ -3337,6 +3341,10 @@
   "{0:N0} items pinned as favorite": {
     "one": "1 item vastgezet als favoriet",
     "other": "{0:N0} items vastgezet als favoriet"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "1 item als favoriet vastgepind",
+    "other": "{0:N0} items als favoriet vastgepind"
   },
   "{0:N0} items removed from collection": {
     "one": "Item verwijderd uit de collectie",

@@ -31,7 +31,7 @@ public partial class MainWindow
     try
     {
      var (total, fresh) = _repository.CountSavedSearch(row.Search!, DateTimeOffset.Now, cancel.Token);
-     await Dispatcher.InvokeAsync(() => { row.CountLabel = total.ToString("N0", CultureInfo.CurrentCulture); row.NewLabel = fresh > 0 ? $"+{fresh:N0}" : ""; });
+     await Dispatcher.InvokeAsync(() => { row.CountLabel = total.ToString("N0", CultureInfo.CurrentCulture); row.NewLabel = fresh > 0 && row.Kind == CollectionNodeKind.Smart ? $"+{fresh:N0}" : ""; });
     }
     catch (Exception error) when (error is OperationCanceledException or ObjectDisposedException or ArgumentException or Microsoft.Data.Sqlite.SqliteException) { if (cancel.IsCancellationRequested) return; }
    }

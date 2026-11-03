@@ -12,4 +12,6 @@ public sealed record SidebarPreferences
  public bool IncludeSubfolders { get; init; } = true;
  public bool TagsByName { get; init; }
  public bool ShowUnusedTags { get; init; }
+ /// <summary>The tag card shows the tags grouped by category instead of the flat list.</summary>
+ public bool TagsByCategory { get; init; }
 }

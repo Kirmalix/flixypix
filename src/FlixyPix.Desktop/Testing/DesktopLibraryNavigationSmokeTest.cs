@@ -13,7 +13,7 @@ public partial class MainWindow
   var healthIds=new List<Guid>();
   var before=_repository.GetPreferences();var state=CaptureViewState();
   try {
-   Check(_sidebarSections.Count==6,"Sidebar sections were not discovered.");
+   Check(_sidebarSections.Count==5,"Sidebar sections were not discovered.");
    _sidebarSections["tags"].IsExpanded=false;Check(_repository.GetPreferences().Sidebar.CollapsedSections.Contains("tags"),"Collapsed section was not saved.");
    _sidebarSections["tags"].IsExpanded=true;
    var empty=Path.Combine(directory,"empty-root");

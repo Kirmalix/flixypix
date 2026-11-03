@@ -484,6 +484,7 @@
   "Catalog {0} · {1}": "Catálogo {0} · {1}",
   "Catalog: backup, export, import, encryption": "Catálogo: backup, exportação, importação e criptografia",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Catálogos e dados antigos|*.json;*.jsonl|Catálogo JSON|*.json|JSONL antigo|*.jsonl",
+  "Categories": "Categorias",
   "Categories and folders": "Categorias e pastas",
   "Category": "Categoria",
   "Category for entries without a category": "Categoria para entradas sem categoria",
@@ -983,6 +984,7 @@
   "Favorite unpinned": "Favorito desafixado",
   "Favorites": "Favoritos",
   "Favorites by rating": "Favoritos por avaliação",
+  "Favorites: drag items here to pin them": "Favoritos: arraste itens para cá para fixá-los",
   "Female": "Mulher",
   "FFmpeg is missing.": "O FFmpeg está ausente.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "O FFmpeg está ausente. O caminho pode ser configurado em Configurações → Ferramentas.",
@@ -1072,6 +1074,7 @@
   "Folder with subfolders …": "Pasta com subpastas …",
   "Folder “{0}”": "Pasta “{0}”",
   "Folders": "Pastas",
+  "Folders also show the items of their subfolders": "As pastas também mostram os itens de suas subpastas",
   "Follow Windows": "Como o Windows",
   "Follow Windows ({0})": "Como o Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Como o Windows segue o idioma de exibição do Windows e usa inglês se o idioma não for suportado. Números e datas sempre seguem o formato regional do Windows.",
@@ -3209,6 +3212,7 @@
   "Wait briefly before starting": "Aguardar um pouco antes de iniciar",
   "Waiting": "Aguardando",
   "Watch later": "Assistir mais tarde",
+  "Watch later: drag items here to mark them": "Assistir depois: arraste itens para cá para marcá-los",
   "Watched": "Assistido",
   "watched": "assistido",
   "Watched (history)": "Assistido (histórico)",
@@ -3422,6 +3426,11 @@
     "other": "{0:N0} itens abertos com {1}"
   },
   "{0:N0} items pinned as favorite": {
+    "one": "{0:N0} item fixado como favorito",
+    "many": "{0:N0} de itens fixados como favoritos",
+    "other": "{0:N0} itens fixados como favoritos"
+  },
+  "{0:N0} items pinned as favorites": {
     "one": "{0:N0} item fixado como favorito",
     "many": "{0:N0} de itens fixados como favoritos",
     "other": "{0:N0} itens fixados como favoritos"

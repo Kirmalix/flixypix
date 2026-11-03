@@ -484,6 +484,7 @@
   "Catalog {0} · {1}": "Каталог {0} · {1}",
   "Catalog: backup, export, import, encryption": "Каталог: резервное копирование, экспорт, перенос, шифрование",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Каталоги и старые данные|*.json;*.jsonl|Каталог JSON|*.json|Старый JSONL|*.jsonl",
+  "Categories": "Категории",
   "Categories and folders": "Категории и папки",
   "Category": "Категория",
   "Category for entries without a category": "Категория для записей без категории",
@@ -983,6 +984,7 @@
   "Favorite unpinned": "Откреплено от избранного",
   "Favorites": "Избранное",
   "Favorites by rating": "Избранное по оценке",
+  "Favorites: drag items here to pin them": "Избранное: перетащите сюда элементы, чтобы закрепить их",
   "Female": "Женщина",
   "FFmpeg is missing.": "FFmpeg отсутствует.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg отсутствует. Путь можно задать в разделе Настройки → Инструменты.",
@@ -1072,6 +1074,7 @@
   "Folder with subfolders …": "Папка с вложенными папками …",
   "Folder “{0}”": "Папка «{0}»",
   "Folders": "Папки",
+  "Folders also show the items of their subfolders": "Папки показывают и элементы своих подпапок",
   "Follow Windows": "Как в Windows",
   "Follow Windows ({0})": "Как в Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Режим «Как в Windows» использует язык интерфейса Windows или английский, если FlixyPix не поддерживает этот язык. Числа и даты всегда соответствуют региональному формату Windows.",
@@ -3209,6 +3212,7 @@
   "Wait briefly before starting": "Небольшая задержка перед запуском",
   "Waiting": "Ожидает",
   "Watch later": "Посмотреть позже",
+  "Watch later: drag items here to mark them": "Посмотреть позже: перетащите сюда элементы, чтобы отложить их",
   "Watched": "Просмотрено",
   "watched": "просмотрено",
   "Watched (history)": "Просмотрено (история)",
@@ -3425,6 +3429,11 @@
     "one": "{0:N0} элемент закреплён в избранном",
     "few": "{0:N0} элемента закреплены в избранном",
     "many": "{0:N0} элементов закреплены в избранном"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "{0:N0} элемент закреплён в избранном",
+    "few": "{0:N0} элемента закреплены в избранном",
+    "many": "{0:N0} элементов закреплено в избранном"
   },
   "{0:N0} items removed from collection": {
     "one": "{0:N0} элемент удалён из коллекции",
