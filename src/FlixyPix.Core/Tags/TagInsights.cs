@@ -112,6 +112,9 @@ public sealed partial class CatalogRepository
 
     /// <summary>Adds and removes flat tags on several media in one transaction. Removal also clears the tag from tag categories.</summary>
     public int UpdateTags(IReadOnlyCollection<Guid> mediaIds, IReadOnlyCollection<string> add, IReadOnlyCollection<string> remove, CancellationToken cancellationToken = default)
+        => UpdateTagsWithUndo(mediaIds, add, remove, cancellationToken).Rows.Count;
+
+    public ImmediateEditUndo UpdateTagsWithUndo(IReadOnlyCollection<Guid> mediaIds, IReadOnlyCollection<string> add, IReadOnlyCollection<string> remove, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(mediaIds); ArgumentNullException.ThrowIfNull(add); ArgumentNullException.ThrowIfNull(remove);
         if (add.Concat(remove).Any(string.IsNullOrWhiteSpace)) throw new ArgumentException(T("Tags must not be empty."));
@@ -123,6 +126,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             var before = ChangeStamp();
             var changes = new List<(MediaItem Old, MediaItem New)>();
+            long? namespaceRevision=null;
             using (var transaction = connection.BeginTransaction())
             {
                 foreach (var id in mediaIds.Distinct())
@@ -139,10 +143,11 @@ public sealed partial class CatalogRepository
                     changes.Add((item, UpsertCore(item with { Tags = tags, TagCategories = categories }, transaction)));
                 }
                 cancellationToken.ThrowIfCancellationRequested();
+                if(changes.Count>0)namespaceRevision=ReadTagNamespaceRevision(transaction);
                 transaction.Commit();
             }
             if (changes.Count > 0) CarryCachesAcross(before, changes);
-            return changes.Count;
+            return new(changes.Select(change => ImmediateRow(change.Old, change.New, ImmediateEditFields.Tags)).ToArray()){TagNamespaceRevision=namespaceRevision};
         }
     }
 

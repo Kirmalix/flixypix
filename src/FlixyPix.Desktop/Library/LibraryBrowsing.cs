@@ -199,7 +199,7 @@ public partial class MainWindow
    if (groups.ContainsKey(parts[0])) { Message.Show(this, T("A category may appear only once.")); return; }
    if (tags.Count > 0) groups[parts[0]] = tags;
   }
-  _repository.Upsert(item with { TagCategories = groups }); Refresh(item.Id); Status.Text = T("Tag categories saved · previous flat tags are kept");
+  ApplyImmediate([item.Id], ImmediateEditFields.Tags, current => current with { TagCategories = groups }); Refresh(item.Id); Status.Text = T("Tag categories saved · previous flat tags are kept");
  }
  private async void SelectCustomThumbnail()
  {
