@@ -258,6 +258,25 @@ public partial class MainWindow
   File.Delete(cache); var recovered = await EnsureArchiveImageAsync(archiveItem);
   Require(File.Exists(recovered.Path) && recovered.Id == archiveItem.Id && archiveBefore.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(archivePath))), "Archive cache recovery changed identity or source.");
   _repository.Delete(archiveItem.Id);
+  // An archive image set extracts only the shown image, not every member before the viewer opens.
+  var setArchivePath = Path.Combine(directory, "synthetic-set.zip");
+  using (var archive = System.IO.Compression.ZipFile.Open(setArchivePath, System.IO.Compression.ZipArchiveMode.Create))
+   foreach (var name in new[] { "Seite 1.png", "Seite 2.png", "Seite 3.png" })
+   { using var target = archive.CreateEntry(name).Open(); using var input = File.OpenRead(_repository.Search().First().Path); input.CopyTo(target); }
+  var setItems = new List<MediaItem>(); var setCaches = new List<string>();
+  foreach (var entry in archiveService.Inspect(setArchivePath).OrderBy(e => e.EntryName, StringComparer.Ordinal))
+  {
+   var extracted = await archiveService.ExtractAsync(entry); setCaches.Add(extracted);
+   setItems.Add(_repository.Upsert(new MediaItem { Path = extracted, Kind = MediaKind.Image, Title = entry.EntryName, Extra = new() { ["archivePath"] = setArchivePath, ["entryName"] = entry.EntryName, ["sha256"] = entry.ArchiveSha256 } }));
+  }
+  setCaches.ForEach(File.Delete);
+  var archiveSet = _repository.UpsertImageSet(new ImageSet { Name = "Archive set", MediaIds = setItems.Select(i => i.Id).ToList() });
+  await OpenImageSetAsync(archiveSet, setItems[1].Id);
+  for (var wait = 0; !File.Exists(setCaches[1]) && wait < 100; wait++) { if (_viewer is ImageViewerWindow loading) await loading.ReadyTask; await Task.Delay(50); }
+  Require(_viewer is ImageViewerWindow { CurrentIndex: 1 } && File.Exists(setCaches[1]) && !File.Exists(setCaches[0]) && !File.Exists(setCaches[2]),
+   "Opening an archive image set did not extract only the shown image.");
+  _viewer!.Close(); _viewer = null;
+  _repository.DeleteImageSet(archiveSet.Id); foreach (var item in setItems) _repository.Delete(item.Id);
   var first = _repository.Search().First();
   await RefreshAsync(first.Id);
   await _previewReady;

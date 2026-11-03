@@ -89,17 +89,31 @@ public partial class MainWindow
   }
  }
 
- private async Task<MediaItem> EnsureArchiveImageAsync(MediaItem item, CancellationToken token = default)
+ /// <param name="inspected">Shared by callers that open many entries of the same archives, so each archive is
+ /// hashed and listed once; extraction still verifies the archive hash.</param>
+ private async Task<MediaItem> EnsureArchiveImageAsync(MediaItem item, CancellationToken token = default,
+  Dictionary<string, Task<IReadOnlyList<ArchiveImageEntry>>>? inspected = null)
  {
   if (File.Exists(item.Path) || !item.Extra.TryGetValue("archivePath", out var archive) || string.IsNullOrWhiteSpace(archive) ||
    !item.Extra.TryGetValue("entryName", out var name) || string.IsNullOrWhiteSpace(name)) return item;
   var service = new ImageArchiveService(Path.Combine(_settings.DataDirectory, "archive-cache"));
-  var entries = await Task.Run(() => service.Inspect(archive), token);
+  IReadOnlyList<ArchiveImageEntry> entries;
+  if (inspected == null) entries = await Task.Run(() => service.Inspect(archive), token);
+  else
+  {
+   var key = CatalogRepository.PathKey(archive);
+   if (!inspected.TryGetValue(key, out var inspection)) inspected[key] = inspection = Task.Run(() => service.Inspect(archive));
+   try { entries = await inspection.WaitAsync(token); }
+   catch (Exception) when (!token.IsCancellationRequested) { if (inspected.TryGetValue(key, out var known) && ReferenceEquals(known, inspection)) inspected.Remove(key); throw; }
+  }
   var entry = entries.SingleOrDefault(e => e.EntryName.Equals(name, StringComparison.Ordinal))
    ?? throw new IOException(T("The image is missing from the original image archive: ") + name);
   if (item.Extra.TryGetValue("sha256", out var expected) && !string.IsNullOrEmpty(expected) && expected != entry.ArchiveSha256)
    throw new IOException(T("The image archive was changed. Please import it as a new image archive."));
-  var restored = await service.ExtractAsync(entry, token);
+  string restored;
+  // A changed archive invalidates the shared listing; the next entry inspects it again.
+  try { restored = await service.ExtractAsync(entry, token); }
+  catch (InvalidDataException) when (inspected != null) { inspected.Remove(CatalogRepository.PathKey(archive)); throw; }
   return _repository.Upsert(item with { Path = restored });
  }
 
