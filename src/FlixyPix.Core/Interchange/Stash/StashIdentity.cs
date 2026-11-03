@@ -62,11 +62,18 @@ public sealed partial class CatalogRepository
  public StashIdentityProposal ResolveStashIdentity(Guid sourceId,StashSourceDocument document,CancellationToken token=default)
  {
   token.ThrowIfCancellationRequested();
-  var keys=StashExport.IdentityKeys(document);
   lock(gate)
   {
    ThrowIfDisposed();using var transaction=connection.BeginTransaction();
    var source=ReadEntity<StashSourceProfile>("stash_sources",sourceId,transaction)??throw new ArgumentException("Unknown Stash source.");
+   return ResolveStashIdentity(source,document,transaction,token);
+  }
+ }
+ /// <summary>Resolution inside a caller's transaction, so the apply step sees the candidate set it writes against.</summary>
+ private StashIdentityProposal ResolveStashIdentity(StashSourceProfile source,StashSourceDocument document,SqliteTransaction transaction,CancellationToken token)
+ {
+  var sourceId=source.Id;var keys=StashExport.IdentityKeys(document);
+  {
    if(keys.Count==0)return new(document.Ordinal,source.Revision,StashIdentityState.Invalid,[]);
    var candidates=new Dictionary<Guid,(long Revision,List<StashIdentityKey> Evidence,bool Truncated)>();var truncated=false;
    foreach(var key in keys)

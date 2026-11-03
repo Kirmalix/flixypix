@@ -30,13 +30,27 @@ public sealed partial class StashExportSnapshot:IDisposable
    while(reader.Read())
    {
     var length=reader.GetInt64(8);if(result.Count>0&&length>64L*1024*1024-pageBytes)break;pageBytes+=length;
-    var bytes=(byte[])reader.GetValue(5);JsonElement? json=null;
-    if(reader.GetBoolean(7)){using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=64});json=document.RootElement.Clone();}
-    result.Add(new(reader.GetInt64(0),(StashEntityKind)reader.GetInt32(1),reader.GetString(2),reader.GetString(3),reader.IsDBNull(4)?null:reader.GetString(4),bytes,json,
-     JsonSerializer.Deserialize<StashReadIssue[]>(reader.GetString(6))!));
+    result.Add(ReadRecord(reader));
    }
    return result;
   }
+ }
+ /// <summary>One staged record by its ordinal, for the selected apply; null when the ordinal is not part of this snapshot.</summary>
+ internal StashSourceDocument? ReadDocument(long ordinal)
+ {
+  lock(gate)
+  {
+   ObjectDisposedException.ThrowIf(disposed,this);
+   using var command=connection.CreateCommand();command.CommandText="SELECT ordinal,kind,path,sha256,natural_key,original,issues,json_valid FROM documents WHERE ordinal=$ordinal";command.Parameters.AddWithValue("$ordinal",ordinal);
+   using var reader=command.ExecuteReader();return reader.Read()?ReadRecord(reader):null;
+  }
+ }
+ private static StashSourceDocument ReadRecord(SqliteDataReader reader)
+ {
+  var bytes=(byte[])reader.GetValue(5);JsonElement? json=null;
+  if(reader.GetBoolean(7)){using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=64});json=document.RootElement.Clone();}
+  return new(reader.GetInt64(0),(StashEntityKind)reader.GetInt32(1),reader.GetString(2),reader.GetString(3),reader.IsDBNull(4)?null:reader.GetString(4),bytes,json,
+   JsonSerializer.Deserialize<StashReadIssue[]>(reader.GetString(6))!);
  }
  /// <summary>Rechecks the selected JSON inventory and hashes before a later preview can be applied.</summary>
  public Task VerifySourceAsync(CancellationToken token=default)=>Task.Run(()=>

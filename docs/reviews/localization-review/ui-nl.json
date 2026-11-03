@@ -13758,6 +13758,66 @@
     "This folder contains no installation of EazyFlixPix 4.": {
       "status": "unchanged",
       "digest": "bd5c55e3c60a98fa69ffc8371c4884ee0a22e50e14e6ca95d52b0b7dddb50af4"
+    },
+    "A local directory entry already has this name. Choose it as the target or enter another name: {0}": {
+      "status": "unchanged",
+      "digest": "c48dde026febbfaa254b2588c8dfc49e458e1e3e0646e15a047398b1c64c088d"
+    },
+    "A local medium already uses this file. Choose it as the target: {0}": {
+      "status": "unchanged",
+      "digest": "5a27a9f3dc9223d7b5654645bf9d2d5b21833affa51470e563a02ed3dc3b7ad5"
+    },
+    "A Stash marker has an invalid time range: {0}": {
+      "status": "unchanged",
+      "digest": "d07c95b206f64e6af9c935d88dcdd6b7801c9ce86fbad0a1bf43a4c0cc97727b"
+    },
+    "Aliases and the description of a tag are kept only with its source record: {0}": {
+      "status": "unchanged",
+      "digest": "ab06c4caa28259f410effa74c6d2b5d43520b94993c36b6bda85b6fa5de02af8"
+    },
+    "Further files stay proposals and are not added as versions yet: {0}": {
+      "status": "unchanged",
+      "digest": "ce64d7f6c332f8800baa8a33eee23a4b6d8607282b562cf534f83654f5ce5ad7"
+    },
+    "Plain tags have no editable directory fields: {0}": {
+      "status": "unchanged",
+      "digest": "b175f09347659b42b55b87d2ce7264f34ef38d7ca8c1954b608e0fb3da56182d"
+    },
+    "Select the referenced performer too, or import it first: {0}": {
+      "status": "unchanged",
+      "digest": "0350b66b4ce853456f2d185aeef1563ca91a01f0b46a55157c800c63ebe88465"
+    },
+    "Select the referenced studio too, or import it first: {0}": {
+      "status": "unchanged",
+      "digest": "199948f9ab32a036f8ec9dcc685c8c83d8a9f1d4d81323841966919ada4c9020"
+    },
+    "The category is already used with another role: {0}": {
+      "status": "unchanged",
+      "digest": "eabe4d3e715161ff427158626372cb0b2cc69ea33100d276c07edf2504577cee"
+    },
+    "The local target of this Stash record was removed. Choose a target or create a new one: {0}": {
+      "status": "unchanged",
+      "digest": "de66712a69443a19e5806f8b3edd955c9e8e77335c292d04b610c3da7235126f"
+    },
+    "The Stash identities changed. Refresh the preview.": {
+      "status": "unchanged",
+      "digest": "77acadde3d7d2ded8d7baaa0298c9f091e4378bbfcad2f3d6893fecfc382f394"
+    },
+    "The Stash record has no mapped local file: {0}": {
+      "status": "unchanged",
+      "digest": "ff5cc6ff92ed01f7fe349c6e388c70662c20126130dd993f010818a8f5d911e6"
+    },
+    "The Stash record needs corrections: {0}": {
+      "status": "unchanged",
+      "digest": "bda44f6446139bad5e494371befc7e79e30b4f0a5a62452f1b0a98755b9a0dd6"
+    },
+    "This kind of Stash record cannot be imported yet: {0}": {
+      "status": "unchanged",
+      "digest": "4a96cdf5458f3d6d11427a68507f87ac1585c0d386739cee3fd8ad301a6d5286"
+    },
+    "Two selected Stash entries would get the same directory name: {0}": {
+      "status": "unchanged",
+      "digest": "f9bb76c4cca609b4681e09fc39fd675b2b3c9520bb16ae4196dd16c74f46baa7"
     }
   }
 }
