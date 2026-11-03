@@ -14197,6 +14197,14 @@
     "{0:N0} groups with identical file content.": {
       "status": "unchanged",
       "digest": "d3a252b0ea08a3d13b98ad5b6ce888599b8253291bd57bb1351fd9b591ef4eb1"
+    },
+    "Only images can belong to an image set; other gallery entries are kept as provenance: {0}": {
+      "status": "unchanged",
+      "digest": "5ef70d4cc9178f0c4ba74e7725f20f65c007a8101d6221e3d1041aa483a5bac6"
+    },
+    "Select the referenced media too, or import them first: {0}": {
+      "status": "unchanged",
+      "digest": "e443d5e37c672740ec387e4651d66f18b5069c88dcd1551fad97cb462621ac6d"
     }
   }
 }
