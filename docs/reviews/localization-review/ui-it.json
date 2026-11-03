@@ -14339,6 +14339,302 @@
     "The image cannot be located inside its archive: {0}": {
       "status": "unchanged",
       "digest": "15da9522d6b74efe8ace4a0bf9a620a24c1d6e26497addb9954b251c31924683"
+    },
+    "A different record (register as new)": {
+      "status": "unchanged",
+      "digest": "d290027c72276afec9062b26d6625d2977d804f888017d29ebfeb975a32b10a0"
+    },
+    "Add mapping": {
+      "status": "unchanged",
+      "digest": "1b5faa553a8fdbce3426e9266421011f535a9f61af76781518a7e4833bc8713e"
+    },
+    "Add referenced records": {
+      "status": "unchanged",
+      "digest": "bdbe7c906a75bec405949d7bf7f0f760b710436af524de15e1d90a55ae8611df"
+    },
+    "Add the further files as versions": {
+      "status": "unchanged",
+      "digest": "52ba22ff5b34234576cb4276bd8fe5552c074ab84965f677e0918555695c581f"
+    },
+    "Adds performers, studios and media that the selected records refer to and that were not imported before.": {
+      "status": "unchanged",
+      "digest": "446371022d74c185dccaa07a4390b89671ab62e99ebeef4cfd17fcee792b3bd1"
+    },
+    "All records": {
+      "status": "unchanged",
+      "digest": "1563d4269c451dee16529e9680ec55b23aafdbade0ef7cea5f155318a2ec952e"
+    },
+    "Ambiguous": {
+      "status": "unchanged",
+      "digest": "e8f70b916b00f04df516f3cdfbd80c6a4925719ea39cf6e8064260b9579d2fa9"
+    },
+    "Category for performers": {
+      "status": "unchanged",
+      "digest": "c4c634c03c8c45b5b6858c4a86059d681c3f9929c98ca4cd73f90820b74e32a9"
+    },
+    "Category for studios": {
+      "status": "unchanged",
+      "digest": "870fa215d1bd77fb660086ab9b3dbdd0af50a9d00a15d807b0ab72c2556ea90a"
+    },
+    "changed in Stash": {
+      "status": "unchanged",
+      "digest": "0a7febdbf355bfdc32dde4e91b5c07ee4222b4ac03572da0fc7555c082c66133"
+    },
+    "changed in Stash and locally": {
+      "status": "unchanged",
+      "digest": "6458e5376ae1dbb2f7365d3713ef76e2940bddb78127a7b681a08f187bf0deb2"
+    },
+    "Choose a local target or create a new one.": {
+      "status": "unchanged",
+      "digest": "b7c963af950d6808eedc0a830e72e95502889349034223620428a0597fa20f77"
+    },
+    "Choose an existing export folder.": {
+      "status": "unchanged",
+      "digest": "d00359accf1cc09ef7666247a13a49d042f0dc67d5bb19270bdd15747141bc53"
+    },
+    "Choose the matching local entry or create a new one.": {
+      "status": "unchanged",
+      "digest": "a55572d35e6cb253cf7ee2ff4924a51051f9f5ad094a64c17b8c77b99793de17"
+    },
+    "Choose the Stash export folder": {
+      "status": "unchanged",
+      "digest": "11c8d7d299829c5300e90fcadbb3eb794fae5fe9e95d1014d76e0acc4d79c89e"
+    },
+    "Choose which earlier record this is.": {
+      "status": "unchanged",
+      "digest": "fa457e2e062008b0b08a076abf5fe0f4dbc18672a0b8ddc352425ed919bf37ec"
+    },
+    "Correct the record in Stash and export again.": {
+      "status": "unchanged",
+      "digest": "c757a9d10d9e08f381d7bb4e677dd79832d99367983a6dac90ca12082ea7b768"
+    },
+    "Create a new entry": {
+      "status": "unchanged",
+      "digest": "eac5a3a24c2ba7aa6dd7cdf894089d99c3473072bb58f6b797bc02b46df2d16d"
+    },
+    "Each mapping needs a source folder and a local folder.": {
+      "status": "unchanged",
+      "digest": "37da37182aeb9e609ff7b591c957f3f4b53dfcbd7f729fc37e9a0c63dd4c85f1"
+    },
+    "Earlier import": {
+      "status": "unchanged",
+      "digest": "4f8d6a26f7f9e577669ae589ad7ab2b110456f7530a50daed6249a47790ebaba"
+    },
+    "Earlier record {0}": {
+      "status": "unchanged",
+      "digest": "aa56061cd3bb94f13b5731fd2f228c0c29cf1d7d980bee650af290f126e372dd"
+    },
+    "Export folder": {
+      "status": "unchanged",
+      "digest": "2f7a92c3c82a207e6b799f3214465294748b2fc2d1887e90b4c416a5502c2f4e"
+    },
+    "Fields": {
+      "status": "unchanged",
+      "digest": "42c5333c28f06465afb4dcde2795e030d573ef322f58f1238465b90d669a316f"
+    },
+    "Gallery": {
+      "status": "unchanged",
+      "digest": "218cf306c4dea8950c422e3a3248ab298af2f2174a39f27117c2ae3f77c1e711"
+    },
+    "Group": {
+      "status": "unchanged",
+      "digest": "b10e5bf27591b8d6a669b064e01ba22708bf069531e6b4d691e68839cb7ebeda"
+    },
+    "Import finished": {
+      "status": "unchanged",
+      "digest": "0874f2d578edc9d871432ff8d64880306646bbfa988b50ac7b31405ea24ec1a3"
+    },
+    "Import from Stash": {
+      "status": "unchanged",
+      "digest": "61b151703a6df309065f8d1e1be1aba962a75b525a4218fa3ccea94d4cee6f5f"
+    },
+    "Importing … {0:N0} / {1:N0}": {
+      "status": "unchanged",
+      "digest": "1de634469a47c7967f589043f9fa5d0fcbc677740928c881fdc3e5f9d45e5d93"
+    },
+    "kept locally before": {
+      "status": "unchanged",
+      "digest": "e6542f834ab75a69a58f0e69d1435d3ab60e730aa913d78499334ee6afb504b2"
+    },
+    "Local": {
+      "status": "unchanged",
+      "digest": "403df3661bf921e44c15c3b516ae521c3aff4d4305894cfe9788e2dc14a6401c"
+    },
+    "Local folder for {0}": {
+      "status": "unchanged",
+      "digest": "28b1c29c83096ba7336a169fc661450f9af72b8d3cb33e973ead7e5595706474"
+    },
+    "Local target": {
+      "status": "unchanged",
+      "digest": "b3ff4643b1e2c00f001c6274f3297f2656490868d1c2b70b47823e4a5706c446"
+    },
+    "Local target removed": {
+      "status": "unchanged",
+      "digest": "f73e10e3e31a6f12a5da3ca8c1f7cb2f822ee25c33ea6598e9fa1f19596cde3d"
+    },
+    "Matches a local entry": {
+      "status": "unchanged",
+      "digest": "3556f42b45831479158c13778b14b80222a15d226264f92cc26b10d688195f71"
+    },
+    "Members": {
+      "status": "unchanged",
+      "digest": "051a761510b0f4cc58a59c4c8ad27ecd1b1c5e3c2049eb3fa63cac1b3659c168"
+    },
+    "Name in the directory": {
+      "status": "unchanged",
+      "digest": "5185c8dcf852797f2ca75dec61350fabddbe7cdb1bfd6ffc108efa940c0a0e6c"
+    },
+    "Name of the source": {
+      "status": "unchanged",
+      "digest": "612fa442b0e8798c15a5c44f7a2c9eb9ae74007c3429872a304069fccaea15fe"
+    },
+    "Needs corrections": {
+      "status": "unchanged",
+      "digest": "8ea45ba59baaaf3ee5bf77583268dad0d3891ed1b20cf7112451528dd2d11b1c"
+    },
+    "New source": {
+      "status": "unchanged",
+      "digest": "24b9d3f36d8def7c03ac67e5617a562254d8d7d900517520ad59f97574197d7d"
+    },
+    "New: {0:N0} · Updated: {1:N0} · Unchanged: {2:N0}": {
+      "status": "unchanged",
+      "digest": "6b93d8954629eb19b8689571c6844379fe5d9958782c8c60cb8555b2d92289ea"
+    },
+    "not decided before": {
+      "status": "unchanged",
+      "digest": "dc82a25327de829ba2b4a28c5199ecd4898e45e0b01adbe5c6d222b279ab3f0a"
+    },
+    "Not imported": {
+      "status": "unchanged",
+      "digest": "50beb38996b9537f725774aa7057d13d0181e24b2e7a974b676d3897706d3cf9"
+    },
+    "Notes:": {
+      "status": "unchanged",
+      "digest": "5a4beb7df798853c966058ba63c4b531e3e9f59fb116eabd48d8f5028a972d6d"
+    },
+    "Nothing was imported. {0}": {
+      "status": "unchanged",
+      "digest": "49bbe96da095e89ddc48a54f676f794b6c2c0f19dce4974cacca6b46790262cd"
+    },
+    "Other record": {
+      "status": "unchanged",
+      "digest": "8fb469e10866ad98093edfa4fc46791e1230c11087289614303b08812fd98447"
+    },
+    "Paths": {
+      "status": "unchanged",
+      "digest": "98a7efa493fc5aac3536e444e56c2ee5326d5b25c2cc73857527e042fb068474"
+    },
+    "Performer": {
+      "status": "unchanged",
+      "digest": "f8eb844e15c5874bc1cefd51d4a1ad3cad8e70aec68472b17e088d14983367e5"
+    },
+    "Preparing the preview …": {
+      "status": "unchanged",
+      "digest": "bc680340338f9c9bbbb107fece94b13bc70ed35510b785c6e76da103294141ea"
+    },
+    "Preparing the preview … {0:N0} / {1:N0}": {
+      "status": "unchanged",
+      "digest": "2c9eb01a02d6695b9a5954f3ea6052193d1979701a8165e57220698786d65c7e"
+    },
+    "Profile": {
+      "status": "unchanged",
+      "digest": "95e1e5ee30f261977e1e3b244e23e24d688f4afd81d45a6aaef1d332446c3f94"
+    },
+    "Read export": {
+      "status": "unchanged",
+      "digest": "82633bcbd1db716964699d69ecfa28154bdbab8891e8726b3e86fef0fa7ce335"
+    },
+    "Reading the export …": {
+      "status": "unchanged",
+      "digest": "45941147d519f8538c77f2eebd8f297870325437a18f9e17a74338f6ea148d7b"
+    },
+    "Reading the export … {0:N0} records": {
+      "status": "unchanged",
+      "digest": "579c42f8e39621aca388c358f51d6acffd6ef9447d08d4333d5540ad5546ba18"
+    },
+    "Reads a Stash 0.31.1 metadata export folder. The source and the media files stay unchanged; nothing in the catalog changes before the last step.": {
+      "status": "unchanged",
+      "digest": "c9bd11a8db5e346beb0710b9c9b8c54c3d72ce418c09c10c98ee635981e19039"
+    },
+    "Saved source": {
+      "status": "unchanged",
+      "digest": "920953d138509726a2ae011f4333b2c3978383c5554bee1a8e43952e9fd21b88"
+    },
+    "Select all new": {
+      "status": "unchanged",
+      "digest": "4737e340706f320365c7107477c16e8afd00cf67cd91bd13becb4a65f11d193e"
+    },
+    "Select none": {
+      "status": "unchanged",
+      "digest": "fe62ee2d4cad3946827e32946e9c0f73a1f97f679a3ef88fb9b4a3f80d7c32c2"
+    },
+    "Stash": {
+      "status": "unchanged",
+      "digest": "becc61918016af4e83b2f641d54a082bfb583dff3d0a8e5db4bbcc6a4295a18c"
+    },
+    "Stash stores the paths of its own computer. Assign each source folder the local folder that holds the same files; unmapped files cannot be imported.": {
+      "status": "unchanged",
+      "digest": "ee4c4768fc62dd68a4bc662f2121948f184a72330d93d6f495f6ae1009113e09"
+    },
+    "Stash tags become plain tags. Performers and studios become directory entries in these categories.": {
+      "status": "unchanged",
+      "digest": "ee76a26a00141792ba118c60d70b36ffacba1dba2f11ddb326ae067c7eceb3b5"
+    },
+    "Stopped after {0:N0} of {1:N0} records; completed batches stay imported. {2}": {
+      "status": "unchanged",
+      "digest": "cab3a31f135468b2ad5269c829f92d3d12d18b19c068c50e067d74134e819bc3"
+    },
+    "Take": {
+      "status": "unchanged",
+      "digest": "2fd15eabf081bfe30d7c4477a5ea95ebc23a346ba79c7f6a25886baf1fd40b95"
+    },
+    "Takes performers, studios, tags, scenes, images, galleries and groups from a Stash export folder, with a preview. Local values stay unless you choose otherwise.": {
+      "status": "unchanged",
+      "digest": "44325a1e2a5513a0a33eff73c1db249f658cbeb83aecb068219abbf049010de0"
+    },
+    "The folder Stash wrote with “Export to JSON”, containing scenes, images, performers and the other sections.": {
+      "status": "unchanged",
+      "digest": "cadd76b1a4beb0dbb6f257ce374ab48ef2e2671dfac8bca89e8e0e3b15fdd7e4"
+    },
+    "The import source no longer exists.": {
+      "status": "unchanged",
+      "digest": "1dc574d7bf08fca65bbd3e29d3f2a70c2334c4495b88c2fa124b8a2f80839a90"
+    },
+    "They are imported in batches of {0}; each batch is complete or not imported at all.": {
+      "status": "unchanged",
+      "digest": "b360c9905569c35c0a5d25d29aa62227b8e4393198855ea1e9c3a8ccdf2f17c3"
+    },
+    "This kind of record is kept in the export and not imported.": {
+      "status": "unchanged",
+      "digest": "81be68fc4ac736ca78cef6af41d25915ad7bce87b632450b9180c4c0532ac254"
+    },
+    "Unchanged": {
+      "status": "unchanged",
+      "digest": "f9f36da61f047da53729722110329fe3f3beaa98415b224b05f3ced5043230cf"
+    },
+    "unchanged in Stash": {
+      "status": "unchanged",
+      "digest": "d02863c1a777a3aa12d44a87ccc20398fd864dd0a5ea87f4566420dd5b57529d"
+    },
+    "Unchecked fields keep the local value. Checked fields take the value from Stash.": {
+      "status": "unchanged",
+      "digest": "b3eb34f9ed1af98770ca9ad8387d5c810aab167aad91c8debeb03284f760086a"
+    },
+    "{0:N0} need corrections.": {
+      "status": "unchanged",
+      "digest": "3ee6cca653b1282b985886f8b003995734bdfe2a52c10508fe9d79152373ebb9"
+    },
+    "{0:N0} of {1:N0} records selected.": {
+      "status": "unchanged",
+      "digest": "dbab7e0e74d1b67df1e1659404e5ec6e21deff71ec7153a14aa3d60cc161728b"
+    },
+    "{0:N0} records in the preview.": {
+      "status": "unchanged",
+      "digest": "166c2962f610891892028c28fc43cd6369d7a0f8c51db8633e4bcf900466b93c"
+    },
+    "{0:N0} records read.": {
+      "status": "unchanged",
+      "digest": "6727ccb116b4b101510c0ff55fa5e6891292a86e108c8abbc116ff1cba484959"
     }
   }
 }
