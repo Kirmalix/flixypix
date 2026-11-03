@@ -21,8 +21,9 @@ internal static class AppShell
  private static readonly List<nint> hiddenWindows = [];
  private static nint lastActive;
  private static HwndSource? hotkeyWindow;
- private static bool hotkeyRegistered, mutedByBoss, minimizedByBoss;
+ private static bool hotkeyRegistered, restoreHotkeyRegistered, mutedByBoss, minimizedByBoss;
  private const int HotkeyId = 0xB055;
+ private const int RestoreHotkeyId = 0xB056;
 
  /// <summary>Shortcut such as "Escape" or "Ctrl+Shift+H"; empty switches the boss key off.</summary>
  internal static string BossKey { get; set; } = "Escape";
@@ -42,6 +43,7 @@ internal static class AppShell
  internal static WindowState RestoreState { get; private set; } = WindowState.Normal;
  /// <summary>The boss key is registered with Windows and works while other programs have the focus.</summary>
  internal static bool GlobalHotkeyActive => hotkeyRegistered;
+ internal static bool RestoreHotkeyActive => restoreHotkeyRegistered;
  internal static nint HotkeyWindow => hotkeyWindow?.Handle ?? 0;
  internal static Window? Root => root;
 
@@ -100,7 +102,7 @@ internal static class AppShell
   if (window.WindowState != WindowState.Minimized)
   {
    RestoreState = window.WindowState;
-   if (minimizedByBoss) { minimizedByBoss = false; GiveSoundBack(); }
+   if (minimizedByBoss) { minimizedByBoss = false; GiveSoundBack(); RegisterHotkey(); }
    return;
   }
   if (IsHidden) return;
@@ -138,6 +140,7 @@ internal static class AppShell
   {
    // Minimizing then neither goes into the tray on its own; the lock on minimizing still applies.
    minimizedByBoss = true; root.WindowState = WindowState.Minimized;
+   RegisterHotkey();
    return;
   }
   HideAll(pause: false, trayIcon: privacy.BossAction == BossAction.Tray);
@@ -145,7 +148,7 @@ internal static class AppShell
 
  /// <summary>Hides every window of the application (also the player, dialogs and popups) and shows the tray icon.
  /// The boss key pauses playback; minimizing into the tray lets it run on. Without <paramref name="trayIcon"/> nothing
- /// remains on screen; the system-wide boss key, the lock prompt or a new start bring the windows back.</summary>
+ /// remains on screen; the separate restore shortcut or the lock prompt brings the windows back.</summary>
  internal static void HideAll(bool pause = true, bool trayIcon = true)
  {
   if (IsHidden) return;
@@ -158,6 +161,13 @@ internal static class AppShell
   }, 0);
   lastActive = hiddenWindows.Contains(foreground) ? foreground : root != null ? new WindowInteropHelper(root).Handle : 0;
   foreach (var handle in hiddenWindows) ShowWindow(handle, SwHide);
+  RegisterHotkey();
+  // Never leave an invisible instance without a working return path.
+  if (!restoreHotkeyRegistered && !trayIcon && !AppLock.IsLocked)
+  {
+   ShowAll();
+   return;
+  }
   if (!trayIcon) return;
   ShowTray();
   // Without a tray icon (no taskbar, for example while Explorer restarts) nothing would bring the windows back.
@@ -165,6 +175,13 @@ internal static class AppShell
  }
 
  private static void ShowTray() { tray ??= new TrayIcon(ShowAll, Exit); tray.Show(); }
+
+ internal static bool CanHideLockPrompt()
+ {
+  if (restoreHotkeyRegistered) return true;
+  ShowTray();
+  return TrayShown;
+ }
 
  /// <summary>Shows the hidden windows again in their former order and activates the one that was active. While locked,
  /// only the lock prompt appears.</summary>
@@ -179,6 +196,7 @@ internal static class AppShell
   if (root is { WindowState: WindowState.Minimized } main) main.WindowState = RestoreState;
   if (lastActive != 0) SetForegroundWindow(lastActive);
   GiveSoundBack();
+  RegisterHotkey();
  }
 
  private static void GiveSoundBack() { if (!mutedByBoss) return; mutedByBoss = false; Muting?.Invoke(false); }
@@ -198,7 +216,11 @@ internal static class AppShell
  private static void RegisterHotkey()
  {
   UnregisterHotkey();
-  if (!Privacy.Settings.BossGlobal || !PlayerHotkeys.TryParse(BossKey, out var modifiers, out var key) || !HasGlobalModifier(modifiers)) return;
+  var restoring = IsHidden || minimizedByBoss;
+  var shortcut = restoring ? Privacy.Settings.RestoreKey : BossKey;
+  if (!PlayerHotkeys.TryParse(shortcut, out var modifiers, out var key) || PlayerHotkeys.IsModifierOnly(key)) return;
+  if (restoring ? modifiers == ModifierKeys.None : !Privacy.Settings.BossGlobal || !HasGlobalModifier(modifiers)) return;
+  if (restoring && PlayerHotkeys.TryParse(BossKey, out var bossModifiers, out var bossKey) && key == bossKey && modifiers == bossModifiers) return;
   if (hotkeyWindow == null)
   {
    hotkeyWindow = new HwndSource(new HwndSourceParameters("FlixyPix-Hotkey") { ParentWindow = new nint(-3), Width = 0, Height = 0, WindowStyle = 0 });
@@ -206,7 +228,8 @@ internal static class AppShell
   }
   var flags = (modifiers.HasFlag(ModifierKeys.Alt) ? 1u : 0) | (modifiers.HasFlag(ModifierKeys.Control) ? 2u : 0) | (modifiers.HasFlag(ModifierKeys.Shift) ? 4u : 0)
    | (modifiers.HasFlag(ModifierKeys.Windows) ? 8u : 0) | 0x4000; // MOD_NOREPEAT
-  hotkeyRegistered = RegisterHotKey(hotkeyWindow.Handle, HotkeyId, flags, (uint)KeyInterop.VirtualKeyFromKey(key));
+  var registered = RegisterHotKey(hotkeyWindow.Handle, restoring ? RestoreHotkeyId : HotkeyId, flags, (uint)KeyInterop.VirtualKeyFromKey(key));
+  if (restoring) restoreHotkeyRegistered = registered; else hotkeyRegistered = registered;
  }
 
  internal static bool HasGlobalModifier(ModifierKeys modifiers) => (modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Windows)) != 0;
@@ -214,16 +237,22 @@ internal static class AppShell
  private static void UnregisterHotkey()
  {
   if (hotkeyRegistered && hotkeyWindow != null) UnregisterHotKey(hotkeyWindow.Handle, HotkeyId);
+  if (restoreHotkeyRegistered && hotkeyWindow != null) UnregisterHotKey(hotkeyWindow.Handle, RestoreHotkeyId);
   hotkeyRegistered = false;
+  restoreHotkeyRegistered = false;
  }
 
  private static nint HotkeyHook(nint window, int message, nint wParam, nint lParam, ref bool handled)
  {
-  if (message != 0x312 || wParam != HotkeyId) return 0; // WM_HOTKEY
+  if (message != 0x312) return 0; // WM_HOTKEY
+  if (wParam == RestoreHotkeyId)
+  {
+   if (restoreHotkeyRegistered && (IsHidden || minimizedByBoss)) { handled = true; ShowAll(); }
+   return 0;
+  }
+  if (wParam != HotkeyId || !hotkeyRegistered) return 0;
   handled = true;
-  // The same key hides and brings back; out of the hidden state it shows the windows or the lock prompt.
-  if (IsHidden && !AppLock.PromptShown || minimizedByBoss) ShowAll();
-  else Boss();
+  Boss();
   return 0;
  }
 

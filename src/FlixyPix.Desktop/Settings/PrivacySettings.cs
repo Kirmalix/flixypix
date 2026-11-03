@@ -10,7 +10,7 @@ internal enum BossAction
  Tray,
  /// <summary>Minimize to the taskbar.</summary>
  Minimize,
- /// <summary>Hide every window without any icon; the boss key (system-wide) or starting FlixyPix again brings it back.</summary>
+ /// <summary>Hide every window without any icon; the separate restore shortcut brings it back.</summary>
  Vanish,
 }
 
@@ -27,6 +27,8 @@ internal sealed record PrivacySettings
  public BossPlayback BossPlayback { get; init; }
  /// <summary>The boss key works also while another program has the focus (needs a modifier such as Ctrl).</summary>
  public bool BossGlobal { get; init; }
+ /// <summary>Registered only while hidden or minimized by the boss key.</summary>
+ public string RestoreKey { get; init; } = "Shift+Escape";
  /// <summary>Lock after this many minutes without input; 0 switches it off.</summary>
  public int LockAfterMinutes { get; init; }
  public bool LockOnMinimize { get; init; }
@@ -37,7 +39,7 @@ internal sealed record PrivacySettings
  public bool BlurPictures { get; init; }
  public string BlurKey { get; init; } = "Ctrl+Shift+U";
  /// <summary>File dialogs add nothing to "Recent" and the jump list; existing entries of FlixyPix are removed.</summary>
- public bool HideRecent { get; init; }
+ public bool HideRecent { get; init; } = FlixyPix.Core.AppStorage.Current.Mode == FlixyPix.Core.StorageMode.Portable;
  /// <summary>Windows, taskbar and the tray icon show <see cref="NeutralTitleText"/> and a plain icon instead of FlixyPix.</summary>
  public bool NeutralTitle { get; init; }
  public string NeutralTitleText { get; init; } = "";
@@ -55,7 +57,7 @@ internal sealed record PrivacySettings
   if (!Enum.IsDefined(BossPlayback)) { reset.Add(prefix + nameof(BossPlayback)); result = result with { BossPlayback = BossPlayback.Pause }; }
   if (LockAfterMinutes is < 0 or > MaximumLockMinutes) { reset.Add(prefix + nameof(LockAfterMinutes)); result = result with { LockAfterMinutes = 0 }; }
   if (PinHash != null && !PinCode.IsHash(PinHash)) { reset.Add(prefix + nameof(PinHash)); result = result with { PinHash = null }; }
-  return result with { BlurKey = BlurKey ?? "", NeutralTitleText = NeutralTitleText ?? "" };
+  return result with { RestoreKey = RestoreKey ?? "Shift+Escape", BlurKey = BlurKey ?? "", NeutralTitleText = NeutralTitleText ?? "" };
  }
 }
 
