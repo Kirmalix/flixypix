@@ -14272,6 +14272,14 @@
       "status": "corrected",
       "digest": "97140e9dc4cfe547fc8fac37c4e1838c0167f667c8106b9ec2de6181e8928fd4",
       "previous_digest": "6033324ff9f41cafaeb427f6128ddd5aedd81d52bb0da59789f36ac8c18de2ad"
+    },
+    "Only images can belong to an image set; other gallery entries are kept as provenance: {0}": {
+      "status": "unchanged",
+      "digest": "bff5fb02bdc32dc2102f7d486ec987f4315f1e43767e52034f00113e031392d1"
+    },
+    "Select the referenced media too, or import them first: {0}": {
+      "status": "unchanged",
+      "digest": "7c98cccdfbccce73ea48cef8483c0986154a1b2a3e933bd698127e78482ed74d"
     }
   }
 }

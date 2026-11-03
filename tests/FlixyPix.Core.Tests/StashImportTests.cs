@@ -134,4 +134,75 @@ public sealed class StashImportTests:IDisposable
   // A repeat of an unconfirmed identity is refused rather than registering a duplicate source identity.
   await Assert.ThrowsAsync<InvalidOperationException>(()=>db.ApplyStashImportAsync(snapshot,Request(source,[new(second)])));
  }
+
+ private void AddOrganization()
+ {
+  foreach(var name in new[]{"a.jpg","b.jpg","s1.mp4","s2.mp4"})File.WriteAllText(Path.Combine(Target,name),"synthetic "+name);
+  Add("galleries/holiday.json","""{"title":"Holiday","details":"Beach week","folder_path":"/library/holiday"}""");
+  Add("images/b.json","""{"title":"B","files":["/library/b.jpg"],"galleries":[{"folder_path":"/library/holiday"}]}""");
+  Add("images/a.json","""{"title":"A","files":["/library/a.jpg"],"galleries":[{"folder_path":"/library/holiday"}]}""");
+  Add("movies/series.json","""{"name":"Series","synopsis":"Two parts"}""");
+  Add("scenes/s1.json","""{"title":"Part two","files":["/library/s1.mp4"],"movies":[{"movieName":"Series","scene_index":2}]}""");
+  Add("scenes/s2.json","""{"title":"Part one","files":["/library/s2.mp4"],"movies":[{"movieName":"Series","scene_index":1}]}""");
+ }
+
+ [Theory][InlineData(false)][InlineData(true)]
+ public async Task GalleriesAndGroupsBecomeOrderedImageSetsAndPublicationGroups(bool encrypted)
+ {
+  AddOrganization();using var db=Open(encrypted);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  var result=await db.ApplyStashImportAsync(snapshot,Request(source,rows.Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));Assert.Equal(6,result.Created);
+  var media=db.Search().ToDictionary(item=>item.Title);
+  var set=Assert.Single(db.GetImageSets());Assert.Equal(("Holiday","Beach week"),(set.Name,set.Description));
+  Assert.Equal(new[]{media["A"].Id,media["B"].Id},set.MediaIds);Assert.Equal(media["A"].Id,set.CoverId);
+  var group=Assert.Single(db.GetPublicationGroups());Assert.Equal(("Series","Two parts"),(group.Name,group.Description));
+  Assert.Equal(new[]{media["Part one"].Id,media["Part two"].Id},group.Members.Select(member=>member.TargetId));
+  Assert.All(group.Members,member=>Assert.Equal(PublicationGroupMemberKind.Video,member.Kind));
+  var again=await db.ApplyStashImportAsync(snapshot,Request(source,Confirmed(Preview(db,snapshot,source))));Assert.Equal((0,0,6),(again.Created,again.Updated,again.Unchanged));
+  Assert.Single(db.GetImageSets());Assert.Single(db.GetPublicationGroups());
+ }
+
+ [Fact]
+ public async Task MembersMustBeSelectedOrImportedEarlierAndChangedMembershipIsOnlyTakenWhenChosen()
+ {
+  AddOrganization();using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  var gallery=rows.Single(row=>row.Draft.Kind==StashEntityKind.Gallery);
+  var missing=await Assert.ThrowsAsync<ArgumentException>(()=>db.ApplyStashImportAsync(snapshot,Request(source,[new(gallery.Draft.SourceOrdinal)])));
+  Assert.Contains("images/",missing.Message,StringComparison.Ordinal);RequireNothingImported(db,source);Assert.Empty(db.GetImageSets());
+  await db.ApplyStashImportAsync(snapshot,Request(source,rows.Where(row=>row.Draft.Kind==StashEntityKind.Image).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  await db.ApplyStashImportAsync(snapshot,Request(source,[new(gallery.Draft.SourceOrdinal)]));
+  var set=Assert.Single(db.GetImageSets());var a=db.Search().Single(item=>item.Title=="A");
+  // A local reorder is kept; the changed source order shows as a conflict and is only taken when chosen.
+  db.UpsertImageSet(set with {MediaIds=set.MediaIds.AsEnumerable().Reverse().ToList()});
+  Add("images/a.json","""{"title":"A","files":["/library/a.jpg"]}""");
+  using var changed=await Read();var row=Preview(db,changed,source).Single(row=>row.Draft.Kind==StashEntityKind.Gallery);
+  Assert.Equal(StashFieldStatus.Conflict,row.Fields.Single(field=>field.Field=="mediaIds").Status);
+  var images=Preview(db,changed,source).Where(row=>row.Draft.Kind==StashEntityKind.Image);
+  await db.ApplyStashImportAsync(changed,Request(source,Confirmed([row,..images])));
+  Assert.Equal(2,Assert.Single(db.GetImageSets()).MediaIds.Count);
+  var choice=Confirmed([row]).Single() with {Fields=[new("mediaIds",StashFieldDecision.UseSource)]};
+  await db.ApplyStashImportAsync(changed,Request(source,[choice]));
+  var updated=Assert.Single(db.GetImageSets());Assert.Equal(new[]{db.Search().Single(item=>item.Title=="B").Id},updated.MediaIds);Assert.NotEqual(a.Id,updated.CoverId);
+ }
+
+ [Fact]
+ public async Task TagParentsGoIntoTheHierarchyAndCyclesRefuseTheImport()
+ {
+  Add("tags/outdoor.json","""{"name":"Outdoor","parents":["Place"]}""");Add("tags/place.json","""{"name":"Place"}""");
+  using var db=Open(false);var source=Profile(db);
+  using(var snapshot=await Read())
+  {
+   await db.ApplyStashImportAsync(snapshot,Request(source,Preview(db,snapshot,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+   Assert.Equal(new[]{new TagKey("","Place")},db.GetTagParents(new TagKey("","Outdoor")));
+   Assert.Equal(StashFieldStatus.Equal,Preview(db,snapshot,source).Single(row=>row.Draft.Name=="Outdoor").Fields.Single(field=>field.Field=="parents").Status);
+  }
+  Add("tags/place.json","""{"name":"Place","parents":["Outdoor"]}""");
+  using var cyclic=await Read();var rows=Preview(db,cyclic,source);var place=rows.Single(row=>row.Draft.Name=="Place");
+  // The first export had no parents field for Place, so it was never decided and appears as new.
+  Assert.Equal(StashFieldStatus.New,place.Fields.Single(field=>field.Field=="parents").Status);
+  var revisions=db.GetStashBindings(source.Id).Select(binding=>(binding.Id,binding.Revision)).Order().ToArray();
+  var choice=Confirmed([place]).Single() with {Fields=[new("parents",StashFieldDecision.UseSource)]};
+  var cycle=await Assert.ThrowsAsync<ArgumentException>(()=>db.ApplyStashImportAsync(cyclic,Request(source,[choice])));
+  Assert.Contains(Texts.T("The tag hierarchy cannot contain a cycle."),cycle.Message,StringComparison.Ordinal);
+  Assert.Empty(db.GetTagParents(new TagKey("","Place")));Assert.Equal(revisions,db.GetStashBindings(source.Id).Select(binding=>(binding.Id,binding.Revision)).Order());
+ }
 }
