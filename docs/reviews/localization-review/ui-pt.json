@@ -12851,10 +12851,6 @@
       "status": "unchanged",
       "digest": "220cebcc3ac935dd20fd0a9cabe1629c45c2ff9c65c5ca170b338b93620c3cce"
     },
-    "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": {
-      "status": "unchanged",
-      "digest": "faf19402b34cafe41071a72efc5ff1af996f69821b31136e08e70a8d5776f0ff"
-    },
     "Action": {
       "status": "unchanged",
       "digest": "c3765bea4768680ecad86fb0fa0b23e10bd2207a36c73698285d630223f45f2f"
@@ -14183,11 +14179,6 @@
       "digest": "4db4dda41fc1cdca370beb727db3a874ac2cabf66e3f30993a61b94fb753fe47",
       "previous_digest": "62816305f25bc4996436d7329b039b29297977f9341c037c7056ef182b866e47"
     },
-    "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": {
-      "status": "corrected",
-      "digest": "a26a8e6b43278ea5dde48b0ff59773def20f34a4b71323d0967bfba6450e6766",
-      "previous_digest": "262ae08e9d77bee97f3144c664c2b35308053abad197800a0079d627f92537d5"
-    },
     "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
       "status": "corrected",
       "digest": "cf8a2869f90c9a6ee2810647e3e439227e5b4db9e35834b840e73066b073c17b",
@@ -14628,6 +14619,14 @@
     "{0:N0} items pinned as favorites": {
       "status": "unchanged",
       "digest": "9926bc82656e4b0a8ab8b25cc8f47404f4b5b134e0a1356854ea66486d5789a8"
+    },
+    "The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden.": {
+      "status": "unchanged",
+      "digest": "123533dc97d6229df11455f67ac1c569340d5601e4b31becbea3b3e67a452f7c"
+    },
+    "A–B loop": {
+      "status": "unchanged",
+      "digest": "d1b0ae10b1b9e46f038f5a72eee102b063c0d8f344a8d5cbfbcc9f9940b7e311"
     }
   }
 }

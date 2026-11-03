@@ -12846,10 +12846,6 @@
       "status": "unchanged",
       "digest": "643e7606adad41fc6e70edc5358d0fcac7298fb2b7b14f2d8c4aa82efad4a9ec"
     },
-    "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": {
-      "status": "unchanged",
-      "digest": "92b165faba5e89759a45a294d69f52da41e673ddee0f742220844b574de2322d"
-    },
     "Action": {
       "status": "unchanged",
       "digest": "7f9c73ab5557151240bcc336f4d9c3eef9622ad4c1b66d438fcae55de4046419"
@@ -14210,11 +14206,6 @@
       "digest": "8b39082b22bac6de2c4952652f0db2bfa2fe5d82b627fe7960bd5eb5da83c369",
       "previous_digest": "9a255eb81406cb53b0ce578f3d49df19ae4cc552bc3777021db10d428e753b63"
     },
-    "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": {
-      "status": "corrected",
-      "digest": "53b8c27af20e357d42c7dfb11bcc843fb6204382047fe99e44f6f9dabb8aba87",
-      "previous_digest": "b1a0c51964d1ea6d08bd97ad8c9d188f1d21eb6ae8a83c81718628ecb5a9c125"
-    },
     "The tag is not in the directory.": {
       "status": "corrected",
       "digest": "4cec9dcc40aa826fa79c6149860757efe523bbe655501d4c1586d5cb7d7a18cc",
@@ -14585,6 +14576,14 @@
     "{0:N0} items pinned as favorites": {
       "status": "unchanged",
       "digest": "0e45a79aaddda02c37b040c5da16a9cb25bc60f68049635ee8ae1d663a3f889b"
+    },
+    "The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden.": {
+      "status": "unchanged",
+      "digest": "b6b7912aad9e3b9e349dc36f7134eccb0231606fa6e5f0be5c6d9bc66f1acb86"
+    },
+    "A–B loop": {
+      "status": "unchanged",
+      "digest": "63b1e82e42f745fc9a632e9a867d210b83aadc47c2b032a260a9013cdd0a602e"
     }
   }
 }

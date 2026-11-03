@@ -12889,10 +12889,6 @@
       "status": "unchanged",
       "digest": "8b767c4051acc35ade0e20706de712659ecba50f44358f2e9a0b89b28510cfb7"
     },
-    "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": {
-      "status": "unchanged",
-      "digest": "f4fe7ecd92d26403119a31f26d50b97f1dd7d4cc4201eeac8b9542579d51b6a2"
-    },
     "Action": {
       "status": "unchanged",
       "digest": "d9976b463ba8e1683c1a9243f46eec4a70b5c13b5f489309ca43f2330d64e852"
@@ -14257,11 +14253,6 @@
       "digest": "9d970db2f741a812598944ae287807fd6a2aa56d2f41b06d8e756d7edfbd2433",
       "previous_digest": "7f39f88ec2ad457fde9bc833516180588a9f741807eb8f07caf2b638fce8af35"
     },
-    "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": {
-      "status": "corrected",
-      "digest": "bff6fbe076e8981cd1d85a7bf0c9e1bcb2977a78c7c5f61441c653b27438b156",
-      "previous_digest": "a32918beceaa831a1fe1f3e6860b263c4a2184720ade3edf6c31157dc8c67f79"
-    },
     "The jump mark no longer exists.": {
       "status": "corrected",
       "digest": "64906b513b463df2a8fa2be0c942007d6cc8131e6b863404abc51d347a3409ac",
@@ -14627,6 +14618,14 @@
     "{0:N0} items pinned as favorites": {
       "status": "unchanged",
       "digest": "eef8810ab5d1a517a989173dfb1ed8337c6543e73d2bb22d5fa3f30273b0b1d1"
+    },
+    "The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden.": {
+      "status": "unchanged",
+      "digest": "1cb8f78ec162985d376e5b9fa9bd1b1080467507a302a2d454d79d00bfe8e9f5"
+    },
+    "A–B loop": {
+      "status": "unchanged",
+      "digest": "86e7903541299f2287306998f31f735d89939df6c122973415df6457b93522be"
     }
   }
 }

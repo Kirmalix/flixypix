@@ -41,7 +41,7 @@ internal sealed partial class SettingsWindow
     new SettingRow(T("Action"), T("Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again."), BossActionChoice),
     new SettingRow(T("Show FlixyPix again"), T("Works system-wide only while hidden or minimized by the boss key. Default: Shift+Esc. Choose a different combination from the boss key."), RestoreKey),
     new SettingRow(T("Playback"), T("What happens to a running video. Muted videos get their sound back when FlixyPix returns."), BossPlaybackChoice),
-    new SettingRow(T("System-wide"), T("The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win."), BossGlobal),
+    new SettingRow(T("System-wide"), T("The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden."), BossGlobal),
     new SettingRow(T("Minimize to the notification area"), T("When minimized, FlixyPix and all its windows leave the taskbar; only the icon in the notification area remains, and a click on it brings everything back. Playback continues. Applies to this computer."), MinimizeToTray)),
    SettingsUi.Card(T("Lock"), T("Hides all windows behind a prompt. An encrypted library opens with its password or recovery key, otherwise with the PIN of this computer. The lock guards the screen; only the encryption protects the files."),
     new SettingRow(T("Lock after inactivity"), T("Minutes without mouse or keyboard input in Windows; 0 turns it off. A running video or slideshow keeps the lock away."), LockMinutes),
@@ -106,8 +106,6 @@ internal sealed partial class SettingsWindow
    HideRecent = HideRecent.IsChecked == true, NeutralTitle = NeutralTitle.IsChecked == true, NeutralTitleText = NeutralTitleText.Text.Trim(), BlockCapture = BlockCapture.IsChecked == true,
   };
   var bossParsed = PlayerHotkeys.TryParse(BossKey.Value, out var bossModifiers, out var bossKey);
-  if (privacy.BossGlobal && (!bossParsed || !AppShell.HasGlobalModifier(bossModifiers)))
-   throw new ArgumentException(T("A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H."));
   var restoreParsed = PlayerHotkeys.TryParse(privacy.RestoreKey, out var restoreModifiers, out var restoreKey);
   if (!restoreParsed || restoreModifiers == System.Windows.Input.ModifierKeys.None || PlayerHotkeys.IsModifierOnly(restoreKey))
    throw new ArgumentException(T("Choose a shortcut with a modifier to show FlixyPix again, for example Shift+Esc."));

@@ -34,8 +34,8 @@ public partial class MainWindow
   {
    window.SelectPage("Privacy"); await Settled();
    Capture((FrameworkElement)window.Content, Path.Combine(directory, "settings-privacy.png"));
-   window.BossKey.Value = "Escape"; window.BossGlobal.IsChecked = true;
-   Require(!window.TrySave() && window.LastError?.Contains(T("A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.")) == true, "A system-wide Esc was not refused.");
+   window.BossKey.Value = "Escape"; window.BossGlobal.IsChecked = true; window.RestoreKey.Value = "";
+   Require(!window.TrySave() && window.LastError?.Contains(T("Choose a shortcut with a modifier to show FlixyPix again, for example Shift+Esc.")) == true, "A system-wide Esc was refused.");
    window.BossKey.Value = "Ctrl+Shift+H"; window.BossGlobal.IsChecked = false; window.BossActionChoice.Value = (int)BossAction.Vanish; window.RestoreKey.Value = "";
    Require(!window.TrySave() && window.LastError != null, "An empty restore shortcut was not refused.");
    window.RestoreKey.Value = "Ctrl+Shift+H";
@@ -92,7 +92,9 @@ public partial class MainWindow
    try { AppShell.Boss(); await Settled(); Require(!AppShell.IsHidden && AppShell.IsOnScreen(this), "Restore conflict stranded an invisible app."); }
    finally { ReleasePrivacyKey(handle, 0xB057); }
    Use(new PrivacySettings { BossGlobal = true }, "Escape");
-   Require(!AppShell.GlobalHotkeyActive, "Esc was taken from other programs.");
+   Require(!AppShell.GlobalHotkeyActive && AppShell.KeyListenerActive, "Esc was taken from other programs or not listened to.");
+   Use(new PrivacySettings { BossGlobal = false }, "Escape");
+   Require(!AppShell.KeyListenerActive, "Esc was listened to although system-wide is off.");
 
    // The lock: nothing to open it with means no lock.
    Use(new PrivacySettings { LockAfterMinutes = 1 });
