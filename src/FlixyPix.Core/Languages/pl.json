@@ -484,6 +484,7 @@
   "Catalog {0} · {1}": "Katalog {0} · {1}",
   "Catalog: backup, export, import, encryption": "Katalog: kopia zapasowa, eksport, import, szyfrowanie",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Katalogi i stare dane|*.json;*.jsonl|Katalog JSON|*.json|Stare dane JSONL|*.jsonl",
+  "Categories": "Kategorie",
   "Categories and folders": "Kategorie i foldery",
   "Category": "Kategoria",
   "Category for entries without a category": "Kategoria dla wpisów bez kategorii",
@@ -983,6 +984,7 @@
   "Favorite unpinned": "Odpięto ulubione",
   "Favorites": "Ulubione",
   "Favorites by rating": "Ulubione według oceny",
+  "Favorites: drag items here to pin them": "Ulubione: przeciągnij tu elementy, aby je przypiąć",
   "Female": "Kobieta",
   "FFmpeg is missing.": "Brak FFmpeg.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "Brak FFmpeg. Ścieżkę można ustawić w Ustawienia → Narzędzia.",
@@ -1072,6 +1074,7 @@
   "Folder with subfolders …": "Folder z podfolderami …",
   "Folder “{0}”": "Folder „{0}”",
   "Folders": "Foldery",
+  "Folders also show the items of their subfolders": "Foldery pokazują też elementy swoich podfolderów",
   "Follow Windows": "Jak w Windows",
   "Follow Windows ({0})": "Jak w Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Opcja Jak w Windows używa języka wyświetlania systemu Windows, a jeśli FlixyPix go nie obsługuje — angielskiego. Liczby i daty zawsze mają format regionalny systemu Windows.",
@@ -3209,6 +3212,7 @@
   "Wait briefly before starting": "Czekaj krótko przed rozpoczęciem",
   "Waiting": "Oczekuje",
   "Watch later": "Obejrzyj później",
+  "Watch later: drag items here to mark them": "Obejrzyj później: przeciągnij tu elementy, aby je oznaczyć",
   "Watched": "Obejrzane",
   "watched": "obejrzane",
   "Watched (history)": "Obejrzano (historia)",
@@ -3425,6 +3429,11 @@
     "one": "Przypięto 1 element jako ulubiony",
     "few": "Przypięto {0:N0} elementy jako ulubione",
     "many": "Przypięto {0:N0} elementów jako ulubione"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "1 element przypięto do ulubionych",
+    "few": "{0:N0} elementy przypięto do ulubionych",
+    "many": "{0:N0} elementów przypięto do ulubionych"
   },
   "{0:N0} items removed from collection": {
     "one": "Element usunięty z kolekcji",

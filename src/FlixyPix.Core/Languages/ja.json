@@ -436,6 +436,7 @@
   "Catalog {0} · {1}": "カタログ {0} · {1}",
   "Catalog: backup, export, import, encryption": "カタログ：バックアップ、エクスポート、取り込み、暗号化",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "カタログと旧データ|*.json;*.jsonl|JSON カタログ|*.json|旧 JSONL|*.jsonl",
+  "Categories": "カテゴリ",
   "Categories and folders": "カテゴリとフォルダー",
   "Category": "カテゴリ",
   "Category for entries without a category": "カテゴリのない項目に付けるカテゴリ",
@@ -927,6 +928,7 @@
   "Favorite unpinned": "お気に入りの固定を解除しました",
   "Favorites": "お気に入り",
   "Favorites by rating": "評価によるお気に入り",
+  "Favorites: drag items here to pin them": "お気に入り: アイテムをここにドラッグして固定します",
   "Female": "女性",
   "FFmpeg is missing.": "FFmpeg がありません。",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg がありません。「設定」→「ツール」でパスを指定できます。",
@@ -1016,6 +1018,7 @@
   "Folder with subfolders …": "フォルダー（サブフォルダーを含む）…",
   "Folder “{0}”": "フォルダー「{0}」",
   "Folders": "フォルダー",
+  "Folders also show the items of their subfolders": "フォルダーにはサブフォルダーのアイテムも表示されます",
   "Follow Windows": "Windows に合わせる",
   "Follow Windows ({0})": "Windows に合わせる（{0}）",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "「Windows に合わせる」は Windows の表示言語に従い、FlixyPix が対応していない言語の場合は英語を使用します。数値と日付は常に Windows の地域設定に従います。",
@@ -3085,6 +3088,7 @@
   "Wait briefly before starting": "開始前に少し待つ",
   "Waiting": "待機中",
   "Watch later": "後で見る",
+  "Watch later: drag items here to mark them": "後で見る: アイテムをここにドラッグして追加します",
   "Watched": "視聴済み",
   "watched": "視聴済み",
   "Watched (history)": "視聴時間（履歴）",
@@ -3248,6 +3252,9 @@
     "other": "{0:N0} 件のメディアを {1} で開きました"
   },
   "{0:N0} items pinned as favorite": {
+    "other": "{0:N0} 件をお気に入りに固定しました"
+  },
+  "{0:N0} items pinned as favorites": {
     "other": "{0:N0} 件をお気に入りに固定しました"
   },
   "{0:N0} items removed from collection": {

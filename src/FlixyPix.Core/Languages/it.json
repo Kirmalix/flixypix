@@ -484,6 +484,7 @@
   "Catalog {0} · {1}": "Catalogo {0} · {1}",
   "Catalog: backup, export, import, encryption": "Catalogo: backup, esportazione, importazione, crittografia",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Cataloghi e vecchi dati|*.json;*.jsonl|Catalogo JSON|*.json|JSONL legacy|*.jsonl",
+  "Categories": "Categorie",
   "Categories and folders": "Categorie e cartelle",
   "Category": "Categoria",
   "Category for entries without a category": "Categoria per le voci senza categoria",
@@ -983,6 +984,7 @@
   "Favorite unpinned": "Preferito non più fissato",
   "Favorites": "Preferiti",
   "Favorites by rating": "Preferiti per valutazione",
+  "Favorites: drag items here to pin them": "Preferiti: trascina qui gli elementi per fissarli",
   "Female": "Donna",
   "FFmpeg is missing.": "FFmpeg non è disponibile.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg non è disponibile. Puoi impostarne il percorso in Impostazioni → Strumenti.",
@@ -1072,6 +1074,7 @@
   "Folder with subfolders …": "Cartella con sottocartelle …",
   "Folder “{0}”": "Cartella «{0}»",
   "Folders": "Cartelle",
+  "Folders also show the items of their subfolders": "Le cartelle mostrano anche gli elementi delle sottocartelle",
   "Follow Windows": "Come Windows",
   "Follow Windows ({0})": "Come Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Come Windows segue la lingua di visualizzazione di Windows e usa l'inglese se FlixyPix non la supporta. Numeri e date seguono sempre il formato regionale di Windows.",
@@ -3209,6 +3212,7 @@
   "Wait briefly before starting": "Attendi brevemente prima dell'avvio",
   "Waiting": "Attesa",
   "Watch later": "Guarda più tardi",
+  "Watch later: drag items here to mark them": "Guarda più tardi: trascina qui gli elementi per segnarli",
   "Watched": "Guardato",
   "watched": "visto",
   "Watched (history)": "Guardato (cronologia)",
@@ -3423,6 +3427,11 @@
   },
   "{0:N0} items pinned as favorite": {
     "one": "{0:N0} elemento fissato come preferito",
+    "many": "{0:N0} di elementi fissati come preferiti",
+    "other": "{0:N0} elementi fissati come preferiti"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "1 elemento fissato come preferito",
     "many": "{0:N0} di elementi fissati come preferiti",
     "other": "{0:N0} elementi fissati come preferiti"
   },

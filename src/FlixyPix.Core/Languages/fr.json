@@ -484,6 +484,7 @@
   "Catalog {0} · {1}": "Catalogue {0} · {1}",
   "Catalog: backup, export, import, encryption": "Catalogue : sauvegarde, exportation, importation, chiffrement",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Catalogues et anciennes données|*.json;*.jsonl|Catalogue JSON|*.json|Ancien catalogue JSONL|*.jsonl",
+  "Categories": "Catégories",
   "Categories and folders": "Catégories et dossiers",
   "Category": "Catégorie",
   "Category for entries without a category": "Catégorie pour les entrées sans catégorie",
@@ -983,6 +984,7 @@
   "Favorite unpinned": "Favori désépinglé",
   "Favorites": "Favoris",
   "Favorites by rating": "Favoris selon la note",
+  "Favorites: drag items here to pin them": "Favoris : glissez des médias ici pour les épingler",
   "Female": "Femme",
   "FFmpeg is missing.": "FFmpeg est introuvable.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg est introuvable. Son chemin peut être défini dans Paramètres → Outils.",
@@ -1072,6 +1074,7 @@
   "Folder with subfolders …": "Dossier avec sous-dossiers…",
   "Folder “{0}”": "Dossier « {0} »",
   "Folders": "Dossiers",
+  "Folders also show the items of their subfolders": "Les dossiers affichent aussi les médias de leurs sous-dossiers",
   "Follow Windows": "Comme Windows",
   "Follow Windows ({0})": "Comme Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "« Comme Windows » suit la langue d'affichage de Windows et utilise l'anglais si cette langue n'est pas prise en charge par FlixyPix. Les nombres et les dates suivent toujours le format régional de Windows.",
@@ -3209,6 +3212,7 @@
   "Wait briefly before starting": "Attendre un peu avant de commencer",
   "Waiting": "En attente",
   "Watch later": "À regarder plus tard",
+  "Watch later: drag items here to mark them": "À regarder plus tard : glissez des médias ici pour les marquer",
   "Watched": "Vu",
   "watched": "vu",
   "Watched (history)": "Regardé (historique)",
@@ -3425,6 +3429,11 @@
     "one": "{0:N0} média épinglé comme favori",
     "many": "{0:N0} de médias épinglés comme favoris",
     "other": "{0:N0} médias épinglés comme favoris"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "{0:N0} média épinglé en favori",
+    "many": "{0:N0} de médias épinglés en favoris",
+    "other": "{0:N0} médias épinglés en favoris"
   },
   "{0:N0} items removed from collection": {
     "one": "{0:N0} média retiré de la collection",

@@ -460,6 +460,7 @@
   "Catalog {0} · {1}": "Katalog {0} · {1}",
   "Catalog: backup, export, import, encryption": "Katalog: Sicherung, Export, Übernahme, Verschlüsselung",
   "Catalogs and legacy data|*.json;*.jsonl|JSON catalog|*.json|Legacy JSONL|*.jsonl": "Kataloge und Altdaten|*.json;*.jsonl|JSON-Katalog|*.json|Legacy-JSONL|*.jsonl",
+  "Categories": "Kategorien",
   "Categories and folders": "Kategorien und Ordner",
   "Category": "Kategorie",
   "Category for entries without a category": "Kategorie für Einträge ohne Kategorie",
@@ -955,6 +956,7 @@
   "Favorite unpinned": "Favorit gelöst",
   "Favorites": "Favoriten",
   "Favorites by rating": "Favoriten nach Bewertung",
+  "Favorites: drag items here to pin them": "Favoriten: Medien hierher ziehen, um sie anzuheften",
   "Female": "Weiblich",
   "FFmpeg is missing.": "FFmpeg fehlt.",
   "FFmpeg is missing. Its path can be set under Settings → Tools.": "FFmpeg fehlt. Der Pfad lässt sich unter Einstellungen → Werkzeuge festlegen.",
@@ -1044,6 +1046,7 @@
   "Folder with subfolders …": "Ordner mit Unterordnern …",
   "Folder “{0}”": "Ordner „{0}“",
   "Folders": "Ordner",
+  "Folders also show the items of their subfolders": "Ordner zeigen auch die Medien ihrer Unterordner",
   "Follow Windows": "Wie Windows",
   "Follow Windows ({0})": "Wie Windows ({0})",
   "Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format.": "Wie Windows folgt der Anzeigesprache von Windows und nimmt Englisch, wenn FlixyPix sie nicht spricht. Zahlen und Datumsangaben folgen immer dem Regionalformat von Windows.",
@@ -3147,6 +3150,7 @@
   "Wait briefly before starting": "Kurz warten vor dem Start",
   "Waiting": "Wartet",
   "Watch later": "Später ansehen",
+  "Watch later: drag items here to mark them": "Später ansehen: Medien hierher ziehen, um sie vorzumerken",
   "Watched": "Angesehen",
   "watched": "gesehen",
   "Watched (history)": "Gesehen (Verlauf)",
@@ -3337,6 +3341,10 @@
   "{0:N0} items pinned as favorite": {
     "one": "1 Medium als Favorit angeheftet",
     "other": "{0:N0} Medien als Favorit angeheftet"
+  },
+  "{0:N0} items pinned as favorites": {
+    "one": "1 Medium als Favorit angeheftet",
+    "other": "{0:N0} Medien als Favoriten angeheftet"
   },
   "{0:N0} items removed from collection": {
     "one": "Medium aus Sammlung entfernt",

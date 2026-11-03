@@ -67,6 +67,5 @@ public partial class MainWindow
   else target.ScrollToVerticalOffset(target.VerticalOffset-steps*distance);
  }
  private void SidebarTagTools(object sender,RoutedEventArgs e)=>_sidebarToolsMenu=MenuBelow(sender,
-  (T("Sort tags by frequency or name"),()=>TagSortClicked(sender,e)),
   (T("Open directory"),()=>DirectoryClicked(sender,e)));
 }

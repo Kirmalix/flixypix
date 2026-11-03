@@ -89,7 +89,7 @@ public partial class MainWindow
  }
  private void TagFilterChanged(object sender, TextChangedEventArgs e) { if (_repository != null) RenderTagList(); }
  private void TagListOptionsChanged(object sender, RoutedEventArgs e) { if (_repository != null) { SaveSidebar(s=>s with {ShowUnusedTags=ShowUnusedTags.IsChecked==true});RenderTagList(); } }
- private void TagSortClicked(object sender, RoutedEventArgs e) { _tagsByName = !_tagsByName; SaveSidebar(s=>s with {TagsByName=_tagsByName}); TagSortButton.Content = _tagsByName ? "Name" : T("Frequency"); RenderTagList(); }
+ private void TagSortClicked(object sender, RoutedEventArgs e) { _tagsByName = !_tagsByName; SaveSidebar(s=>s with {TagsByName=_tagsByName}); TagSortButton.Content = TagSortLabel(); RenderTagList(); }
 
  private void TagItemClicked(object sender, MouseButtonEventArgs e)
  {

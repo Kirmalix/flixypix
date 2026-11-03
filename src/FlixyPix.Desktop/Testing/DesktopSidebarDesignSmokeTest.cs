@@ -12,7 +12,7 @@ public partial class MainWindow
  {
   static void Check(bool condition,string message) {if(!condition)throw new InvalidOperationException(message);}
   async Task Idle()=>await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-  foreach(var key in new[]{"folders","collections","tags","categories"})Check(_sidebarSections[key].Template!=null,"Card template missing.");
+  foreach(var key in new[]{"folders","collections","tags"})Check(_sidebarSections[key].Template!=null,"Card template missing.");
   Check(SidebarCard.GetActions(_sidebarSections["collections"]) is Button,"Collection header action missing.");
   var expanded=_sidebarSections["tags"].IsExpanded;
   var action=(Button)SidebarCard.GetActions(_sidebarSections["tags"]);
@@ -29,6 +29,19 @@ public partial class MainWindow
   ApplyNavigationEntries(new NavigationCounts(0,5,1,3),ReviewInboxMode.Never);
   Check(InboxNav.Visibility!=Visibility.Visible,"Inbox shown although switched off.");
   _view=view;ApplyNavigationEntries(_repository.GetNavigationCounts(),_repository.GetPreferences().General.ReviewInbox);
+  // Favorites and Watch later are fixed rows of the collection card; the tag card switches between list and categories.
+  var fixedRows=CollectionNodes().Where(n=>n.Kind==CollectionNodeKind.View).Select(n=>n.View).ToList();
+  Check(fixedRows.SequenceEqual(["favorites","watchlater"]),"Favorites and Watch later rows missing.");
+  Check(!Logicals<RadioButton>(NavItems).Any(n=>n.Tag is "favorites" or "watchlater"),"Favorites still listed as library entry.");
+  if(_repository.Search().FirstOrDefault(m=>!m.WatchLater) is {} sample)
+  {
+   MarkDropped("watchlater",[sample]);Check(_repository.GetMedia(sample.Id)?.WatchLater==true,"Dropping on Watch later did not mark the item.");
+   ApplyImmediate([sample.Id],ImmediateEditFields.WatchLater,current=>current with {WatchLater=false});Refresh();
+  }
+  TagCategoryMode.IsChecked=true;TagModeClicked(this,new RoutedEventArgs());
+  Check(CategorizedTags.Visibility==Visibility.Visible&&TagListPanel.Visibility!=Visibility.Visible&&_repository.GetPreferences().Sidebar.TagsByCategory,"Tag categories mode did not switch.");
+  TagListMode.IsChecked=true;TagModeClicked(this,new RoutedEventArgs());
+  Check(TagListPanel.Visibility==Visibility.Visible&&!_repository.GetPreferences().Sidebar.TagsByCategory,"Tag list mode did not return.");
   var height=_folderDesiredHeight;
   FolderHeightDragging(this,new DragDeltaEventArgs(0,40));await Idle();SaveFolderViewportState();
   Check(_repository.GetPreferences().Sidebar.FolderHeight==height+40,"Folder height was not persisted.");

@@ -18,7 +18,7 @@ public partial class MainWindow
   MediaList.AddHandler(System.Windows.Controls.Primitives.ButtonBase.ClickEvent,new RoutedEventHandler((sender,e)=> {if(e.OriginalSource is Button {Tag:"quick-collection"} button)TileQuickCollection(button,e);}));
   var saved=_repository.GetPreferences().Sidebar;
   _restoringSidebar=true;
-  IncludeFolderChildren.IsChecked=saved.IncludeSubfolders; _tagsByName=saved.TagsByName;TagSortButton.Content=_tagsByName?"Name":T("Frequency"); ShowUnusedTags.IsChecked=saved.ShowUnusedTags;
+  IncludeFolderChildren.IsChecked=saved.IncludeSubfolders; _tagsByName=saved.TagsByName;TagSortButton.Content=TagSortLabel();ShowTagMode(saved.TagsByCategory); ShowUnusedTags.IsChecked=saved.ShowUnusedTags;
   _collapsedSets.UnionWith(saved.CollapsedSets);
   foreach(var exp in Logicals<Expander>(Sidebar))
   {
@@ -51,6 +51,16 @@ public partial class MainWindow
   var open=(tree.ItemsSource as IEnumerable<BrowseNode>??[]).SelectMany(n=>n.Descendants().Prepend(n)).Where(n=>n.IsExpanded).Select(n=>n.Path??n.Category??"").ToList();
   SaveSidebar(s=>section=="folders"?s with {ExpandedFolders=open}:s with {ExpandedCategories=open});
  }
+ private string TagSortLabel()=>_tagsByName?"A–Z":T("Frequency");
+ /// <summary>The tag card shows either the flat list (with filter, sorting and unused tags) or the tags by category.</summary>
+ private void ShowTagMode(bool byCategory)
+ {
+  TagCategoryMode.IsChecked=byCategory;TagListMode.IsChecked=!byCategory;
+  var list=byCategory?Visibility.Collapsed:Visibility.Visible;
+  TagListPanel.Visibility=list;TagSortButton.Visibility=list;
+  CategorizedTags.Visibility=byCategory?Visibility.Visible:Visibility.Collapsed;
+ }
+ private void TagModeClicked(object sender,RoutedEventArgs e) { var byCategory=TagCategoryMode.IsChecked==true;ShowTagMode(byCategory);SaveSidebar(s=>s with {TagsByCategory=byCategory}); }
  private void FolderChildrenChanged(object sender,RoutedEventArgs e) { SaveSidebar(s=>s with {IncludeSubfolders=IncludeFolderChildren.IsChecked==true});_anchor=0;Refresh(); }
  private static bool IsQuickBadge(object source) { for(var node=source as DependencyObject;node!=null;node=VisualTreeHelper.GetParent(node))if(node is Button)return true;return false; }
  private async void QuickTagBadgeClicked(object sender,RoutedEventArgs e)

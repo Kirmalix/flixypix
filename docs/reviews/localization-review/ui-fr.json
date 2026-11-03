@@ -14565,6 +14565,26 @@
     "Show the review inbox": {
       "status": "unchanged",
       "digest": "1b43f4ca0ee915b0905baabb8cb0d6d72ac4c5e16e0d991fef228c222fc5582c"
+    },
+    "Categories": {
+      "status": "unchanged",
+      "digest": "aab72e08fa5b6505e2adbec9bf8d6bf06b137ae4684552b9be8f7f74955cd53f"
+    },
+    "Favorites: drag items here to pin them": {
+      "status": "unchanged",
+      "digest": "3fde6ca1e6bd003174bad8ea63ffef6e2f192af8a54279ee4064587b0bda7b8c"
+    },
+    "Folders also show the items of their subfolders": {
+      "status": "unchanged",
+      "digest": "f904cecf9875b7c246e42269e39a0b2ce69c8fccdaf0f6e7deedb5007ef1088e"
+    },
+    "Watch later: drag items here to mark them": {
+      "status": "unchanged",
+      "digest": "6cb3e43024c5151a768f8fc7daf18ac63005939da43a71bf15f97dba83104fe5"
+    },
+    "{0:N0} items pinned as favorites": {
+      "status": "unchanged",
+      "digest": "0e45a79aaddda02c37b040c5da16a9cb25bc60f68049635ee8ae1d663a3f889b"
     }
   }
 }

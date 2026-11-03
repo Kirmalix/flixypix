@@ -9,7 +9,8 @@ using FlixyPix.Core;
 
 namespace FlixyPix.Desktop;
 
-internal enum CollectionNodeKind { Quick, Set, Collection, Smart }
+/// <summary>View rows are the fixed lists Favorites and Watch later: they open their library view and take dropped items.</summary>
+internal enum CollectionNodeKind { Quick, View, Set, Collection, Smart }
 
 /// <summary>A row of the collection tree: the quick collection, a collection set, a collection or slideshow, or a smart
 /// collection (saved search).</summary>
@@ -22,8 +23,12 @@ internal sealed class CollectionNode : INotifyPropertyChanged
  /// <summary>The collection; null for a quick collection not made yet, a set or a smart collection.</summary>
  public Playlist? Collection { get; init; }
  public SavedSearch? Search { get; init; }
+ /// <summary>The library view of a view row ("favorites" or "watchlater").</summary>
+ public string? View { get; init; }
+ /// <summary>Fixed rows at the top that cannot be renamed, moved or deleted.</summary>
+ public bool IsFixed => Kind is CollectionNodeKind.Quick or CollectionNodeKind.View;
  public CollectionSet? Set { get; init; }
- public Guid Id => Collection?.Id ?? Search?.Id ?? Set?.Id ?? Guid.Empty;
+ public Guid Id => Kind == CollectionNodeKind.View ? Guid.Empty : Collection?.Id ?? Search?.Id ?? Set?.Id ?? Guid.Empty;
  public Guid? ParentId => Collection?.ParentId ?? Search?.ParentId ?? Set?.ParentId;
  public int Order => Collection?.Order ?? Search?.Order ?? Set?.Order ?? 0;
  public ObservableCollection<CollectionNode> Children { get; } = [];
@@ -79,6 +84,9 @@ public partial class MainWindow
    Kind = CollectionNodeKind.Collection, Name = p.Name, Collection = p, Glyph = p.Kind == PlaylistKind.Slideshow ? "" : "",
    IsTarget = IsTarget(p.Id), IsOpen = _playlist?.Id == p.Id, CountLabel = EntryCount(p).ToString("N0"),
   };
+  bool ViewOpen(string view) => _view == view && _playlist == null && _folder == null && _tagGroup == null && _tag == null && _advancedExpression == null;
+  CollectionNode ViewRow(string view, string name, string glyph, SavedSearch counted, string hint) =>
+   new() { Kind = CollectionNodeKind.View, View = view, Name = name, Glyph = glyph, Search = counted, IsOpen = ViewOpen(view), Hint = hint };
   CollectionNode Smart(SavedSearch s) => new() { Kind = CollectionNodeKind.Smart, Name = s.Name, Search = s, Glyph = SmartGlyph(s), Hint = T("Smart collection: stays current by itself") };
   var placed = new HashSet<Guid>();
   List<CollectionNode> ChildrenOf(Guid? parent) =>
@@ -97,6 +105,8 @@ public partial class MainWindow
    new() { Kind = CollectionNodeKind.Quick, Name = T("Quick collection"), Collection = quick, Glyph = "", IsTarget = IsTarget(quick?.Id),
     IsOpen = quick != null && _playlist?.Id == quick.Id, CountLabel = (quick == null ? 0 : EntryCount(quick)).ToString("N0"),
     Hint = T("Quick collection: B adds the selected items or takes them out again") },
+   ViewRow("favorites", T("Favorites"), "", new SavedSearch { IsFavorite = true }, T("Favorites: drag items here to pin them")),
+   ViewRow("watchlater", T("Watch later"), "", new SavedSearch { WatchLater = true }, T("Watch later: drag items here to mark them")),
   };
   nodes.AddRange(ChildrenOf(null));
   void Place(IEnumerable<CollectionNode> level, int depth) { foreach (var node in level) { node.Depth = depth; Place(node.Children, depth + 1); } }
@@ -124,6 +134,7 @@ public partial class MainWindow
   {
    case CollectionNodeKind.Set: node.IsExpanded = !node.IsExpanded; break;
    case CollectionNodeKind.Smart: ApplySavedSearch(node.Search!); break;
+   case CollectionNodeKind.View: ApplyViewState(new ViewState { View = node.View! }); SaveViewPreferences(); break;
    default: OpenCollection(node.Collection ?? _repository.GetQuickCollection()); break;
   }
  }
@@ -153,8 +164,8 @@ public partial class MainWindow
  {
   if (CollectionTree.SelectedItem is not CollectionNode node) return;
   if (e.Key == Key.Enter) { e.Handled = true; OpenCollectionNode(node); }
-  else if (e.Key == Key.F2 && node.Kind != CollectionNodeKind.Quick) { e.Handled = true; RenameCollectionNode(node); }
-  else if (e.Key == Key.Delete && node.Kind != CollectionNodeKind.Quick) { e.Handled = true; DeleteCollectionNode(node); }
+  else if (e.Key == Key.F2 && !node.IsFixed) { e.Handled = true; RenameCollectionNode(node); }
+  else if (e.Key == Key.Delete && !node.IsFixed) { e.Handled = true; DeleteCollectionNode(node); }
  }
 
  private void CollectionTreeRightClicked(object sender, MouseButtonEventArgs e)
@@ -180,6 +191,7 @@ public partial class MainWindow
  internal IReadOnlyList<MenuSpec> CollectionNodeMenu(CollectionNode node)
  {
   if (node.Kind == CollectionNodeKind.Smart) return [.. SmartCollectionMenu(node)];
+  if (node.Kind == CollectionNodeKind.View) return [MenuSpec.Command(T("Open"), () => OpenCollectionNode(node), "", T("Enter"))];
   if (node.Kind == CollectionNodeKind.Set)
    return
    [
@@ -247,7 +259,7 @@ public partial class MainWindow
 
  private void RenameCollectionNode(CollectionNode node)
  {
-  if (node.Kind == CollectionNodeKind.Quick) return;
+  if (node.IsFixed) return;
   if (Dialogs.Fields(this, T("Rename"), ("Name", node.Name)) is not [var name] || name.Length == 0 || name == node.Name) return;
   switch (node.Kind)
   {
@@ -283,7 +295,7 @@ public partial class MainWindow
  /// <summary>Puts the row into a set (or the top level); with <paramref name="before"/> it takes that row's place among its kind.</summary>
  private void MoveCollectionNode(CollectionNode node, Guid? parent, CollectionNode? before = null)
  {
-  if (node.Kind == CollectionNodeKind.Quick) return;
+  if (node.IsFixed) return;
   var siblings = CollectionNodes().Where(n => n.Kind == node.Kind && n.ParentId == parent && n.Id != node.Id).OrderBy(n => n.Order).ThenBy(n => n.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
   var place = before != null && before.Kind == node.Kind && siblings.IndexOf(before) is >= 0 and var index ? index : siblings.Count;
   siblings.Insert(place, node);
@@ -348,7 +360,7 @@ public partial class MainWindow
  private void CollectionTreeMouseDown(object sender, MouseButtonEventArgs e)
  {
   _collectionDragNode = NodeAt(e.OriginalSource);
-  _collectionDragStart = _collectionDragNode is { Kind: not CollectionNodeKind.Quick } ? e.GetPosition(CollectionTree) : null;
+  _collectionDragStart = _collectionDragNode is { IsFixed: false } ? e.GetPosition(CollectionTree) : null;
  }
 
  private void CollectionTreeMouseMove(object sender, MouseEventArgs e)
@@ -364,7 +376,7 @@ public partial class MainWindow
  private void CollectionTreeDragOver(object sender, DragEventArgs e)
  {
   var target = NodeAt(e.OriginalSource);
-  e.Effects = e.Data.GetDataPresent(MediaDragFormat) ? target is { Kind: CollectionNodeKind.Quick or CollectionNodeKind.Collection } ? DragDropEffects.Copy : DragDropEffects.None
+  e.Effects = e.Data.GetDataPresent(MediaDragFormat) ? target is { Kind: CollectionNodeKind.Quick or CollectionNodeKind.View or CollectionNodeKind.Collection } ? DragDropEffects.Copy : DragDropEffects.None
    : e.Data.GetData(CollectionDragFormat) is CollectionNode moved && moved != target ? DragDropEffects.Move : DragDropEffects.None;
   e.Handled = true;
  }
@@ -375,8 +387,9 @@ public partial class MainWindow
   var target = NodeAt(e.OriginalSource);
   if (e.Data.GetData(MediaDragFormat) is string[] ids)
   {
-   if (target is not { Kind: CollectionNodeKind.Quick or CollectionNodeKind.Collection }) return;
+   if (target is not { Kind: CollectionNodeKind.Quick or CollectionNodeKind.View or CollectionNodeKind.Collection }) return;
    var items = ids.Select(id => _repository.GetMedia(Guid.Parse(id))).OfType<MediaItem>().ToList();
+   if (target.Kind == CollectionNodeKind.View) { MarkDropped(target.View!, items); return; }
    if (items.Count > 0) AddToCollection(target.Collection ?? _repository.GetQuickCollection(), items, null);
    return;
   }
@@ -384,7 +397,25 @@ public partial class MainWindow
   // Onto a set: into it. Onto another row: beside it, at its place. Onto free space: to the top level.
   if (target == null) MoveCollectionNode(moved, null);
   else if (target.Kind == CollectionNodeKind.Set) MoveCollectionNode(moved, target.Id);
-  else if (target.Kind != CollectionNodeKind.Quick) MoveCollectionNode(moved, target.ParentId, target);
+  else if (!target.IsFixed) MoveCollectionNode(moved, target.ParentId, target);
+ }
+
+ /// <summary>Items dropped on Favorites are pinned, on Watch later marked; what is marked already stays so.</summary>
+ private void MarkDropped(string view, IReadOnlyList<MediaItem> items)
+ {
+  if (items.Count == 0) return;
+  var ids = items.Select(m => m.Id).ToList();
+  if (view == "favorites")
+  {
+   ApplyImmediate(ids, ImmediateEditFields.Favorite, current => current with { IsFavorite = true });
+   Status.Text = Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorites");
+  }
+  else
+  {
+   ApplyImmediate(ids, ImmediateEditFields.WatchLater, current => current with { WatchLater = true });
+   Status.Text = Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later");
+  }
+  Refresh();
  }
 
  // ----- Details -----
