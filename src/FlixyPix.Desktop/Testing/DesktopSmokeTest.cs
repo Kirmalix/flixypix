@@ -12,6 +12,7 @@ public partial class MainWindow
 {
  internal async Task RunSmokeTestAsync(string directory)
  {
+  await RunStorageTransitionSmokeAsync(directory);
   static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }
   Require(Title==ProductIdentity.Name,"The application window did not use the new product name.");
   var fixtureDirectory = Path.Combine(directory, "fixtures");
@@ -89,7 +90,7 @@ public partial class MainWindow
     await _videoWindow.LoadSeekFrameAsync(.5, CancellationToken.None);
     Require(_videoWindow.SeekPreviewShown, "Hovering the time line did not show a frame.");
     Require(_videoWindow.StepRequested != null && (_videoWindow.TrackMenuSummary.StartsWith(T("Audio {0} · {1}", "\u0001", "").Split('\u0001')[0],
-     StringComparison.Ordinal) || _videoWindow.TrackMenuSummary.StartsWith(T("Audio off"), StringComparison.Ordinal)),
+     StringComparison.Ordinal) || _videoWindow.TrackMenuSummary.StartsWith(T("Audio off"), StringComparison.Ordinal)||_videoWindow.TrackMenuSummary.StartsWith(T("Automatic"),StringComparison.Ordinal)),
      "Previous/next or the track menu are missing: " + _videoWindow.TrackMenuSummary + " · step " + (_videoWindow.StepRequested != null));
     // The further shortcuts of the original: scene from start and end marks, toggle a bookmark, screenshot, slow motion.
     var scenesBefore = _repository.GetScenes(imported.Id).Count;
@@ -154,6 +155,7 @@ public partial class MainWindow
     _videoWindow.RefreshMarks(); Require(!_videoWindow.MarkPanelVisible,"Refreshing marks reopened the hidden panel.");
     _videoWindow.ToggleFullscreen(); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
     _videoWindow.ToggleMarkPanel(); Require(!_repository.GetPreferences().Playback.ShowMarks,"Full screen changed the saved panel state.");
+    Require(_videoWindow.MarkPanelVisible,"Explicit fullscreen mark request did not open its list.");
     _videoWindow.ToggleFullscreen(); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
     Require(!_videoWindow.MarkPanelVisible,"Leaving full screen reopened the hidden panel.");
     _videoWindow.ToggleMarkPanel();
@@ -265,8 +267,79 @@ public partial class MainWindow
   // The rating is stored at once; the unsaved title stays in its box through the refresh.
   Require(_repository.GetMedia(first.Id)?.Rating == 9, "Star rating was not saved immediately.");
   await _lastRefresh; Require(EditTitle.Text == "Abendlicht am See" && EditRating.Value == 9, "Quick save lost the unsaved title.");
+  var ratingUndo = _immediateUndo!;
+  var favoriteBeforeUndoTest = _repository.GetMedia(first.Id)!.IsFavorite;
+  ApplyImmediate([first.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite });
+  UndoImmediateAction(ratingUndo); await _lastRefresh;
+  Require(_repository.GetMedia(first.Id)!.IsFavorite != favoriteBeforeUndoTest && _immediateUndo != null, "An older undo action undid or cleared the newer action.");
+  UndoImmediate(); await _lastRefresh;
+  Require(_repository.GetMedia(first.Id)!.Rating != 9 && EditTitle.Text == "Abendlicht am See", "Immediate undo reverted the text draft or did not undo the rating.");
+  EditRating.Value = 9; await _lastRefresh;
   EditDescription.Text = "Ein ruhiger Moment am Wasser. Dieses Bild wurde für den Oberflächentest aus Vektoren erzeugt.";
+  var draftTitle = EditTitle.Text; var draftDescription = EditDescription.Text;
+  var draftOther = _repository.Search().First(m => m.Id != first.Id);
+  await RefreshAsync(draftOther.Id);
+  await RefreshAsync(first.Id);
+  Require(EditTitle.Text == draftTitle && EditDescription.Text == draftDescription, "Selection change lost a metadata draft.");
+  await RefreshAsync(draftOther.Id);
+  EditDescription.Text = "Other pending draft";
+  await RefreshAsync(first.Id);
+  Require(DetailsDiscard.IsEnabled && DetailsSave.IsEnabled, "Draft actions were not enabled.");
+  DiscardDetails(this, new RoutedEventArgs()); await _lastRefresh;
+  Require(EditTitle.Text == _repository.GetMedia(first.Id)!.Title && !DetailsDiscard.IsEnabled, "Discard did not restore the selected medium.");
+  Require(_repository.GetMetadataDrafts().Any(d => d.MediaId == draftOther.Id), "Discard removed another medium's draft.");
+  Require(_repository.GetMedia(first.Id)!.Rating == 9 && _repository.GetMedia(first.Id)!.Tags.Count == 2, "Discard reverted immediate edits.");
+  await RefreshAsync(draftOther.Id);
+  Require(EditDescription.Text == "Other pending draft", "Another draft was lost after discard.");
+  DiscardDetails(this, new RoutedEventArgs()); await _lastRefresh;
+  await RefreshAsync(first.Id);
+  EditTitle.Text = draftTitle; EditDescription.Text = draftDescription;
   SaveDetails(this, new RoutedEventArgs());
+  Require(!_detailsDrafts.ContainsKey(first.Id), "Saving left a stale metadata draft.");
+  await _lastRefresh;
+  EditDescription.Text = "Draft saved on close";
+  CheckpointDetailsDrafts();
+  var conflictBefore = _repository.GetMedia(first.Id)!;
+  _repository.Upsert(conflictBefore with { Category = "Changed elsewhere" });
+  SaveDetails(this, new RoutedEventArgs());
+  Require(_metadataConflicts.Contains(first.Id) && DetailsReload.Visibility == Visibility.Visible, "Metadata conflict did not offer reload.");
+  Require(_repository.GetMedia(first.Id)!.Description == conflictBefore.Description && _repository.GetMetadataDrafts().Any(d => d.MediaId == first.Id), "Conflict lost a draft or overwrote stored metadata.");
+  DiscardDetails(this, new RoutedEventArgs()); await _lastRefresh;
+  Require(EditCategory.Text == "Changed elsewhere" && !_metadataConflicts.Contains(first.Id), "Reload did not show the concurrent saved values.");
+  EditDescription.Text = "Selected recovery draft"; CheckpointDetailsDrafts();
+  await RefreshAsync(draftOther.Id);
+  EditDescription.Text = "Unselected recovery draft"; CheckpointDetailsDrafts();
+  await RefreshAsync(first.Id);
+  var missingDraftId = Guid.NewGuid();
+  _detailsDrafts[missingDraftId] = new("Missing recovery draft", "", "", "") { Original = new("Missing", null, null, null) };
+  PersistDetailsDrafts();
+  var recoveryWindow = new MetadataRecoveryWindow(this, _detailsDrafts.Select(pair =>
+   new MetadataRecoveryRow(pair.Key, pair.Value.Title, _repository.GetMedia(pair.Key) != null)).ToArray());
+  recoveryWindow.Show(); recoveryWindow.Select(draftOther.Id, false);
+  await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+  Capture((FrameworkElement)recoveryWindow.Content, Path.Combine(directory, "metadata-recovery.png"));
+  var recoveryIds = recoveryWindow.SelectedIds; recoveryWindow.Close();
+  ApplyDetailsRecovery(recoveryIds);
+  Require(EditDescription.Text == "Selected recovery draft" && !_detailsDrafts.ContainsKey(draftOther.Id) && _detailsDrafts.ContainsKey(missingDraftId), "Selective recovery lost selected/missing drafts or retained an unchecked draft.");
+  Require(_repository.GetMetadataDrafts().Count == 2 && _repository.GetMedia(first.Id)!.Description == conflictBefore.Description, "Recovery changed saved metadata or failed to persist its decision.");
+  ApplyDetailsRecovery([first.Id]);
+  DiscardDetails(this, new RoutedEventArgs()); await _lastRefresh;
+  EditDescription.Text = "Draft saved on close";
+  Require(!ResolveDetailsDrafts(MessageBoxResult.Cancel), "Cancel did not preserve pending drafts.");
+  _switchTo = Path.Combine(directory, "cancelled-switch");
+  _pendingDataDirectory = _switchTo;
+  _switched = new(TaskCreationOptions.RunContinuationsAsynchronously);
+  var cancelledSwitch = _switched.Task;
+  CancelLibrarySwitch();
+  Require(cancelledSwitch.IsCompletedSuccessfully && cancelledSwitch.Result == null && _switchTo == null && _switched == null && _pendingDataDirectory == null,
+   "Cancelling a library switch left pending state.");
+  Require(_repository.GetMetadataDrafts().Any(d => d.MediaId == Selected!.Id), "Pending edit was not persisted for crash recovery.");
+  EditReleaseDate.Text = "invalid-date";
+  Require(!ResolveDetailsDrafts(MessageBoxResult.Yes), "Invalid draft date was saved.");
+  Require(_repository.GetMedia(first.Id)!.Description != "Draft saved on close", "Invalid draft partially changed metadata.");
+  EditReleaseDate.Text = "";
+  EditDescription.Text = draftDescription;
+  Require(ResolveDetailsDrafts(MessageBoxResult.Yes), "Valid drafts could not be saved on close.");
   var saved = _repository.Search().Single(i => i.Id == first.Id);
   Require(saved.Rating == 9 && saved.Tags.Count == 2 && saved.Description!.Contains("Vektoren"), "Editing failed or half-star rating lost.");
   _repository.Upsert(saved with { WatchLater = true, Category = "Natur", TagCategories = new() { ["Orte"] = ["See"], ["Motive"] = ["Abendlicht"] } });
@@ -631,6 +704,8 @@ public partial class MainWindow
   await RunTakeoverSmokeTestAsync(directory);
   await RunNotificationSmokeTestAsync(directory);
   await RunMetadataSmokeTestAsync(directory);
+  await RunMetadataCrashSmokeAsync(directory);
+  await RunPlaybackPreferencesSmokeAsync(directory);
   await RunHomeSmokeTestAsync(directory);
   await RunCollectionSmokeTestAsync(directory);
   await RunLibrarySettingsSmokeTestAsync(directory, fixtureDirectory);
@@ -718,10 +793,12 @@ public partial class MainWindow
    foreach (var nested in Descendants<T>(child)) yield return nested;
   }
  }
- private static void Capture(FrameworkElement element, string path, double scale = 1)
+ internal static void Capture(FrameworkElement element, string path, double scale = 1)
  {
   // The brush draws the element at its layout offset, so its margin belongs to the picture; without it the right and
   // bottom edges were cut off by exactly the margin and buttons looked as if they lay outside the window.
+  element.UpdateLayout();
+  if (Environment.GetEnvironmentVariable("FLIXYPIX_TEST_CAPTURE") != "1") return;
   if (!double.IsFinite(scale) || scale <= 0) throw new ArgumentOutOfRangeException(nameof(scale));
   element.UpdateLayout(); var width = element.ActualWidth + element.Margin.Left + element.Margin.Right; var height = element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
   var screenshot = new RenderTargetBitmap((int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);

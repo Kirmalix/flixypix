@@ -13,10 +13,16 @@ public enum RestoreScope
 
 /// <summary>What the main window shows. It is kept in the catalog, so an encrypted library keeps it encrypted, and it
 /// doubles as an entry of the back/forward history.</summary>
+public sealed record DirectoryViewState(TagKey? Selected = null, double ListOffset = 0, double ProfileOffset = 0);
+
 public sealed record ViewState
 {
     /// <summary>all, Video, Image, Audio, favorites, watchlater.</summary>
     public string View { get; init; } = "all";
+    public List<ReviewState> ReviewStates { get; init; } = [];
+    public DirectoryViewState? Directory { get; init; }
+    public Guid? ImageSetId { get; init; }
+    public Guid? PublicationGroupId {get;init;}
     public Guid? PlaylistId { get; init; }
     public Guid? SavedSearchId { get; init; }
     public string? SearchText { get; init; }
@@ -47,19 +53,19 @@ public sealed record ViewState
     public DateTimeOffset SavedAt { get; init; }
 
     /// <summary>"home" is the start page; as a query it stands for all media.</summary>
-    public static readonly string[] Views = ["home", "all", "Video", "Image", "Audio", "favorites", "watchlater"];
+    public static readonly string[] Views = ["publication-groups", "image-sets", "inbox", "home", "performers", "studios", "all", "Video", "Image", "Audio", "favorites", "watchlater"];
 
     /// <summary>The part of the state a scope restores; the rest falls back to an empty view.</summary>
     public ViewState Restricted(RestoreScope scope) => scope == RestoreScope.All ? this : new ViewState
     {
-        View = View, PlaylistId = PlaylistId, SavedSearchId = SavedSearchId, SortOrder = SortOrder, ViewMode = ViewMode, TileWidth = TileWidth, SavedAt = SavedAt
+        View = View, ImageSetId = ImageSetId, PublicationGroupId=PublicationGroupId, PlaylistId = PlaylistId, SavedSearchId = SavedSearchId, SortOrder = SortOrder, ViewMode = ViewMode, TileWidth = TileWidth, SavedAt = SavedAt
     };
 
     /// <summary>Same view, filters and order; position and selection do not count (used by the history).</summary>
     public bool SameView(ViewState other) =>
-        View == other.View && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
+        View == other.View && ImageSetId == other.ImageSetId && PublicationGroupId==other.PublicationGroupId && Directory?.Selected == other.Directory?.Selected && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
         Tag == other.Tag && TagCategory == other.TagCategory && Category == other.Category && Folder == other.Folder && IncludeSubfolders == other.IncludeSubfolders &&
-        RequiredTags.SequenceEqual(other.RequiredTags) && ExcludedTags.SequenceEqual(other.ExcludedTags) && MinimumStars == other.MinimumStars &&
+        ReviewStates.SequenceEqual(other.ReviewStates) && RequiredTags.SequenceEqual(other.RequiredTags) && ExcludedTags.SequenceEqual(other.ExcludedTags) && MinimumStars == other.MinimumStars &&
         SortOrder == other.SortOrder && TagsMatchAny == other.TagsMatchAny &&
         JsonSerializer.Serialize(Expression, CatalogRepository.Json) == JsonSerializer.Serialize(other.Expression, CatalogRepository.Json) &&
         JsonSerializer.Serialize(Filter, CatalogRepository.Json) == JsonSerializer.Serialize(other.Filter, CatalogRepository.Json);
@@ -84,6 +90,7 @@ public sealed record ViewState
         var (sort, descending) = SortFor(SortOrder);
         return new MediaQuery
         {
+            ReviewStates = ReviewStates.Count > 0 ? ReviewStates : View == "inbox" ? [ReviewState.Unreviewed, ReviewState.NeedsAttention] : [],
             Text = SearchText, Tag = Tag, MinimumRating = Math.Clamp(MinimumStars, 0, 5) * 2,
             IsFavorite = View == "favorites" ? true : null, WatchLater = View == "watchlater" ? true : null,
             Kind = Enum.TryParse<MediaKind>(View, out var kind) ? kind : null,
@@ -152,7 +159,7 @@ public sealed partial class CatalogRepository
     public void SaveViewState(ViewState state)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (state.RequiredTags is null || state.ExcludedTags is null || state.Selection is null || state.Selection.Count > 100_000)
+        if (state.ReviewStates is null || state.ReviewStates.Any(value => !Enum.IsDefined(value)) || state.RequiredTags is null || state.ExcludedTags is null || state.Selection is null || state.Selection.Count > 100_000)
             throw new ArgumentException("Invalid view state.", nameof(state));
         if (state.Expression is not null) ValidateSearchExpression(state.Expression);
         lock (gate)
@@ -175,10 +182,15 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
+            result = result with { ReviewStates = (state.ReviewStates ?? []).Where(value => Enum.IsDefined(value)).Distinct().ToList() };
             var facets = GetFacets();
             var preferences = ReadPreferences();
             var tags = new HashSet<string>(facets.Tags.Concat(preferences.TagVocabulary.Select(t => t.Tag)), StringComparer.OrdinalIgnoreCase);
             if (!ViewState.Views.Contains(state.View)) { removed.Add(T("View {0}", state.View)); result = result with { View = "all" }; }
+            if (state.ImageSetId is { } setId && GetImageSet(setId) is null)
+            { removed.Add(T("Image sets")); result = result with { ImageSetId = null }; }
+            if(state.PublicationGroupId is {} groupId&&GetPublicationGroup(groupId)==null)
+            {removed.Add(T("Publication groups"));result=result with {PublicationGroupId=null};}
             if (state.PlaylistId is { } playlist && ReadDocuments<Playlist>("playlists").All(p => p.Id != playlist))
             { removed.Add(T("Collection")); result = result with { PlaylistId = null }; }
             if (state.SavedSearchId is { } search && ReadDocuments<SavedSearch>("saved_searches").All(s => s.Id != search))
@@ -223,6 +235,15 @@ public sealed partial class CatalogRepository
                 result = result with { Selection = state.Selection.Where(existing.Contains).ToList() };
             }
             if (state.AnchorId is { } anchor && GetMedia(anchor) is null) result = result with { AnchorId = null };
+            if (state.Directory is { } directory)
+            {
+                var selected = directory.Selected;
+                var role = state.View == "performers" ? TagRole.Performer : TagRole.Studio;
+                if (selected != null && !GetDirectory().Any(e => e.Role == role && Same(e.Category, selected.Category) && Same(e.Tag, selected.Value)))
+                { removed.Add(selected.Value); selected = null; }
+                static double Offset(double value) => double.IsFinite(value) ? Math.Max(0, value) : 0;
+                result = result with { Directory = directory with { Selected = selected, ListOffset = Offset(directory.ListOffset), ProfileOffset = Offset(directory.ProfileOffset) } };
+            }
             result = result with { MinimumStars = Math.Clamp(state.MinimumStars, 0, 5), Position = Math.Max(0, state.Position) };
         }
         dropped = removed;

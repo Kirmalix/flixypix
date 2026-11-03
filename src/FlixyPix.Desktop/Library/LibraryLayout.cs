@@ -29,7 +29,7 @@ public partial class MainWindow
  private void ToggleDetailsClicked(object sender, RoutedEventArgs e) => ToggleDetails();
  internal void ToggleDetails()
  {
-  if (_view == "home") return;
+  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) return;
   _detailsAutoFolded = false; SetDetails(!DetailsExpanded); SaveViewPreferences();
  }
 
@@ -44,7 +44,7 @@ public partial class MainWindow
 
  private void SetDetails(bool expanded)
  {
-  if (_view == "home")
+  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView))
   {
    // The start page needs no details and takes their place.
    DetailsPane.Visibility = DetailsRail.Visibility = DetailsResizer.Visibility = Visibility.Collapsed;
@@ -63,7 +63,7 @@ public partial class MainWindow
   if (sidebarNarrow && !_sidebarAutoFolded && SidebarExpanded) { _sidebarAutoFolded = true; SetSidebar(false); }
   else if (!sidebarNarrow && _sidebarAutoFolded) { _sidebarAutoFolded = false; SetSidebar(!_settings.SidebarCollapsed); }
   var detailsNarrow = ActualWidth < DetailsFoldWidth;
-  if (_view == "home") SetDetails(false);
+  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) SetDetails(false);
   else if (detailsNarrow && !_detailsAutoFolded && !_settings.DetailsCollapsed) { _detailsAutoFolded = true; SetDetails(false); }
   else if (!detailsNarrow && _detailsAutoFolded) { _detailsAutoFolded = false; SetDetails(!_settings.DetailsCollapsed); }
   else SetDetails(_detailsAutoFolded ? false : !_settings.DetailsCollapsed);
@@ -100,7 +100,7 @@ public partial class MainWindow
  /// <summary>Opens the details at a part: with tabs the tab, otherwise the place in the long column.</summary>
  internal void OpenDetailsAt(string part)
  {
-  if (_view == "home") return;
+  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) return;
   if (!DetailsExpanded) { _detailsAutoFolded = false; SetDetails(true); SaveViewPreferences(); }
   if (_settings.DetailsTabs) { ShowDetailsTab(part); return; }
   FrameworkElement target = part switch { "tags" => DetailsTagsPart, "scenes" => DetailsScenesPart, _ => DetailsFieldsPart };

@@ -28,8 +28,8 @@ public sealed partial class CatalogRepository : IDisposable
     /// and the playback history, 13 bookmark tags, collection sets and the quick collection (older versions would drop them
     /// when they save), 14 technical data and further versions of a medium (query columns and the table media_files), 15 picture
     /// bytes in files beside the catalog instead of inside it (see <see cref="AssetStore"/>), 16 smaller documents (see
-    /// <see cref="CompactDocuments"/>).</summary>
-    internal const long SchemaVersion = 17;
+    /// <see cref="CompactDocuments"/>), 18 indexed scene-wall projections.</summary>
+    internal const long SchemaVersion = 26;
 
     public string DatabasePath { get; }
     /// <summary>Data key of an encrypted library; snapshots and backups reuse it.</summary>
@@ -97,7 +97,15 @@ public sealed partial class CatalogRepository : IDisposable
             command.ExecuteNonQuery();
             // Schema 16 reads the original's dates from the medium itself; the triggers are created anew.
             if (schemaVersion is > 0 and < 16) using (var drop = Command("DROP TRIGGER IF EXISTS media_query_insert; DROP TRIGGER IF EXISTS media_query_update;", transaction)) drop.ExecuteNonQuery();
+            InitializeImageSets(transaction);
+            InitializePublicationGroups(transaction);
+            InitializeTagHierarchy(transaction);
+            InitializeStashSources(transaction);
+            InitializeStashIdentities(transaction);
+            InitializeStashProvenance(transaction);
+            InitializeStashBindings(transaction);
             InitializeQuerySchema(transaction, schemaVersion < 7);
+            InitializeWallSchema(transaction, schemaVersion < 18);
             using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id);", transaction)) health.ExecuteNonQuery();
             InitializeSearchIndexSchema(transaction);
             InitializeHistorySchema(transaction);
@@ -176,7 +184,7 @@ public sealed partial class CatalogRepository : IDisposable
         lock (gate)
         {
             if (FindPath(item.Path) is not null) return false;
-            Upsert(item);
+            Upsert(item with { ReviewState = ReviewState.Unreviewed });
             return true;
         }
     }
@@ -187,6 +195,8 @@ public sealed partial class CatalogRepository : IDisposable
         {
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
+            RemoveImageSetMedia(id, transaction);
+            RemovePublicationGroupMembers(PublicationGroupMemberKind.Video,new HashSet<Guid>{id},transaction);
             using (var command = Command("DELETE FROM media WHERE id=$id", transaction, ("$id", id.ToString()))) command.ExecuteNonQuery();
             cachedMedia = null;
             foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
@@ -294,7 +304,12 @@ public sealed partial class CatalogRepository : IDisposable
                     using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
                     {
                         writer.WriteStartObject();
-                        writer.WriteString("format", "flixypix-catalog"); writer.WriteNumber("version", 4);
+                        writer.WriteString("format", "flixypix-catalog"); writer.WriteNumber("version", 5);
+                        WriteDocuments("imageSets","image_sets");WriteDocuments("publicationGroups","publication_groups");WriteDocuments("tagHierarchies",TagHierarchyTable);
+                        WriteDocuments("stashSources","stash_sources");
+                        WriteDocuments("stashIdentities","stash_identities");
+                        WriteDocuments("stashProvenance","stash_provenance");WriteStashProvenanceChunks(writer,transaction);
+                        WriteStashBindings(writer,transaction);
                         WriteDocuments("items", "media"); WriteDocuments("playlists", "playlists"); WriteDocuments("scenes", "scenes");
                         WriteDocuments("savedSearches", "saved_searches"); WriteDocuments("filenameTagRules", "filename_rules");
                         WriteDocuments("bookmarks", "bookmarks"); WriteDocuments("mediaAssets", "media_assets", withData: true); WriteDocuments("collectionSets", "collection_sets");
@@ -437,6 +452,7 @@ public sealed partial class CatalogRepository : IDisposable
                     try { ValidatePreferences(preferences); SaveDocument("preferences", Guid.Empty, preferences, transaction); }
                     catch (ArgumentException ex) { AddPortableError(errors, $"Preferences: {ex.Message}"); skipped++; }
                 }
+                ImportPortableOrganization(transaction,cancellationToken);
                 if (errors.Count != 0)
                 {
                     transaction.Rollback(); cachedMedia = null;
@@ -465,7 +481,9 @@ public sealed partial class CatalogRepository : IDisposable
     private MediaItem UpsertCore(MediaItem item, SqliteTransaction transaction)
     {
         ArgumentNullException.ThrowIfNull(item);
-        if (item.Id == Guid.Empty || string.IsNullOrWhiteSpace(item.Path) || item.Title is null || !Enum.IsDefined(item.Kind) ||
+        ValidatePlaybackSettings(item.Playback);ValidateAudioTrack(item.AudioTrack);
+        item.ContactSheet?.Validate();
+        if (item.Id == Guid.Empty || string.IsNullOrWhiteSpace(item.Path) || item.Title is null || !Enum.IsDefined(item.Kind) || !Enum.IsDefined(item.ReviewState) ||
             item.Tags is null || item.TagCategories is null || item.TagCategories.Any(x => string.IsNullOrWhiteSpace(x.Key) || x.Value is null) ||
             item.Extra is null || item.PlayCount is <0 || item.ViewCount is <0 || item.OCount is <0 || item.WatchCount is <0 || item.Rating is < 0 or > 10 || item.FileSize is < 0 || item.Width is <= 0 || item.Height is <= 0 ||
             item.DurationSeconds is { } duration && (!double.IsFinite(duration) || duration < 0) ||
@@ -494,6 +512,17 @@ public sealed partial class CatalogRepository : IDisposable
             Category = string.IsNullOrWhiteSpace(item.Category) ? null : item.Category.Trim(),
             Extra = new Dictionary<string, string?>(item.Extra)
         };
+        if(saved.ContactSheet is {} sheet&&(saved.Kind!=MediaKind.Video||!MediaVersions.All(saved).Any(file=>PathKey(file.Path)==PathKey(sheet.SourcePath))))saved=saved with {ContactSheet=null};
+        if (saved.Kind != MediaKind.Image)
+        {
+            using var membership = Command("SELECT 1 FROM image_set_members WHERE media_id=$id LIMIT 1", transaction, ("$id", saved.Id.ToString()));
+            if (membership.ExecuteScalar() != null) throw new ArgumentException("An image set member must remain an image.");
+        }
+        if(saved.Kind!=MediaKind.Video)
+        {
+            using var membership=Command("SELECT 1 FROM publication_group_members WHERE video_id=$id LIMIT 1",transaction,("$id",saved.Id.ToString()));
+            if(membership.ExecuteScalar()!=null)throw new ArgumentException("A publication-group video must remain a video.");
+        }
         if(legacySession!=null)
         {
             using var existingDocument=Command("SELECT document FROM media WHERE id=$id",transaction,("$id",saved.Id.ToString()));

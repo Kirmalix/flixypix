@@ -25,7 +25,7 @@ internal sealed class HomePage : Grid
  internal Action<DirectoryEntry>? ShowEntity { get; set; }
  internal Action? Import { get; set; }
  internal Action? ContentPack { get; set; }
- /// <summary>The welcome page offers the content pack only when an installation of the original can supply its names.</summary>
+ /// <summary>The welcome page offers the bundled genre vocabulary without requiring a legacy installation.</summary>
  internal Func<bool>? ContentPackAvailable { get; set; }
  /// <summary>Right click, context menu key or Shift+F10 on a card or the banner: the media menu of that medium.</summary>
  internal Action<MediaItem>? MenuRequested { get; set; }

@@ -11,7 +11,7 @@ public partial class MainWindow
  private readonly Dictionary<FrameworkElement,IInputElement> _regionFocus=[];
  private int? _keyboardIndex,_keyboardAnchor;
  private readonly SemaphoreSlim _keyboardNavigationGate=new(1);
- private FrameworkElement[] KeyboardRegions()=>new FrameworkElement[]{HeaderBar,Sidebar.IsVisible?Sidebar:SidebarRail,_view=="home"?_home:MediaList,DetailsPane.IsVisible?DetailsPane:DetailsRail}.Where(r=>r!=null&&r.IsVisible).ToArray();
+ private FrameworkElement[] KeyboardRegions()=>new FrameworkElement[]{HeaderBar,Sidebar.IsVisible?Sidebar:SidebarRail,IsPublicationGroupView && _publicationPage != null ? _publicationPage : IsImageSetView && _setPage != null ? _setPage : IsRoleView && _roleBrowser != null ? _roleBrowser : _view=="home"?_home:MediaList,DetailsPane.IsVisible?DetailsPane:DetailsRail}.Where(r=>r!=null&&r.IsVisible).ToArray();
  private void MoveKeyboardRegion(bool backwards)
  {
   var regions=KeyboardRegions();if(regions.Length==0)return;
