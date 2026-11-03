@@ -2127,19 +2127,9 @@
       "digest": "6ca130c7547c132857e6b21f46191be0bfa673243ca40d58103473804efc5680",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "COLLECTIONS": {
-      "status": "unchanged",
-      "digest": "424e1cf45ff73e70046ea7ecbc688a66a40a5e5f5aec932feaaa7226c1d9b2eb",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Newly imported since last opened": {
       "status": "unchanged",
       "digest": "86e8bb4ea7056e30000e956c5a4b74352d24d3c238b1e3f069813b7bd41c7e10",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Directory: manage tags, performers and studios": {
-      "status": "unchanged",
-      "digest": "770bcf395db646cf5c58c071a95956f414d22bdfb73fb15f45ff671826c32014",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Open directory": {
@@ -2155,11 +2145,6 @@
     "Sort tags by frequency or name": {
       "status": "unchanged",
       "digest": "f3a3be8f3fecbda9ed82bb0174cd2f1014b42623b1d639c606aa84034e289876",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "TAGS": {
-      "status": "unchanged",
-      "digest": "228fe10684c77b85d3b5c3e850d1ef2cb5c03780ff84789146285dfb516f5a37",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Filter tags": {
@@ -2180,16 +2165,6 @@
     "Click: filter · Ctrl+click: exclude · right-click: more actions · drag items here: assign tag": {
       "status": "unchanged",
       "digest": "8ca1b6e1a45ee48c98f2c4da8e39d609e1195b90e66ec5ec3084e32183b64390",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "TAG CATEGORIES": {
-      "status": "unchanged",
-      "digest": "64cd8ad75e59ff4129f948427943dc32326ab941f1097efca20e1e130e81956b",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "FOLDERS": {
-      "status": "unchanged",
-      "digest": "295cd9b4ac5d2fdd02374577e024c4b95bfca82519d1cfc5c1d29560423e7335",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Stored locally.\nKept for the future.": {
@@ -2270,11 +2245,6 @@
     "Title Z–A": {
       "status": "unchanged",
       "digest": "431dff625252d79b6a8cdff8c57c71af2e64726ab05f7f7ace579ed44cc7c5a2",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Newest first": {
-      "status": "unchanged",
-      "digest": "5f12abcf8ebee09f0dd5ccd0eeb26c84e4ce1981cb07065891f95cb0a0dd0178",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Longest first": {
@@ -2930,26 +2900,6 @@
     "SHA-256 · {0}/{1} · {2}": {
       "status": "unchanged",
       "digest": "ea5aa4eec2b3869ac9260b43a8c94f5cb0639edde20ac08e7e0ac89f5efc226b",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "{0} groups with identical file content.\nNo files were changed or removed.\n\n": {
-      "status": "unchanged",
-      "digest": "6bd7433d3f31d285087541e88cec84d231156d86d4f1c87012069b810a3155f9",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Group {0} · {1:N0} bytes\nSHA-256: {2}\n": {
-      "status": "unchanged",
-      "digest": "33c0c767f7fc6a11bf53b6b93accf1b947b8d735104dbdee5c88981951373fb4",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "\n\nNot checked:\n": {
-      "status": "unchanged",
-      "digest": "64f94ae37ccbea567cd340634180f69a3039f80d4b72bbbe467efca57034c816",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Identical files": {
-      "status": "unchanged",
-      "digest": "d94619d509f20a48a78ac36f3a627cf7147fc712d0deb2da852f6c19a66546a8",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Create complete backup package": {
@@ -4020,11 +3970,6 @@
     "Find identical files": {
       "status": "unchanged",
       "digest": "72690b4decdb10a09c86cce3b711af2c6100ebcc2a4fe26551f8cabe31626677",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Compares the files by SHA-256 and shows duplicate items.": {
-      "status": "unchanged",
-      "digest": "2c8de900e2808da0f841547d79d4dcea5b8afb673d929d7d0b60d479d9e914b1",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Adds thumbnails, dimensions and duration where they are missing.": {
@@ -6470,11 +6415,6 @@
     "Please select items first.": {
       "status": "unchanged",
       "digest": "8caa88684390386c0e18a429053445fb843aa0ccdaeb1e01abb1d73325ed5561",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "  · Ctrl+{0}": {
-      "status": "unchanged",
-      "digest": "13980948a2b43bac4d62fae88989a8a413a64481bf6076d6163b74d3dab1da6c",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Filter (all chosen tags)": {
@@ -8937,11 +8877,6 @@
       "digest": "c8e46ca6c044f7444f00c0fcb119fcf3aa0a0eb1d3a62533cb567856c8d2f3ee",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "If a video has bookmarks or scenes, their list opens on start.": {
-      "status": "unchanged",
-      "digest": "b81a698d61f5879b56642189259d76b29f6351546b6d93d579d6886877928f53",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "When off, the player only reacts to Esc, F11 and the media keys.": {
       "status": "unchanged",
       "digest": "4c69d36ce2d7050a85ab9349760c010917b1aba174776dfd9e3a3b477fd3552f",
@@ -10282,21 +10217,6 @@
       "digest": "1a055dfd76df9b7e4dc4b4df55b74ecc0c6899e8bb0380e4bcd5392015746fe3",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "\nTitle: ": {
-      "status": "unchanged",
-      "digest": "b2415e2f9bf36ab5c7e0bd4fdf5eb55d33761aee6f8a1bbff16cbecba95ea60d",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "\nTags before: ": {
-      "status": "unchanged",
-      "digest": "fda1b8a4633d6651968ab8f478cf53536b33c15e07110d98a5ab888bb55abad4",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "\nTags after: ": {
-      "status": "unchanged",
-      "digest": "dc6548eb1cd7e1d20a607e6e5734cfc29277f5960d87aae7147da1bd598b5892",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Check parser changes": {
       "status": "unchanged",
       "digest": "0ee8056cc04df8c071a3dae2d923eb29fefc7b6512527df96eb9af604257a8ab",
@@ -10652,24 +10572,9 @@
       "digest": "24609a733b03b88a5c8c38eef11383bd24442a8cf4c4cacbd4cd2aa337ba66df",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "FlixyPix reconciles these folders with the catalog: new files are offered, moved and renamed files reassigned, missing ones reported. The files themselves stay unchanged.": {
-      "status": "unchanged",
-      "digest": "93fee2de81061f84be2fd9c87591481b56a3858011beba6fb7fa6577ba8caa03",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Changes found": {
       "status": "unchanged",
       "digest": "3c978d10c1c32e8e39644225f1e40e721d7fb9392888f351bc5bb73a9d161054",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "library folder\u0004Type": {
-      "status": "unchanged",
-      "digest": "b3cf59f0cf91e9df2c664c22d516b49acfffc087367d5075416377a89556649c",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Place": {
-      "status": "unchanged",
-      "digest": "f02f2c97f6eb2d9633d6c5e6005ab9e045654ed1e32ac7d2a10f1b13fb8befab",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "No media folders yet. Add the folders that hold your videos, images and music.": {
@@ -10785,11 +10690,6 @@
     ", {0:N0} hidden": {
       "status": "unchanged",
       "digest": "bef08775e154bca9dd186bc79b209919e9e560d66c83214008817073ec4117ff",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    ", {0:N0} skipped because they changed since the check": {
-      "status": "unchanged",
-      "digest": "79d5e56a9000e5249a9e576095ce843a2dd9955fda0dc5b9cfeeb3d18c7d2176",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     " · Media artwork": {
@@ -12217,22 +12117,6 @@
       "digest": "4d88f1269fae388dbd88965ec895cadfa204b283b9f30920fc84ae39be1e3841",
       "previous_digest": "faaa35684068f07f7baa654ff21fdd0b0b2e30af3fe0ff93a03d051e68cf3443"
     },
-    "A new, local media library for Windows.\n\nFiles are not moved on import. Catalog and settings live in your user profile. The app shows images itself; video and audio use mpv, processing uses FFmpeg and ffprobe.": {
-      "status": "unchanged",
-      "digest": "1f8966393f2056e13740a40abb409c114a0055c90fc92edd0830a3fe82d50d2c"
-    },
-    "FlixyPix is an independent project, not affiliated with the authors of EazyFlixPix. Online providers and live TV are not part of it.": {
-      "status": "unchanged",
-      "digest": "4f072f8f519b46c3af6c85a0228de70c232caaa87b0c65b1ab745ce6bafe8b59"
-    },
-    "Keyboard: Ctrl+O import files · Ctrl+F search · Esc clear search · Ctrl+S save details · Enter open · 0–5 rate with stars · F2 edit title · Ctrl+T add tag · Ctrl+1–9 quick tags · Space large view · Home/End start/end of the list · Ctrl+B sidebar · Del remove from catalog.": {
-      "status": "unchanged",
-      "digest": "dd296de8b3b838e2712218bf3c80611f7676e9c0a1dc98f40d3572532e9651a1"
-    },
-    "Version {0} · {1}\n\nCopyright (C) 2026 The FlixyPix contributors. FlixyPix is free software under the GNU General Public License, version 3 or later, and comes without any warranty. Bundled components keep their own licenses; see THIRD-PARTY-NOTICES.md beside the program.": {
-      "status": "unchanged",
-      "digest": "0f12def5aba2316afa19a8290b71a39477ee55fd7b5aa3e58c74ab0fa69fadd3"
-    },
     "A studio also finds the items of the studios that belong to it (directory: “Belongs to”).": {
       "status": "unchanged",
       "digest": "49a3b2970939c78119cb294f0ec459336f28b965e78c4811c44f900852c407fa"
@@ -12568,10 +12452,6 @@
     "Finds more, including some that only look alike; check before removing.": {
       "status": "unchanged",
       "digest": "8d8f11dc7ec35a5b476db09e682f71dd89f2a0b77edf558d47d9c548b1be624f"
-    },
-    "Finds videos and images that look alike, also in another resolution or quality, and helps to keep the best version.": {
-      "status": "unchanged",
-      "digest": "978c529d3bf540d14dc729518b4004e4c591207f74fb04d50304cbb64e5ee0c8"
     },
     "Finds videos and images that look alike, also in another resolution or quality. Fingerprints are computed once and kept; files are only read.": {
       "status": "unchanged",
@@ -13966,10 +13846,6 @@
       "status": "unchanged",
       "digest": "b89807de9ab4c77f130747fc33433eac4f3bd70c093e9886d1f9082d09f6539f"
     },
-    "Notification area: only its icon remains, a click brings everything back. Hide completely: nothing remains; the boss key again or starting FlixyPix brings it back.": {
-      "status": "unchanged",
-      "digest": "e81eb9cd959bdd749dda6d10711038895940ff81c57738a6024dac43873a171e"
-    },
     "Password or PIN": {
       "status": "unchanged",
       "digest": "0cbce2fd0a305612a838de6fb39e416f30a11d3db36bdd9b3890af607f221d83"
@@ -14034,10 +13910,6 @@
       "status": "unchanged",
       "digest": "5e80836a57b3015eeef7048805081c7d8fb9b81938fe0d092b84b9cd706e1337"
     },
-    "The boss key also works while another program is in front, and then brings FlixyPix back as well. Needs Ctrl, Alt or Win in the key, so Esc stays free for other programs.": {
-      "status": "unchanged",
-      "digest": "d392b36811a6c96232ae31ab08d2975eb7e73ac32704b9b8156e1db0b7082b9c"
-    },
     "The PIN needs at least {0} characters.\n\n": {
       "status": "unchanged",
       "digest": "17dbbfdd850f43bb2c2cf68780477f763303dede2083b00b402917c7d55753e1"
@@ -14089,11 +13961,6 @@
     "Wrong · try again in {0} s": {
       "status": "unchanged",
       "digest": "d37ab3e371349680507c5d537ed14c1f0701728e8b3c971f9469f556052a23d3"
-    },
-    "“Hide completely” needs a system-wide boss key; otherwise only a new start of FlixyPix would bring it back.": {
-      "status": "corrected",
-      "digest": "65c19298bc3ddf17741cfe9a16ed70a230858811edc5a177a7caaa61979c7ee1",
-      "previous_digest": "3932d94b99c1fc08a2782bf96117deffa3eefef81e1e93ebb4bba0e3d0c53588"
     },
     "60 fps": {
       "status": "unchanged",
@@ -14640,6 +14507,593 @@
     "Two selected Stash entries would get the same directory name: {0}": {
       "status": "unchanged",
       "digest": "e9951022ea94a903306654a0734b35e30d49922cdb729ff442205acb13670775"
+    },
+    "Add members": {
+      "status": "unchanged",
+      "digest": "2c1fe2e652a0e33b2ee1c4f95007ca112451e77ecaa36f92dd67dc3dbe1c8e1c"
+    },
+    "Add one or more media folders to a library. Import keeps your original files in place. Back up the catalog and media files separately.": {
+      "status": "unchanged",
+      "digest": "f43fcbe5217cea922c8be3c2337a6bb0a5c3658ed7acb3c89be0875baec83abb"
+    },
+    "Add to quick collection": {
+      "status": "unchanged",
+      "digest": "0d61da3d506ea53c0925a470d851226ed5176dedc8b23ae59869a73226cd0be7"
+    },
+    "An image set with these members already exists.": {
+      "status": "unchanged",
+      "digest": "0ae379da56745f873b1919035d4504cf7042a856a0d49fc8e8923cda7cb95b87"
+    },
+    "Apply and restart": {
+      "status": "unchanged",
+      "digest": "0d758222721fbd05fa5e84ce184ac93e4420f91009c6ea65b27c59afd70e6266"
+    },
+    "Apply automatically": {
+      "status": "unchanged",
+      "digest": "e87255730b712c5a93c4137c7e9cfe80198bfff40664f7c516868bcff19ad207"
+    },
+    "Assign shortcut": {
+      "status": "unchanged",
+      "digest": "c49a4d92f5f07c8ddc33b969f581da4c6bdf1fde03ee47804c1d6cceda59693e"
+    },
+    "Assign to selected items": {
+      "status": "unchanged",
+      "digest": "8a4441d932f4557cf4d4856a19b9d52d026063e60a58c46e5a767e2160b32b48"
+    },
+    "Audio earlier (−0.1 s)": {
+      "status": "unchanged",
+      "digest": "307952d715d19bee33ce67dffcd148420f7f1e315690a34bd15f17603e279e5c"
+    },
+    "Audio later (+0.1 s)": {
+      "status": "unchanged",
+      "digest": "4f811a1e89965ac6770ce51c7519d2509e1716e8a99274ad5ef3c9057e48a597"
+    },
+    "Automatic": {
+      "status": "unchanged",
+      "digest": "0ab3771a5e570dcf5634f76ea40155d994de3361e544dee5c49c4a2dd3172fa7"
+    },
+    "Boss key and the shortcut to show FlixyPix again must differ.": {
+      "status": "unchanged",
+      "digest": "c253d3aa61ac25d4a836261a93f40d1493172c92c19b4363cbbe7f28ad3324d9"
+    },
+    "Change storage mode": {
+      "status": "unchanged",
+      "digest": "f1a6e432810438b2a7df23ae89d8705705ca9bfdf1791dc168fc55c1ebc0adda"
+    },
+    "Changed": {
+      "status": "unchanged",
+      "digest": "c0499233c69a2a7a77366a836600d90b450516d088d1f2887fbf9714f029b9b5"
+    },
+    "Checking thumbnails…": {
+      "status": "unchanged",
+      "digest": "3e440ff524752979d7d74c4e38a67f9d6a0eae0492138010ec31c50a8204ab06"
+    },
+    "Children": {
+      "status": "unchanged",
+      "digest": "e1979eca3936c3c929ea2df62274b4abdbd45ae5e5e56d9871e7c03d58e9c6bb"
+    },
+    "Choose a shortcut with a modifier to show FlixyPix again, for example Shift+Esc.": {
+      "status": "unchanged",
+      "digest": "ba84e26307bd0aae1de5cada6753982ecb36b6224ceef3592a6aa3dfa9c341a5"
+    },
+    "Choose an A–B range within the video, with B after A.": {
+      "status": "unchanged",
+      "digest": "88fcb4afc815352fcbf92f32cb1b841a7070fa4c5a32f89968460c8ce74aa1fe"
+    },
+    "Choose any number of parents. The tag itself and its descendants cannot be parents.": {
+      "status": "unchanged",
+      "digest": "9308cb2d3bfeb392b90ad387696cb0bf4f0d5a4213185876cfa2eca1e8f0d6e4"
+    },
+    "Choose drafts to restore. Unselected drafts are discarded; missing media drafts are kept. Saved media stay unchanged.": {
+      "status": "unchanged",
+      "digest": "5f2f2ee16b10767b9499349e18aade53d35cbdd2f206287cdc54c1d921d3e31a"
+    },
+    "Choose the main file.": {
+      "status": "unchanged",
+      "digest": "c2d2f2235cf4f94a7bc5c08303ab0f94f445d45f4651c8fc31a41a3e1f5870d1"
+    },
+    "Click a frame to play this file from the displayed time.": {
+      "status": "unchanged",
+      "digest": "7347a3e3364a14dd45c9f467fd9ddaf23534c1d192a50703cb034c6b1d80ecab"
+    },
+    "Close the other FlixyPix windows first.": {
+      "status": "unchanged",
+      "digest": "1fca8074589a59ed81cf412c0cc8b352875dc56cdef20bd4a508e35a516c2f73"
+    },
+    "Combine search, tags, rating and thumbnail filters. Click a filter chip to remove it. Save the view as a smart collection to reuse it.": {
+      "status": "unchanged",
+      "digest": "733b697470e7c7467c1487da0c475dc5078ceb94e7db8d9d0fd080b39c369820"
+    },
+    "Copy current libraries; keep the originals": {
+      "status": "unchanged",
+      "digest": "f718dc99cf82e86f370073c270da669bec73bbc6cbc3ee149376bd7376d46ad8"
+    },
+    "Copy existing profile data into this portable edition? The originals are kept.": {
+      "status": "unchanged",
+      "digest": "6e0f6bf7abac201fc004c45390e83ac5c9ecc07e677731b6b087e13ded389924"
+    },
+    "Copy profile data": {
+      "status": "unchanged",
+      "digest": "1d4301032c7995869feee0e980e736b52f42dd5ecc9a4d1c4cfe6986e6d7533d"
+    },
+    "Cover image": {
+      "status": "unchanged",
+      "digest": "40f6e91bfff9ae384fb97ec06914b948d6a3617c4c54a0e5d6408014ef64e0a9"
+    },
+    "Create scene": {
+      "status": "unchanged",
+      "digest": "7d118a5a001a68df767f9e2939d86ff3b63cd0b5258776237e0bd24acb43798c"
+    },
+    "Data and storage": {
+      "status": "unchanged",
+      "digest": "c22d0cd16fd3bd9ef9146ed3ff34f6adf83163df26170489583a6acce9b7e4db"
+    },
+    "Diagnostics": {
+      "status": "unchanged",
+      "digest": "3d9c3ad4237053a91b77d9abb44c4fb45710d358b9366ae1d044006485703cee"
+    },
+    "Discard changes": {
+      "status": "unchanged",
+      "digest": "9a427b8cceb44de52f5c06543492800111e699c7ee7dc0c3447ec22b2f2e67e1"
+    },
+    "Drag to change the height": {
+      "status": "unchanged",
+      "digest": "124b29f88a7f5fa4498051623c74c4b4ae635a8799acefaa7d1ba169e9a2a49a"
+    },
+    "Edit": {
+      "status": "unchanged",
+      "digest": "6436b4acf04a30ce9c644aca6ec315b7391cf19b6334ef08433c50ce240a26f2"
+    },
+    "Edit parents": {
+      "status": "unchanged",
+      "digest": "04bb9a90c1575a7b6d2c28d5c1f1ae638cc6adeb72c83382f389f9dc38c0b55f"
+    },
+    "Estimated copy size: {0}": {
+      "status": "unchanged",
+      "digest": "7532c62147606d6f4b917e6f455a77e3e42caa18324efa5192b05777363e262a"
+    },
+    "Existing destination libraries and settings are preserved. Media files are not copied. Other FlixyPix windows must be closed.": {
+      "status": "unchanged",
+      "digest": "6b07d6c55597f595aa9d27a053a3611057d85aa97448b8ecfff23b1e9945f709"
+    },
+    "Existing translation overrides are kept; screenshot name conflicts receive a new name.": {
+      "status": "unchanged",
+      "digest": "03247ec9e7e28faa70e875d98650caae55d34f4a0601724a9699596fae2d3b0a"
+    },
+    "Exit": {
+      "status": "unchanged",
+      "digest": "eb08fd6097c47b23689f26ef4508d90381166499c3e1b4f1f8b60e9374a40754"
+    },
+    "External locations remain linked:": {
+      "status": "unchanged",
+      "digest": "b00a8247e5ff0471a9aeb2c822db2c0f73eb0c255feaef427a4a1f23d7a25f3c"
+    },
+    "Fill and crop": {
+      "status": "unchanged",
+      "digest": "8691d3bb8d87ddd19986676da0eebc5fd29cda0042e8fa96f493ab0d4edf7c0a"
+    },
+    "Find duplicates": {
+      "status": "unchanged",
+      "digest": "e23b1c1b7e06055db355055d50e7cd1496ec171046ad06334400d6da8d1452fa"
+    },
+    "Fit whole image": {
+      "status": "unchanged",
+      "digest": "d215df9bc45c18c75349b949a2915a6c36ccef99eb71525d31d29119349db9bc"
+    },
+    "Fit whole image preserves the complete thumbnail. Fill and crop fills the frame. High-resolution home artwork is generated only for the visible featured video.": {
+      "status": "unchanged",
+      "digest": "067eb5bfcbb707da10d40dc7f0631e87ff0de9c9556cce58ec6f2d75b6023564"
+    },
+    "Free space at destination: {0}": {
+      "status": "unchanged",
+      "digest": "81f6c305bd9174ac1fe853a20dc51b2e7544525c934caa6598da3d235e7ce6d1"
+    },
+    "Group {0} · {1:N0} bytes": {
+      "status": "unchanged",
+      "digest": "04468ebc4a5684542a3b0a9fe43cf9759ba4dcecffbc67fbf1692f9ba2ca81aa"
+    },
+    "Help": {
+      "status": "unchanged",
+      "digest": "b181bedf02e18b2dd4c4cef61fdf5d550e5b9ecc323fb3d2d8e3635512d371b1"
+    },
+    "Image sets": {
+      "status": "unchanged",
+      "digest": "d07b5ad9c17a423991d5a4c814a5edd638c9a2ac50eb73c4b89586f74ee05fc9"
+    },
+    "Image-set details or references are invalid. They stay unchanged; restore them from a backup or correct them explicitly.": {
+      "status": "unchanged",
+      "digest": "84ca1869945921f65742ce91df7d421d741d534cc3d065d959d824ab52d002e9"
+    },
+    "Image-set membership": {
+      "status": "unchanged",
+      "digest": "5b8167e6f1e510199d70359f81c4bead919cdc182365348528fa0c6a10a8b49d"
+    },
+    "Images also belong to: {0}": {
+      "status": "unchanged",
+      "digest": "39c6281da579d8d9363d795cc99ef8648c5911f658ca1567b46b18b1322949ba"
+    },
+    "Inactive": {
+      "status": "unchanged",
+      "digest": "915534a5c7e6e9aab530f531055c88c0cbaa12c0117db6ddda4729cf043ba804"
+    },
+    "Include subfolders": {
+      "status": "unchanged",
+      "digest": "51cf9fc65153e4114ff3484f8d4e59ee9be54bea35eba1572f750fd86153db91"
+    },
+    "Invalid image sets": {
+      "status": "unchanged",
+      "digest": "7cdbca67aa4f4637723102afe21aed2fed8bc5e0fc482b7b4203fcb51795465a"
+    },
+    "Invalid image-set name.": {
+      "status": "unchanged",
+      "digest": "2a4a665200b7e3eb38fa070c3adcd92e359561be0de65b7589cd83b4bd4b36e1"
+    },
+    "Invalid publication groups": {
+      "status": "unchanged",
+      "digest": "ba7e27f91d137557909a4447b91f05b8db115c74022c7388ddd1e0e4794b830f"
+    },
+    "Invert selection": {
+      "status": "unchanged",
+      "digest": "340aa04ba9ab063e85e7ffcb1e5111ee99ce5040516924338935559c20b268f6"
+    },
+    "Keyboard shortcuts": {
+      "status": "unchanged",
+      "digest": "901ab56f0c9dda6369afdd415682f7557e63247e918c11b4dbc43a14db8c548a"
+    },
+    "Large view": {
+      "status": "unchanged",
+      "digest": "99eba7f7f9f4f54c13e063c9dcd0256a34f06b73a60e73a81b8c84774090bffd"
+    },
+    "Licenses": {
+      "status": "unchanged",
+      "digest": "3bc8bef9a36956e160b30992d8008e24760e807d6388886c114b0dc14e42a17a"
+    },
+    "Membership differs from valid image sets. Fixing rebuilds the ordered references without changing sets or files.": {
+      "status": "unchanged",
+      "digest": "15acee3eb0cd917de45c7f448ea349360f8632f25775d961d241f98f24077435"
+    },
+    "Membership differs from valid publication groups. Fixing rebuilds the ordered references without changing groups or files.": {
+      "status": "unchanged",
+      "digest": "24b5153fbd2d5cd53f79b21a997c3981e6707f4a3b4ddec6f6f117b3ff0a3ee0"
+    },
+    "Menu": {
+      "status": "unchanged",
+      "digest": "5207495229423373d77a432a6fb62f2b9bbb62616837beb4bf6459ee801fc705"
+    },
+    "Monitor these folders after import": {
+      "status": "unchanged",
+      "digest": "2dd9aa8348df03f22f88e6a1b9201675a49dd1974a6618861b197b4f2bc8b9ea"
+    },
+    "Move down": {
+      "status": "unchanged",
+      "digest": "68b8e66011aab2cfcde8491a47cf2c350ee4dc26396844565205de527c3f722b"
+    },
+    "Move up": {
+      "status": "unchanged",
+      "digest": "ccf6a5c036e226c8287fa011727ddef31d030fa3ce0b166450cf9326f84fb472"
+    },
+    "Needs attention": {
+      "status": "unchanged",
+      "digest": "9304281494e167cefb5b3129aba4c40920dde525eaadd87382f95513fd1c831d"
+    },
+    "New files, familiar places. Keep your library up to date.": {
+      "status": "unchanged",
+      "digest": "646b6eb7489d7d600d7d2b47b30ac0ef29b1368e5c95ffcd357a2d63e0c0972b"
+    },
+    "No category": {
+      "status": "unchanged",
+      "digest": "bec711caebfcf5b58c088dd04f64fd06ff5e380ef06880f749f5dd511fff2af5"
+    },
+    "Not available": {
+      "status": "unchanged",
+      "digest": "764a8c65d669a879307305de15fafc05f837f56159b6df1745ccb57e6a88ae34"
+    },
+    "Not checked:": {
+      "status": "unchanged",
+      "digest": "c26c2298eb6e6ae547cb34471d77c6f19d3cb3a72fd7b1528efc45e7a428bf8d"
+    },
+    "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": {
+      "status": "unchanged",
+      "digest": "26b5a29ce0af7fdac6e829bddaf329371b7baf349013d77f08432cb45536bc1c"
+    },
+    "Only checked proposals are created. Existing sets and files are kept.": {
+      "status": "unchanged",
+      "digest": "8713462aa2d4c54f4204c4f7070388b800d94b7ef5333c586a75fb2a212dba42"
+    },
+    "Open log folder": {
+      "status": "unchanged",
+      "digest": "51a606ce4e26e635abbb18241971e42c916311cd6d80bc0450f49af138a7aef8"
+    },
+    "Operation cancelled": {
+      "status": "unchanged",
+      "digest": "797506358887476c26dc6d4d6934f779830c3ad822d3b544fb429a81e28db24f"
+    },
+    "Other catalog folders": {
+      "status": "unchanged",
+      "digest": "d3274bfe5b99d6520eb4c3710208e9a4a52420180e379c92fc5c2df89a508619"
+    },
+    "Parents": {
+      "status": "unchanged",
+      "digest": "cbf7a8f37e4df0b2d2425625790bc723de32fc0e9aed4c6fdccfb5772d5ee47b"
+    },
+    "Player shortcuts are off. Assignments stay saved and work again when switched on.": {
+      "status": "unchanged",
+      "digest": "11f816620f14481b66d9810dd890967d91294ffd2c19a4b24a79e14e219d372c"
+    },
+    "Portable": {
+      "status": "unchanged",
+      "digest": "d5d6eaee6c3a3c778fa6de7d947a4e244806413caf986beea8dafa0119103d7b"
+    },
+    "Position": {
+      "status": "unchanged",
+      "digest": "12a2dab5996939910b7a9ff46ec9ee0bcbf619ea993f0d9b04f6f09d1fbac8d5"
+    },
+    "Previous": {
+      "status": "unchanged",
+      "digest": "f87f8aaef33210395f6eb1fda1256caa056ec7d9b22cffb0e6cce5c702528f2b"
+    },
+    "Project website": {
+      "status": "unchanged",
+      "digest": "216ade7676e3fa82e96b940cea852acdafb63373ab810401fbce387fac4eb34a"
+    },
+    "Publication groups": {
+      "status": "unchanged",
+      "digest": "e62cf5c7b7ad818f190160eb53896634dff0339e66e9308085a9dfa4ab3c0133"
+    },
+    "Publication-group details or references are invalid. They stay unchanged; restore them from a backup or correct them explicitly.": {
+      "status": "unchanged",
+      "digest": "5527248c492c043c09b48cb0f54bf1fd97bcd9d8ffde79e970dcf865ad7e797f"
+    },
+    "Publication-group membership": {
+      "status": "unchanged",
+      "digest": "c67723d0a08b0aeea5f35f8312902716019cefaa14a7d3d7c09b4e681cd3f5f0"
+    },
+    "Release notes": {
+      "status": "unchanged",
+      "digest": "11c0ff194a0192d145ad9495a32adb47728f60adbc9c12f32e1eb0e498a2546d"
+    },
+    "Reload saved values": {
+      "status": "unchanged",
+      "digest": "a0d252fd2a62cb5b09ec8c70c9e39130875d58d98d78e684652ef9ddf97627dd"
+    },
+    "Reloading discards this draft and shows the saved values.": {
+      "status": "unchanged",
+      "digest": "e51553756c0a3da67c28eeb7e2737669e14c918ec2f9132c5fe7c69913d04037"
+    },
+    "Remembers whether the jump mark panel is shown, including after restarting the application.": {
+      "status": "unchanged",
+      "digest": "5a677e7b203eafd016f91c9077eeb04e854cd3da9ad8e13f5ad2ac858b6e2932"
+    },
+    "Remove from quick collection": {
+      "status": "unchanged",
+      "digest": "8baab99281a9b60ffe5b74fcb3cceff5c72ba9012daa41bc924297208351ac95"
+    },
+    "Remove selected missing files from the catalog? Personal details of removed items will be lost.": {
+      "status": "unchanged",
+      "digest": "716e19cc0b497a3dcbdfca20f7d7291d6915a50248377c334ef6bb3eaecdb5c4"
+    },
+    "Remove shortcut": {
+      "status": "unchanged",
+      "digest": "9e27eea4885cc1284f2bda090011ebf112d5ff0b98e8e5e98f1434a50edda460"
+    },
+    "Report": {
+      "status": "unchanged",
+      "digest": "d3b2f6c8dcfd90a33e64be183380782e0848638640356487cf5cdf4514818834"
+    },
+    "Report a problem": {
+      "status": "unchanged",
+      "digest": "5207d452a9e9b5ce9376433dbb87a9877cb214bf275a135504677b545065c012"
+    },
+    "Reserved for quick tags": {
+      "status": "unchanged",
+      "digest": "d7e28147be1df868122f403b7bed14770d6f72eec23269a1ae9e75d1a5353aa0"
+    },
+    "Reset A–B": {
+      "status": "unchanged",
+      "digest": "97403cb055188b7564744494b9c377f3813c3bf7ec5fc49a1d7d659dc165f9da"
+    },
+    "Review inbox": {
+      "status": "unchanged",
+      "digest": "49585c4b96be67558857d8cecc54cc3a2633a32292b771b0732b22d5ec59f20a"
+    },
+    "Review status": {
+      "status": "unchanged",
+      "digest": "890faadce1392c3a536256b6c1f4525725cbe2eb90aeec77f770a32616821a16"
+    },
+    "Review unspecified": {
+      "status": "unchanged",
+      "digest": "e5dabd044a2ae342352feab1cb1725f190adebf9540a2e28d524899c7fd50fbc"
+    },
+    "Reviewed": {
+      "status": "unchanged",
+      "digest": "358728aff4cc8ecf1105a8125b5a16543f593721a3a30358fff27830924256fb"
+    },
+    "Scene end": {
+      "status": "unchanged",
+      "digest": "930e0479e05f0fdd653ca4b3c55e3d448546f267995ebde05b6e1bee67a4c69f"
+    },
+    "Scene start": {
+      "status": "unchanged",
+      "digest": "36615eaa04fabc7134799213141c127aeec6c23c43b560e3cdd58ca8ce9691c4"
+    },
+    "Select at least one library.": {
+      "status": "unchanged",
+      "digest": "7037b5ae3c270f96a4fb12d05f28fdf40d45c06095e544a39f40b31a183e5772"
+    },
+    "Select media before assigning tags. Ctrl+1–9 uses your fixed quick tags. Enter filters by the focused tag; Ctrl+Enter excludes it.": {
+      "status": "unchanged",
+      "digest": "42c620e2cb5015e4926aca1287035ea9de4f21aad6dffd37c73aebb99228852f"
+    },
+    "Selection": {
+      "status": "unchanged",
+      "digest": "a32ef5f81ddd4c105b83501341b900876f4f0940d9532d12d417e622f3def4b2"
+    },
+    "Set A": {
+      "status": "unchanged",
+      "digest": "6c21a911ee1a6056c068af98bac0ee228bb950d79797f05b76b580727f6eaba4"
+    },
+    "Set B": {
+      "status": "unchanged",
+      "digest": "104913c7fe14319220235af5ff7acfcee2f7a71b5d36e5f5e8d78ec30107a900"
+    },
+    "SHA-256 compares file content. Visual similarity compares appearance. Searching does not remove items or files.": {
+      "status": "unchanged",
+      "digest": "9c46c50a2045ba0fea5088585096ab10e1951a782d7e19dc7bdb25d9ff0c4877"
+    },
+    "Show FlixyPix again": {
+      "status": "unchanged",
+      "digest": "1d08470a0a0e3c774f787136887850c78dd844bffe85b9b24fedc2d1db437075"
+    },
+    "Show including descendants": {
+      "status": "unchanged",
+      "digest": "af6acc31be6c10b658b90814b09d09356d1ed45de6fa5a9f081ab8df29dd2309"
+    },
+    "Show jump mark panel": {
+      "status": "unchanged",
+      "digest": "02f1abae20f432ccc44420125a7b19ed7c09bd990771d74a688b5880a5a0ea93"
+    },
+    "Show or hide details": {
+      "status": "unchanged",
+      "digest": "7078bb7cabe61c6c74cfd74d622a22f9f979a4af22bb311332e9408cbaf0dfbb"
+    },
+    "Skipped": {
+      "status": "unchanged",
+      "digest": "c4dd1ebc45b04172b4b41bf715917884184b32460a18ec55518d4edc1b52b911"
+    },
+    "Sound on": {
+      "status": "unchanged",
+      "digest": "54e26b5c79975144404f4a30b674ff539e8cf30886329440e5340487491fd5b7"
+    },
+    "Suggest image sets": {
+      "status": "unchanged",
+      "digest": "8ca38a3c173ef54150ffada71a9856c54e146f148c2ec15ea03fdc265e07cf0f"
+    },
+    "Sync folders": {
+      "status": "unchanged",
+      "digest": "4e7627b6e43e31f9b97fb3c45301f45733a321002eeb3cf30eae425ccf8cec59"
+    },
+    "Tag hierarchy": {
+      "status": "unchanged",
+      "digest": "382a76d1cba8105be1016bf752cc775f4a0f165f1027b715d3025fcb8eb72d5e"
+    },
+    "Technical information": {
+      "status": "unchanged",
+      "digest": "72adc3c19c2de7b67f878c734a39b61d108657c4cf962ad2d6004b324532bba4"
+    },
+    "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": {
+      "status": "unchanged",
+      "digest": "9f5d63b7bc71587c1d22654476dcdc6a928584c896cf7e166e8e5e1196962f63"
+    },
+    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "0be62cb3967b254abfff63f8406e6e552bd1cc6a475b434d03a3992729b354d6"
+    },
+    "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
+      "status": "unchanged",
+      "digest": "ca7ef7fec5eb85661b4e07cb6d2fe9831acf4385a941094e9850492fee86ed17"
+    },
+    "The image-set proposals changed. Refresh the preview.": {
+      "status": "unchanged",
+      "digest": "8bc42cc6248f21a201763f458e36497cfd11970b3334f6cc103476938d898ccc"
+    },
+    "The jump mark no longer exists.": {
+      "status": "unchanged",
+      "digest": "ffa6eb2fc64a447bc2d64bebdba849b068ca0bcce10f7c9eaf5388b52781b13b"
+    },
+    "The parents changed. Reload them before saving.": {
+      "status": "unchanged",
+      "digest": "aa3397c6af1141e9f156a612cd9c3e41534904a4a89bbf23830837694006855e"
+    },
+    "The saved audio track is unavailable. Automatic selection is used.": {
+      "status": "unchanged",
+      "digest": "4f5012db691e08c0bacf73f21ec21f20076b858a7f3d0877dd5d5e6049bfb6dd"
+    },
+    "The storage mode changes after a restart. Existing data is preserved.": {
+      "status": "unchanged",
+      "digest": "9b8fb982c2335d0c59d5044085707cd8b0e52303ad6ab65c89d989478ce004a8"
+    },
+    "The tag hierarchy cannot contain a cycle.": {
+      "status": "unchanged",
+      "digest": "2e3319c035908b42806f52255d0ed17644d78a242f372d764b9cbf3e260eaa0a"
+    },
+    "The tag hierarchy is invalid. It stays unchanged; restore it from a backup or correct it explicitly.": {
+      "status": "unchanged",
+      "digest": "3a964598ac669313735a5486d09f420649138e25476ecd9567b4732b5db9c7e7"
+    },
+    "The tag is not in the directory.": {
+      "status": "unchanged",
+      "digest": "58770e758b6da4f319919f7e8aba1468769f321cdee3f296a01aa194309cb439"
+    },
+    "This contact sheet cannot be used for seeking. Recreate the thumbnail to enable it.": {
+      "status": "unchanged",
+      "digest": "f080de740fe2f726b6320c7f0881fd1623041daa0cc2915d56af5f23c18c4e2e"
+    },
+    "Thumbnail display": {
+      "status": "unchanged",
+      "digest": "c3c2b8623fd3575d7a948bb232e7ddf02fb66f730f607ff34a909a3d2d020aaf"
+    },
+    "Unreviewed": {
+      "status": "unchanged",
+      "digest": "6feb2030c4ef21e76917ab5853e9b8779a4e9d08b488ae5eaafa05e87b216bfb"
+    },
+    "Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings.": {
+      "status": "unchanged",
+      "digest": "94c09dc928d2380773736e81f59b4b60a6f2ec3a833d98d1cc46f97a858aa674"
+    },
+    "Use the existing destination data": {
+      "status": "unchanged",
+      "digest": "4af781a2015f34132e7556efb54207d09eb413c09bd6ea996d28abf010db4570"
+    },
+    "Use the folder tree to narrow the view. The subfolder switch affects browsing only. Wheel scrolls vertically; Shift+wheel scrolls horizontally.": {
+      "status": "unchanged",
+      "digest": "d289acd70a699fe6e4e48befe92f8c13466df188b99c37c8eda7933992c582f6"
+    },
+    "View contact sheet": {
+      "status": "unchanged",
+      "digest": "3b84762ba9ef786a3870143a76e81c2a5dcc05122b194d8d3be1e4a2a4ddc51d"
+    },
+    "Visual similarity does not prove identical file content.": {
+      "status": "unchanged",
+      "digest": "6463e11e8a992374f3693328dacfa18ae6bac7be705044b42692e3327ffd931d"
+    },
+    "Whole library": {
+      "status": "unchanged",
+      "digest": "2518877ec170500103c161861a20086a1a2bb051f732556aa06bdfa06e4b188a"
+    },
+    "Windows profile": {
+      "status": "unchanged",
+      "digest": "725f14f57c4ebea6c7069485323515b27eb04a8fb7a118b21e372b4a91b02961"
+    },
+    "With thumbnail": {
+      "status": "unchanged",
+      "digest": "c7997a8fe728a14657826f48c1f68ca919e786b6e60ae1eabd2d0b039e4c3bf3"
+    },
+    "Without thumbnail": {
+      "status": "unchanged",
+      "digest": "65a02ff50b3b9f7394e92e84c4fae7c0c733f4579b0e8ff0aad230fc8b174d0d"
+    },
+    "Your files stay where they are. Your library grows here.": {
+      "status": "unchanged",
+      "digest": "b81e464cb488451bbf153c3d559e8e26db2def28f96ec016786f7f6cf021ea85"
+    },
+    "{0:N0} groups with identical file content.": {
+      "status": "unchanged",
+      "digest": "3eddd4dade886b9aefae8598040d0832208b33a2eaed3c742fcfa9d772d30956"
+    },
+    "Checking thumbnails: {0:N0} / {1:N0}": {
+      "status": "corrected",
+      "digest": "10c7f2d715d58dbe19de51cad8ed008b67daf9e818f66d9d31d90826febc1b68",
+      "previous_digest": "fbe8c113ed70e76bab83086ccf2cded0e46249d340edba8bb7f1154e0f5062eb"
+    },
+    "Set as cover": {
+      "status": "corrected",
+      "digest": "67020f3c13fb5d74d4bf5d7bbb689561450a695bfb2522681a26c5927c722dda",
+      "previous_digest": "9915945a5d03c158516d04bf00bc97e17cc5f791d3418f21dc841d611e93f994"
+    },
+    "Works system-wide only while hidden or minimized by the boss key. Default: Shift+Esc. Choose a different combination from the boss key.": {
+      "status": "corrected",
+      "digest": "66beb83471f865d3a822dbe53ca457e0894e40a2820d89538986bf7b3334bd3b",
+      "previous_digest": "0a317635095bdc9fd6268b608a5baa7b3c6e0693b0620c62ae7348b85ebef7ad"
     }
   }
 }
