@@ -44,11 +44,12 @@ internal sealed partial class VideoPlayerWindow : Window
  internal double LastPositionSeconds { get; private set; }
  internal bool HasPlayer=>player!=null;
  internal event Action<double>? PositionTick;
- private sealed record TrackChoice(int? Id,string Label);
+ private sealed record TrackChoice(int? Id,string Label,bool Automatic=false);
 
- internal VideoPlayerWindow(Window owner,MediaItem media,CatalogRepository repository)
+ internal VideoPlayerWindow(Window owner,MediaItem media,CatalogRepository repository,PlaybackSource? source=null)
  {
   Owner=owner; this.media=media; this.repository=repository; Title=media.Title+T(" · Playback"); playback=repository.GetPreferences().Playback;
+  Source=source??(File.Exists(media.Path)?PlaybackSource.Resolve(media,media.Path):null);durationSeconds=Source?.DurationSeconds??media.DurationSeconds;
   ScreenshotFolder=playback.Screenshots.Folder??ScreenshotFolder; marksWanted=playback.ShowMarks;
   host.Input += QueueMouseInput;
   // Some Windows wheel settings deliver to the focused WPF window instead of the native child under the pointer.
@@ -64,7 +65,7 @@ internal sealed partial class VideoPlayerWindow : Window
   var root=new DockPanel(); var bar=BuildControlBar(); DockPanel.SetDock(bar,Dock.Bottom); root.Children.Add(bar);
   var panel=BuildMarkPanel(); DockPanel.SetDock(panel,Dock.Right); root.Children.Add(panel);
   // Track lists stay as the model of the track menu; the menu sets their selection.
-  audio.SelectionChanged+=async (_,_)=>{ if(!syncing && audio.SelectedItem is TrackChoice track && player!=null)await Command(()=>player.SelectAudioTrackAsync(track.Id)); };
+  audio.SelectionChanged+=async (_,_)=>{ if(!syncing && audio.SelectedItem is TrackChoice track && player!=null)await TrackPreference(()=>SelectAudioAsync(track)); };
   subtitles.SelectionChanged+=async (_,_)=>{ if(!syncing && subtitles.SelectedItem is TrackChoice track && player!=null)await Command(()=>player.SelectSubtitleTrackAsync(track.Id)); };
   transforms.Checked+=(_,_)=>ApplyTransform(); transforms.Unchecked+=(_,_)=>ApplyTransform();
   root.Children.Add(host); Content=root;
@@ -80,7 +81,7 @@ internal sealed partial class VideoPlayerWindow : Window
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
    ready.TrySetResult(host.VideoHandle); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
    } catch(Exception error) { ready.TrySetException(error); status.Text=error.Message; } };
-  Closed+=(_,_)=>{ closing=true; if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=seekPreview.IsOpen=false; seekPreviewWork?.Cancel(); ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
+  Closed+=(_,_)=>{ closing=true;DisposeSeekPreview(); if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=false; ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
   host.SizeChanged+=(_,_)=>{ ApplyTransform(); if(overlay.IsOpen)ShowOverlay(); };
   Deactivated+=(_,_)=>{ overlay.IsOpen=false; HideSeekPreview(); };
   PreviewKeyDown+=async (_,e)=>
@@ -112,9 +113,11 @@ internal sealed partial class VideoPlayerWindow : Window
   if(closing)return; this.player=player;
   volumeSlider.Value=Math.Clamp(InitialVolume,0,100); if(InitialVolume!=100)await player.SetVolumeAsync(volumeSlider.Value);
   if(playback.PreventSleep)awake??=SleepGuard.Acquire();
-  position.Maximum=Math.Max(1,media.DurationSeconds??1); position.IsEnabled=media.DurationSeconds>0; RenderMarkers();
+  durationSeconds=await player.GetDurationAsync() is >0 and var actual?actual:durationSeconds;
+  if(Source!=null)Source=Source with {DurationSeconds=durationSeconds};
+  position.Maximum=Math.Max(1,durationSeconds??1); position.IsEnabled=durationSeconds>0; RenderMarkers();
   pause.Content=paused?"":"";
-  await Command(() => RestoreSubtitlesAsync(player)); await RefreshTracksAsync(); await PollAsync(); timer.Start();
+  await Command(() => RestoreSubtitlesAsync(player)); await Command(RestorePlaybackSettingsAsync); await RefreshTracksAsync(); RefreshMarks();UpdateRangeControls(); await PollAsync(); timer.Start();
  }
  /// <summary>Whether the left mouse button is down; the smoke test replaces it because it cannot press a real button.</summary>
  internal Func<bool> PointerPressed { get; set; } = ()=>Mouse.LeftButton==MouseButtonState.Pressed;
@@ -128,7 +131,7 @@ internal sealed partial class VideoPlayerWindow : Window
  }
  internal async Task SeekToAsync(double seconds)
  {
-  if(media.DurationSeconds is >0 and var duration)seconds=Math.Min(seconds,duration);
+  if(durationSeconds is >0 and var duration)seconds=Math.Min(seconds,duration);
   await RequirePlayer().SeekAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
  }
  internal void SetManualTransform(PlayerTransform transform) { PlayerTransformTimeline.Validate(new() { Steps=[transform] }); manualTransform=transform; ApplyTransform(); }
@@ -139,9 +142,9 @@ internal sealed partial class VideoPlayerWindow : Window
   var tracks=await RequirePlayer().GetTracksAsync(); syncing=true;
   try
   {
-   var audioChoices=tracks.Where(t=>t.Type=="audio").Select(t=>new TrackChoice(t.Id,T("Audio {0} · {1}", t.Id, t.Title??t.Language??T("Default")))).Prepend(new(null,T("Audio off"))).ToArray();
+   var audioChoices=tracks.Where(t=>t.Type=="audio").Select(t=>new TrackChoice(t.Id,T("Audio {0} · {1}", t.Id, t.Title??t.Language??T("Default")))).Prepend(new(null,T("Audio off"))).Prepend(new(null,T("Automatic"),true)).ToArray();
    var subtitleChoices=tracks.Where(t=>t.Type=="sub").Select(t=>new TrackChoice(t.Id,T("Subtitle {0} · {1}", t.Id, t.Title??t.Language??T("Default")))).Prepend(new(null,T("Subtitles off"))).ToArray();
-   audio.ItemsSource=audioChoices; audio.SelectedItem=audioChoices.FirstOrDefault(c=>c.Id==tracks.FirstOrDefault(t=>t.Type=="audio" && t.Selected)?.Id)??audioChoices[0];
+   audio.ItemsSource=audioChoices; audio.SelectedItem=audioMode==AudioTrackMode.Automatic?audioChoices[0]:audioMode==AudioTrackMode.Off?audioChoices[1]:audioChoices.FirstOrDefault(c=>!c.Automatic&&c.Id==tracks.FirstOrDefault(t=>t.Type=="audio" && t.Selected)?.Id)??audioChoices[0];
    subtitles.ItemsSource=subtitleChoices; subtitles.SelectedItem=subtitleChoices.FirstOrDefault(c=>c.Id==tracks.FirstOrDefault(t=>t.Type=="sub" && t.Selected)?.Id)??subtitleChoices[0];
   }
   finally { syncing=false; }
@@ -171,12 +174,12 @@ internal sealed partial class VideoPlayerWindow : Window
  private async Task Command(Func<Task> action)
  {
   try { await action(); }
-  catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or OperationCanceledException or ObjectDisposedException)
+  catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or OperationCanceledException or ObjectDisposedException or Microsoft.Data.Sqlite.SqliteException)
   { if(!closing)status.Text=error.Message; }
  }
  internal async Task TogglePauseAsync() { paused=!paused; await RequirePlayer().PauseAsync(paused); ShowPlayState(); }
  /// <summary>Pauses for the boss key or the lock; the play button then shows the pause.</summary>
- internal async Task PauseForPrivacyAsync() { if(!paused&&player!=null)await TogglePauseAsync(); }
+ internal async Task PauseForPrivacyAsync() { ClearSeekPreview();if(!paused&&player!=null)await TogglePauseAsync(); }
  private Task JumpAsync(double seconds)=>SeekToAsync(Math.Max(0,LastPositionSeconds+seconds));
  private async Task RunActionAsync(string action)
  {
@@ -204,8 +207,8 @@ internal sealed partial class VideoPlayerWindow : Window
    case PlayerActions.NextVideo or PlayerActions.PreviousVideo:
     if(StepRequested!=null)await StepRequested(action==PlayerActions.NextVideo?1:-1); else Notify(T("Back and forward navigation is only available from a library view.")); break;
    case PlayerActions.ToggleBookmark: ToggleBookmarkHere(); break;
-   case PlayerActions.ClipStart: ClipStart=LastPositionSeconds; Notify(T("Scene start · ")+Time(LastPositionSeconds)+ClipHint()); break;
-   case PlayerActions.ClipEnd: ClipEnd=LastPositionSeconds; Notify(T("Scene end · ")+Time(LastPositionSeconds)+ClipHint()); break;
+   case PlayerActions.ClipStart: ClipStart=LastPositionSeconds;UpdateRangeControls(); Notify(T("Scene start · ")+Time(LastPositionSeconds)+ClipHint()); break;
+   case PlayerActions.ClipEnd: ClipEnd=LastPositionSeconds;UpdateRangeControls(); Notify(T("Scene end · ")+Time(LastPositionSeconds)+ClipHint()); break;
    case PlayerActions.ClipCreate: CreateSceneFromMarks(); break;
    case PlayerActions.Screenshot: await SaveScreenshotAsync(); break;
    case PlayerActions.SlowMotion: ToggleSlowMotion(); break;
@@ -225,23 +228,24 @@ internal sealed partial class VideoPlayerWindow : Window
  internal void Act(string action)
  {
   switch(action) { case PlayerActions.ClipStart: ClipStart=LastPositionSeconds; break; case PlayerActions.ClipEnd: ClipEnd=LastPositionSeconds; break; case PlayerActions.ClipCreate: CreateSceneFromMarks(); break; }
+  UpdateRangeControls();
  }
  internal void CreateSceneFromMarks()
  {
   if(ClipStart is not { } start || ClipEnd is not { } end || end<=start) { Notify(T("Mark the scene start first and then a later scene end.")+KeyHint(PlayerActions.ClipStart)); return; }
   repository.UpsertScene(new Scene { MediaId=media.Id,Title=T("Scene {0}–{1}", Time(start), Time(end)),StartSeconds=start,EndSeconds=end });
-  ClipStart=ClipEnd=null; RefreshMarks(); Notify(T("Scene created · {0}–{1}", Time(start), Time(end)));
+  ClipStart=ClipEnd=null;UpdateRangeControls(); RefreshMarks(); Notify(T("Scene created · {0}–{1}", Time(start), Time(end)));
  }
  /// <summary>Removes a bookmark close to the current position (within 1 s, or 1 % of a short video), otherwise sets one there.</summary>
  internal void ToggleBookmarkHere()
  {
-  var tolerance=Math.Min(1,Math.Max(.05,(media.DurationSeconds??100)*.01));
+  var tolerance=Math.Min(1,Math.Max(.05,(durationSeconds??100)*.01));
   var near=repository.GetBookmarks(media.Id).Where(b=>b.Kind==BookmarkKind.Bookmark && Math.Abs(b.PositionSeconds-LastPositionSeconds)<=tolerance).OrderBy(b=>Math.Abs(b.PositionSeconds-LastPositionSeconds)).FirstOrDefault();
   if(near!=null) { repository.DeleteBookmark(near.Id); Notify(T("Bookmark removed · ")+Time(near.PositionSeconds)); }
   else { repository.UpsertBookmark(new Bookmark { MediaId=media.Id,Title=T("Bookmark {0}", Time(LastPositionSeconds)),PositionSeconds=LastPositionSeconds }); Notify(T("Bookmark added · {0}", Time(LastPositionSeconds))); }
   RefreshMarks();
  }
- internal string ScreenshotFolder { get; set; }=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),"FlixyPix");
+ internal string ScreenshotFolder { get; set; }=FlixyPix.Core.AppStorage.Current.Screenshots;
  /// <summary>Saves the current frame in the folder, format and naming of the settings (original "Save screenshot", "videoscreenshots-*").</summary>
  internal async Task<string> SaveScreenshotAsync()
  {

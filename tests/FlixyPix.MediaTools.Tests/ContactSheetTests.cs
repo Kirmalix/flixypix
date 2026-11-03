@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json;
 using FlixyPix.Core;
 using FlixyPix.MediaTools;
 using Xunit;
@@ -24,6 +26,25 @@ public sealed class ContactSheetTests : IDisposable
     }
 
     public void Dispose() { try { Directory.Delete(scratch, true); } catch (IOException) { } }
+
+    [Theory]
+    [InlineData("jpg",640,8)]
+    [InlineData("jpg",641,3)]
+    [InlineData("png",641,3)]
+    public async Task OddHeaderAndBordersRetainExactImageDimensionsAndCellPixels(string extension,int width,int border)
+    {
+        var source=await SecondsVideo();
+        var result=await service.CreateContactSheetResultAsync(source,Path.Combine(scratch,"odd."+extension),30,64d/36,new(){Columns=2,Rows=2,Width=width,Border=border,FastSeek=false,Header=["Odd header"],FontFile=FontFiles.FindOrDefault("Segoe UI")});
+        var start=new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(ffmpeg)!,"ffprobe.exe")){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+        foreach(var arg in new[]{"-v","error","-show_entries","stream=width,height","-of","json",result.ImagePath})start.ArgumentList.Add(arg);
+        using var probe=Process.Start(start)!;var output=probe.StandardOutput.ReadToEndAsync();var error=probe.StandardError.ReadToEndAsync();await probe.WaitForExitAsync();Assert.True(probe.ExitCode==0,await error);
+        using var info=JsonDocument.Parse(await output);var stream=info.RootElement.GetProperty("streams")[0];Assert.Equal(result.Width,stream.GetProperty("width").GetInt32());Assert.Equal(result.Height,stream.GetProperty("height").GetInt32());
+        foreach(var cell in result.Cells)
+        {
+            var bounds=cell.Bounds;var green=await CentreGreen(result.ImagePath,$"crop=8:8:{bounds.X+bounds.Width/2-4}:{bounds.Y+bounds.Height/2-4}");
+            Assert.InRange(green,(int)Math.Floor(cell.Seconds)*8-10,(int)Math.Floor(cell.Seconds)*8+10);
+        }
+    }
 
     /// <summary>30 s whose green channel shows the second (8 per second), with a keyframe only every 10 s.</summary>
     private async Task<string> SecondsVideo()
@@ -57,12 +78,52 @@ public sealed class ContactSheetTests : IDisposable
     {
         var source = await SecondsVideo();
         // One scene at 15 s; the keyframe before it is at 10 s.
-        var fast = await service.CreateContactSheetAsync(source, Path.Combine(scratch, "fast.png"), 30, 64d / 36, new ContactSheetStyle { Width = 160, FastSeek = true });
-        var exact = await service.CreateContactSheetAsync(source, Path.Combine(scratch, "exact.png"), 30, 64d / 36, new ContactSheetStyle { Width = 160, FastSeek = false });
+        var fastResult = await service.CreateContactSheetResultAsync(source, Path.Combine(scratch, "fast.png"), 30, 64d / 36, new ContactSheetStyle { Width = 160, FastSeek = true });
+        var exactResult = await service.CreateContactSheetResultAsync(source, Path.Combine(scratch, "exact.png"), 30, 64d / 36, new ContactSheetStyle { Width = 160, FastSeek = false });
+        var fast=fastResult.ImagePath;var exact=exactResult.ImagePath;
+        Assert.InRange(Assert.Single(fastResult.Cells).Seconds,9.999,10.001);Assert.InRange(Assert.Single(exactResult.Cells).Seconds,14.999,15.001);
+        Assert.Equal(new SheetRectangle(0,0,160,90),fastResult.Cells[0].Bounds);Assert.Equal(fastResult.Cells[0],fastResult.HitTest(80,45));Assert.Null(fastResult.HitTest(160,45));Assert.Null(fastResult.HitTest(double.NaN,0));Assert.True(fastResult.SourceUnchanged());
         Assert.InRange(await CentreGreen(fast), 72, 88);
         Assert.InRange(await CentreGreen(exact), 112, 128);
     }
 
+    [Fact]
+    public async Task ResultRectanglesExcludeHeaderAndGapsAndSourceChangesInvalidate()
+    {
+        var source=await SecondsVideo();var style=new ContactSheetStyle{Columns=3,Rows=2,Width=640,Border=4,FastSeek=false,FontFile=FontFiles.FindOrDefault("Segoe UI"),Header=["Synthetic header","Second line"]};
+        var result=await service.CreateContactSheetResultAsync(source,Path.Combine(scratch,"result.png"),30,64d/36,style);
+        Assert.Equal(6,result.Cells.Count);Assert.Equal(640,result.Width);Assert.Equal(640,(await service.ProbeAsync(result.ImagePath)).Width);
+        foreach(var cell in result.Cells)
+        {
+            Assert.Equal(cell,result.HitTest(cell.Bounds.X+cell.Bounds.Width/2d,cell.Bounds.Y+cell.Bounds.Height/2d));
+            Assert.Null(result.HitTest(cell.Bounds.X-1,cell.Bounds.Y));Assert.InRange(cell.Seconds,0,30);
+        }
+        Assert.Null(result.HitTest(50,0));File.SetLastWriteTimeUtc(source,File.GetLastWriteTimeUtc(source).AddSeconds(2));Assert.False(result.SourceUnchanged());
+    }
+    [Fact]
+    public async Task NonzeroStreamStartHasMediaRelativeFrameTimeMatchingPixels()
+    {
+        var source=await SecondsVideo();var shifted=Path.Combine(scratch,"shifted.mp4");await Run(ffmpeg,"-hide_banner","-loglevel","error","-i",source,"-c","copy","-output_ts_offset","5",shifted);
+        var result=await service.CreateContactSheetResultAsync(shifted,Path.Combine(scratch,"shifted.png"),30,64d/36,new(){Width=160,FastSeek=false});
+        Assert.InRange(Assert.Single(result.Cells).Seconds,14.999,15.001);Assert.InRange(await CentreGreen(result.ImagePath),112,128);
+    }
+    [Fact]
+    public async Task VariableRateCellTimesAreDecodedFrameTimesRatherThanSeekTargets()
+    {
+        var source=Path.Combine(scratch,"variable.mp4");await Run(ffmpeg,"-hide_banner","-loglevel","error","-f","lavfi","-i","nullsrc=s=64x36:r=30:d=6,geq=r=0:g='T*40':b=0,format=yuv420p","-vf","select='if(lt(t,3),not(mod(n,3)),1)'","-fps_mode","vfr","-c:v","libx264","-preset","ultrafast",source);
+        var info=new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(ffmpeg)!,"ffprobe.exe")){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+        foreach(var arg in new[]{"-v","error","-select_streams","v:0","-show_frames","-show_entries","frame=best_effort_timestamp_time","-of","json",source})info.ArgumentList.Add(arg);
+        using var probe=Process.Start(info)!;var output=probe.StandardOutput.ReadToEndAsync();var errors=probe.StandardError.ReadToEndAsync();await probe.WaitForExitAsync();Assert.True(probe.ExitCode==0,await errors);
+        using var document=JsonDocument.Parse(await output);var available=document.RootElement.GetProperty("frames").EnumerateArray().Select(f=>double.Parse(f.GetProperty("best_effort_timestamp_time").GetString()!,CultureInfo.InvariantCulture)).ToArray();
+        var result=await service.CreateContactSheetResultAsync(source,Path.Combine(scratch,"vfr.png"),6,64d/36,new(){Columns=3,Width=480,SkipPercent=7,FastSeek=false});var targets=MediaToolService.SheetTimes(6,3,7);
+        Assert.Contains(result.Cells.Zip(targets),pair=>Math.Abs(pair.First.Seconds-pair.Second)>.01);
+        foreach(var cell in result.Cells)
+        {
+            Assert.InRange(Math.Abs(cell.Seconds-available.First(time=>time>=targets[cell.Index]-.001)),0,.001);
+            var green=await CentreGreen(result.ImagePath,$"crop=8:8:{cell.Bounds.X+cell.Bounds.Width/2-4}:{cell.Bounds.Y+cell.Bounds.Height/2-4}");
+            Assert.InRange(Math.Abs(green-cell.Seconds*40),0,10);
+        }
+    }
     [Fact]
     public async Task ScenesCloserThanKeyframesUseTheExactSecond()
     {

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
+using FlixyPix.Core;
 
 namespace FlixyPix.MediaTools;
 
@@ -113,6 +114,14 @@ public sealed class MpvPlayer : IAsyncDisposable
         var result = await SendAsync("get_property", "time-pos");
         return result.ValueKind == JsonValueKind.Number && result.TryGetDouble(out var value) ? value : null;
     }
+    public async Task<bool?> GetPausedAsync()
+    {
+        var result=await SendAsync("get_property","pause");return result.ValueKind is JsonValueKind.True or JsonValueKind.False?result.GetBoolean():null;
+    }
+    public async Task<double?> GetVolumeAsync()
+    {
+        var result=await SendAsync("get_property","volume");return result.ValueKind==JsonValueKind.Number&&result.TryGetDouble(out var value)?value:null;
+    }
     public async Task SetVolumeAsync(double volume)
     {
         if (!double.IsFinite(volume) || volume is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(volume));
@@ -127,6 +136,33 @@ public sealed class MpvPlayer : IAsyncDisposable
     {
         if (id is <= 0) throw new ArgumentOutOfRangeException(nameof(id));
         _ = await SendAsync("set_property", "aid", id.HasValue ? (object)id.Value : "no");
+    }
+    public async Task SelectAutomaticAudioTrackAsync() => _ = await SendAsync("set_property", "aid", "auto");
+    public async Task<double?> GetDurationAsync()
+    {
+        var result=await SendAsync("get_property","duration");return result.ValueKind==JsonValueKind.Number&&result.TryGetDouble(out var value)?value:null;
+    }
+    public async Task SetAudioDelayAsync(double seconds)
+    {
+        if(!double.IsFinite(seconds)||Math.Abs(seconds)>600)throw new ArgumentOutOfRangeException(nameof(seconds));
+        _ = await SendAsync("set_property","audio-delay",seconds);
+    }
+    public async Task<double?> GetAudioDelayAsync()
+    {
+        var result=await SendAsync("get_property","audio-delay");return result.ValueKind==JsonValueKind.Number&&result.TryGetDouble(out var value)?value:null;
+    }
+    public async Task SetAbLoopAsync(AbLoopState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);state.Validate(await GetDurationAsync());
+        _ = await SendAsync("set_property","ab-loop-b","no");
+        _ = await SendAsync("set_property","ab-loop-a",state.Start.HasValue?(object)state.Start.Value:"no");
+        _ = await SendAsync("set_property","ab-loop-count","inf");
+        if(state.End.HasValue)_ = await SendAsync("set_property","ab-loop-b",state.End.Value);
+    }
+    public async Task<AbLoopState> GetAbLoopAsync()
+    {
+        var a=await SendAsync("get_property","ab-loop-a");var b=await SendAsync("get_property","ab-loop-b");
+        return new(){Start=a.ValueKind==JsonValueKind.Number&&a.TryGetDouble(out var start)?start:null,End=b.ValueKind==JsonValueKind.Number&&b.TryGetDouble(out var end)?end:null};
     }
     public async Task SelectSubtitleTrackAsync(int? id)
     {

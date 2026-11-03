@@ -47,7 +47,7 @@ public static class MediaVersions
     /// <summary>The main file with what is stored for it.</summary>
     public static MediaFile Main(MediaItem item) => new()
     {
-        Path = item.Path, FileSize = item.FileSize, FileModifiedAtUtc = item.FileModifiedAtUtc, Width = item.Width, Height = item.Height, DurationSeconds = item.DurationSeconds, Technical = item.Technical,
+        Path = item.Path, FileSize = item.FileSize, FileModifiedAtUtc = item.FileModifiedAtUtc, Width = item.Width, Height = item.Height, DurationSeconds = item.DurationSeconds, Technical = item.Technical, AudioTrack=item.AudioTrack,
     };
 
     /// <summary>Main file first, then the further versions in their order.</summary>
@@ -83,6 +83,7 @@ public sealed partial class CatalogRepository
         var keys = new HashSet<string>(StringComparer.Ordinal) { mainKey };
         foreach (var file in saved.Files)
         {
+            if(file!=null)ValidateAudioTrack(file.AudioTrack);
             if (file is null || string.IsNullOrWhiteSpace(file.Path) || file.FileSize is < 0 || file.Width is <= 0 || file.Height is <= 0 ||
                 file.DurationSeconds is { } duration && (!double.IsFinite(duration) || duration < 0))
                 throw new ArgumentException("Invalid version file.");
@@ -183,6 +184,7 @@ public sealed partial class CatalogRepository
                         MediaIds = playlist.MediaIds.Select(id => id == otherId ? mainId : id).Distinct().ToList(),
                         Entries = playlist.Entries.Select(e => e.MediaId == otherId ? e with { MediaId = mainId } : e).Distinct().ToList(),
                     }, transaction);
+                RedirectPublicationGroupVideos(new HashSet<Guid>{otherId},mainId,transaction);
                 using var delete = Command("DELETE FROM media WHERE id=$other", transaction, ("$other", otherId.ToString()));
                 delete.ExecuteNonQuery();
             }
@@ -225,7 +227,7 @@ public sealed partial class CatalogRepository
                 Path = file.Path, Title = System.IO.Path.GetFileNameWithoutExtension(file.Path), Kind = item.Kind, FileSize = file.FileSize,
                 Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical,
                 Tags = [.. item.Tags], TagCategories = item.TagCategories.ToDictionary(pair => pair.Key, pair => pair.Value.ToList()),
-                Category = item.Category, Rating = item.Rating, ReleaseDate = item.ReleaseDate,
+                Category = item.Category, Rating = item.Rating, ReleaseDate = item.ReleaseDate, Playback=item.Playback, AudioTrack=file.AudioTrack, FileModifiedAtUtc=file.FileModifiedAtUtc,
                 FileCreatedAt = File.Exists(file.Path) ? MediaScanner.FileDate(new FileInfo(file.Path)) : null,
             }, transaction);
             transaction.Commit();
@@ -246,7 +248,7 @@ public sealed partial class CatalogRepository
             var file = item.Files.FirstOrDefault(f => PathKey(f.Path) == key) ?? throw new ArgumentException(T("The file is no further version of this item."));
             var saved = UpsertCore(item with
             {
-                Path = file.Path, FileSize = file.FileSize, FileModifiedAtUtc = file.FileModifiedAtUtc, Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical,
+                Path = file.Path, FileSize = file.FileSize, FileModifiedAtUtc = file.FileModifiedAtUtc, Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical, AudioTrack=file.AudioTrack,
                 Files = [MediaVersions.Main(item), .. item.Files.Where(f => f != file)],
             }, transaction);
             transaction.Commit();

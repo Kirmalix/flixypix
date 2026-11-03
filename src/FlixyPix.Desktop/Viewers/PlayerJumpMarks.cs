@@ -86,11 +86,12 @@ internal sealed partial class VideoPlayerWindow
   UpdateMarkSteps();
   return markPanel;
  }
- /// <summary>The list beside the video; in full screen the bar lives in the overlay and the list stays hidden.</summary>
+ /// <summary>Full-screen visibility is session-only; leaving restores the saved normal-window preference.</summary>
  private bool marksWanted;
+ private bool fullscreenMarksWanted;
  internal void ToggleMarkPanel()
  {
-  if(IsFullscreen)return;
+  if(IsFullscreen){fullscreenMarksWanted=!fullscreenMarksWanted;ShowMarkPanel(fullscreenMarksWanted);ApplyTransform();ShowOverlay();return;}
   var wanted=!marksWanted;
   var current=repository.GetPreferences().Playback;
   repository.SavePlaybackPreferences(current with { ShowMarks=wanted });
@@ -105,13 +106,13 @@ internal sealed partial class VideoPlayerWindow
  internal void RefreshMarks()
  {
   if(editingMark)return;
-  Marks = JumpMarks.Build(repository.GetBookmarks(media.Id), repository.GetOrderedScenes(media.Id), media.DurationSeconds);
+  Marks = JumpMarks.Build(repository.GetBookmarks(media.Id), repository.GetOrderedScenes(media.Id), durationSeconds);
   markRows = Marks.Select((mark, index) => new MarkRow(mark, index < 9 ? (index + 1).ToString(CultureInfo.CurrentCulture) : "", Theme.Brush(mark.Kind == JumpMarkKind.Scene ? "SceneMark" : "TimelineMark"))).ToArray();
   markList.ItemsSource = markRows; markCount.Text = Marks.Count.ToString("N0", CultureInfo.CurrentCulture);
   noMarks.Visibility = Marks.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
   marksButton.Content = Marks.Count == 0 ? T("Jump marks") : T("Jump marks · {0:N0}", Marks.Count);
   // Refreshing the contents never changes the remembered visibility.
-  ShowMarkPanel(marksWanted && !IsFullscreen);
+  ShowMarkPanel(IsFullscreen?fullscreenMarksWanted:marksWanted);
   UpdateMarkSteps();
   RenderMarkers(); UpdateCurrentMark();
   MarksChanged?.Invoke();

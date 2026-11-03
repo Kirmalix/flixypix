@@ -36,7 +36,8 @@ public partial class MainWindow
    // The next video opens where the previous one was, in the same window size or full screen.
    (Rect Bounds, bool Fullscreen)? previous = _videoWindow is { IsLoaded: true } shown ? (shown.IsFullscreen ? shown.RestoreBounds : new Rect(shown.Left, shown.Top, shown.Width, shown.Height), shown.IsFullscreen) : null;
    await StopPlayer();
-   var window = new VideoPlayerWindow(this,item,_repository) { Topmost = playback.AlwaysOnTop }; _videoWindow = window;
+   var source=PlaybackSource.Resolve(item,path);
+   var window = new VideoPlayerWindow(this,item,_repository,source) { Topmost = playback.AlwaysOnTop }; _videoWindow = window;
    // Volume of the previous video, or the start volume (original "remembervolume", "defaultvolume").
    window.InitialVolume = playback.RememberVolume ? _settings.PlayerVolume : playback.StartVolume;
    window.Closing += (_, _) => { if (playback.RememberVolume) _settings = _settings with { PlayerVolume = (int)Math.Round(window.Volume) }; };

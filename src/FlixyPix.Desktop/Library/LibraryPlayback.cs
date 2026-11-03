@@ -33,7 +33,7 @@ public partial class MainWindow
    window.StepRequested = direction => PlayNeighborAsync(item, direction, window.Shuffle, wrap: true);
    window.RandomRequested = () => PlayNeighborAsync(item, 1, shuffle: true, wrap: true);
   }
-  window.FrameAt = (seconds, token) => FrameAtAsync(item, seconds, token);
+  if(ToolExists(_settings.Ffmpeg,"ffmpeg"))window.ConfigureSeekPreview(_tools);
  }
 
  /// <summary>Plays the previous or next video of the current view; with shuffle a random one.</summary>
@@ -105,17 +105,4 @@ public partial class MainWindow
   catch (Exception error) when (error is IOException or InvalidOperationException or ObjectDisposedException or OperationCanceledException) { }
  }
 
- /// <summary>A small frame of the video for the time line preview, cached in the library's hover cache in steps of about 1 % of the duration.</summary>
- private async Task<string?> FrameAtAsync(MediaItem item, double seconds, CancellationToken token)
- {
-  if (!ToolExists(_settings.Ffmpeg, "ffmpeg") || item.DurationSeconds is not > 0) return null;
-  var step = Math.Max(1, Math.Round(item.DurationSeconds.Value / 100));
-  var rounded = Math.Min(Math.Round(seconds / step) * step, Math.Max(0, item.DurationSeconds.Value - .5));
-  var folder = Path.Combine(_settings.DataDirectory, "hover-cache");
-  var path = Path.Combine(folder, $"{item.Id:N}-seek-{rounded:0}.jpg");
-  if (File.Exists(path)) return path;
-  Directory.CreateDirectory(folder);
-  try { return await _tools.CreateThumbnailAsync(item.Path, path, rounded, token); }
-  catch (Exception error) when (error is IOException or InvalidOperationException or InvalidDataException) { return null; }
- }
 }

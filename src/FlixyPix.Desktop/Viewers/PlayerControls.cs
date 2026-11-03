@@ -85,7 +85,7 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Jumps by seconds or a share of the length and shows how far, e.g. "+10 s · 12:34".</summary>
  internal async Task JumpByAsync(double amount, JumpUnit unit)
  {
-  var seconds = Jumps.Seconds(amount, unit, media.DurationSeconds);
+  var seconds = Jumps.Seconds(amount, unit, durationSeconds);
   if (seconds == 0) { Notify(T("Percent jumps need the length of the video.")); return; }
   await JumpAsync(seconds);
   Notify(Jumps.Describe(amount, unit) + " · " + TimeSpan.FromSeconds(LastPositionSeconds).ToString(LastPositionSeconds >= 3600 ? @"h\:mm\:ss" : @"m\:ss"));
@@ -151,14 +151,13 @@ internal sealed partial class VideoPlayerWindow
   wheelOverride = WheelMode == PlayerWheelAction.Volume ? PlayerWheelAction.Seek : PlayerWheelAction.Volume;
   Notify(T("Mouse wheel: {0}", WheelMode == PlayerWheelAction.Volume ? T("Volume") : T("seek")));
  }
- private CancellationTokenSource? seekPreviewWork;
  private DispatcherTimerLike? flashTimer;
  private (int X, int Y) lastCursor; private DateTime lastMovement = DateTime.MinValue;
 
  /// <summary>Asks the library for the previous (−1) or next (+1) video of the current view; the library honours shuffle.</summary>
  internal Func<int, Task>? StepRequested { get; set; }
  /// <summary>Picture of the video at a time, for the preview while hovering the time line.</summary>
- internal Func<double, CancellationToken, Task<string?>>? FrameAt { get; set; }
+ internal Func<double, CancellationToken, Task<FlixyPix.MediaTools.MemoryVideoFrame?>>? FrameAt { get; set; }
  internal event Action? PlaybackModeChanged;
  internal bool Repeat { get => repeat.IsChecked == true; set => repeat.IsChecked = value; }
  internal bool Shuffle { get => shuffle.IsChecked == true; set => shuffle.IsChecked = value; }
@@ -199,7 +198,8 @@ internal sealed partial class VideoPlayerWindow
  {
   AutomationProperties.SetName(volumeSlider,T("Volume"));AutomationProperties.SetName(position,T("Position"));AutomationProperties.SetName(speed,T("Speed"));
   controlBar.Children.Add(BuildTimeline());
-  var row = new DockPanel { LastChildFill = false };
+  controlBar.Children.Add(BuildRangeControls());
+  var row = new WrapPanel();
   var left = new StackPanel { Orientation = Orientation.Horizontal };
   pause.Content = ""; pause.Style = (Style)Application.Current.Resources["IconButton"]; pause.FontSize = 20; pause.ToolTip = T("Play / Pause"); AutomationProperties.SetName(pause, T("Play or pause"));
   pause.Click += async (_, _) => await Command(TogglePauseAsync);
@@ -214,7 +214,7 @@ internal sealed partial class VideoPlayerWindow
   left.Children.Add(clock);
   DockPanel.SetDock(left, Dock.Left); row.Children.Add(left);
 
-  var right = new StackPanel { Orientation = Orientation.Horizontal };
+  var right = new WrapPanel();
   repeat.Click += (_, _) => PlaybackModeChanged?.Invoke(); shuffle.Click += (_, _) => PlaybackModeChanged?.Invoke();
   right.Children.Add(repeat); right.Children.Add(shuffle);
   volumeButton.Margin=new Thickness(6,0,2,0);
@@ -227,7 +227,7 @@ internal sealed partial class VideoPlayerWindow
   speed.Margin = new Thickness(10, 0, 2, 0); speed.VerticalAlignment = VerticalAlignment.Center; speed.ToolTip = T("Playback speed"); speed.ItemStringFormat = "0.##×";
   // xml:lang follows the UI language; numeric items follow the user's regional format.
   speed.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
-  speed.SelectionChanged += async (_, _) => { if (player != null && speed.SelectedItem is double value) await Command(() => player.SetSpeedAsync(value)); };
+  speed.SelectionChanged += async (_, _) => { if (!syncing && player != null && speed.SelectedItem is double value) await TrackPreference(() => SaveSpeedAsync(value)); };
   right.Children.Add(speed);
   var tracks = Labeled("", T("Tracks"), T("Choose audio and subtitle track")); tracks.Click += (_, _) => TrackMenu(tracks);
   var view = Labeled("", Tc("player", "View"), T("Time-based view: crop and position of the picture per point in time")); view.Click += (_, _) => ViewMenu(view);
@@ -237,6 +237,7 @@ internal sealed partial class VideoPlayerWindow
   fullscreenButton.Click += (_, _) => ToggleFullscreen(); right.Children.Add(fullscreenButton);
   DockPanel.SetDock(right, Dock.Right); row.Children.Add(right);
   controlBar.Children.Add(row);
+  if(Source!=null)controlBar.Children.Add(new TextBlock{Text=Source.Path,ToolTip=Source.Path,TextTrimming=TextTrimming.CharacterEllipsis,Margin=new Thickness(8,2,8,2),FontSize=11});
   status.Margin = new Thickness(8, 0, 8, 2); status.FontSize = 12; status.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
   controlBar.Children.Add(status);
 
@@ -274,7 +275,7 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Clock and play symbol follow each poll; previous and next only appear when the library offers them.</summary>
  private void UpdateControls(double seconds)
  {
-  clock.Text = Time(seconds) + " / " + (media.DurationSeconds is double duration ? Time(duration) : "–");
+  clock.Text = Time(seconds) + " / " + (durationSeconds is double duration ? Time(duration) : "–");
   previousButton.Visibility = nextButton.Visibility = StepRequested != null ? Visibility.Visible : Visibility.Collapsed;
   KeepOverlayFresh();
  }
@@ -297,30 +298,14 @@ internal sealed partial class VideoPlayerWindow
 
  private void ShowSeekPreview(double x)
  {
-  if (media.DurationSeconds is not (> 0 and double duration) || position.ActualWidth <= TimelineThumbWidth) return;
+  if (durationSeconds is not (> 0 and double duration) || position.ActualWidth <= TimelineThumbWidth) return;
   var seconds = Math.Clamp((x - TimelineThumbWidth / 2) / (position.ActualWidth - TimelineThumbWidth), 0, 1) * duration;
   seekTime.Text = Time(seconds) + (JumpMarks.Current(Marks, seconds) is { } mark ? " · " + mark.Title : "");
   seekPreview.HorizontalOffset = Math.Clamp(x - 124, 0, Math.Max(0, position.ActualWidth - 248));
   seekPreview.VerticalOffset = -(seekImage.Source != null ? seekImage.ActualHeight + 52 : 44);
   seekPreview.IsOpen = true;
-  if (FrameAt == null) return;
-  seekPreviewWork?.Cancel(); var work = seekPreviewWork = new CancellationTokenSource();
-  _ = LoadSeekFrameAsync(seconds, work.Token);
+  _ = LoadSeekFrameAsync(seconds,CancellationToken.None);
  }
- internal async Task LoadSeekFrameAsync(double seconds, CancellationToken token)
- {
-  try
-  {
-   await Task.Delay(120, token); // only where the pointer rests
-   if (FrameAt == null || await FrameAt(seconds, token) is not { } path || token.IsCancellationRequested) return;
-   var picture = await Task.Run(() => MediaCard.LoadBitmap(path, 480), token);
-   if (token.IsCancellationRequested || picture == null) return;
-   seekImage.Source = picture; seekPreview.IsOpen = true;
-   seekPreview.VerticalOffset = -(240 / Math.Max(.1, picture.PixelWidth / (double)Math.Max(1, picture.PixelHeight)) + 52);
-  }
-  catch (Exception error) when (error is OperationCanceledException or System.IO.IOException or InvalidOperationException) { }
- }
- private void HideSeekPreview() { seekPreviewWork?.Cancel(); seekPreview.IsOpen = false; }
 
  private void TrackMenu(Button target) => Menus.Open(target, TrackEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
  /// <summary>Audio and subtitle tracks with the current one checked, and the subtitle file and offset.</summary>
@@ -334,6 +319,10 @@ internal sealed partial class VideoPlayerWindow
     entries.Add(new MenuCommand(choice.Label, () => source.SelectedItem = choice) { Checked = ReferenceEquals(source.SelectedItem, choice) });
   }
   Section(Tc("player", "Audio"), audio); entries.Add(MenuSpec.Separator); Section(T("Subtitles"), subtitles);
+  entries.Add(MenuSpec.Separator);
+  entries.Add(MenuSpec.Command(T("Audio earlier (−0.1 s)"),async()=>await Command(()=>ShiftAudioAsync(-1))));
+  entries.Add(MenuSpec.Command(T("Audio later (+0.1 s)"),async()=>await Command(()=>ShiftAudioAsync(1))));
+  entries.Add(MenuSpec.Command(T("Reset offset ({0} s)",AudioDelay.ToString("+0.0;-0.0;0.0",System.Globalization.CultureInfo.CurrentCulture)),async()=>await Command(()=>ShiftAudioAsync(0)),enabled:AudioDelay!=0));
   entries.Add(MenuSpec.Separator);
   foreach (var (label, action) in new (string, Func<Task>)[] { (T("Load subtitle file …"), () => LoadSubtitleFileAsync()),
    (T("Subtitles earlier (−0.1 s)"), () => ShiftSubtitlesAsync(-1)), (T("Subtitles later (+0.1 s)"), () => ShiftSubtitlesAsync(1)) })
@@ -360,13 +349,13 @@ internal sealed partial class VideoPlayerWindow
  private void EnterOverlayMode()
  {
   if (controlBar.Parent is Panel parent) parent.Children.Remove(controlBar);
-  overlayFrame.Child = controlBar; ShowMarkPanel(false); marksButton.IsEnabled=false;
+  overlayFrame.Child = controlBar; fullscreenMarksWanted=false;ShowMarkPanel(false); marksButton.IsEnabled=true;
   fullscreenButton.Content = ""; fullscreenButton.ToolTip = T("Leave full screen (Esc)");
   ShowOverlay();
  }
  private void LeaveOverlayMode()
  {
-  overlay.IsOpen = false; overlayFrame.Child = null; marksButton.IsEnabled=true; ShowMarkPanel(marksWanted);
+  overlay.IsOpen = false; overlayFrame.Child = null;fullscreenMarksWanted=false; marksButton.IsEnabled=true; ShowMarkPanel(marksWanted);
   if (Content is DockPanel root && !root.Children.Contains(controlBar)) { DockPanel.SetDock(controlBar, Dock.Bottom); root.Children.Insert(0, controlBar); }
   fullscreenButton.Content = ""; fullscreenButton.ToolTip = T("Full screen (F11)");
  }
@@ -396,7 +385,7 @@ internal sealed partial class VideoPlayerWindow
 
  private void HideIdleControls(bool mouseOverControls)
  {
-  if (overlayFrame.Child != null && playback.AutoHideControls && overlay.IsOpen && !mouseOverControls && !controlBar.IsKeyboardFocusWithin && !paused && DateTime.UtcNow - lastMovement > TimeSpan.FromSeconds(2.5)) overlay.IsOpen = false;
+  if (overlayFrame.Child != null && playback.AutoHideControls && overlay.IsOpen && !MarkPanelVisible && !mouseOverControls && !controlBar.IsKeyboardFocusWithin && !paused && DateTime.UtcNow - lastMovement > TimeSpan.FromSeconds(2.5)) overlay.IsOpen = false;
  }
 
  [StructLayout(LayoutKind.Sequential)] private struct CursorPoint { public int X, Y; }

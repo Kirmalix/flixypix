@@ -175,7 +175,7 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
         }
     }
 
-    private async Task<string> RenderAsync(string input, string output, string[] before, string[] after, CancellationToken token)
+    private async Task<string> RenderAsync(string input, string output, string[] before, string[] after, CancellationToken token,Action<string>? diagnostics=null)
     {
         var target = Path.GetFullPath(output);
         FileAccessPolicy.Current.EnsureWritable(target);
@@ -187,7 +187,7 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
         var temporary = Path.Combine(Path.GetDirectoryName(target)!, "." + Path.GetFileNameWithoutExtension(target) + "." + Guid.NewGuid().ToString("N") + Path.GetExtension(target));
         try
         {
-            await RunAsync(Resolve(paths.Ffmpeg, "ffmpeg"), ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", ..before, "-i", source, ..after, temporary], token);
+            await RunAsync(Resolve(paths.Ffmpeg, "ffmpeg"), ["-hide_banner", "-loglevel", diagnostics==null?"error":"info", "-nostdin", "-n", ..before, "-i", source, ..after, temporary], token,diagnostics:diagnostics);
             if (!File.Exists(temporary) || new FileInfo(temporary).Length == 0) throw new NoRenderedMediaException();
             FileAccessPolicy.Current.EnsureWritable(target); File.Move(temporary, target, overwrite: false);
             return target;
@@ -222,7 +222,7 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
         string? inputConf = null;
         if (reportMouse)
         {
-            inputConf = Path.Combine(Path.GetTempPath(), "flixypix-input-" + Guid.NewGuid().ToString("N") + ".conf");
+            inputConf = Path.Combine(FlixyPix.Core.AppStorage.WorkDirectory, "flixypix-input-" + Guid.NewGuid().ToString("N") + ".conf");
             await File.WriteAllLinesAsync(inputConf, ReportedMouseInputs.Select(key => $"{key} script-message {MouseMessage} {key}"), cancellationToken);
             arguments.Add("--input-conf=" + inputConf);
         }
@@ -260,7 +260,7 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
         return info;
     }
 
-    internal static async Task<string> RunAsync(string executable, IEnumerable<string> arguments, CancellationToken cancellationToken, TimeSpan? limit = null)
+    internal static async Task<string> RunAsync(string executable, IEnumerable<string> arguments, CancellationToken cancellationToken, TimeSpan? limit = null,Action<string>? diagnostics=null)
     {
         var info = StartInfo(executable, arguments); info.RedirectStandardOutput = true; info.RedirectStandardError = true;
         using var process = new Process { StartInfo = info };
@@ -279,6 +279,7 @@ public sealed partial class MediaToolService(MediaToolPaths paths)
             cancellationToken.ThrowIfCancellationRequested();
             var result = await stdout; var error = await stderr;
             if (process.ExitCode != 0) throw new InvalidOperationException($"{Path.GetFileName(executable)} wurde mit Fehler {process.ExitCode} beendet: {error[..Math.Min(error.Length, 1800)]}");
+            diagnostics?.Invoke(error);
             return result;
         }
         finally

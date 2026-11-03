@@ -52,9 +52,15 @@ internal static class AppLock
   if (IsLocked) return true;
   if (!CanLock || AppShell.Root is not { IsLoaded: true }) return false;
   IsLocked = true;
+  foreach(var player in Application.Current.Windows.OfType<VideoPlayerWindow>())player.ClearSeekPreview();
+  var alreadyHidden = AppShell.IsHidden;
+  if (!alreadyHidden) AppShell.HideAll(pause: true, trayIcon: false);
+  // Persistence must never prevent the privacy lock from hiding the screen.
+  try { if (AppShell.Root is MainWindow main) main.CheckpointDetailsDrafts(); }
+  catch (Exception error) when (error is System.IO.IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException)
+  { ErrorLog.Write("Draft checkpoint before privacy lock", error); }
   // Hidden by the boss key already: the prompt waits for the tray icon or the boss key.
-  if (AppShell.IsHidden) return true;
-  AppShell.HideAll(pause: true, trayIcon: false);
+  if (alreadyHidden) return true;
   ShowPrompt();
   return true;
  }
@@ -77,7 +83,11 @@ internal static class AppLock
   prompt.Show(); prompt.Activate();
  }
 
- internal static void HidePrompt() => prompt?.Hide();
+ internal static void HidePrompt()
+ {
+  // A conflicting return shortcut must not strand a locked, invisible instance.
+  if (AppShell.CanHideLockPrompt()) prompt?.Hide();
+ }
  internal static bool Dismissing { get; private set; }
 
  /// <summary>The main window closed: the prompt goes with it, so it does not keep the application running.</summary>
@@ -154,7 +164,7 @@ internal sealed class LockWindow : Window
   frame.Add(T("Quit"), AppShell.Exit);
   Content = frame;
   // Closing the prompt does not open the lock; it hides like the boss key.
-  Closing += (_, e) => { if (AppLock.IsLocked && !AppLock.Dismissing) { e.Cancel = true; Hide(); } };
+  Closing += (_, e) => { if (AppLock.IsLocked && !AppLock.Dismissing) { e.Cancel = true; AppLock.HidePrompt(); } };
   Activated += (_, _) => secret.Focus();
  }
 

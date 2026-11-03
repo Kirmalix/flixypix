@@ -32,12 +32,15 @@ public partial class MainWindow
   entries.Add(MenuSpec.Submenu(T("Open with"), OpenWithEntries(items), ""));
   if (outside) entries.Add(MenuSpec.Command(T("Show in library"), () => ShowInLibrary(first), ""));
   entries.Add(MenuSpec.Separator);
+  entries.Add(MenuSpec.Submenu(T("Review status"), Enum.GetValues<ReviewState>().Select(state => MenuSpec.Command(ReviewLabel(state), () => { ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.ReviewState, m => m with { ReviewState = state }); Refresh(); })), "\uE73E"));
   entries.Add(MenuSpec.Submenu(T("Rate"), RatingEntries(items, keys: !outside), ""));
   entries.Add(new MenuCommand(T("Favorite"), () => PinFavorite(items)) { Icon = "", Shortcut = outside ? null : "F", Checked = items.All(i => i.IsFavorite) });
   entries.Add(new MenuCommand(T("Watch later"), () => MarkWatchLater(items)) { Icon = "", Checked = items.All(i => i.WatchLater) });
   entries.Add(MenuSpec.Command(T("Edit tags …"), Here(FocusTagInput), "", KeyLabel("Ctrl+T")));
   entries.Add(MenuSpec.Separator);
   entries.Add(new MenuCommand(T("In the target collection"), () => ToggleTargetCollection()) { Icon = "\uE710", Shortcut = outside ? null : "B", Checked = items.All(i => MediaCard.TargetMembers.Contains(i.Id)), Enabled = !outside });
+  if (items.All(item => item.Kind == MediaKind.Image)) entries.Add(MenuSpec.Submenu(T("Image sets"), _repository.GetImageSets().Select(set => MenuSpec.Command(set.Name, () => AddImagesToSet(set, items)))));
+  if(items.All(item=>item.Kind==MediaKind.Video))entries.Add(MenuSpec.Submenu(T("Publication groups"),_repository.GetPublicationGroups().Select(group=>MenuSpec.Command(group.Name,()=>AddVideosToPublicationGroup(group,items)))));
   entries.Add(MenuSpec.Submenu(T("Add to collection"), CollectionChoices(items), ""));
   entries.Add(MenuSpec.Separator);
   entries.Add(MenuSpec.Submenu(T("Preview"), PreviewEntries(items, Here), ""));
@@ -45,6 +48,7 @@ public partial class MainWindow
   entries.Add(MenuSpec.Submenu(T("Metadata"), MetadataEntries(single || outside ? 1 : items.Count, Here), ""));
   entries.Add(MenuSpec.Submenu(single && first.Files.Count > 0 ? Tn(first.Files.Count + 1, "1 file", "{0} files") : T("Versions"), VersionEntries(items, outside), ""));
   entries.Add(MenuSpec.Command(T("Find similar"), () => ShowSimilarMedia(first), "", enabled: single && first.Kind != MediaKind.Audio));
+  entries.Add(MenuSpec.Command(T("Find duplicates"),()=>ShowDuplicates(items),"\uE721"));
   entries.Add(MenuSpec.Command(T("More from the same folder"), Here(ShowSameFolder), "", enabled: single));
   entries.Add(MenuSpec.Separator);
   entries.Add(MenuSpec.Submenu(T("File"), FileEntries(items, Here), ""));
@@ -122,6 +126,7 @@ public partial class MainWindow
  private IEnumerable<MenuSpec> PreviewEntries(IReadOnlyList<MediaItem> items, Func<Action, Action> here)
  {
   var single = items.Count == 1; var anyVideo = items.Any(i => i.Kind == MediaKind.Video);
+  yield return MenuSpec.Command(T("View contact sheet"),()=>ShowContactSheet(items[0]),enabled:single&&items[0].Kind==MediaKind.Video&&File.Exists(items[0].ThumbnailPath));
   yield return MenuSpec.Command(T("Recreate thumbnail"), here(RegenerateSelectedThumbnails), enabled: anyVideo);
   yield return MenuSpec.Command(T("Create preview clip"), here(CreateSelectedPreviewClips), enabled: anyVideo);
   yield return MenuSpec.Command(T("Create scene images …"), here(GenerateScenePreviews), enabled: single && items[0].Kind == MediaKind.Video);
@@ -189,7 +194,7 @@ public partial class MainWindow
  internal void RateMedia(IReadOnlyList<MediaItem> items, int stars)
  {
   if (items.Count == 0) return;
-  foreach (var item in items) _repository.Upsert((_repository.GetMedia(item.Id) ?? item) with { Rating = stars * 2 });
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Rating, current => current with { Rating = stars * 2 });
   Status.Text = (stars == 0 ? T("Rating removed") : Tn(stars, "1 star", "{0} stars")) + (items.Count > 1 ? Tn(items.Count, " · 1 item", " · {0:N0} items") : ""); Refresh();
  
  }
@@ -199,7 +204,7 @@ public partial class MainWindow
  {
   if (items.Count == 0) return;
   var pin = !items.All(i => (_repository.GetMedia(i.Id) ?? i).IsFavorite);
-  foreach (var item in items) _repository.Upsert((_repository.GetMedia(item.Id) ?? item) with { IsFavorite = pin });
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Favorite, current => current with { IsFavorite = pin });
   Status.Text = items.Count == 1 ? (pin ? T("“{0}” pinned as favorite", items[0].Title) : T("“{0}” no longer pinned as favorite", items[0].Title))
    : pin ? Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorite") : Tn(items.Count, "1 item no longer pinned as favorite", "{0:N0} items no longer pinned as favorite");
   Refresh();
@@ -210,7 +215,7 @@ public partial class MainWindow
  {
   if (items.Count == 0) return;
   var mark = !items.All(i => (_repository.GetMedia(i.Id) ?? i).WatchLater);
-  foreach (var item in items) _repository.Upsert((_repository.GetMedia(item.Id) ?? item) with { WatchLater = mark });
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.WatchLater, current => current with { WatchLater = mark });
   Status.Text = items.Count == 1 ? (mark ? T("“{0}” marked for later", items[0].Title) : T("“{0}” removed from Watch later", items[0].Title))
    : mark ? Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later") : Tn(items.Count, "1 item removed from Watch later", "{0:N0} items removed from Watch later");
   Refresh();
