@@ -13,7 +13,8 @@ Push-Location $projectRoot
 try {
     # Old build, test and tool output would otherwise fill the disk over time.
     try { & (Join-Path $PSScriptRoot 'clean-workspace.ps1') | ForEach-Object { Write-Host $_ } } catch { Write-Warning "Workspace cleanup: $($_.Exception.Message)" }
-    $versionArguments = if ($InformationalVersion) { @("-p:InformationalVersion=$InformationalVersion") } else { @() }
+    # @(...) around the if: a one-element result would otherwise be a string, and splatting a string passes its characters.
+    $versionArguments = @(if ($InformationalVersion) { "-p:InformationalVersion=$InformationalVersion" })
     & $dotnet build FlixyPix.slnx --configuration Release --nologo @versionArguments
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     if ($BuildOnly) { return }
