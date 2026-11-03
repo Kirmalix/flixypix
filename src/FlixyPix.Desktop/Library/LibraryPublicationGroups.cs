@@ -95,7 +95,7 @@ public partial class MainWindow
    if(row.Member.Kind==PublicationGroupMemberKind.Video&&_repository.GetMedia(row.Member.TargetId) is {} video){StopSlideshow();await Play(video);}
    else if(row.Member.Kind==PublicationGroupMemberKind.ImageSet&&_repository.GetImageSet(row.Member.TargetId) is {} set)await OpenImageSetAsync(set);
   }
-  catch(Exception error)when(error is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+  catch(Exception error)when(IsSetActionFailure(error))
   {MenuFailed(T("Open"),error);}
  }
  private void ChoosePublicationMembers()

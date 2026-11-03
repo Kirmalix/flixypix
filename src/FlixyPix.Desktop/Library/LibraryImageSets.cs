@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using FlixyPix.Archives;
 using FlixyPix.Core;
 namespace FlixyPix.Desktop;
 public partial class MainWindow
@@ -39,11 +40,13 @@ public partial class MainWindow
    var members=new DockPanel();DockPanel.SetDock(_setCover,Dock.Top);members.Children.Add(_setCover);DockPanel.SetDock(_setCoverCaption,Dock.Top);members.Children.Add(_setCoverCaption);members.Children.Add(_setMembers);
    body.Children.Add(_setList);Grid.SetColumn(members,1);body.Children.Add(members);
    var frame=new WindowFrame(T("Image sets"),null,body,scroll:false,wrapActions:true);
-   void Add(string key,Action action)=>_setActions[key]=frame.Add(T(key),()=>{try{action();}catch(Exception error) when(error is IOException or InvalidOperationException or ArgumentException or Microsoft.Data.Sqlite.SqliteException){MenuFailed(T(key),error);}});
+   void Add(string key,Action action)=>AddAsync(key,()=>{action();return Task.CompletedTask;});
+   // Awaited inside the handler, so failures after the first await are reported as well.
+   void AddAsync(string key,Func<Task> action)=>_setActions[key]=frame.Add(T(key),async()=>{try{await action();}catch(Exception error) when(IsSetActionFailure(error)){MenuFailed(T(key),error);}});
    Add(TKey("New entry"),CreateImageSet);Add(TKey("Edit"),EditImageSet);
-   Add(TKey("Suggest image sets"),async()=>await SuggestImageSetsAsync());
+   AddAsync(TKey("Suggest image sets"),SuggestImageSetsAsync);
    Add(TKey("Publication groups"),AddImageSetToPublicationGroup);
-   Add(TKey("Open"),async()=>await OpenSetImageFromUiAsync());
+   AddAsync(TKey("Open"),OpenSetImageFromUiAsync);
    Add(TKey("Move up"),()=>MoveSetMember(-1));Add(TKey("Move down"),()=>MoveSetMember(1));
    Add(TKey("Set as cover"),()=>{if(CurrentImageSet() is {} set&&_setMembers.SelectedItem is MediaItem media){_repository.UpsertImageSet(set with {CoverId=media.Id});RefreshImageSets();}});
    Add(TKey("Remove"),()=>{if(CurrentImageSet() is {} set&&_setMembers.SelectedItem is MediaItem media){_repository.UpsertImageSet(set with {MediaIds=set.MediaIds.Where(id=>id!=media.Id).ToList(),CoverId=set.CoverId==media.Id?null:set.CoverId});RefreshImageSets();}});
@@ -119,16 +122,27 @@ public partial class MainWindow
  private async Task OpenImageSetAsync(ImageSet set,Guid? selectedId=null)
  {
   var selected=selectedId??set.CoverId??set.MediaIds.FirstOrDefault();if(selected==Guid.Empty)return;
-  var images=new List<MediaItem>();foreach(var id in set.MediaIds)if(_repository.GetMedia(id) is {} media)images.Add(await EnsureArchiveImageAsync(media));
-  if(images.Count==0)return;_viewer?.Close();var viewer=new ImageViewerWindow(this,images,selected);_viewer=viewer;
+  var repository=_repository;var images=await Task.Run(()=>set.MediaIds.Select(repository.GetMedia).OfType<MediaItem>().ToArray());
+  if(images.Length==0||!ReferenceEquals(repository,_repository)||_closing)return;
+  // Archive images are extracted only when shown; one inspection per archive serves the whole set.
+  var inspected=new Dictionary<string,Task<IReadOnlyList<ArchiveImageEntry>>>();var resolved=new Task<MediaItem>?[images.Length];
+  async Task<MediaItem?> ItemAt(int index)
+  {
+   if(index<0||index>=images.Length)return null;var task=resolved[index]??=EnsureArchiveImageAsync(images[index],default,inspected);
+   try{return await task;}catch(Exception){if(ReferenceEquals(resolved[index],task))resolved[index]=null;throw;}
+  }
+  var initial=Math.Max(0,Array.FindIndex(images,image=>image.Id==selected));
+  _viewer?.Close();var viewer=new ImageViewerWindow(this,images,images[initial].Id,ItemAt,images.Length,initial);_viewer=viewer;
   viewer.Closed+=(_,_)=>{if(ReferenceEquals(_viewer,viewer))_viewer=null;};viewer.Show();await viewer.ReadyTask;
  }
  private async Task OpenSetImageFromUiAsync()
  {
   try{await OpenSetImageAsync();}
-  catch(Exception error) when(error is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+  catch(Exception error) when(IsSetActionFailure(error))
   {MenuFailed(T("Open"),error);}
  }
+ /// <summary>Expected failures of set and group actions; InvalidDataException covers damaged archives.</summary>
+ private static bool IsSetActionFailure(Exception error)=>error is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or NotSupportedException or Microsoft.Data.Sqlite.SqliteException;
  private void AddImagesToSet(ImageSet set,IReadOnlyList<MediaItem> images)
  { _repository.AddImageSetMembers(set.Id,images.Where(i=>i.Kind==MediaKind.Image).Select(i=>i.Id)); }
  private async Task SuggestImageSetsAsync()
