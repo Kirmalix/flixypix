@@ -24,6 +24,19 @@ public sealed class MediaToolsTests : IDisposable
     }
 
     [Fact]
+    public async Task MemoryFrameDecoderReturnsBoundedRgbWithoutWritingFilesAndRecoversAfterCancellation()
+    {
+        var source=await MakeFixture();var before=File.ReadAllBytes(source);var files=Directory.GetFiles(scratch).Order().ToArray();
+        var frame=await service.DecodeFrameAsync(source,.5,96,64);Assert.Equal((96,64,96*64*3),(frame.Width,frame.Height,frame.Pixels.Length));Assert.Contains(frame.Pixels.ToArray(),value=>value!=0);
+        Assert.Equal(97*63*3,(await service.DecodeFrameAsync(source,.5,97,63)).Pixels.Length);
+        Assert.Equal(files,Directory.GetFiles(scratch).Order());Assert.Equal(before,File.ReadAllBytes(source));
+        await Assert.ThrowsAsync<InvalidDataException>(()=>service.DecodeFrameAsync(source,100,96,64));
+        using(var cancel=new CancellationTokenSource()){cancel.Cancel();await Assert.ThrowsAnyAsync<OperationCanceledException>(()=>service.DecodeFrameAsync(source,.5,96,64,cancel.Token));}
+        using(var cancel=new CancellationTokenSource(TimeSpan.FromMilliseconds(1)))await Assert.ThrowsAnyAsync<OperationCanceledException>(()=>service.DecodeFrameAsync(source,.5,96,64,cancel.Token));
+        var limited=new MediaToolService(new(ffmpeg)){PreviewTimeout=TimeSpan.FromTicks(1)};await Assert.ThrowsAsync<MediaToolService.MediaToolTimeoutException>(()=>limited.DecodeFrameAsync(source,.5,96,64));
+        Assert.Equal(96*64*3,(await service.DecodeFrameAsync(source,1,96,64)).Pixels.Length);Assert.Equal(files,Directory.GetFiles(scratch).Order());
+    }
+    [Fact]
     public async Task HomeArtworkNeverUpscalesAndKeepsSource()
     {
         var source=await MakeFixture();var before=File.ReadAllBytes(source);var output=Path.Combine(scratch,"home.jpg");
@@ -94,14 +107,17 @@ public sealed class MediaToolsTests : IDisposable
         var source = await MakeFixture();
         await using var player = await service.PlayAsync(source);
         await player.PauseAsync(true); await Task.Delay(200);
+        Assert.True(await player.GetPausedAsync());
         var first = await player.GetPositionAsync(); await Task.Delay(250); var second = await player.GetPositionAsync();
         Assert.NotNull(first); Assert.NotNull(second); Assert.InRange(Math.Abs(second.Value - first.Value), 0, 0.15);
         await player.SeekAsync(1.5); await player.SetVolumeAsync(25); await player.SetSpeedAsync(1.5);
+        Assert.Equal(25,await player.GetVolumeAsync());
         Assert.Contains(await player.GetTracksAsync(), track => track.Type == "video");
         await player.SelectSubtitleTrackAsync(null); await player.SelectAudioTrackAsync(null);
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => player.SetSpeedAsync(0));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => player.SelectAudioTrackAsync(0));
         await player.PauseAsync(false);
+        Assert.False(await player.GetPausedAsync());
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await player.WaitForEndAsync(timeout.Token);
         Assert.True((await player.GetPositionAsync()) >= 1.5);

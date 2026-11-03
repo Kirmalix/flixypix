@@ -9,10 +9,10 @@ namespace FlixyPix.Desktop;
 /// style it was made with, so "regenerate" only redoes those that look different and can resume after a stop.</summary>
 public partial class MainWindow
 {
- internal const string SheetStyleKey = "thumbnail.style";
+ internal const string SheetStyleKey = CatalogRepository.GeneratedThumbnailStyleKey;
 
  /// <summary>Everything that changes how a sheet looks; header text comes from the medium itself.</summary>
- internal static string SheetSignature(PreviewPreferences p) => string.Join('|', "sheet-2", p.SheetColumns, p.SheetRows, p.SheetWidth, p.SheetFastSeek, p.SheetBorder,
+ internal static string SheetSignature(PreviewPreferences p) => string.Join('|', "sheet-3", p.SheetColumns, p.SheetRows, p.SheetWidth, p.SheetFastSeek, p.SheetBorder,
   p.SheetHeader, p.SheetTimestamp, p.SheetBackground, p.SheetForeground, p.SheetFont, p.SheetSkipPercent);
 
  internal static ContactSheetStyle SheetStyle(PreviewPreferences p, MediaItem item) => new()
@@ -45,20 +45,22 @@ public partial class MainWindow
   string Output() => Path.Combine(ThumbnailFolder, item.Id + "-" + Guid.NewGuid().ToString("N") + ".jpg");
   var duration = item.DurationSeconds.GetValueOrDefault();
   string path;
+  ContactSheetResult? sheet=null;
+  var aspect = item.Width is > 0 && item.Height is > 0 ? (double)item.Width.Value / item.Height.Value : 16d / 9;
+  async Task<string> Render(ContactSheetStyle style){sheet=await _tools.CreateContactSheetResultAsync(item.Path,Output(),duration,aspect,style,token);return sheet.ImagePath;}
   if (duration > 0)
   {
-   var aspect = item.Width is > 0 && item.Height is > 0 ? (double)item.Width.Value / item.Height.Value : 16d / 9;
    var style = SheetStyle(previews, item);
-   try { path = await _tools.CreateContactSheetAsync(item.Path, Output(), duration, aspect, style, token); }
+   try { path = await Render(style); }
    catch (IOException) when (style.FastSeek)
    {
-    try { path = await _tools.CreateContactSheetAsync(item.Path, Output(), duration, aspect, style with { FastSeek = false }, token); }
+    try { path = await Render(style with { FastSeek = false }); }
     catch (IOException) { path = await _tools.CreateThumbnailAsync(item.Path, Output(), Math.Min(duration / 10, 30), token); }
    }
    catch (IOException) { path = await _tools.CreateThumbnailAsync(item.Path, Output(), Math.Min(duration / 10, 30), token); }
   }
   else path = await _tools.CreateThumbnailAsync(item.Path, Output(), 0, token);
-  return item with { ThumbnailPath = path, Extra = new(item.Extra) { [SheetStyleKey] = SheetSignature(previews) } };
+  return item with { ThumbnailPath = path,ContactSheet=sheet?.Metadata(), Extra = new(item.Extra) { [SheetStyleKey] = SheetSignature(previews) } };
  }
 
  /// <summary>Remakes video thumbnails in the background: the chosen media always, otherwise every video whose thumbnail was
@@ -90,13 +92,15 @@ public partial class MainWindow
    {
     try
     {
+     var source=PlaybackSource.Resolve(current,current.Path);
      if (current.DurationSeconds is null && canProbe)
      {
       var probe = await _tools.ProbeAsync(current.Path, itemToken);
       current = current with { DurationSeconds = probe.DurationSeconds, Width = current.Width ?? probe.Width, Height = current.Height ?? probe.Height };
      }
      var updated = await RenderVideoThumbnailAsync(current, previews, itemToken);
-     _repository.Upsert(updated);
+     try { itemToken.ThrowIfCancellationRequested();_repository.SetGeneratedThumbnail(current,source,updated.ThumbnailPath!,updated.ContactSheet,signature); }
+     catch { if(IsGeneratedThumbnail(updated.ThumbnailPath))File.Delete(updated.ThumbnailPath!);throw; }
      if (IsGeneratedThumbnail(current.ThumbnailPath) && current.ThumbnailPath != updated.ThumbnailPath) File.Delete(current.ThumbnailPath!);
      Interlocked.Increment(ref made);
     }
@@ -145,7 +149,7 @@ public partial class MainWindow
   var sample = Selected is { Kind: MediaKind.Video, DurationSeconds: > 0 } selected && File.Exists(selected.Path) ? selected : await Task.Run(() =>
    _repository.QueryPage(new MediaQuery { Kind = MediaKind.Video, Limit = 50 }, token).Items.FirstOrDefault(i => i.DurationSeconds > 0 && File.Exists(i.Path)), token);
   if (sample is null) return null;
-  var output = Path.Combine(Path.GetTempPath(), "flixypix-sample-" + Guid.NewGuid().ToString("N") + ".jpg");
+  var output = Path.Combine(FlixyPix.Core.AppStorage.WorkDirectory, "flixypix-sample-" + Guid.NewGuid().ToString("N") + ".jpg");
   var aspect = sample.Width is > 0 && sample.Height is > 0 ? (double)sample.Width.Value / sample.Height.Value : 16d / 9;
   return await _tools.CreateContactSheetAsync(sample.Path, output, sample.DurationSeconds!.Value, aspect, SheetStyle(previews, sample), token);
  }

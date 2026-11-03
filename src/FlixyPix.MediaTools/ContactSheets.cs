@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using FlixyPix.Core;
 
 namespace FlixyPix.MediaTools;
@@ -42,6 +43,9 @@ public sealed partial class MediaToolService
     /// per scene, scaling, stacking and text in one filter graph. The original started one process per scene and drew the
     /// sheet afterwards.</summary>
     public async Task<string> CreateContactSheetAsync(string input, string output, double durationSeconds, double aspectRatio, ContactSheetStyle style, CancellationToken cancellationToken = default)
+    =>(await CreateContactSheetResultAsync(input,output,durationSeconds,aspectRatio,style,cancellationToken)).ImagePath;
+
+    public async Task<ContactSheetResult> CreateContactSheetResultAsync(string input, string output, double durationSeconds, double aspectRatio, ContactSheetStyle style, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(style);
         if (style.Columns is < 1 or > 6 || style.Rows is < 1 or > 6) throw new ArgumentOutOfRangeException(nameof(style), "Das Raster erlaubt 1 bis 6 Spalten und Zeilen.");
@@ -77,11 +81,13 @@ public sealed partial class MediaToolService
         // Keyframes are usually up to 10 s apart: closer scenes would show the same keyframe twice, and short videos decode fast anyway.
         var fast = style.FastSeek && durationSeconds * (100 - 2 * style.SkipPercent) / 100d / (count + 1) >= FastSeekMinimumSpacing;
         string[] Seek(int index) => [.. fast ? new[] { "-skip_frame", "nokey", "-noaccurate_seek" } : [], "-ss", F(times[index])];
-        var source = Input(input); var extraInputs = new List<string>(); var graph = new StringBuilder();
+        var source = Input(input);var sourceInfo=new FileInfo(source);var sourceSize=sourceInfo.Length;var sourceModified=new DateTimeOffset(sourceInfo.LastWriteTimeUtc);
+        var extraInputs = new List<string>(); var graph = new StringBuilder();
         for (var index = 0; index < count; index++)
         {
             if (index > 0) extraInputs.AddRange([.. Seek(index), "-i", source]);
-            graph.Append(CultureInfo.InvariantCulture, $"[{index}:v]trim=end_frame=1,scale={cellWidth}:{cellHeight}:force_original_aspect_ratio=decrease,pad={cellWidth}:{cellHeight}:(ow-iw)/2:(oh-ih)/2:color=black");
+            // 4:4:4 preserves odd border/header positions and final image dimensions; 4:2:0 pad rounds them down.
+            graph.Append(CultureInfo.InvariantCulture, $"[{index}:v]trim=end_frame=1,showinfo@sheet{index},scale={cellWidth}:{cellHeight}:force_original_aspect_ratio=decrease,format=yuv444p,pad={cellWidth}:{cellHeight}:(ow-iw)/2:(oh-ih)/2:color=black");
             // The frame's own time plus the seek target: with a fast seek this is the keyframe actually shown.
             if (style.Timestamp != SheetTimestamp.None)
                 graph.Append(CultureInfo.InvariantCulture, $",drawtext={font}:text='%{{pts\\:gmtime\\:{F(times[index])}\\:{clock}}}':fontsize={stampSize}:fontcolor=white:box=1:boxcolor=black@0.55:boxborderw={Math.Max(2, stampSize / 4)}:x={stampX}:y={stampY}");
@@ -102,11 +108,29 @@ public sealed partial class MediaToolService
         }
         graph.Append("[sheet]");
         // The graph goes into a script file: long graphs and file names stay out of the command line.
-        var script = Path.Combine(Path.GetTempPath(), "flixypix-sheet-" + Guid.NewGuid().ToString("N") + ".graph");
+        var script = Path.Combine(FlixyPix.Core.AppStorage.WorkDirectory, "flixypix-sheet-" + Guid.NewGuid().ToString("N") + ".graph");
         await File.WriteAllTextAsync(script, graph.ToString(), new UTF8Encoding(false), cancellationToken);
         try
         {
-            return await RenderAsync(input, output, Seek(0), [.. extraInputs, "-/filter_complex", script, "-map", "[sheet]", "-frames:v", "1", "-update", "1"], cancellationToken);
+            var renderedCells=new List<ContactSheetCell>();
+            var image=await RenderAsync(input, output, Seek(0), [.. extraInputs, "-/filter_complex", script, "-map", "[sheet]", "-frames:v", "1", "-update", "1"], cancellationToken,diagnostics=>
+            {
+                var decoded=new Dictionary<int,double>();
+                foreach(Match match in Regex.Matches(diagnostics,@"\[showinfo@sheet(\d+)\s+@[^\]]+\]\s+n:\s*0\s+pts:\s*\S+\s+pts_time:([-+0-9.eE]+)"))
+                {
+                    var index=int.Parse(match.Groups[1].Value,CultureInfo.InvariantCulture);
+                    if(index<0||index>=count||!double.TryParse(match.Groups[2].Value,NumberStyles.Float,CultureInfo.InvariantCulture,out var pts)||!double.IsFinite(pts)||!decoded.TryAdd(index,pts))throw new InvalidDataException("Invalid contact-sheet frame timing.");
+                }
+                if(decoded.Count!=count)throw new InvalidDataException("The decoder did not report all contact-sheet frame times.");
+                for(var index=0;index<count;index++)
+                {
+                    var seconds=times[index]+decoded[index];
+                    if(seconds<-.001||seconds>durationSeconds+.001)throw new InvalidDataException("Contact-sheet frame lies outside the video.");
+                    renderedCells.Add(new(index,new(left+index%style.Columns*(cellWidth+gap),headerHeight+gap+index/style.Columns*(cellHeight+gap),cellWidth,cellHeight),Math.Max(0,seconds)));
+                }
+                sourceInfo.Refresh();if(sourceInfo.Length!=sourceSize||sourceInfo.LastWriteTimeUtc.Ticks!=sourceModified.UtcTicks)throw new IOException("The contact-sheet source changed while decoding.");
+            });
+            return new(image,gridWidth,gridHeight+headerHeight,source,sourceSize,sourceModified,renderedCells);
         }
         finally { File.Delete(script); }
     }

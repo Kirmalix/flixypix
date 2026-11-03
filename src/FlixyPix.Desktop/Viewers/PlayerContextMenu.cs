@@ -22,8 +22,7 @@ internal sealed partial class VideoPlayerWindow
    Act(T("Set bookmark"), PlayerActions.CreateBookmark, ""),
    Act(T("Previous bookmark"), PlayerActions.PreviousBookmark, "", Marks.Count > 0),
    Act(T("Next bookmark"), PlayerActions.NextBookmark, "", Marks.Count > 0),
-   // In full screen the list stays hidden; the bar's previous/next buttons stand in for it.
-   new MenuCommand(T("Jump marks"), ToggleMarkPanel) { Checked = MarkPanelVisible, Shortcut = Shortcut(PlayerActions.ToggleMarks), Enabled = !IsFullscreen },
+   new MenuCommand(T("Jump marks"), ToggleMarkPanel) { Checked = MarkPanelVisible, Shortcut = Shortcut(PlayerActions.ToggleMarks) },
    MenuSpec.Separator,
    MenuSpec.Submenu(T("Tracks"), TrackEntries(), ""),
    MenuSpec.Submenu(T("Playback speed"), speed.Items.OfType<double>().Select(value =>

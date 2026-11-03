@@ -49,7 +49,8 @@ public sealed partial class CatalogRepository
    using(var select=Command("SELECT document,target FROM temp.mapping_originals ORDER BY ordinal",tx))using(var reader=select.ExecuteReader())while(reader.Read())
    {
     token.ThrowIfCancellationRequested();var item=JsonSerializer.Deserialize<MediaItem>(reader.GetString(0),Json)!;var extra=new Dictionary<string,string?>(item.Extra);extra.TryAdd("migration.originalPath",item.Path);
-    UpsertCore(item with {Path=reader.GetString(1),Extra=extra},tx);
+    var target=reader.GetString(1);
+    UpsertCore(item with {Path=target,ContactSheet=item.ContactSheet is {} sheet&&PathKey(sheet.SourcePath)==PathKey(item.Path)?sheet with {SourcePath=target}:item.ContactSheet,Extra=extra},tx);
    }
    using(var drop=Command("DROP TABLE temp.mapping_originals",tx))drop.ExecuteNonQuery();tx.Commit();return plan.Changes.Count;
   }

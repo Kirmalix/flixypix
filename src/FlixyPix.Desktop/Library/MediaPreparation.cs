@@ -28,21 +28,20 @@ public partial class MainWindow
     lock(errors)errors.Add(T("Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings."));
    var number = Interlocked.Increment(ref index);
    _ = Dispatcher.InvokeAsync(() => Status.Text = T("Preview · {0} · {1}", number, Path.GetFileName(item.Path)));
+   MediaItem? prepared=null;var published=false;
    try {
-    var stamp = PerceptualHash.Stamp(new FileInfo(item.Path));
-    var prepared = await PrepareItemAsync(item, previews, canProbe, canRender, itemToken);
+    var sourceInfo=new FileInfo(item.Path);var sourceSize=sourceInfo.Length;var sourceModified=new DateTimeOffset(sourceInfo.LastWriteTimeUtc);
+    var stamp = PerceptualHash.Stamp(sourceInfo);
+    prepared = await PrepareItemAsync(item, previews, canProbe, canRender, itemToken);
     if (PerceptualHash.Stamp(new FileInfo(item.Path)) != stamp) { lock(errors) errors.Add(item.Path + ": changed during preparation"); return; }
-    if (_repository.GetMedia(item.Id) is not { } current || current.Path != item.Path || current.FileModifiedAtUtc != item.FileModifiedAtUtc) return;
-    var extra = new Dictionary<string,string?>(current.Extra);
-    if (prepared.Extra.TryGetValue(SheetStyleKey, out var style)) extra[SheetStyleKey] = style;
-    if (!prepared.Extra.ContainsKey("folders.previewStale")) extra.Remove("folders.previewStale");
-    var customChanged = current.Extra.GetValueOrDefault("thumbnail.assetId") != item.Extra.GetValueOrDefault("thumbnail.assetId");
-    _repository.Upsert(current with { Width = prepared.Width, Height = prepared.Height, DurationSeconds = prepared.DurationSeconds,
-     Technical = prepared.Technical, Kind = prepared.Kind, ThumbnailPath = customChanged ? current.ThumbnailPath : prepared.ThumbnailPath, Extra = extra });
+    itemToken.ThrowIfCancellationRequested();
+    var saved=_repository.SetPreparedMedia(item,prepared,sourceSize,sourceModified);
+    published=saved?.ThumbnailPath==prepared.ThumbnailPath;
    }
    catch (OperationCanceledException) { throw; }
    catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or UnauthorizedAccessException)
    { lock(errors)errors.Add(Path.GetFileName(item.Path) + ": " + error.Message); }
+   finally { if(!published&&prepared?.ThumbnailPath!=item.ThumbnailPath&&IsGeneratedThumbnail(prepared?.ThumbnailPath))File.Delete(prepared!.ThumbnailPath!); }
   });
   if (errors.Count > 0 && reportErrors != null) reportErrors(errors);
   else if (errors.Count > 0) Dialogs.Text(this, T("Preview and analysis report"), string.Join(Environment.NewLine, errors.Take(30)) +

@@ -30,6 +30,32 @@ public sealed class VideoCompatibilityTests : IDisposable
     }
 
     [Fact]
+    public async Task AbLoopActuallyRepeatsRejectsBadBoundsAndResetsWithoutChangingFile()
+    {
+        var source=Path.Combine(scratch,"ab-loop.mp4");await Generate(["-f","lavfi","-i","testsrc2=size=160x90:rate=25:duration=6","-c:v","libx264","-preset","ultrafast","-g","50","-pix_fmt","yuv420p",source]);var before=Hash(source);
+        await using(var player=await tools.PlayAsync(source))
+        {
+            await player.PauseAsync(true);await player.SetAbLoopAsync(new(){Start=1,End=2});
+            Assert.Equal(new AbLoopState{Start=1,End=2},await player.GetAbLoopAsync());
+            await Assert.ThrowsAsync<ArgumentException>(()=>player.SetAbLoopAsync(new(){Start=3,End=2}));
+            await Assert.ThrowsAsync<ArgumentException>(()=>player.SetAbLoopAsync(new(){Start=1,End=7}));
+            Assert.Equal(new AbLoopState{Start=1,End=2},await player.GetAbLoopAsync());
+            await player.SeekAsync(1.2);await player.SetSpeedAsync(2);await player.PauseAsync(false);
+            var watch=Stopwatch.StartNew();var wraps=0;double? previous=null;
+            while(wraps<2&&watch.Elapsed<TimeSpan.FromSeconds(5))
+            {
+                await Task.Delay(40);var position=await player.GetPositionAsync();Assert.NotNull(position);Assert.InRange(position.Value,.8,2.3);
+                if(previous.HasValue&&previous.Value-position.Value>.35)wraps++;previous=position;
+            }
+            Assert.True(wraps>=2,"The decoder did not repeat the A-B range twice.");await player.PauseAsync(true);
+            await player.SetAbLoopAsync(new(){Start=1});Assert.False((await player.GetAbLoopAsync()).Active);
+            await player.SetAbLoopAsync(new());Assert.Equal(new AbLoopState(),await player.GetAbLoopAsync());
+            await player.SeekAsync(4);await player.SetSpeedAsync(8);await player.PauseAsync(false);await End(player);Assert.InRange((await player.GetPositionAsync())??0,5.8,6.2);
+        }
+        await using(var fresh=await tools.PlayAsync(source)){Assert.Equal(new AbLoopState(),await fresh.GetAbLoopAsync());}
+        Assert.Equal(before,Hash(source));
+    }
+    [Fact]
     public async Task TwelveSecondVideoSeeksBothDirectionsAndResumesPersistedPositionInNewPlayer()
     {
         var source = Path.Combine(scratch, "Zwölf Sekunden ü.mp4");
@@ -101,7 +127,12 @@ public sealed class VideoCompatibilityTests : IDisposable
         await using var player = await tools.PlayAsync(source); await player.PauseAsync(true);
         var tracks = await player.GetTracksAsync(); var audio = tracks.Where(track => track.Type == "audio").ToArray(); var sub = Assert.Single(tracks, track => track.Type == "sub");
         Assert.Equal(2, audio.Length); Assert.Contains(audio, track => track.Title == "Deutsch"); Assert.Contains(audio, track => track.Title == "English");
+        Assert.InRange((await player.GetDurationAsync())!.Value,3.9,4.2);
+        await player.SetAudioDelayAsync(.3);Assert.Equal(.3,await player.GetAudioDelayAsync());
+        await player.SetAudioDelayAsync(-.2);Assert.Equal(-.2,await player.GetAudioDelayAsync());
+        await player.SetAudioDelayAsync(0);Assert.Equal(0,await player.GetAudioDelayAsync());
         await player.SelectAudioTrackAsync(audio[1].Id); await Selected(player, "audio", audio[1].Id);
+        await player.SelectAutomaticAudioTrackAsync();Assert.Single(await player.GetTracksAsync(),t=>t.Type=="audio"&&t.Selected);
         await player.SelectAudioTrackAsync(audio[0].Id); await Selected(player, "audio", audio[0].Id);
         await player.SelectSubtitleTrackAsync(sub.Id); await Selected(player, "sub", sub.Id);
         await player.SeekAsync(1.25); await At(player, 1.25);
