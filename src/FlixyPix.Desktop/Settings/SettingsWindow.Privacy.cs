@@ -13,7 +13,7 @@ internal sealed partial class SettingsWindow
  internal readonly CheckBox BossGlobal = SettingsUi.Switch(), LockOnMinimize = SettingsUi.Switch(), LockWithWindows = SettingsUi.Switch(), BlurPictures = SettingsUi.Switch(),
   HideRecent = SettingsUi.Switch(), NeutralTitle = SettingsUi.Switch(), BlockCapture = SettingsUi.Switch();
  internal NumberBox LockMinutes = null!;
- internal readonly HotkeyBox BlurKey = new();
+ internal readonly HotkeyBox BlurKey = new(), RestoreKey = new();
  internal readonly TextBox NeutralTitleText = new() { MinWidth = 260, MaxLength = 60 };
  private readonly TextBlock pinStatus = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
  private readonly Button setPin = SettingsUi.SmallButton(""), removePin = SettingsUi.SmallButton(T("Remove PIN"));
@@ -26,6 +26,7 @@ internal sealed partial class SettingsWindow
   LockMinutes = Number(0, PrivacySettings.MaximumLockMinutes, 1, "min", T("Lock after inactivity"));
   foreach (var check in new[] { BossGlobal, LockOnMinimize, LockWithWindows, BlurPictures, HideRecent, NeutralTitle, BlockCapture }) { check.Checked += (_, _) => Touch(); check.Unchecked += (_, _) => Touch(); }
   foreach (var choice in new[] { BossActionChoice, BossPlaybackChoice }) choice.Changed += Touch;
+  RestoreKey.Changed += Touch; AutomationProperties.SetName(RestoreKey, T("Show FlixyPix again"));
   BlurKey.Changed += Touch; NeutralTitleText.TextChanged += (_, _) => Touch();
   AutomationProperties.SetName(BlurKey, T("Shortcut for blurring")); AutomationProperties.SetName(NeutralTitleText, T("Neutral title"));
   foreach (var (check, name) in new[] { (BossGlobal, T("System-wide")), (LockOnMinimize, T("Lock on minimizing")), (LockWithWindows, T("Lock with Windows")),
@@ -37,9 +38,10 @@ internal sealed partial class SettingsWindow
    SettingsUi.Card(T("Boss key"),
     T("Hides FlixyPix with the player, dialogs and overlays at once. Click the field and press a key; Del turns it off. While Esc is the boss key, Esc no longer leaves full screen or closes dialogs (use F11, F and the buttons instead)."),
     new SettingRow(T("Key"), T("Applies on this computer, in all FlixyPix windows. Default: Esc."), BossKey),
-    new SettingRow(T("Action"), T("Notification area: only its icon remains, a click brings everything back. Hide completely: nothing remains; the boss key again or starting FlixyPix brings it back."), BossActionChoice),
+    new SettingRow(T("Action"), T("Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again."), BossActionChoice),
+    new SettingRow(T("Show FlixyPix again"), T("Works system-wide only while hidden or minimized by the boss key. Default: Shift+Esc. Choose a different combination from the boss key."), RestoreKey),
     new SettingRow(T("Playback"), T("What happens to a running video. Muted videos get their sound back when FlixyPix returns."), BossPlaybackChoice),
-    new SettingRow(T("System-wide"), T("The boss key also works while another program is in front, and then brings FlixyPix back as well. Needs Ctrl, Alt or Win in the key, so Esc stays free for other programs."), BossGlobal),
+    new SettingRow(T("System-wide"), T("The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win."), BossGlobal),
     new SettingRow(T("Minimize to the notification area"), T("When minimized, FlixyPix and all its windows leave the taskbar; only the icon in the notification area remains, and a click on it brings everything back. Playback continues. Applies to this computer."), MinimizeToTray)),
    SettingsUi.Card(T("Lock"), T("Hides all windows behind a prompt. An encrypted library opens with its password or recovery key, otherwise with the PIN of this computer. The lock guards the screen; only the encryption protects the files."),
     new SettingRow(T("Lock after inactivity"), T("Minutes without mouse or keyboard input in Windows; 0 turns it off. A running video or slideshow keeps the lock away."), LockMinutes),
@@ -58,7 +60,7 @@ internal sealed partial class SettingsWindow
 
  private void LoadPrivacy(PrivacySettings privacy)
  {
-  BossActionChoice.Value = (int)privacy.BossAction; BossPlaybackChoice.Value = (int)privacy.BossPlayback; BossGlobal.IsChecked = privacy.BossGlobal;
+  BossActionChoice.Value = (int)privacy.BossAction; BossPlaybackChoice.Value = (int)privacy.BossPlayback; BossGlobal.IsChecked = privacy.BossGlobal; RestoreKey.Value = privacy.RestoreKey;
   LockMinutes.Value = privacy.LockAfterMinutes; LockOnMinimize.IsChecked = privacy.LockOnMinimize; LockWithWindows.IsChecked = privacy.LockWithWindows;
   pinHash = privacy.PinHash; ShowPin();
   BlurPictures.IsChecked = privacy.BlurPictures; BlurKey.Value = privacy.BlurKey;
@@ -97,17 +99,20 @@ internal sealed partial class SettingsWindow
  {
   var privacy = privacyBefore with
   {
-   BossAction = (BossAction)BossActionChoice.Value, BossPlayback = (BossPlayback)BossPlaybackChoice.Value, BossGlobal = BossGlobal.IsChecked == true,
+   BossAction = (BossAction)BossActionChoice.Value, BossPlayback = (BossPlayback)BossPlaybackChoice.Value, BossGlobal = BossGlobal.IsChecked == true, RestoreKey = RestoreKey.Value,
    LockAfterMinutes = (int)Math.Round(LockMinutes.Value ?? throw new ArgumentException(T("Please enter the minutes for the lock as a number from 0 to {0}.", PrivacySettings.MaximumLockMinutes))),
    LockOnMinimize = LockOnMinimize.IsChecked == true, LockWithWindows = LockWithWindows.IsChecked == true, PinHash = pinHash,
    BlurPictures = BlurPictures.IsChecked == true, BlurKey = BlurKey.Value,
    HideRecent = HideRecent.IsChecked == true, NeutralTitle = NeutralTitle.IsChecked == true, NeutralTitleText = NeutralTitleText.Text.Trim(), BlockCapture = BlockCapture.IsChecked == true,
   };
-  var bossParsed = PlayerHotkeys.TryParse(BossKey.Value, out var bossModifiers, out _);
+  var bossParsed = PlayerHotkeys.TryParse(BossKey.Value, out var bossModifiers, out var bossKey);
   if (privacy.BossGlobal && (!bossParsed || !AppShell.HasGlobalModifier(bossModifiers)))
    throw new ArgumentException(T("A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H."));
-  if (privacy.BossAction == BossAction.Vanish && (!privacy.BossGlobal || !bossParsed))
-   throw new ArgumentException(T("“Hide completely” needs a system-wide boss key; otherwise only a new start of FlixyPix would bring it back."));
+  var restoreParsed = PlayerHotkeys.TryParse(privacy.RestoreKey, out var restoreModifiers, out var restoreKey);
+  if (!restoreParsed || restoreModifiers == System.Windows.Input.ModifierKeys.None || PlayerHotkeys.IsModifierOnly(restoreKey))
+   throw new ArgumentException(T("Choose a shortcut with a modifier to show FlixyPix again, for example Shift+Esc."));
+  if (bossParsed && bossModifiers == restoreModifiers && bossKey == restoreKey)
+   throw new ArgumentException(T("Boss key and the shortcut to show FlixyPix again must differ."));
   if (privacy.BlurKey.Length > 0 && string.Equals(privacy.BlurKey, BossKey.Value, StringComparison.OrdinalIgnoreCase))
    throw new ArgumentException(T("Boss key and the shortcut for blurring must differ."));
   if (privacy.LocksAutomatically && privacy.PinHash == null && !repository.IsEncrypted)

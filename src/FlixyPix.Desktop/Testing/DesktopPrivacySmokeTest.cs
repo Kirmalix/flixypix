@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -20,6 +21,9 @@ public partial class MainWindow
   var pinHash = PinCode.Hash(pin);
   Require(PinCode.Verify(pin, pinHash) && !PinCode.Verify("2469", pinHash) && !PinCode.Verify(pin, null) && PinCode.IsHash(pinHash) && !PinCode.IsHash("2468"),
    "The PIN check value does not tell right from wrong.");
+  Require(System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>("{}")!.RestoreKey == "Shift+Escape", "Old settings lost the restore default.");
+  var custom = new PrivacySettings { RestoreKey = "Ctrl+Alt+F11" };
+  Require(System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>(System.Text.Json.JsonSerializer.Serialize(custom))!.RestoreKey == custom.RestoreKey, "Custom restore shortcut did not persist.");
   var reset = new List<string>();
   var repaired = new PrivacySettings { PinHash = "plain", LockAfterMinutes = 9999, BossAction = (BossAction)7 }.Validated(reset, "Privacy.");
   Require(repaired.PinHash == null && repaired.LockAfterMinutes == 0 && repaired.BossAction == BossAction.Tray && reset.Count == 3, "Damaged privacy values were not reset.");
@@ -32,15 +36,18 @@ public partial class MainWindow
    Capture((FrameworkElement)window.Content, Path.Combine(directory, "settings-privacy.png"));
    window.BossKey.Value = "Escape"; window.BossGlobal.IsChecked = true;
    Require(!window.TrySave() && window.LastError?.Contains(T("A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.")) == true, "A system-wide Esc was not refused.");
-   window.BossKey.Value = "Ctrl+Shift+H"; window.BossGlobal.IsChecked = false; window.BossActionChoice.Value = (int)BossAction.Vanish;
-   Require(!window.TrySave() && window.LastError != null, "Hiding completely without a system-wide key was not refused.");
+   window.BossKey.Value = "Ctrl+Shift+H"; window.BossGlobal.IsChecked = false; window.BossActionChoice.Value = (int)BossAction.Vanish; window.RestoreKey.Value = "";
+   Require(!window.TrySave() && window.LastError != null, "An empty restore shortcut was not refused.");
+   window.RestoreKey.Value = "Ctrl+Shift+H";
+   Require(!window.TrySave(), "Identical boss and restore shortcuts were accepted.");
+   window.RestoreKey.Value = "Shift+Escape";
    window.BossActionChoice.Value = (int)BossAction.Tray; window.LockOnMinimize.IsChecked = true;
    Require(_repository.IsEncrypted || !window.TrySave() && window.LastError != null, "A lock that nothing can open was not refused.");
    window.LockOnMinimize.IsChecked = false; window.BlurKey.Value = "Ctrl+Shift+H";
    Require(!window.TrySave(), "The same key for boss and blur was not refused.");
    window.BlurKey.Value = "Ctrl+Shift+U"; window.BossActionChoice.Value = (int)BossAction.Minimize; window.BossPlaybackChoice.Value = (int)BossPlayback.Mute;
    window.NeutralTitle.IsChecked = true; window.NeutralTitleText.Text = "Notizen"; window.HideRecent.IsChecked = true;
-   Require(window.TrySave() && window.Result is { BossKey: "Ctrl+Shift+H", Privacy: { BossAction: BossAction.Minimize, BossPlayback: BossPlayback.Mute, NeutralTitle: true, NeutralTitleText: "Notizen", HideRecent: true } },
+   Require(window.TrySave() && window.Result is { BossKey: "Ctrl+Shift+H", Privacy: { BossAction: BossAction.Minimize, BossPlayback: BossPlayback.Mute, NeutralTitle: true, NeutralTitleText: "Notizen", HideRecent: true, RestoreKey: "Shift+Escape" } },
     "Valid privacy options did not reach the result.");
   }
   finally { window.CloseDiscarding(); }
@@ -64,15 +71,26 @@ public partial class MainWindow
    Use(new PrivacySettings { BossAction = BossAction.Minimize });
    AppShell.Boss(); await Settled();
    Require(WindowState == WindowState.Minimized && paused == 1 && !AppShell.IsHidden, "The boss key did not minimize and pause.");
-   AppShell.ShowAll(); await Settled();
+   Require(AppShell.RestoreHotkeyActive && !AppShell.GlobalHotkeyActive, "Minimizing did not register the return key.");
+   SendMessage(AppShell.HotkeyWindow, 0x312, 0xB056, 0); await Settled();
    Require(WindowState == WindowState.Normal && AppShell.IsOnScreen(this), "Coming back from minimizing failed.");
-   // System-wide: Windows hands the key to FlixyPix, the same key brings it back.
-   Use(new PrivacySettings { BossAction = BossAction.Vanish, BossPlayback = BossPlayback.Continue, BossGlobal = true }, "Ctrl+Alt+Shift+F12");
+   // Hiding releases the boss shortcut and registers only the separate restore shortcut.
+   Use(new PrivacySettings { BossAction = BossAction.Vanish, BossPlayback = BossPlayback.Continue, BossGlobal = true, RestoreKey = "Ctrl+Alt+F11" }, "Ctrl+Alt+Shift+F12");
    Require(AppShell.GlobalHotkeyActive, "The system-wide boss key was not registered.");
    SendMessage(AppShell.HotkeyWindow, 0x312, 0xB055, 0); await Settled();
    Require(AppShell.IsHidden && !AppShell.IsOnScreen(this), "The system-wide boss key did not hide.");
-   SendMessage(AppShell.HotkeyWindow, 0x312, 0xB055, 0); await Settled();
+   Require(!AppShell.GlobalHotkeyActive && AppShell.RestoreHotkeyActive, "Hidden app still reserved the boss key.");
+   var handle = AppShell.HotkeyWindow;
+   Require(ReservePrivacyKey(handle, 0xB057, 1|2|4, (uint)KeyInterop.VirtualKeyFromKey(Key.F12)), "Another consumer could not reserve the released boss key.");
+   try { SendMessage(handle, 0x312, 0xB055, 0); Require(AppShell.IsHidden, "Stale boss message restored the app."); }
+   finally { ReleasePrivacyKey(handle, 0xB057); }
+   SendMessage(handle, 0x312, 0xB056, 0); await Settled();
+   Require(AppShell.GlobalHotkeyActive && !AppShell.RestoreHotkeyActive, "Showing did not restore shortcut ownership.");
    Require(!AppShell.IsHidden && AppShell.IsOnScreen(this), "The system-wide boss key did not bring FlixyPix back.");
+   // An occupied return key must never strand an invisible instance.
+   Require(ReservePrivacyKey(handle, 0xB057, 1|2, (uint)KeyInterop.VirtualKeyFromKey(Key.F11)), "Could not reserve conflict fixture.");
+   try { AppShell.Boss(); await Settled(); Require(!AppShell.IsHidden && AppShell.IsOnScreen(this), "Restore conflict stranded an invisible app."); }
+   finally { ReleasePrivacyKey(handle, 0xB057); }
    Use(new PrivacySettings { BossGlobal = true }, "Escape");
    Require(!AppShell.GlobalHotkeyActive, "Esc was taken from other programs.");
 
@@ -98,6 +116,21 @@ public partial class MainWindow
    Require(AppLock.PromptShown && !AppShell.IsOnScreen(this), "The prompt did not come back.");
    await prompt.EnterAsync(pin); await Settled();
    Require(!AppLock.IsLocked && !AppLock.PromptShown && AppShell.IsOnScreen(this), "The right PIN did not open the lock.");
+   Require(ReservePrivacyKey(AppShell.HotkeyWindow, 0xB057, 4, (uint)KeyInterop.VirtualKeyFromKey(Key.Escape)), "Could not reserve locked-return conflict fixture.");
+   try
+   {
+    var checkpointItem = _repository.Search().First();
+    await RefreshAsync(checkpointItem.Id);
+    EditDescription.Text = "Synthetic privacy-lock checkpoint";
+    _draftTimer.Stop(); // Lock must checkpoint even before the debounce timer runs.
+    Require(AppLock.Lock(), "Conflict fixture could not lock."); await Settled();
+    Require(_repository.GetMetadataDrafts().Any(d => d.MediaId == checkpointItem.Id && d.Description == "Synthetic privacy-lock checkpoint"), "Privacy lock did not checkpoint the last edit.");
+    AppLock.HidePrompt(); await Settled();
+    Require(AppLock.PromptShown || AppShell.TrayShown, "Return conflict stranded a hidden lock prompt.");
+    await AppLock.Prompt!.EnterAsync(pin); await Settled();
+    DiscardDetails(this, new RoutedEventArgs()); await Settled();
+   }
+   finally { ReleasePrivacyKey(AppShell.HotkeyWindow, 0xB057); }
    AppLock.IdleTime = () => TimeSpan.Zero;
    // Windows locks: the session message locks FlixyPix as well.
    SendMessage(AppLock.SessionWindow, 0x2B1, 7, 0); await Settled();
@@ -130,7 +163,7 @@ public partial class MainWindow
    Require(Privacy.ShownTitle(loose) == "Notizen", "A title change brought the name back.");
    Require(Privacy.IsCaptureBlocked(this) && Privacy.IsCaptureBlocked(loose), "The windows were not protected against screen captures.");
    Require(!Privacy.AddToRecent && Privacy.ClearRecent(), "The recent items of FlixyPix were not removed.");
-   Use(new PrivacySettings()); await Settled();
+   Use(new PrivacySettings { HideRecent = false }); await Settled();
    Require(Privacy.ShownTitle(this) == Title && Privacy.ShownTitle(loose) == loose.Title && !Privacy.IsCaptureBlocked(this) && Privacy.AddToRecent, "Switching off did not restore title, capture and recent items.");
    loose.Close();
   }
@@ -153,5 +186,7 @@ public partial class MainWindow
   }
  }
 
+ [DllImport("user32.dll", EntryPoint="RegisterHotKey")] private static extern bool ReservePrivacyKey(nint handle,int id,uint modifiers,uint key);
+ [DllImport("user32.dll", EntryPoint="UnregisterHotKey")] private static extern bool ReleasePrivacyKey(nint handle,int id);
  [DllImport("user32.dll")] private static extern nint SendMessage(nint handle, int message, nint wParam, nint lParam);
 }
