@@ -6,9 +6,9 @@
   "\n\nNumbers and options:\n": "\n\nLiczby i opcje:\n",
   "\n\nThe original file was not changed.\n\nTechnical detail: ": "\n\nOryginalny plik nie został zmieniony.\n\nInformacja techniczna: ",
   "\n\n{0} notes:\n": {
+    "one": "\n\nUwagi: {0}\n",
     "few": "\n\nUwagi: {0}\n",
-    "many": "\n\nUwagi: {0}\n",
-    "one": "\n\nUwagi: {0}\n"
+    "many": "\n\nUwagi: {0}\n"
   },
   "\nCancelled. Actions already completed are kept.": "\nAnulowano. Już wykonane działania zostają zachowane.",
   "\nFile is currently unavailable": "\nPlik nie jest obecnie dostępny",
@@ -18,135 +18,135 @@
   "\nSource rows and target objects are counted separately. Values kept only in raw form are preserved but not yet fully supported.": "\nWiersze źródłowe i obiekty docelowe są liczone osobno. Wartości zachowane tylko jako surowe dane pozostają dostępne, ale ich pełna obsługa funkcjonalna nie została jeszcze wdrożona.",
   "\nThe original bytes stay stored and can be exported.": "\nOryginalne bajty pozostają przechowywane i mogą być eksportowane.",
   "\n… and {0:N0} more notes": {
+    "one": "\n… i {0:N0} dodatkowa uwaga",
     "few": "\n… i {0:N0} dodatkowe uwagi",
-    "many": "\n… i {0:N0} dodatkowych uwag",
-    "one": "\n… i {0:N0} dodatkowa uwaga"
+    "many": "\n… i {0:N0} dodatkowych uwag"
   },
   "\n… and {0} more": "\n… i jeszcze {0}",
   " (missing: {0})": " (brak: {0})",
   " Missing files stay in the catalog with all their details and are marked as “Missing”.": " Brakujące pliki pozostają w katalogu ze wszystkimi danymi i są oznaczone jako „Brak”.",
   " Unavailable: {0}.": " Brak dostępności: {0}.",
   " {0} folders could not be read.": {
+    "one": " Nie można odczytać folderów: {0}.",
     "few": " Nie można odczytać folderów: {0}.",
-    "many": " Nie można odczytać folderów: {0}.",
-    "one": " Nie można odczytać folderów: {0}."
+    "many": " Nie można odczytać folderów: {0}."
   },
+  " · about {0} left": " · pozostało około {0}",
   " · Advanced search": " · Zaawansowane wyszukiwanie",
   " · Aliases: ": " · Aliasy: ",
-  " · Default": " · Domyślne",
-  " · FlixyPix": " · FlixyPix",
-  " · FlixyPix ": " · FlixyPix ",
-  " · Image viewer": " · Przeglądarka obrazów",
-  " · Large view": " · Powiększony widok",
-  " · Media artwork": " · Grafiki multimediów",
-  " · Media information": " · Informacje o multimediach",
-  " · Playback": " · Odtwarzanie",
-  " · Scene {0}–{1} ready": " · Scena {0}–{1} gotowa",
-  " · Tag: {0}": " · Tag: {0}",
-  " · Tags: {0}": " · Tagi: {0}",
-  " · about {0} left": " · pozostało około {0}",
   " · already matches": " · już zgodne",
   " · cancelled": " · anulowano",
   " · completed": " · zakończone",
   " · currently inactive": " · obecnie nieaktywne",
+  " · Default": " · Domyślne",
+  " · FlixyPix": " · FlixyPix",
+  " · FlixyPix ": " · FlixyPix ",
   " · folder filter": " · filtr folderów",
+  " · Image viewer": " · Przeglądarka obrazów",
   " · inactive": " · nieaktywne",
+  " · Large view": " · Powiększony widok",
+  " · Media artwork": " · Grafiki multimediów",
+  " · Media information": " · Informacje o multimediach",
   " · mirrored": " · odbicie lustrzane",
   " · no condition": " · bez warunku",
   " · older than 30 days": " · starsza niż 30 dni",
   " · paused": " · wstrzymano",
+  " · Playback": " · Odtwarzanie",
+  " · Scene {0}–{1} ready": " · Scena {0}–{1} gotowa",
+  " · Tag: {0}": " · Tag: {0}",
+  " · Tags: {0}": " · Tagi: {0}",
   " · the right mouse button takes it back": " · prawy przycisk myszy cofa",
   " · videos skipped: FFmpeg is missing": " · pominięto filmy: brak FFmpeg",
   " · without {0}": " · bez {0}",
   " · {0:0.###} seconds": " · {0:0.###} sekund",
   " · {0:N0} already existed": {
+    "one": " · 1 już istniał",
     "few": " · {0:N0} już istniały",
-    "many": " · {0:N0} już istniało",
-    "one": " · 1 już istniał"
+    "many": " · {0:N0} już istniało"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} zmieniono w międzyczasie i pominięto",
   " · {0:N0} entries not in the catalog": {
+    "one": " · 1 wpis spoza katalogu",
     "few": " · {0:N0} wpisy spoza katalogu",
-    "many": " · {0:N0} wpisów spoza katalogu",
-    "one": " · 1 wpis spoza katalogu"
+    "many": " · {0:N0} wpisów spoza katalogu"
   },
   " · {0:N0} errors": {
+    "one": " · Błędy: {0:N0}",
     "few": " · Błędy: {0:N0}",
-    "many": " · Błędy: {0:N0}",
-    "one": " · Błędy: {0:N0}"
+    "many": " · Błędy: {0:N0}"
   },
   " · {0:N0} images with web addresses were not loaded": {
+    "one": " · Nie wczytano {0:N0} obrazu z adresu internetowego",
     "few": " · Nie wczytano {0:N0} obrazów z adresów internetowych",
-    "many": " · Nie wczytano {0:N0} obrazów z adresów internetowych",
-    "one": " · Nie wczytano {0:N0} obrazu z adresu internetowego"
+    "many": " · Nie wczytano {0:N0} obrazów z adresów internetowych"
   },
   " · {0:N0} items": {
+    "one": " · Elementy: {0:N0}",
     "few": " · Elementy: {0:N0}",
-    "many": " · Elementy: {0:N0}",
-    "one": " · Elementy: {0:N0}"
+    "many": " · Elementy: {0:N0}"
   },
   " · {0:N0} items changed": {
+    "one": " · Zmienione elementy: {0:N0}",
     "few": " · Zmienione elementy: {0:N0}",
-    "many": " · Zmienione elementy: {0:N0}",
-    "one": " · Zmienione elementy: {0:N0}"
+    "many": " · Zmienione elementy: {0:N0}"
   },
   " · {0:N0} items in your library": {
+    "one": " · Elementy w bibliotece: {0:N0}",
     "few": " · Elementy w bibliotece: {0:N0}",
-    "many": " · Elementy w bibliotece: {0:N0}",
-    "one": " · Elementy w bibliotece: {0:N0}"
+    "many": " · Elementy w bibliotece: {0:N0}"
   },
   " · {0:N0} new tags": {
+    "one": " · Nowe tagi: {0:N0}",
     "few": " · Nowe tagi: {0:N0}",
-    "many": " · Nowe tagi: {0:N0}",
-    "one": " · Nowe tagi: {0:N0}"
+    "many": " · Nowe tagi: {0:N0}"
   },
   " · {0:N0} unreadable": {
+    "one": " · Nieczytelne: {0:N0}",
     "few": " · Nieczytelne: {0:N0}",
-    "many": " · Nieczytelne: {0:N0}",
-    "one": " · Nieczytelne: {0:N0}"
+    "many": " · Nieczytelne: {0:N0}"
   },
   " · {0:N0} values change": {
+    "one": " · Wartości do zmiany: {0:N0}",
     "few": " · Wartości do zmiany: {0:N0}",
-    "many": " · Wartości do zmiany: {0:N0}",
-    "one": " · Wartości do zmiany: {0:N0}"
+    "many": " · Wartości do zmiany: {0:N0}"
   },
   " · {0:N0} values changed": {
+    "one": " · Zmienione wartości: {0:N0}",
     "few": " · Zmienione wartości: {0:N0}",
-    "many": " · Zmienione wartości: {0:N0}",
-    "one": " · Zmienione wartości: {0:N0}"
+    "many": " · Zmienione wartości: {0:N0}"
   },
   " · {0:N0} were up to date": {
+    "one": " · Aktualne: {0:N0}",
     "few": " · Aktualne: {0:N0}",
-    "many": " · Aktualne: {0:N0}",
-    "one": " · Aktualne: {0:N0}"
+    "many": " · Aktualne: {0:N0}"
   },
   " · {0:N0} with changes": {
+    "one": " · Ze zmianami: {0:N0}",
     "few": " · Ze zmianami: {0:N0}",
-    "many": " · Ze zmianami: {0:N0}",
-    "one": " · Ze zmianami: {0:N0}"
-  },
-  " · {0:N0} without NFO": {
-    "few": " · Bez NFO: {0:N0}",
-    "many": " · Bez NFO: {0:N0}",
-    "one": " · Bez NFO: {0:N0}"
+    "many": " · Ze zmianami: {0:N0}"
   },
   " · {0:N0} without metadata": {
+    "one": " · Bez metadanych: {0:N0}",
     "few": " · Bez metadanych: {0:N0}",
-    "many": " · Bez metadanych: {0:N0}",
-    "one": " · Bez metadanych: {0:N0}"
+    "many": " · Bez metadanych: {0:N0}"
+  },
+  " · {0:N0} without NFO": {
+    "one": " · Bez NFO: {0:N0}",
+    "few": " · Bez NFO: {0:N0}",
+    "many": " · Bez NFO: {0:N0}"
   },
   " · {0} added, {1} removed": " · {0} dodano, {1} usunięto",
   " · {0}: previous/next": " · {0}: poprzedni/następny",
   "% of the length": "% długości",
   ", changes {0:N0} saved searches": {
+    "one": ", zmienione zapisane wyszukiwania: {0:N0}",
     "few": ", zmienione zapisane wyszukiwania: {0:N0}",
-    "many": ", zmienione zapisane wyszukiwania: {0:N0}",
-    "one": ", zmienione zapisane wyszukiwania: {0:N0}"
+    "many": ", zmienione zapisane wyszukiwania: {0:N0}"
   },
   ", turns off {0:N0} rules": {
+    "one": ", wyłączone reguły: {0:N0}",
     "few": ", wyłączone reguły: {0:N0}",
-    "many": ", wyłączone reguły: {0:N0}",
-    "one": ", wyłączone reguły: {0:N0}"
+    "many": ", wyłączone reguły: {0:N0}"
   },
   ", {0:N0} hidden": ", {0:N0} ukryte",
   ". Afterwards it can be undone here.": ". Potem można to tutaj cofnąć.",
@@ -174,16 +174,18 @@
   "A library file was changed during the import.": "Plik biblioteki został zmieniony podczas importu.",
   "A library keeps its catalog, thumbnails and caches in its folder. You can create several libraries and switch between them; one is always open.": "Katalog, miniatury i pamięć podręczna biblioteki znajdują się w jej folderze. Można utworzyć kilka bibliotek i przełączać się między nimi; otwarta jest zawsze jedna.",
   "A link in the write path has no reachable target: ": "Dowiązanie w ścieżce zapisu nie ma dostępnego celu: ",
+  "A local directory entry already has this name. Choose it as the target or enter another name: {0}": "Lokalny wpis w katalogu tagów ma już tę nazwę. Wybierz go jako cel lub wpisz inną nazwę: {0}",
   "A local image referenced by <thumb> becomes the video’s thumbnail. Images from web addresses are not loaded.": "Lokalny obraz z <thumb> staje się miniaturą filmu. Adresy internetowe nie są wczytywane.",
+  "A local medium already uses this file. Choose it as the target: {0}": "Lokalny element już używa tego pliku. Wybierz go jako cel: {0}",
   "A media folder needs a complete path and a known media type.": "Folder multimediów wymaga pełnej ścieżki i znanego typu multimediów.",
   "A nested group, for example for “A and (B or C)”": "Zagnieżdżona grupa, np. „A i (B lub C)”",
   "A new category is created when saving.": "Nowa kategoria powstaje podczas zapisywania.",
   "A new library leaves the open one unchanged; it can be chosen afterwards.": "Utworzenie nowej biblioteki nie zmienia otwartej biblioteki; nową można później wybrać.",
   "A new random selection every day.": "Codziennie nowy losowy wybór.",
   "A package may have at most {0:N0} entries.": {
+    "one": "Maksymalna liczba wpisów w pakiecie: {0:N0}.",
     "few": "Maksymalna liczba wpisów w pakiecie: {0:N0}.",
-    "many": "Maksymalna liczba wpisów w pakiecie: {0:N0}.",
-    "one": "Maksymalna liczba wpisów w pakiecie: {0:N0}."
+    "many": "Maksymalna liczba wpisów w pakiecie: {0:N0}."
   },
   "A parent target folder is missing.": "Brak nadrzędnego folderu docelowego.",
   "A picture file is damaged or belongs to another library.": "Plik obrazu jest uszkodzony lub należy do innej biblioteki.",
@@ -196,6 +198,7 @@
   "A shortcut is assigned twice.": "Skrót klawiszowy jest przypisany dwukrotnie.",
   "A single click on a thumbnail opens the item; clicking its title or details still selects it.": "Pojedyncze kliknięcie miniatury otwiera element; kliknięcie tytułu lub danych nadal go zaznacza.",
   "A source file was changed during the backup.": "Plik źródłowy został zmieniony podczas tworzenia kopii zapasowej.",
+  "A Stash marker has an invalid time range: {0}": "Znacznik Stash ma nieprawidłowy zakres czasu: {0}",
   "A studio also finds the items of the studios that belong to it (directory: “Belongs to”).": "Studio znajduje też elementy studiów, które do niego należą (katalog tagów: „Należy do”).",
   "A studio cannot belong to itself.": "Studio nie może należeć do samego siebie.",
   "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": "Klawisz szefa działający w całym systemie wymaga Ctrl, Alt lub Win, na przykład Ctrl+Shift+H.",
@@ -205,8 +208,12 @@
   "A thin bar shows how much of a video you have watched.": "Wąski pasek pokazuje obejrzaną część rozpoczętego filmu.",
   "A video starts where it was last stopped.": "Film zaczyna się w miejscu, w którym ostatnio zatrzymano odtwarzanie.",
   "A write path contains a cyclic link.": "Ścieżka zapisu zawiera cykliczne dowiązanie.",
-  "AUDIO": "DŹWIĘK",
   "About FlixyPix": "O FlixyPix",
+  "about {0} minutes": {
+    "one": "około 1 minuty",
+    "few": "około {0} minut",
+    "many": "około {0} minut"
+  },
   "Action": "Działanie",
   "Activates functions of the original that can be translated, after a review.": "Po sprawdzeniu włącza funkcje oryginału, które da się przenieść.",
   "Active": "Aktywny",
@@ -261,25 +268,31 @@
   "Age today": "Obecny wiek",
   "Alias": "Alias",
   "Aliases": "Aliasy",
+  "Aliases and the description of a tag are kept only with its source record: {0}": "Aliasy i opis tagu są zachowane tylko w jego rekordzie źródłowym: {0}",
   "All": "Wszystko",
+  "all": "wszystkie",
   "All categories": "Wszystkie kategorie",
   "All conditions are met": "Wszystkie warunki są spełnione",
   "All files|*.*": "Wszystkie pliki|*.*",
   "All filters: rating, type, category, performers, studios, tags, duration, dates and more": "Wszystkie filtry: ocena, typ, kategoria, wykonawcy, studia, tagi, czas trwania, daty i więcej",
   "All folders": "Wszystkie foldery",
+  "all images and videos in the library": "wszystkie obrazy i filmy w bibliotece",
   "All items": "Wszystkie elementy",
   "All path changes": "Wszystkie zmiany ścieżek",
   "All ratings": "Wszystkie oceny",
   "All scenes and bookmarks of the library. Point at a tile to see a short clip from its place; a click plays the video from there.": "Wszystkie sceny i zakładki biblioteki. Wskazanie kafelka pokazuje krótki klip od jego miejsca; kliknięcie odtwarza wideo od tego miejsca.",
   "All tags": "Wszystkie tagi",
   "All text fields": "Wszystkie pola tekstowe",
+  "all videos in the library": "wszystkie filmy w bibliotece",
   "All {0:N0} video thumbnails match the settings": {
+    "one": "Wszystkie miniatury wideo odpowiadają ustawieniom (liczba: {0:N0}).",
     "few": "Wszystkie miniatury wideo odpowiadają ustawieniom (liczba: {0:N0}).",
-    "many": "Wszystkie miniatury wideo odpowiadają ustawieniom (liczba: {0:N0}).",
-    "one": "Wszystkie miniatury wideo odpowiadają ustawieniom (liczba: {0:N0})."
+    "many": "Wszystkie miniatury wideo odpowiadają ustawieniom (liczba: {0:N0})."
   },
   "Allowed: ": "Pozwolone jest: ",
   "Already exists in these categories: {0}": "Obecnie istnieje w tych kategoriach: {0}",
+  "already exists; additional information will be added": "istnieje, zostanie uzupełnione",
+  "already watched": "już obejrzane",
   "Also assigned to: {0}": "Dodatkowo przypisywane do: {0}",
   "Also back up the media files": "Uwzględnij też pliki multimedialne",
   "Also copies with other quality, small crops or a logo.": "Także kopie w innej jakości, z małym przycięciem lub logo.",
@@ -292,8 +305,8 @@
   "Always play in full screen": "Zawsze odtwarzaj na pełnym ekranie",
   "Always show the import report": "Zawsze pokazuj raport importu",
   "Always start in full screen": "Zawsze uruchamiaj na pełnym ekranie",
-  "Ambiguous Windows path names and device names are not allowed write targets.": "Niejednoznaczne nazwy ścieżek Windows i nazwy urządzeń nie są dozwolonymi celami zapisu.",
   "Ambiguous alias; choose a tag from the suggestions.": "Niejednoznaczny alias; wybierz tag z podpowiedzi.",
+  "Ambiguous Windows path names and device names are not allowed write targets.": "Niejednoznaczne nazwy ścieżek Windows i nazwy urządzeń nie są dozwolonymi celami zapisu.",
   "An encrypted picture file needs the unlocked library.": "Zaszyfrowany plik obrazu wymaga odblokowanej biblioteki.",
   "An existing copy in the thumbnail folder was changed: ": "Istniejąca kopia w folderze podglądów została zmieniona: ",
   "An image set with these members already exists.": "Zestaw z tymi obrazami już istnieje.",
@@ -301,6 +314,7 @@
   "An operation is already running. You can cancel it below.": "Operacja jest już w toku. Można ją anulować poniżej.",
   "Another catalog entry uses this target path.": "Kolejny wpis katalogu wykorzystuje tę ścieżkę docelową.",
   "Another key with its own jump distance": "Dodatkowy klawisz z własną odległością skoku",
+  "any": "dowolne",
   "Any search can become a smart collection. It keeps the search text and all filters and stays current: new matching items appear in it by themselves. You find it on the left under “Collections”.": "Każde wyszukiwanie może stać się inteligentną kolekcją. Zachowuje tekst wyszukiwania i wszystkie filtry i pozostaje aktualna: nowe pasujące elementy pojawiają się w niej same. Znajdziesz ją po lewej w „Kolekcje”.",
   "Any search can become a smart collection: set up search and filters, then ＋ → Smart collection. It stays current, new matching items appear in it by themselves.": "Każde wyszukiwanie może stać się inteligentną kolekcją: ustaw wyszukiwanie i filtry, potem ＋ → Inteligentna kolekcja. Pozostaje aktualna, nowe pasujące elementy pojawiają się w niej same.",
   "Appearance": "Wygląd",
@@ -348,8 +362,13 @@
   "Assign to selected items ({0})": "Przypisz do wybranych elementów ({0})",
   "Assigning files …": "Przypisywanie plików …",
   "Assigns items to a new folder or drive after a move, with a preview before the change.": "Po przeniesieniu przypisuje elementy do nowego folderu lub dysku, z podglądem przed zmianą.",
+  "at least": "co najmniej",
   "At least four characters. Opens the lock also for an encrypted library; FlixyPix keeps only a check value of it.": "Co najmniej cztery znaki. Otwiera blokadę także dla zaszyfrowanej biblioteki; FlixyPix przechowuje tylko wartość kontrolną.",
+  "at least one": "co najmniej jeden",
   "At least one condition is met": "Co najmniej jeden warunek jest spełniony",
+  "at least one:": "co najmniej jeden:",
+  "at most": "najwyżej",
+  "AUDIO": "DŹWIĘK",
   "Audio": "Dźwięk",
   "Audio earlier (−0.1 s)": "Dźwięk wcześniej (−0,1 s)",
   "Audio later (+0.1 s)": "Dźwięk później (+0,1 s)",
@@ -363,11 +382,10 @@
   "Availability check": "Kontrola dostępności",
   "Available": "Dostępne",
   "Available · {0} files hidden": {
+    "one": "Dostępne · ukryte pliki: {0}",
     "few": "Dostępne · ukryte pliki: {0}",
-    "many": "Dostępne · ukryte pliki: {0}",
-    "one": "Dostępne · ukryte pliki: {0}"
+    "many": "Dostępne · ukryte pliki: {0}"
   },
-  "BOOKMARKS": "ZAKŁADKI",
   "Back": "Wstecz",
   "Back (Alt+←, mouse button 4)": "Wstecz (Alt+←, przycisk myszy 4)",
   "Back and forward": "Wstecz i Dalej",
@@ -393,6 +411,7 @@
   "Backup …": "Kopia zapasowa…",
   "Badges": "Plakietki",
   "Because: {0}": "Ponieważ: {0}",
+  "before ": "przed ",
   "Before every repair FlixyPix saves a copy of the catalog here; older backups and copies beyond the chosen number are deleted.": "Przed każdą naprawą FlixyPix zapisuje tu kopię katalogu; starsze kopie ponad wybraną liczbę są usuwane.",
   "Before that, a safety copy of the catalog is made: {0} (free on the drive: {1})": "Najpierw zostanie utworzona kopia bezpieczeństwa katalogu: {0} (wolne na dysku: {1})",
   "Behavior": "Zachowanie",
@@ -414,6 +433,7 @@
   "Bookmark removed · ": "Usunięto zakładkę · ",
   "Bookmark set · ": "Dodano zakładkę · ",
   "Bookmark {0}": "Zakładka {0}",
+  "BOOKMARKS": "ZAKŁADKI",
   "Bookmarks": "Zakładki",
   "Border": "Obramowanie",
   "Border around the scenes": "Obramowanie wokół scen",
@@ -428,13 +448,12 @@
   "Briefly hovering over a tile does not start a preview yet.": "Krótkie wskazanie kafelka nie uruchamia podglądu.",
   "Bring data into the library or pass it on. The import from EazyFlixPix 4 is under Legacy data.": "Przenoszenie danych do biblioteki lub przekazywanie ich dalej. Import z EazyFlixPix 4 znajduje się w sekcji Stare dane.",
   "Browse": "Przeglądaj",
+  "browse": "przeglądaj",
   "Browse …": "Przeglądaj …",
   "Building and checking the new library …": "Budowa i sprawdzenie nowej biblioteki…",
   "By file extension.": "Według rozszerzenia pliku.",
   "By the shorter side of the picture.": "Według krótszego boku obrazu.",
   "Bytes": "Bajty",
-  "CSV catalog exported": "Wyeksportowano katalog CSV",
-  "CSV catalog|*.csv": "Katalog CSV|*.csv",
   "Cache": "Pamięć podręczna",
   "Caches of this library": "Pamięć podręczna tej biblioteki",
   "Calculating …": "Obliczanie…",
@@ -449,6 +468,7 @@
   "Catalog (*.sdf)|*.sdf|All files|*.*": "Katalog (*.sdf)|*.sdf|Wszystkie pliki|*.*",
   "Catalog backup as JSON": "Kopia zapasowa katalogu w JSON",
   "Catalog backup created. Back up media files separately.": "Utworzono kopię katalogu. Pliki multimedialne należy zabezpieczyć osobno.",
+  "catalog check\u0004Remove from catalog": "Usuń z katalogu",
   "Catalog compacted: {0} → {1}": "Katalog skompaktowany: {0} → {1}",
   "Catalog exported · ": "Wyeksportowano katalog · ",
   "Catalog file": "Plik katalogu",
@@ -459,14 +479,15 @@
   "Category": "Kategoria",
   "Category for entries without a category": "Kategoria dla wpisów bez kategorii",
   "Category for newly imported files": "Kategoria dla nowo zaimportowanych plików",
+  "category missing": "brak kategorii",
   "Category “{0}”": "Kategoria „{0}”",
   "Category “{0}” is already {1}": "Kategoria „{0}” jest już {1}",
-  "Change PIN …": "Zmień PIN …",
   "Change category roles": "Zmień role kategorii",
   "Change icon": "Zmień ikonę",
   "Change name / image duration …": "Zmień nazwę / czas wyświetlania obrazu …",
   "Change password": "Zmień hasło",
   "Change password …": "Zmień hasło …",
+  "Change PIN …": "Zmień PIN …",
   "Change storage mode": "Zmień tryb przechowywania",
   "Change tag category": "Zmień kategorię tagu",
   "Change tag category …": "Zmień kategorię tagu …",
@@ -572,10 +593,10 @@
   "Clear search (Esc)": "Wyczyść wyszukiwanie (Esc)",
   "Clear the {0}? It is recreated when needed.": "Wyczyścić {0}? Zostanie utworzone ponownie w razie potrzeby.",
   "Clearing frees space without losing catalog data.": "Wyczyszczenie zwalnia miejsce bez utraty danych katalogu.",
-  "Click Start to run queued jobs one at a time.": "Zadania są wykonywane kolejno po kliknięciu Start.",
   "Click a frame to play this file from the displayed time.": "Kliknij klatkę, aby odtworzyć ten plik od wskazanego czasu.",
   "Click and press a key · Backspace/Del: remove assignment · Esc: cancel": "Kliknij i naciśnij klawisz · Backspace/Delete: usuń przypisanie · Esc: anuluj",
   "Click jumps to the mark · digits 1–9": "Kliknięcie przechodzi do znacznika · cyfry 1–9",
+  "Click Start to run queued jobs one at a time.": "Zadania są wykonywane kolejno po kliknięciu Start.",
   "Click the field and press the key you want, also with Ctrl, Shift or Alt. Backspace or Del removes the assignment. Esc and F11 stay reserved in the player for full screen and closing.": "Kliknij pole i naciśnij wybrany klawisz, również z Ctrl, Shift lub Alt. Backspace lub Delete usuwa przypisanie. Esc i F11 pozostają w odtwarzaczu zarezerwowane dla pełnego ekranu i zamykania.",
   "Click the image to play": "Kliknięcie obrazu rozpoczyna odtwarzanie",
   "Click the left half of a star: half a star · click again: clear · use arrow keys to change": "Kliknięcie lewej połowy gwiazdki: pół gwiazdki · ponowne kliknięcie: wyczyść · strzałki zmieniają ocenę",
@@ -625,13 +646,16 @@
   "Comparing the table for sorting, filters and tags …": "Porównywanie tabeli sortowania, filtrów i tagów…",
   "Comparing …": "Porównywanie …",
   "Comparison": "Porównanie",
+  "complete": "kompletne",
   "Compute fingerprints on import": "Obliczaj odciski przy imporcie",
   "Compute the fingerprints for “Find similar items” right after the import, so the search starts at once. Takes about a second per video.": "Oblicza odciski dla „Znajdź podobne elementy” zaraz po imporcie, aby wyszukiwanie zaczynało się od razu. Trwa około sekundy na wideo.",
   "Condition groups saved": "Zapisano grupy warunków",
+  "configsettings: shortcut {0} was assigned more than once; “{1}” stays free.": "configsettings: skrót {0} był przypisany wielokrotnie; „{1}” pozostaje bez przypisania.",
   "Confirm removing from the catalog": "Potwierdzenie usunięcia z katalogu",
   "Confirmations": "Potwierdzenia",
   "Conflict": "Konflikt",
   "Conflicts": "Konflikty",
+  "contains": "zawiera",
   "Content": "Zawartość",
   "Content folder assignment": "Przypisanie folderów zawartości",
   "Continue to the new library": "Przejdź do nowej biblioteki",
@@ -642,6 +666,7 @@
   "Convert to MP4 …": "Konwertuj do MP4 …",
   "Copied into the library; the old files stay where they are. FlixyPix can later recreate imported thumbnails in its own style via “Adjust thumbnails”.": "Kopiowane do biblioteki; stare pliki pozostają na swoim miejscu. FlixyPix może później odtworzyć zaimportowane miniatury we własnym stylu przez „Dostosuj miniatury”.",
   "Copy": "Kopiuj",
+  "copy": "kopiuj",
   "Copy current libraries; keep the originals": "Kopiuj bieżące biblioteki; zachowaj oryginały",
   "Copy existing profile data into this portable edition? The originals are kept.": "Skopiować dane profilu do tej wersji przenośnej? Oryginały zostaną zachowane.",
   "Copy image": "Kopiuj obraz",
@@ -656,6 +681,7 @@
   "Counted in {0:N0} ms": "Policzono w {0:N0} ms",
   "Counting matches …": "Liczenie wyników …",
   "Counting …": "Liczenie …",
+  "counting …": "liczenie…",
   "Country": "Kraj",
   "Counts as watched from": "Liczy się jako obejrzane od",
   "Counts climaxes per item: button in the player and in the details, shortcuts below “Video player”. It can be sorted and searched.": "Liczy orgazmy dla każdego elementu: przycisk w odtwarzaczu i w szczegółach, skróty w sekcji „Odtwarzacz wideo”. Można według niego sortować i wyszukiwać.",
@@ -665,7 +691,6 @@
   "Covers and thumbnails you chose. They are kept.": "Własnoręcznie wybrane okładki i miniatury. Zostają zachowane.",
   "Crash": "Awaria",
   "Create": "Utwórz",
-  "Create GIF": "Utwórz GIF",
   "Create a file name rule first.": "Najpierw utwórz regułę nazwy pliku.",
   "Create a new, separate library from the catalog": "Utwórz nową, oddzielną bibliotekę z katalogu",
   "Create animated GIF …": "Utwórz animowany GIF …",
@@ -675,6 +700,7 @@
   "Create complete backup package": "Utwórz pełny pakiet kopii zapasowej",
   "Create file name parser …": "Utwórz analizator nazw plików …",
   "Create file name rule …": "Utwórz regułę nazwy pliku …",
+  "Create GIF": "Utwórz GIF",
   "Create missing previews and metadata": "Utwórz brakujące podglądy i metadane",
   "Create new library from legacy data": "Utwórz nową bibliotekę ze starych danych",
   "Create on import": "Twórz podczas importu",
@@ -703,10 +729,12 @@
   "Crop video": "Kadruj film",
   "Cross-fade": "Przenikanie",
   "Cross-fade between images": "Płynne przejścia między obrazami",
+  "CSV catalog exported": "Wyeksportowano katalog CSV",
+  "CSV catalog|*.csv": "Katalog CSV|*.csv",
   "Ctrl": "Ctrl",
   "Ctrl+C": "Ctrl+C",
-  "Ctrl+Shift+C": "Ctrl+Shift+C",
   "Ctrl+mouse wheel": "Ctrl+kółko myszy",
+  "Ctrl+Shift+C": "Ctrl+Shift+C",
   "Ctrl+{0} is not assigned to a tag yet · favorite tags (★) come first": "Ctrl+{0} nie jest jeszcze przypisany do tagu · ulubione tagi (★) są pierwsze",
   "Current folder prefix": "Bieżący prefiks folderu",
   "Current password or recovery key": "Aktualne hasło lub klucz do odzyskiwania",
@@ -716,7 +744,6 @@
   "Custom jump: please press a key or remove the row.": "Własny skok: naciśnij klawisz lub usuń wiersz.",
   "Custom jumps": "Własne skoki",
   "Custom version found.": "Znaleziono własną wersję.",
-  "DETAILS": "SZCZEGÓŁY",
   "Daily": "Codziennie",
   "Dark": "Ciemny",
   "Data": "Dane",
@@ -766,32 +793,40 @@
   "Delete the set “{0}”? What it holds moves up one level.": "Usunąć zestaw „{0}”? Jego zawartość przejdzie o poziom wyżej.",
   "Delete the smart collection “{0}”? The items stay in the catalog.": "Usunąć inteligentną kolekcję „{0}”? Elementy pozostaną w katalogu.",
   "Delete {0:N0} tags?": {
+    "one": "Usunąć wybrane tagi (liczba: {0:N0})?",
     "few": "Usunąć wybrane tagi (liczba: {0:N0})?",
-    "many": "Usunąć wybrane tagi (liczba: {0:N0})?",
-    "one": "Usunąć wybrane tagi (liczba: {0:N0})?"
+    "many": "Usunąć wybrane tagi (liczba: {0:N0})?"
   },
   "Delete “{0}”?": "Usunąć „{0}”?",
   "Delete …": "Usuń …",
   "Deleted · {0:N0} assignments removed": {
+    "one": "Usunięto · usunięte przypisania: {0:N0}",
     "few": "Usunięto · usunięte przypisania: {0:N0}",
-    "many": "Usunięto · usunięte przypisania: {0:N0}",
-    "one": "Usunięto · usunięte przypisania: {0:N0}"
+    "many": "Usunięto · usunięte przypisania: {0:N0}"
   },
   "Deletes all entries; play counts, O counters and the last playback stay.": "Usuwa wszystkie wpisy; liczniki odtworzeń, liczniki O i ostatnie odtworzenie pozostaną.",
   "Description": "Opis",
   "Design": "Styl",
   "Desktop background set": "Ustawiono jako tło pulpitu",
   "Destination folder for the clips": "Folder docelowy klipów",
+  "DETAILS": "SZCZEGÓŁY",
   "Details": "Szczegóły",
   "Details as tabs": "Szczegóły jako karty",
   "Device paths and alternate data streams are not allowed write targets.": "Ścieżki urządzeń i alternatywne strumienie danych nie są dozwolonymi celami zapisu.",
   "Diagnostics": "Diagnostyka",
   "Did you use EazyFlixPix 4?": "Czy używałeś EazyFlixPix 4?",
+  "died aged {0}": {
+    "one": "wiek w chwili śmierci: 1 rok",
+    "few": "wiek w chwili śmierci: {0} lata",
+    "many": "wiek w chwili śmierci: {0} lat"
+  },
+  "difference {0}": "różnica {0}",
   "Differing fields": "Różniące się pola",
   "Differs from the item entries, so sorting, filters or tags can give wrong results. Fixing rebuilds it.": "Różni się od wpisów elementów, więc sortowanie, filtry lub tagi mogą dawać błędne wyniki. Naprawa odbudowuje tabelę.",
   "Differs from the items, so quick search can miss results. Fixing rebuilds it.": "Różni się od elementów, więc szybkie wyszukiwanie może pomijać wyniki. Naprawa odbudowuje indeks.",
   "Director": "Reżyser",
   "Directory": "Katalog tagów",
+  "directory\u0004Position in seconds": "Pozycja w sekundach",
   "Directory · FlixyPix": "Katalog tagów · FlixyPix",
   "Directory: tags, performers, studios …": "Katalog tagów: tagi, wykonawcy, studia …",
   "Discard changes": "Odrzuć zmiany",
@@ -810,6 +845,7 @@
   "Duplicate": "Duplikuj",
   "Duplicate entries of the same file": "Zduplikowane wpisy tego samego pliku",
   "Duplicate or invalid media assignment.": "Zduplikowane lub nieprawidłowe przypisanie multimediów.",
+  "duplicate, already in line {0}": "duplikat, już w wierszu {0}",
   "Duration": "Długość",
   "Duration of cross-fades and pans.": "Czas trwania przejść i przesunięć.",
   "Duration: {0:0.##} seconds\nSize: {1} × {2}\nVideo: {3}\nAudio: {4}\n\n": "Czas trwania: {0:0.##} sekund\nRozmiar: {1} × {2}\nWideo: {3}\nDźwięk: {4}\n\n",
@@ -822,9 +858,9 @@
   "Each video becomes a clip with a random start. Shorter videos are used in full.": "Z każdego filmu powstaje klip z losowym początkiem. Krótsze filmy są używane w całości.",
   "Each video starts with the volume of the previous one.": "Każdy film zaczyna się z głośnością poprzedniego.",
   "EazyFlixPix 4 updated {0} of them automatically; they are monitored. FlixyPix checks the others only on request.": {
+    "one": "Foldery automatycznie aktualizowane przez EazyFlixPix 4: {0}. Będą monitorowane. Pozostałe FlixyPix sprawdza tylko na żądanie.",
     "few": "Foldery automatycznie aktualizowane przez EazyFlixPix 4: {0}. Będą monitorowane. Pozostałe FlixyPix sprawdza tylko na żądanie.",
-    "many": "Foldery automatycznie aktualizowane przez EazyFlixPix 4: {0}. Będą monitorowane. Pozostałe FlixyPix sprawdza tylko na żądanie.",
-    "one": "Foldery automatycznie aktualizowane przez EazyFlixPix 4: {0}. Będą monitorowane. Pozostałe FlixyPix sprawdza tylko na żądanie."
+    "many": "Foldery automatycznie aktualizowane przez EazyFlixPix 4: {0}. Będą monitorowane. Pozostałe FlixyPix sprawdza tylko na żądanie."
   },
   "Edit": "Edytuj",
   "Edit bookmark": "Edytuj zakładkę",
@@ -842,19 +878,23 @@
   "Edit …": "Edytuj …",
   "Elements as tags": "Elementy jako tagi",
   "Elements of the description": "Elementy opisu",
+  "empty": "pusty",
   "Empty rows are not shown. FlixyPix computes suggestions locally from the tags of what you watched recently.": "Puste linie nie są wyświetlane. FlixyPix oblicza propozycje lokalnie z etykiet tego, co ostatnio obejrzałeś.",
+  "empty, created when opened": "pusta, zostanie utworzona przy otwarciu",
   "Empty: title of the video.": "Pusty: tytuł wideo.",
   "Empty: “{0}”.": "Puste: „{0}”.",
   "Encrypt library": "Zaszyfruj bibliotekę",
   "Encrypt library with a password": "Zaszyfruj bibliotekę hasłem",
   "Encrypt library with a password …": "Zaszyfruj bibliotekę hasłem …",
   "Encrypt pictures": "Szyfruj obrazy",
+  "encrypted": "zaszyfrowana",
   "Encrypting pictures … {0:N0} of {1:N0}": "Szyfrowanie obrazów… {0:N0} z {1:N0}",
   "Encryption": "Szyfrowanie",
   "Encrypts the catalog; FlixyPix asks for the password when opening it.": "Szyfruje katalog; FlixyPix pyta o hasło przy otwieraniu.",
   "End": "End",
   "End in seconds": "Koniec w sekundach",
   "End slideshow (S or Esc)": "Zakończ pokaz slajdów (S lub Esc)",
+  "ends with": "kończy się na",
   "Enhanced": "Powiększony",
   "Enter": "Enter",
   "Enter Count or Interval as the mode and a matching value.": "Wpisz tryb Liczba lub Odstęp i odpowiednią wartość.",
@@ -873,6 +913,7 @@
   "Everything is up to date.": "Wszystko jest aktualne.",
   "Everything you watched in the set number of days, newest first.": "Wszystko obejrzane w ustawionej liczbie dni, od najnowszych.",
   "Exact": "Dokładnie",
+  "exactly": "dokładnie",
   "Exception pattern": "Wzorzec wyjątku",
   "Exclude": "Wyklucz",
   "Excluded text fragments (separated by semicolons)": "Wykluczone fragmenty tekstu (oddzielone średnikami)",
@@ -885,15 +926,15 @@
   "Exit": "Zakończ",
   "Explicitly replaced": "Jawnie zastąpione",
   "Export": "Eksportuj",
-  "Export CSV": "Eksportuj CSV",
-  "Export NFO metadata as a new file": "Eksportuj metadane NFO jako nowy plik",
-  "Export NFO metadata …": "Eksportuj metadane NFO …",
   "Export catalog": "Eksportuj katalog",
   "Export catalog as CSV (new file)": "Eksportuj katalog jako CSV (nowy plik)",
   "Export catalog as JSON": "Eksportuj katalog jako JSON",
   "Export clip": "Eksportuj klip",
   "Export clip …": "Eksportuj klip …",
   "Export complete report …": "Eksportuj pełny raport …",
+  "Export CSV": "Eksportuj CSV",
+  "Export NFO metadata as a new file": "Eksportuj metadane NFO jako nowy plik",
+  "Export NFO metadata …": "Eksportuj metadane NFO …",
   "Export original bytes …": "Eksportuj oryginalne bajty …",
   "Export original tag rules": "Eksportuj reguły tagów w formacie oryginału",
   "Export tag group rules in the original format": "Eksportuj reguły grupowe tagów w oryginalnym formacie",
@@ -908,10 +949,6 @@
   "Extracted images from ZIP and RAR archives. Recreated when needed.": "Obrazy rozpakowane z archiwów ZIP i RAR. Tworzone ponownie w razie potrzeby.",
   "Extracts images from ZIP and RAR archives again whose cache is missing.": "Ponownie wypakowuje obrazy z archiwów ZIP i RAR, których brakuje w pamięci podręcznej.",
   "Eye color": "Kolor oczu",
-  "FFmpeg is missing.": "Brak FFmpeg.",
-  "FFmpeg is missing. Its path can be set under Settings → Tools.": "Brak FFmpeg. Ścieżkę można ustawić w Ustawienia → Narzędzia.",
-  "FILE": "PLIK",
-  "FILES": "PLIKI",
   "Fanart from NFO": "Fanart z NFO",
   "Fast": "Szybko",
   "Faster": "Szybciej",
@@ -922,7 +959,11 @@
   "Favorites": "Ulubione",
   "Favorites by rating": "Ulubione według oceny",
   "Female": "Kobieta",
+  "FFmpeg is missing.": "Brak FFmpeg.",
+  "FFmpeg is missing. Its path can be set under Settings → Tools.": "Brak FFmpeg. Ścieżkę można ustawić w Ustawienia → Narzędzia.",
+  "ffprobe is missing. The path can be chosen in Settings › Tools.": "Brak ffprobe. Ścieżkę można wybrać w Ustawienia › Narzędzia.",
   "Field": "Pole",
+  "FILE": "PLIK",
   "File": "Plik",
   "File ": "Plik ",
   "File actions: {0} / {1} · {2}": "Operacje na plikach: {0} / {1} · {2}",
@@ -953,6 +994,7 @@
   "File types": "Typy plików",
   "File unavailable: {0}": "Plik niedostępny: {0}",
   "File {0}": "Plik {0}",
+  "FILES": "PLIKI",
   "Files": "Pliki",
   "Files …": "Pliki …",
   "Fill and crop": "Wypełnij i przytnij",
@@ -1011,35 +1053,53 @@
   "For 16:9 videos {0:0} × {1:0} pixels": "Dla filmów 16:9: {0:0} × {1:0} pikseli",
   "For an export of the original that already exists.": "Dla już utworzonego eksportu oryginału.",
   "For each playback FlixyPix notes when it began, how long you watched and which share of the video you saw. Nothing leaves the computer.": "Przy każdym odtworzeniu FlixyPix zapisuje, kiedy się zaczęło, jak długo oglądano i jaką część wideo obejrzano. Nic nie opuszcza komputera.",
+  "for example 34C-24-34": "np. 34C-24-34",
   "For example “[]#”: “Holiday[2019]” becomes “Holiday2019”.": "Na przykład „[]#”: „Urlaub[2019]” zmienia się w „Urlaub2019”.",
   "For example “_.”: “By_the.Lake” becomes “By the Lake”.": "Na przykład „_.”: „Nad_Jeziorem.Wieczór” zmienia się w „Nad Jeziorem Wieczór”.",
   "For example: ": "Na przykład: ",
   "For tags, performers and studios: in the context menu of a tag and in the directory. FlixyPix only opens the browser and fetches nothing itself.": "Dla tagów, wykonawców i studiów: w menu kontekstowym tagu i w katalogu tagów. FlixyPix tylko otwiera przeglądarkę i sam niczego nie pobiera.",
   "For the header and time stamps.": "Dla nagłówka i znacznika czasu.",
   "For you": "Dla Ciebie",
+  "for {0:N0} items": {
+    "one": "dla elementów (liczba: {0:N0})",
+    "few": "dla elementów (liczba: {0:N0})",
+    "many": "dla elementów (liczba: {0:N0})"
+  },
   "Format": "Format",
   "Format: People: Anna, Tom; Places: Berlin (empty = remove assignments)": "Format: Osoby: Anna, Tom; Miejsca: Berlin (puste = usuń przypisania)",
   "Formatting checked in the import dialog": "Formatowanie sprawdzone w oknie importu",
   "Forward": "Dalej",
   "Forward (Alt+→, mouse button 5)": "Dalej (Alt+→, przycisk myszy 5)",
+  "forward ▶": "naprzód ▶",
   "Frame by frame": "Klatka po klatce",
   "Frame rate": "Liczba klatek na sekundę",
   "Free space at destination: {0}": "Wolne miejsce w lokalizacji docelowej: {0}",
   "Frequency": "Częstotliwość",
+  "from 30 fps": "od 30 kl./s",
+  "from 50 fps": "od 50 kl./s",
+  "from 60 fps": "od 60 kl./s",
   "From date": "Od daty",
   "From the clipboard": "Ze schowka",
   "From the technical data (Organize ▾ → Read technical data).": "Z danych technicznych (Organizuj ▾ → Odczytaj dane techniczne).",
+  "from {0:0.##} {1}": "od {0:0.##} {1}",
+  "from {0:0.#} {1}": "od {0:0.#} {1}",
+  "from {0:d}": "od {0:d}",
+  "from {0}": "od {0}",
+  "from {0} fps": "od {0} kl./s",
+  "from {0} MB": "od {0} MB",
+  "from {0} min": "od {0} min",
   "Full HD": "Full HD",
   "Full screen": "Pełny ekran",
   "Full screen (F11)": "Pełny ekran (F11)",
   "Fully understood": "W pełni zrozumiały",
-  "GIF image|*.gif": "Obraz GIF|*.gif",
-  "GIF|*.gif": "GIF|*.gif",
+  "Further files stay proposals and are not added as versions yet: {0}": "Pozostałe pliki pozostają propozycjami i nie są jeszcze dodawane jako wersje: {0}",
   "Gender": "Płeć",
   "General": "Ogólne",
   "Generation": "Tworzenie",
   "Genre": "Gatunek",
   "Genres": "Gatunki",
+  "GIF image|*.gif": "Obraz GIF|*.gif",
+  "GIF|*.gif": "GIF|*.gif",
   "Go to backup …": "Przejdź do kopii zapasowej…",
   "Good afternoon": "Dzień dobry",
   "Good evening": "Dobry wieczór",
@@ -1047,9 +1107,9 @@
   "Graphics in the catalog": "Grafiki w katalogu",
   "Group operator": "Operator grupy",
   "Group {0} · {1:N0} bytes": "Grupa {0} · {1:N0} bajtów",
-  "HISTORY": "HISTORIA",
   "Hair color": "Kolor włosów",
   "Hardware decoding": "Dekodowanie sprzętowe",
+  "has one of the tags": "ma jeden z tagów",
   "Header": "Nagłówek",
   "Header with file details": "Nagłówek z danymi pliku",
   "Heart": "Serce",
@@ -1063,21 +1123,25 @@
   "Hide completely": "Ukryj całkowicie",
   "Hide the control bar in full screen": "Ukryj pasek sterowania na pełnym ekranie",
   "Hide the list": "Ukryj listę",
-  "Hides FlixyPix with the player, dialogs and overlays at once. Click the field and press a key; Del turns it off. While Esc is the boss key, Esc no longer leaves full screen or closes dialogs (use F11, F and the buttons instead).": "Natychmiast ukrywa FlixyPix wraz z odtwarzaczem, oknami dialogowymi i komunikatami ekranowymi. Kliknij pole i naciśnij klawisz; Delete wyłącza tę funkcję. Gdy Esc jest klawiszem szefa, nie wychodzi z pełnego ekranu ani nie zamyka okien dialogowych (służą do tego F11, F i przyciski).",
   "Hides all windows behind a prompt. An encrypted library opens with its password or recovery key, otherwise with the PIN of this computer. The lock guards the screen; only the encryption protects the files.": "Ukrywa wszystkie okna za monitem. Zaszyfrowana biblioteka otwiera się swoim hasłem lub kluczem do odzyskiwania, w przeciwnym razie kodem PIN tego komputera. Blokada chroni ekran; pliki chroni tylko szyfrowanie.",
+  "Hides FlixyPix with the player, dialogs and overlays at once. Click the field and press a key; Del turns it off. While Esc is the boss key, Esc no longer leaves full screen or closes dialogs (use F11, F and the buttons instead).": "Natychmiast ukrywa FlixyPix wraz z odtwarzaczem, oknami dialogowymi i komunikatami ekranowymi. Kliknij pole i naciśnij klawisz; Delete wyłącza tę funkcję. Gdy Esc jest klawiszem szefa, nie wychodzi z pełnego ekranu ani nie zamyka okien dialogowych (służą do tego F11, F i przyciski).",
   "Hiding in the media folder failed: ": "Nie udało się ukryć w folderze multimediów: ",
-  "Highest O counter": "Najwyższy licznik O",
   "Highest bit rate": "Najwyższa przepływność",
+  "Highest O counter": "Najwyższy licznik O",
   "Highest resolution": "Najwyższa rozdzielczość",
+  "highest {0:N0}": "najwyżej {0:N0}",
   "Historical file name parsers": "Historyczne analizatory nazw plików",
   "Historical functions · FlixyPix": "Funkcje historyczne · FlixyPix",
   "Historical media jobs": "Historyczne zadania multimedialne",
   "Historical parser: the regular expression exceeded 250 ms; no changes were applied.": "Historyczny analizator: wyrażenie regularne przekroczyło 250 ms; nie zastosowano zmian.",
   "Historical templates and inactive drafts": "Historyczne szablony i nieaktywne projekty",
   "Historical templates · FlixyPix": "Historyczne szablony · FlixyPix",
+  "HISTORY": "HISTORIA",
   "History": "Historia",
   "Home": "Start",
+  "home feed\u0004never watched": "jeszcze nieobejrzane",
   "Home page": "Strona główna",
+  "home page\u0004Rows": "Rzędy",
   "Home page (Ctrl+Home)": "Strona główna (Ctrl+Home)",
   "Hover preview": "Podgląd po wskazaniu",
   "Hover preview not possible · ": "Podgląd po wskazaniu niedostępny · ",
@@ -1087,10 +1151,9 @@
   "How many days the row “Recently watched” goes back.": "Ile dni obejmuje rząd „Ostatnio oglądane”.",
   "How the library behaves on import, display and start.": "Zachowanie biblioteki podczas importu, wyświetlania i uruchamiania.",
   "I have stored the recovery key safely.": "Klucz do odzyskiwania jest bezpiecznie przechowywany.",
-  "IMAGE": "OBRAZ",
-  "IN COLLECTIONS": "W KOLEKCJACH",
   "If the target is taken: Cancel, Skip or Unique": "Gdy cel już istnieje: Anuluj, Pomiń lub Unikatowa nazwa",
   "If you cancel, the library stays as it was.": "Po anulowaniu biblioteka pozostanie bez zmian.",
+  "IMAGE": "OBRAZ",
   "Image": "Obraz",
   "Image archive (ZIP/RAR) …": "Archiwum obrazów (ZIP/RAR) …",
   "Image archive · ": "Archiwum obrazów · ",
@@ -1121,11 +1184,6 @@
   "Images|*.jpg;*.jpeg;*.png;*.webp;*.gif;*.bmp;*.tif;*.tiff;*.avif;*.heic|All files|*.*": "Obrazy|*.jpg;*.jpeg;*.png;*.webp;*.gif;*.bmp;*.tif;*.tiff;*.avif;*.heic|Wszystkie pliki|*.*",
   "Images|{0}|All files|*.*": "Obrazy|{0}|Wszystkie pliki|*.*",
   "Import": "Import",
-  "Import CSV": "Importuj CSV",
-  "Import CSV catalog": "Importuj katalog CSV",
-  "Import EazyFlixPix library …": "Importuj bibliotekę EazyFlixPix …",
-  "Import NFO data · ": "Importuj dane NFO · ",
-  "Import NFO metadata …": "Importuj metadane NFO …",
   "Import a folder and the home page fills with continue watching, suggestions and more.": "Zaimportuj folder, a strona główna zapełni się sekcjami Kontynuuj oglądanie, sugestiami i innymi materiałami.",
   "Import a folder or drag files here.\nImages, videos and music stay where they are.": "Zaimportuj folder lub przeciągnij tutaj pliki.\nObrazy, filmy i muzyka pozostają w swojej lokalizacji.",
   "Import and export": "Import i eksport",
@@ -1141,8 +1199,11 @@
   "Import completed": "Import zakończony",
   "Import content folders": "Importuj foldery zawartości",
   "Import content folders from EazyFlixPix 4 ({0})": "Importuj foldery zawartości z EazyFlixPix 4 ({0})",
+  "Import CSV": "Importuj CSV",
+  "Import CSV catalog": "Importuj katalog CSV",
   "Import date": "Data importu",
   "Import description": "Importuj opis",
+  "Import EazyFlixPix library …": "Importuj bibliotekę EazyFlixPix …",
   "Import encrypted catalog": "Importuj zaszyfrowany katalog",
   "Import fanart": "Importuj fanart",
   "Import files, folders or archives (Ctrl+O: files)": "Importuj pliki, foldery lub archiwa (Ctrl+O: pliki)",
@@ -1162,6 +1223,8 @@
   "Import media": "Importuj multimedia",
   "Import media folder (including subfolders)": "Importuj folder multimediów (wraz z podfolderami)",
   "Import metadata · ": "Importuj metadane · ",
+  "Import NFO data · ": "Importuj dane NFO · ",
+  "Import NFO metadata …": "Importuj metadane NFO …",
   "Import not possible": "Import niemożliwy",
   "Import old catalog (JSONL) into a new library": "Zaimportuj stary katalog (JSONL) do nowej biblioteki",
   "Import original database": "Importuj oryginalną bazę danych",
@@ -1182,19 +1245,22 @@
   "Import title": "Importuj tytuł",
   "Import {0}": "Import {0}",
   "Import {0} content folders from EazyFlixPix 4?\n\n{1}{2}\n\n": {
+    "one": "Zaimportować foldery zawartości z EazyFlixPix 4 (liczba: {0})?\n\n{1}{2}\n\n",
     "few": "Zaimportować foldery zawartości z EazyFlixPix 4 (liczba: {0})?\n\n{1}{2}\n\n",
-    "many": "Zaimportować foldery zawartości z EazyFlixPix 4 (liczba: {0})?\n\n{1}{2}\n\n",
-    "one": "Zaimportować foldery zawartości z EazyFlixPix 4 (liczba: {0})?\n\n{1}{2}\n\n"
+    "many": "Zaimportować foldery zawartości z EazyFlixPix 4 (liczba: {0})?\n\n{1}{2}\n\n"
   },
   "Import · {0:N0} checked, {1:N0} added · {2}": "Import · sprawdzono {0:N0}, dodano {1:N0} · {2}",
   "Import-{0:yyyyMMdd-HHmm}": "Import-{0:yyyyMMdd-HHmm}",
   "Imported": "Zaimportowane",
+  "imported ": "zaimportowano ",
   "Imported legacy data": "Przeniesione stare dane",
   "Imported parsers · {0} selected items": {
+    "one": "Zaimportowane analizatory · wybrane elementy: {0}",
     "few": "Zaimportowane analizatory · wybrane elementy: {0}",
-    "many": "Zaimportowane analizatory · wybrane elementy: {0}",
-    "one": "Zaimportowane analizatory · wybrane elementy: {0}"
+    "many": "Zaimportowane analizatory · wybrane elementy: {0}"
   },
+  "imported {0:d}": "zaimportowano {0:d}",
+  "imported {0}": "zaimportowano {0}",
   "Importing the catalog …": "Importowanie katalogu …",
   "Importing …": "Importowanie …",
   "Imports a JSON catalog or a backup; existing data is kept.": "Przenosi katalog JSON lub kopię zapasową; istniejące dane zostają zachowane.",
@@ -1204,7 +1270,11 @@
   "Imports items, tags, ratings, scenes, bookmarks and collections into a new library. The original database stays unchanged.": "Importuje multimedia, tagi, oceny, sceny, zakładki i kolekcje do nowej biblioteki. Oryginalna baza danych pozostaje niezmieniona.",
   "Imports per month": "Importy na miesiąc",
   "Imports tags, performers and studios with categories and aliases from a tag package or a CSV file, with a preview.": "Importuje tagi, wykonawców i studia z kategoriami i aliasami z pakietu tagów lub pliku CSV, z podglądem.",
+  "in case the password is forgotten. It will not be shown again and cannot be recovered.": "na wypadek zapomnienia hasła. Klucz nie zostanie ponownie wyświetlony i nie można go odzyskać.",
+  "IN COLLECTIONS": "W KOLEKCJACH",
   "In order": "Po kolei",
+  "in order": "po kolei",
+  "in the file": "w pliku",
   "In the image viewer with the slideshow button or the S key.": "W przeglądarce obrazów przyciskiem pokazu slajdów lub klawiszem S.",
   "In the original": "W oryginale",
   "In the original, a fixed program password only locked the interface. FlixyPix instead encrypts the catalog, backups and exports with your own password.": "W oryginale stałe hasło programu blokowało tylko interfejs. FlixyPix szyfruje katalog, kopie zapasowe i eksporty własnym hasłem użytkownika.",
@@ -1242,6 +1312,11 @@
   "Invalid time range.": "Nieprawidłowy zakres czasu.",
   "Invalid, linked or duplicate entry in the backup.": "Nieprawidłowy, połączony dowiązaniem lub zduplikowany wpis kopii zapasowej.",
   "Invert selection": "Odwróć zaznaczenie",
+  "is": "jest",
+  "is known": "jest znany",
+  "is not": "nie jest",
+  "is set": "jest podane",
+  "is unknown": "jest nieznany",
   "Item counts by category": "Liczby przy kategoriach",
   "Item counts by folder": "Liczby przy folderach",
   "Item counts by tag category": "Liczby przy kategoriach tagów",
@@ -1249,10 +1324,6 @@
   "Items as a table, for example for a spreadsheet.": "Elementy jako tabela, np. do arkusza kalkulacyjnego.",
   "Items count as favorites from this rating on.": "Elementy są uznawane za ulubione od tej oceny.",
   "Items on disconnected drives": "Elementy na niepodłączonych dyskach",
-  "JSON backup|*.json": "Kopia zapasowa JSON|*.json",
-  "JSON catalog|*.json": "Katalog JSON|*.json",
-  "JSON tag rules|*.json": "Reguły tagów JSON|*.json",
-  "JUMP MARKS": "ZNACZNIKI",
   "Job details": "Szczegóły zadania",
   "Job draft {0}\nInactive · {1}\n\nSource: {2}\nHistorical target: {3}\nClip target: {4}\nDuration: {5}\n\nStored command (text only):\n{6}\n\nNotes:\n": "Projekt zadania {0}\nNieaktywny · {1}\n\nŹródło: {2}\nPierwotny cel: {3}\nCel klipu: {4}\nCzas trwania: {5}\n\nZapisane polecenie (tylko tekst):\n{6}\n\nUwagi:\n",
   "Job drafts": "Projekty zadań",
@@ -1261,6 +1332,9 @@
   "Jobs running …": "Wykonywanie zadań …",
   "Join": "Połącz",
   "Join files · order": "Łączenie plików · kolejność",
+  "JSON backup|*.json": "Kopia zapasowa JSON|*.json",
+  "JSON catalog|*.json": "Katalog JSON|*.json",
+  "JSON tag rules|*.json": "Reguły tagów JSON|*.json",
   "Jump ": "Skok ",
   "Jump back": "Skocz wstecz",
   "Jump distance": "Odległość skoku",
@@ -1268,6 +1342,7 @@
   "Jump distances must be between 1 and 3600 seconds.": "Odległość skoku powinna wynosić od 1 do 3600 sekund.",
   "Jump mark with tag": "Znacznik z tagiem",
   "Jump mark: {0}": "Znacznik: {0}",
+  "JUMP MARKS": "ZNACZNIKI",
   "Jump marks": "Znaczniki",
   "Jump marks · {0:N0}": "Znaczniki · {0:N0}",
   "Jump to the point in time": "Przejdź do punktu czasu",
@@ -1283,24 +1358,28 @@
   "Keeps all files as versions of one item, with the chosen one as main file. Videos only.": "Zachowuje wszystkie pliki jako wersje jednego elementu, z wybranym jako plikiem głównym. Tylko filmy.",
   "Keeps these items apart in later searches.": "Rozdziela te elementy w kolejnych wyszukiwaniach.",
   "Key": "Klawisz",
+  "key\u0004Home": "Home",
   "Key: {0}": "Klawisz: {0}",
   "Keyboard shortcut for {0}": "Skrót klawiszowy: {0}",
   "Keyboard shortcuts": "Skróty klawiszowe",
   "Keyword": "Słowo kluczowe",
   "Kodi-style .nfo files next to videos (Organize ▾ → Read NFO files). Data is imported only after you confirm the preview.": "Pliki .nfo w stylu Kodi obok filmów (Organizuj ▾ → Wczytaj pliki NFO). Dane są importowane dopiero po zatwierdzeniu podglądu.",
-  "LIBRARY": "BIBLIOTEKA",
   "Language": "Język",
   "Language/culture for text and numbers": "Język / kultura dla tekstu i liczb",
   "Large jump": "Duży skok",
   "Large jump back": "Duży skok wstecz",
   "Large jump forward": "Duży skok naprzód",
   "Large view": "Duży podgląd",
-  "Last O taken back · {0:N0}": "Cofnięto ostatnie O · {0:N0}",
+  "last 30 days": "ostatnie 30 dni",
+  "last 7 days": "ostatnie 7 dni",
   "Last backup": "Ostatnia kopia zapasowa",
   "Last check": "Ostatnie sprawdzenie",
   "Last checked {0} · {1}": "Ostatnio sprawdzono {0} · {1}",
   "Last import": "Ostatni import",
+  "Last O taken back · {0:N0}": "Cofnięto ostatnie O · {0:N0}",
+  "last opened {0}": "ostatnio otwarto {0}",
   "Last watched: ": "Ostatnio oglądane: ",
+  "last year": "ostatni rok",
   "Later": "Później",
   "Leave as offline": "Pozostaw jako offline",
   "Leave empty for the default folder ": "Pozostaw pusty dla folderu domyślnego ",
@@ -1312,16 +1391,22 @@
   "Legacy catalog export|*.jsonl": "Eksport starego katalogu|*.jsonl",
   "Legacy data": "Stare dane",
   "Legacy data …": "Stare dane…",
+  "legacy setting\u0004Font": "Krój czcionki",
   "Length in seconds": "Długość w sekundach",
   "Length in seconds (0 = to the end)": "Długość w sekundach (0 = do końca)",
   "Length of each part": "Długość każdej części",
   "Length of videos and audio": "Długość filmów i audio",
   "Less random": "Mniej losowo",
+  "less random": "mniej losowo",
+  "less than": "mniej niż",
+  "less than a minute": "mniej niż minuta",
   "Libraries": "Biblioteki",
   "Libraries · FlixyPix": "Biblioteki · FlixyPix",
   "Libraries …": "Biblioteki…",
   "Libraries, checking and repair, backup, import and export, security and legacy data in one place; also from the Catalog menu.": "Biblioteki, sprawdzanie i naprawa, kopia zapasowa, import i eksport, bezpieczeństwo i stare dane w jednym miejscu; także z menu Katalog.",
+  "LIBRARY": "BIBLIOTEKA",
   "Library": "Biblioteka",
+  "library\u0004View": "Widok",
   "Library added · switch with “Open”": "Biblioteka dodana · przełączanie przyciskiem „Otwórz”",
   "Library links are not followed when the name changes.": "Podczas zmiany nazw dowiązania biblioteki nie są śledzone.",
   "Licenses": "Licencje",
@@ -1357,11 +1442,9 @@
   "Loop": "W pętli",
   "Loop: continue with the next video at the end, start over after the last one": "W pętli: po zakończeniu przejdź do następnego filmu, a po ostatnim zacznij od początku",
   "Loose": "Luźno",
-  "MP3|*.mp3|M4A|*.m4a": "MP3|*.mp3|M4A|*.m4a",
-  "MP4 video|*.mp4": "Film MP4|*.mp4",
-  "MP4|*.mp4": "MP4|*.mp4",
   "Magnifier": "Lupa",
   "Main file": "Plik główny",
+  "main file": "plik główny",
   "Maintenance": "Konserwacja",
   "Make main file": "Ustaw jako plik główny",
   "Makes the missing preview clips of all videos with the current settings.": "Tworzy brakujące klipy podglądu wszystkich wideo z bieżącymi ustawieniami.",
@@ -1381,11 +1464,13 @@
   "Mark the scene start first and then a later scene end.": "Najpierw zaznacz początek sceny, a następnie późniejszy koniec.",
   "Marked as no duplicates": "Oznaczono jako nieduplikaty",
   "Marked for later": "Oznaczony na później",
+  "matches the pattern (regex)": "pasuje do wzorca (regex)",
   "Matches {0:N0} items": {
+    "one": "Pasujące elementy: {0:N0}",
     "few": "Pasujące elementy: {0:N0}",
-    "many": "Pasujące elementy: {0:N0}",
-    "one": "Pasujące elementy: {0:N0}"
+    "many": "Pasujące elementy: {0:N0}"
   },
+  "matches “{0}”, will be added there": "odpowiada „{0}”, zostanie tam uzupełnione",
   "Measurements": "Wymiary",
   "Media": "Multimedia",
   "Media are not tagged automatically.": "Media nie otrzymują tagów automatycznie.",
@@ -1425,19 +1510,20 @@
   "Merge {0} into “{1}”? The old names are kept as aliases.": "Scalić {0} z „{1}”? Stare nazwy zostaną zachowane jako aliasy.",
   "Merge …": "Scal …",
   "Merged · {0:N0} items changed": {
+    "one": "Scalono · zmienione elementy: {0:N0}",
     "few": "Scalono · zmienione elementy: {0:N0}",
-    "many": "Scalono · zmienione elementy: {0:N0}",
-    "one": "Scalono · zmienione elementy: {0:N0}"
+    "many": "Scalono · zmienione elementy: {0:N0}"
   },
   "Metadata": "Metadane",
   "Metadata imported for {0:N0} items": {
+    "one": "Elementy z przejętymi metadanymi: {0:N0}",
     "few": "Elementy z przejętymi metadanymi: {0:N0}",
-    "many": "Elementy z przejętymi metadanymi: {0:N0}",
-    "one": "Elementy z przejętymi metadanymi: {0:N0}"
+    "many": "Elementy z przejętymi metadanymi: {0:N0}"
   },
   "Metadata · FlixyPix": "Metadane · FlixyPix",
   "Middle button": "Środkowy przycisk",
   "Middle mouse button": "Środkowy przycisk myszy",
+  "migration\u0004Please enter a valid new folder name.": "Podaj prawidłową nową nazwę folderu.",
   "Migration report": "Raport migracji",
   "Migration report · FlixyPix": "Raport migracji · FlixyPix",
   "Migration report|*.json": "Raport migracji|*.json",
@@ -1448,6 +1534,7 @@
   "Minutes": "Minuty",
   "Minutes without mouse or keyboard input in Windows; 0 turns it off. A running video or slideshow keeps the lock away.": "Minuty bez użycia myszy lub klawiatury w Windows; 0 wyłącza. Odtwarzany film lub pokaz slajdów powstrzymuje blokadę.",
   "Missing": "Brak",
+  "missing": "brakuje",
   "Missing file ({0}): {1}": "Brakujący plik ({0}): {1}",
   "Missing media files": "Brakujące pliki multimedialne",
   "Missing or damaged pictures": "Brakujące lub uszkodzone obrazy",
@@ -1462,10 +1549,11 @@
   "More keys with their own jump distance, in addition to the small and large jump. Negative distances jump back, e.g. Ctrl+→ = 60, Ctrl+← = −60 or 9 = 90 % (almost to the end).": "Dodatkowe klawisze z własną odległością skoku, oprócz małego i dużego skoku. Ujemne odległości przewijają wstecz, np. Ctrl+→ = 60, Ctrl+← = −60 lub 9 = 90% (prawie do końca).",
   "More legacy data": "Więcej starych danych",
   "More processes are faster but increase CPU and disk load. This computer has {0} logical cores.": {
+    "one": "Więcej procesów przyspiesza pracę, ale obciąża procesor i dysk. Liczba rdzeni logicznych komputera: {0}.",
     "few": "Więcej procesów przyspiesza pracę, ale obciąża procesor i dysk. Liczba rdzeni logicznych komputera: {0}.",
-    "many": "Więcej procesów przyspiesza pracę, ale obciąża procesor i dysk. Liczba rdzeni logicznych komputera: {0}.",
-    "one": "Więcej procesów przyspiesza pracę, ale obciąża procesor i dysk. Liczba rdzeni logicznych komputera: {0}."
+    "many": "Więcej procesów przyspiesza pracę, ale obciąża procesor i dysk. Liczba rdzeni logicznych komputera: {0}."
   },
+  "more than": "więcej niż",
   "More with ": "Więcej z ",
   "More with …": "Więcej z…",
   "Most O": "Najwięcej O",
@@ -1493,14 +1581,14 @@
   "Move to set": "Przenieś do zestawu",
   "Move up": "Przenieś w górę",
   "Move {0:N0} files to the Recycle Bin and remove them from the catalog?": {
+    "one": "Przenieść 1 plik do kosza i usunąć go z katalogu?",
     "few": "Przenieść {0:N0} pliki do kosza i usunąć je z katalogu?",
-    "many": "Przenieść {0:N0} plików do kosza i usunąć je z katalogu?",
-    "one": "Przenieść 1 plik do kosza i usunąć go z katalogu?"
+    "many": "Przenieść {0:N0} plików do kosza i usunąć je z katalogu?"
   },
   "Move {0:N0} files to the Recycle Bin?": {
+    "one": "Przenieść 1 plik do Kosza?",
     "few": "Przenieść {0:N0} pliki do Kosza?",
-    "many": "Przenieść {0:N0} plików do Kosza?",
-    "one": "Przenieść 1 plik do Kosza?"
+    "many": "Przenieść {0:N0} plików do Kosza?"
   },
   "Move “{0}” and its catalog, thumbnails and caches to the Recycle Bin?\n\n{1}\n\nThe media files themselves stay where they are.": "Przenieść „{0}” z katalogiem, miniaturami i pamięcią podręczną do kosza?\n\n{1}\n\nSame pliki multimedialne pozostają na miejscu.",
   "Move …": "Przenieś…",
@@ -1509,23 +1597,12 @@
   "Moving pictures into files beside the catalog": "Przenoszenie obrazów do plików obok katalogu",
   "Moving …": "Przenoszenie…",
   "Moving … {0:P0}": "Przenoszenie… {0:P0}",
+  "MP3|*.mp3|M4A|*.m4a": "MP3|*.mp3|M4A|*.m4a",
+  "MP4 video|*.mp4": "Film MP4|*.mp4",
+  "MP4|*.mp4": "MP4|*.mp4",
   "Mute": "Wycisz",
   "Mute audio": "Wycisz dźwięk",
   "My library": "Moja biblioteka",
-  "NFO / XML|*.nfo;*.xml": "NFO / XML|*.nfo;*.xml",
-  "NFO data imported for {0:N0} videos": {
-    "few": "Filmy z zaimportowanymi danymi NFO: {0:N0}",
-    "many": "Filmy z zaimportowanymi danymi NFO: {0:N0}",
-    "one": "Filmy z zaimportowanymi danymi NFO: {0:N0}"
-  },
-  "NFO elements as tags": "Elementy NFO jako tagi",
-  "NFO elements of the description": "Elementy NFO w opisie",
-  "NFO exported": "Wyeksportowano NFO",
-  "NFO files": "Pliki NFO",
-  "NFO files · FlixyPix": "Pliki NFO · FlixyPix",
-  "NFO metadata for this item": "Metadane NFO tego elementu",
-  "NFO metadata imported": "Zaimportowano metadane NFO",
-  "NFO|*.nfo": "NFO|*.nfo",
   "Name": "Nazwa",
   "Name (a set holds collections, smart collections and further sets)": "Nazwa (zestaw grupuje kolekcje, inteligentne kolekcje i inne zestawy)",
   "Name (empty: folder name)": "Nazwa (pusta: nazwa folderu)",
@@ -1543,17 +1620,18 @@
   "Name, file name and at least one tag are required.": "Wymagana jest nazwa, nazwa pliku i co najmniej jeden tag.",
   "Name, program file, arguments with placeholders, media types and an optional shortcut.": "Nazwa, plik programu, argumenty z symbolami zastępczymi, rodzaje mediów i opcjonalny skrót.",
   "Names, categories and aliases have at most {0} characters.": {
+    "one": "Maksymalna długość nazw, kategorii i aliasów (znaki): {0}.",
     "few": "Maksymalna długość nazw, kategorii i aliasów (znaki): {0}.",
-    "many": "Maksymalna długość nazw, kategorii i aliasów (znaki): {0}.",
-    "one": "Maksymalna długość nazw, kategorii i aliasów (znaki): {0}."
+    "many": "Maksymalna długość nazw, kategorii i aliasów (znaki): {0}."
   },
   "Natural": "Naturalny",
   "Navigation": "Nawigacja",
   "Needs attention": "Wymaga uwagi",
   "Neutral title": "Neutralny tytuł",
   "Never watched": "Nigdy nieobejrzane",
+  "never watched": "nieobejrzane",
   "New": "Nowy",
-  "New PIN": "Nowy PIN",
+  "new": "nowy",
   "New category": "Nowa kategoria",
   "New collection": "Nowa kolekcja",
   "New collection from the selection …": "Nowa kolekcja z zaznaczenia …",
@@ -1574,6 +1652,7 @@
   "New parser": "Nowy analizator",
   "New password (at least {0} characters)": "Nowe hasło (co najmniej {0} znaków)",
   "New path": "Nowa ścieżka",
+  "New PIN": "Nowy PIN",
   "New playlist": "Nowa lista odtwarzania",
   "New playlist …": "Nowa lista odtwarzania …",
   "New scene": "Nowa scena",
@@ -1584,6 +1663,7 @@
   "New tags": "Nowe tagi",
   "New title": "Nowy tytuł",
   "New …": "Nowy…",
+  "new, new category ({0})": "nowe, nowa kategoria ({0})",
   "Newest files first": "Najnowsze pliki najpierw",
   "Newly imported since last opened": "Nowo importowane od ostatniego otwarcia",
   "Next": "Dalej",
@@ -1595,16 +1675,31 @@
   "Next page or next frame of the animation (Page↓)": "Następna strona lub następna klatka animacji (Page Down)",
   "Next video": "Następny film",
   "Next video in the view": "Następny film w widoku",
+  "NFO / XML|*.nfo;*.xml": "NFO / XML|*.nfo;*.xml",
+  "NFO data imported for {0:N0} videos": {
+    "one": "Filmy z zaimportowanymi danymi NFO: {0:N0}",
+    "few": "Filmy z zaimportowanymi danymi NFO: {0:N0}",
+    "many": "Filmy z zaimportowanymi danymi NFO: {0:N0}"
+  },
+  "NFO elements as tags": "Elementy NFO jako tagi",
+  "NFO elements of the description": "Elementy NFO w opisie",
+  "NFO exported": "Wyeksportowano NFO",
+  "NFO files": "Pliki NFO",
+  "NFO files · FlixyPix": "Pliki NFO · FlixyPix",
+  "NFO metadata for this item": "Metadane NFO tego elementu",
+  "NFO metadata imported": "Zaimportowano metadane NFO",
+  "NFO|*.nfo": "NFO|*.nfo",
   "No": "Nie",
-  "No PIN set": "Nie ustawiono kodu PIN",
+  "no": "nie",
   "No assignment": "Brak przypisania",
+  "no backup yet · create one under “Backup”": "brak kopii zapasowej · utwórz ją w „Kopia zapasowa”",
   "No bookmark or scene has a tag yet. Tags are given in the details, in the lists of bookmarks and scenes.": "Żadna zakładka ani scena nie ma jeszcze tagu. Tagi nadajesz w szczegółach, na listach zakładek i scen.",
   "No bookmarks or scenes yet. “Set here”{0} adds a mark at the current position.": "Nie ma jeszcze zakładek ani scen. „Dodaj tutaj”{0} dodaje znacznik w bieżącej pozycji.",
   "No catalog at {0}": "Nie ma katalogu na {0}",
   "No category": "Bez kategorii",
   "No changes.": "Brak zmian.",
-  "No changes: the NFO files found contain nothing new.": "Brak zmian: znalezione pliki NFO nie zawierają niczego nowego.",
   "No changes: the metadata found contains nothing new.": "Brak zmian: znalezione metadane nie zawierają niczego nowego.",
+  "No changes: the NFO files found contain nothing new.": "Brak zmian: znalezione pliki NFO nie zawierają niczego nowego.",
   "No collisions in the catalog plan.": "Brak kolizji w planie katalogu.",
   "No comparable field values are stored for this older conflict. Please reconcile a new snapshot.": "Dla tego starszego konfliktu nie zapisano porównywalnych wartości pól. Porównaj nową migawkę.",
   "No condition: all items": "Bez warunku: wszystkie elementy",
@@ -1626,7 +1721,9 @@
   "No media folders set up · Add ▾ → Media folders …": "Brak skonfigurowanych folderów multimediów · Dodaj ▾ → Foldery multimediów …",
   "No media folders yet. Add the folders that hold your videos, images and music.": "Nie ma jeszcze folderów multimediów. Dodaj foldery zawierające filmy, obrazy i muzykę.",
   "No performer has properties yet; enter them in the directory.": "Żaden wykonawca nie ma jeszcze właściwości; wprowadź je w katalogu tagów.",
+  "No PIN set": "Nie ustawiono kodu PIN",
   "No previous video in this view": "Brak poprzedniego filmu w tym widoku",
+  "no problems": "bez problemów",
   "No programs of your own yet.": "Brak jeszcze własnych programów.",
   "No providers; the menu stays empty.": "Brak dostawców; menu pozostaje puste.",
   "No recent items": "Bez ostatnich elementów",
@@ -1639,29 +1736,38 @@
   "No tag images yet. Source files are only read.": "Brak obrazów tagów. Pliki źródłowe są wyłącznie odczytywane.",
   "No target folders yet.": "Brak jeszcze folderów docelowych.",
   "No technical data read yet. New imports read it; for the library use Organize ▾ → Read technical data.": "Nie odczytano jeszcze danych technicznych. Nowe importy je odczytują; dla biblioteki: Organizuj ▾ → Odczytaj dane techniczne.",
+  "no unambiguous match": "brak jednoznacznego przypisania",
   "No user settings; program defaults": "Brak ustawień użytkownika; domyślne ustawienia programu",
   "No video length for {0}.": "Brak długości filmu dla {0}.",
   "No video with a known duration found, or FFmpeg is missing.": "Nie znaleziono filmu o znanej długości lub brakuje FFmpeg.",
   "No videos in the library": "Brak filmów w bibliotece",
   "Non-binary": "Osoba niebinarna",
   "None": "Brak",
+  "none": "brak",
   "None of the {0} entries is in the catalog; no collection was created.": "Żaden z wpisów ({0}) nie występuje w katalogu; nie utworzono kolekcji.",
   "Normal speed": "Normalna prędkość",
+  "not": "nie",
   "Not a problem: these items stay unchanged in the catalog until the drive is connected again.": "To nie problem: te elementy pozostają bez zmian w katalogu, dopóki dysk nie zostanie ponownie podłączony.",
   "Not an encrypted FlixyPix file.": "To nie jest zaszyfrowany plik FlixyPix.",
   "Not assigned": "Nieprzypisane",
+  "not assigned": "nieprzypisane",
   "Not assigned to any item yet.": "Nie przypisano jeszcze do żadnego elementu.",
   "Not available": "Niedostępne",
   "Not backed up ({0}): {1}": "Nie dołączono do kopii zapasowej ({0}): {1}",
+  "not checked yet": "jeszcze nie sprawdzono",
   "Not checked yet.": "Nie sprawdzono jeszcze.",
   "Not checked:": "Nie sprawdzono:",
+  "not encrypted": "niezaszyfrowana",
   "Not enough free space for the safety copy of the catalog: {0:N0} MB needed, {1:N0} MB free.": "Za mało wolnego miejsca na kopię bezpieczeństwa katalogu: potrzeba {0:N0} MB, wolne {1:N0} MB.",
+  "not in this catalog": "brak w tym katalogu",
   "Not present": "Brak",
+  "not read yet": "jeszcze nie odczytano",
   "Not set": "Nieustawione",
   "Not watched for a long time": "Dawno nieoglądane",
   "Note": "Uwaga",
   "Note code": "Kod komunikatu",
   "Notes": "Uwagi",
+  "nothing": "nic",
   "Nothing chosen": "Nic nie wybrano",
   "Nothing found.": "Nic nie znaleziono.",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "Nic nie pasuje do wyszukiwania i filtrów w tym widoku.\nZłagodź filtry lub je usuń.",
@@ -1685,12 +1791,16 @@
   "O counter, playback history and from when a video counts as watched.": "Licznik O, historia odtwarzania i od kiedy wideo liczy się jako obejrzane.",
   "O counter: a click adds one, the right mouse button takes the last one back": "Licznik O: kliknięcie dodaje jeden, prawy przycisk myszy cofa ostatni",
   "O in total": "O łącznie",
+  "of": "z",
   "Off": "Wyłączone",
   "Off: new playbacks and O presses are no longer noted. Existing entries stay until you delete them.": "Wyłączone: nowe odtworzenia i O nie są już zapisywane. Istniejące wpisy pozostają, dopóki ich nie usuniesz.",
   "Offer for": "Proponuj dla",
-  "Old SDF catalogs are first exported in Windows Sandbox. The original programs and the SQLCE provider belong only in the offline guest.\n\nPreparation in the project folder:\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\nThe matching Offline.wsb is then in the newly created subfolder of artifacts\\offline-scenario.\n\nGuide: docs\\original\\windows-sandbox-einrichten.md\n\nThe media drive is not needed for the export and is not mounted in the guest. This notice starts no programs and changes no Windows feature.": "Stare katalogi SDF są najpierw eksportowane w Windows Sandbox. Oryginalne programy i dostawca SQLCE mogą działać wyłącznie w środowisku gościa offline.\n\nPrzygotowanie w folderze projektu:\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\nOdpowiedni plik Offline.wsb znajdzie się w nowo utworzonym podfolderze artifacts\\offline-scenario.\n\nInstrukcja: docs\\original\\windows-sandbox-einrichten.md\n\nDysk z multimediami nie jest potrzebny do eksportu i nie jest podłączany do gościa. Ten komunikat nie uruchamia żadnych programów i nie zmienia funkcji systemu Windows.",
   "Old key": "Stary klucz",
+  "Old SDF catalogs are first exported in Windows Sandbox. The original programs and the SQLCE provider belong only in the offline guest.\n\nPreparation in the project folder:\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\nThe matching Offline.wsb is then in the newly created subfolder of artifacts\\offline-scenario.\n\nGuide: docs\\original\\windows-sandbox-einrichten.md\n\nThe media drive is not needed for the export and is not mounted in the guest. This notice starts no programs and changes no Windows feature.": "Stare katalogi SDF są najpierw eksportowane w Windows Sandbox. Oryginalne programy i dostawca SQLCE mogą działać wyłącznie w środowisku gościa offline.\n\nPrzygotowanie w folderze projektu:\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\nOdpowiedni plik Offline.wsb znajdzie się w nowo utworzonym podfolderze artifacts\\offline-scenario.\n\nInstrukcja: docs\\original\\windows-sandbox-einrichten.md\n\nDysk z multimediami nie jest potrzebny do eksportu i nie jest podłączany do gościa. Ten komunikat nie uruchamia żadnych programów i nie zmienia funkcji systemu Windows.",
   "Older backups and exports still open with the password that applied when they were created, or with the recovery key.": "Starsze kopie zapasowe i eksporty nadal otwierają się za pomocą hasła obowiązującego przy ich tworzeniu lub klucza odzyskiwania.",
+  "older than 1 year": "starsze niż 1 rok",
+  "older than 2 years": "starsze niż 2 lata",
+  "older than 5 years": "starsze niż 5 lat",
   "Older versions of FlixyPix cannot open the library afterwards. If you cancel during the conversion, the library stays as it was.": "Starsze wersje FlixyPix nie otworzą potem tej biblioteki. Po anulowaniu w trakcie konwersji biblioteka pozostanie bez zmian.",
   "Oldest files first": "Najstarsze pliki najpierw",
   "On": "Włączone",
@@ -1698,6 +1808,7 @@
   "On start": "Przy uruchomieniu",
   "On the watch list": "Na liście do obejrzenia",
   "On {0} of {1} items · click: assign to all · right-click: remove from all": "Przy {0} z {1} elementów · kliknięcie: przypisz wszystkim · prawy przycisk: usuń ze wszystkich",
+  "one file": "jeden plik",
   "One web address per line, such as a website or a profile page.": "Jeden adres internetowy w wierszu, np. strona internetowa lub strona profilu.",
   "Only catalog entries are changed. Files and drives are not checked; files are not moved.": "Zmieniane są wyłącznie wpisy katalogu. Pliki i dyski nie są sprawdzane; pliki nie są przenoszone.",
   "Only checked proposals are created. Existing sets and files are kept.": "Tworzone są tylko zaznaczone propozycje. Istniejące zestawy i pliki zostają zachowane.",
@@ -1712,12 +1823,14 @@
   "Only videos with videos or audio files with audio files can become versions of one item.": "Tylko filmy z filmami albo pliki audio z plikami audio mogą stać się wersjami jednego elementu.",
   "Only with the tag “{0}”": "Tylko z tagiem „{0}”",
   "Open": "Otwórz",
+  "open": "otwarta",
   "Open (Enter)": "Otwórz (Enter)",
   "Open another library first.": "Najpierw należy otworzyć inną bibliotekę.",
   "Open directory": "Otwórz katalog tagów",
   "Open error log": "Otwórz dziennik błędów",
   "Open folder": "Otwórz folder",
   "Open folder favorites …": "Otwórz ulubione foldery …",
+  "open in another window": "otwarta w innym oknie",
   "Open in Explorer": "Otwórz w Eksploratorze",
   "Open in new window": "Otwórz w nowym oknie",
   "Open library": "Otwarta biblioteka",
@@ -1748,29 +1861,27 @@
   "Otherwise the report only opens on errors or notes.": "W przeciwnym razie raport otwiera się tylko przy błędach lub uwagach.",
   "Outline": "Streszczenie",
   "Output file": "Plik wyjściowy",
+  "over 1 h": "ponad 1 h",
   "Overlays": "Komunikaty ekranowe",
   "Overlays in the player": "Komunikaty ekranowe w odtwarzaczu",
   "Overview": "Przegląd",
   "Overwrite smart collection": "Nadpisz inteligentną kolekcję",
   "Overwrite with current view": "Zastąp bieżącym widokiem",
-  "PERFORMERS": "WYKONAWCY",
-  "PIN": "PIN",
-  "PIN for the lock": "PIN blokady",
-  "PIN set": "Ustawiono PIN",
-  "PNG is lossless, JPG much smaller.": "PNG jest bezstratny, JPG jest znacznie mniejszy.",
   "Page": "Strona",
-  "Page X of Y with direct page navigation (Ctrl+G).": "Strona X z Y z przejściem do wybranej strony (Ctrl+G).",
   "Page bar below the grid": "Pasek stron pod siatką",
+  "Page X of Y with direct page navigation (Ctrl+G).": "Strona X z Y z przejściem do wybranej strony (Ctrl+G).",
   "Page {0:N0}": "Strona {0:N0}",
   "Page {0:N0} of {1:N0} · type a number and press Enter (Ctrl+G)": "Strona {0:N0} z {1:N0} · wpisz numer i naciśnij przycisk Enter (Ctrl+G)",
   "Page ↑": "Page Up",
   "Page ↓": "Page Down",
+  "pan": "przesuwaj",
   "Pan and zoom": "Przesuwanie i powiększanie",
   "Parents": "Tagi nadrzędne",
   "Parser draft {0}\nInactive · {1}\nChecksum: {2}\n\nRecognized text fields:\n": "Projekt analizatora {0}\nNieaktywny · {1}\nSuma kontrolna: {2}\n\nRozpoznane pola tekstowe:\n",
   "Parser drafts": "Projekty analizatorów",
   "Parser translation": "Tłumaczenie analizatora",
   "Parser {0} · inactive": "Analizator {0} · nieaktywny",
+  "partly": "częściowo",
   "Partly imported": "Częściowo zaimportowane",
   "Partly understood": "Częściowo zrozumiały",
   "Parts": "Części",
@@ -1781,9 +1892,9 @@
   "Password, recovery key or PIN": "Hasło, klucz do odzyskiwania lub PIN",
   "Paste thumbnail": "Wklej miniaturę",
   "Paste thumbnail ({0:N0} items)": {
+    "one": "Wklej miniaturę (1 element)",
     "few": "Wklej miniaturę ({0:N0} elementy)",
-    "many": "Wklej miniaturę ({0:N0} elementów)",
-    "one": "Wklej miniaturę (1 element)"
+    "many": "Wklej miniaturę ({0:N0} elementów)"
   },
   "Path": "Ścieżka",
   "Path assignment": "Przypisanie ścieżek",
@@ -1794,6 +1905,7 @@
   "Pause animation (Space)": "Wstrzymaj animację (spacja)",
   "People": "Osoby",
   "Percent jumps need the length of the video.": "Skoki procentowe wymagają znajomości długości filmu.",
+  "PERFORMERS": "WYKONAWCY",
   "Performers": "Wykonawcy",
   "Performers with the most items, favorites first.": "Wykonawcy z największą liczbą elementów, ulubieni najpierw.",
   "Performers, studios and the original genre names are read from an installation of EazyFlixPix 4. None was found; translated genres are available.": "Wykonawcy, studia i oryginalne nazwy gatunków są odczytywane z instalacji EazyFlixPix 4. Nie znaleziono żadnej; dostępne są przetłumaczone gatunki.",
@@ -1802,25 +1914,29 @@
   "Permanently delete file": "Trwale usuń plik",
   "Permanently delete the file from the disk?\n\n{0}\n\nThis action cannot be undone.": "Trwale usunąć plik z dysku?\n\n{0}\n\nTej operacji nie można cofnąć.",
   "Permanently delete {0:N0} files and remove them from the catalog? This cannot be undone.": {
+    "one": "Trwale usunąć 1 plik i usunąć go z katalogu? Tej operacji nie można cofnąć.",
     "few": "Trwale usunąć {0:N0} pliki i usunąć je z katalogu? Tej operacji nie można cofnąć.",
-    "many": "Trwale usunąć {0:N0} plików i usunąć je z katalogu? Tej operacji nie można cofnąć.",
-    "one": "Trwale usunąć 1 plik i usunąć go z katalogu? Tej operacji nie można cofnąć."
+    "many": "Trwale usunąć {0:N0} plików i usunąć je z katalogu? Tej operacji nie można cofnąć."
   },
   "Permanently delete {0:N0} files from the disk?\n\nThis action cannot be undone.": {
+    "one": "Trwale usunąć 1 plik z dysku?\n\nTej operacji nie można cofnąć.",
     "few": "Trwale usunąć {0:N0} pliki z dysku?\n\nTej operacji nie można cofnąć.",
-    "many": "Trwale usunąć {0:N0} plików z dysku?\n\nTej operacji nie można cofnąć.",
-    "one": "Trwale usunąć 1 plik z dysku?\n\nTej operacji nie można cofnąć."
+    "many": "Trwale usunąć {0:N0} plików z dysku?\n\nTej operacji nie można cofnąć."
   },
   "Permanently deleting a file always requires confirmation.": "Trwałe usunięcie pliku zawsze wymaga potwierdzenia.",
   "Person": "Osoba",
   "Pictures": "Obrazy",
   "Piercings": "Kolczyki",
+  "PIN": "PIN",
   "Pin as favorite, in addition to the rating": "Przypnij jako ulubione, niezależnie od oceny",
   "Pin favorite": "Przypnij ulubione",
+  "PIN for the lock": "PIN blokady",
   "Pin or unpin as favorite": "Przypnij lub odepnij ulubione",
+  "PIN set": "Ustawiono PIN",
   "Pinned": "Przypięte",
   "Pinned as favorite": "Przypięto jako ulubione",
   "Placeholders: {0} full path, {1} folder, {2} file name, {3} title, {4} remembered position in seconds. Add quotes yourself, such as \"{0}\".": "Symbole zastępcze: {0} pełna ścieżka, {1} folder, {2} nazwa pliku, {3} tytuł, {4} zapamiętana pozycja w sekundach. Cudzysłowy należy dodać samodzielnie, np. \"{0}\".",
+  "Plain tags have no editable directory fields: {0}": "Zwykłe tagi nie mają edytowalnych pól katalogu tagów: {0}",
   "Play": "Odtwórz",
   "Play / Pause": "Odtwórz / pauza",
   "Play animation (Space)": "Odtwórz animację (spacja)",
@@ -1845,10 +1961,17 @@
   "Playbacks (history)": "Odtworzenia (historia)",
   "Playbacks per week": "Odtworzenia na tydzień",
   "Played {0:N0} times": {
+    "one": "Odtworzono raz",
     "few": "Odtworzono {0:N0} razy",
-    "many": "Odtworzono {0:N0} razy",
-    "one": "Odtworzono raz"
+    "many": "Odtworzono {0:N0} razy"
   },
+  "played {0:N0} times": {
+    "one": "odtworzono 1 raz",
+    "few": "odtworzono {0:N0} razy",
+    "many": "odtworzono {0:N0} razy"
+  },
+  "player\u0004Audio": "Dźwięk",
+  "player\u0004View": "Widok",
   "Player always on top": "Odtwarzacz zawsze na wierzchu",
   "Player and shortcuts": "Odtwarzacz i skróty klawiszowe",
   "Player menu": "Menu odtwarzacza",
@@ -1860,6 +1983,7 @@
   "Playlist (UTF-8)|*.m3u8|Playlist|*.m3u": "Lista odtwarzania (UTF-8)|*.m3u8|Lista odtwarzania|*.m3u",
   "Playlists|*.m3u;*.m3u8|All files|*.*": "Listy odtwarzania|*.m3u;*.m3u8|Wszystkie pliki|*.*",
   "Plays": "Odtworzenia",
+  "plays": "odtwarzany",
   "Plays videos and audio in the built-in player.": "Odtwarza filmy i dźwięk we wbudowanym odtwarzaczu.",
   "Please choose a font.": "Wybierz czcionkę.",
   "Please choose an installation.": "Proszę wybrać instalację.",
@@ -1868,7 +1992,6 @@
   "Please choose at least one media type.": "Należy wybrać co najmniej jeden rodzaj mediów.",
   "Please choose the program folder or the database file.": "Proszę wybrać folder programu lub plik bazy danych.",
   "Please choose the program.": "Należy wybrać program.",
-  "Please enter Cancel, Skip or Unique.": "Wpisz Anuluj, Pomiń lub Unikatowa nazwa.",
   "Please enter a complete path with a drive.": "Podaj pełną ścieżkę z oznaczeniem dysku.",
   "Please enter a full folder path and a valid name.": "Wpisz pełną ścieżkę folderu i prawidłową nazwę.",
   "Please enter a name.": "Należy wpisać nazwę.",
@@ -1881,6 +2004,7 @@
   "Please enter a width between 160 and 3840 pixels.": "Wpisz szerokość od 160 do 3840 pikseli.",
   "Please enter at least one image file type.": "Proszę wpisać co najmniej jeden typ pliku obrazu.",
   "Please enter at least one video file type.": "Proszę wpisać co najmniej jeden typ pliku wideo.",
+  "Please enter Cancel, Skip or Unique.": "Wpisz Anuluj, Pomiń lub Unikatowa nazwa.",
   "Please enter colors as #RRGGBB.": "Proszę wpisać kolory jako #RRGGBB.",
   "Please enter file types as extensions like .mp4.": "Podaj typy plików jako rozszerzenia, np. .mp4.",
   "Please enter numbers with a decimal point.": "Wpisz liczby z kropką dziesiętną.",
@@ -1900,6 +2024,7 @@
   "Please select items with Ctrl/Shift.": "Proszę wybrać elementy za pomocą Ctrl/Shift.",
   "Please select one or more videos.": "Proszę wybrać jeden lub więcej filmów.",
   "Plot": "Fabuła",
+  "PNG is lossless, JPG much smaller.": "PNG jest bezstratny, JPG jest znacznie mniejszy.",
   "Popular": "Popularne",
   "Portable": "Przenośny",
   "Portrait": "Pionowa",
@@ -1916,6 +2041,7 @@
   "Prepare offline export": "Przygotuj eksport offline",
   "Preparing quick search … {0:P0}": "Przygotowywanie szybkiego wyszukiwania… {0:P0}",
   "Present": "Istnieje",
+  "present without a category, gets “{0}”": "istnieje bez kategorii, otrzyma „{0}”",
   "Preserved as raw data only: {0:N0} · partially imported: {1:N0} · invalid: {2:N0}": "Tylko surowe dane: {0:N0} · częściowo zaimportowane: {1:N0} · nieprawidłowe: {2:N0}",
   "Preserved only": "Tylko zachowane",
   "Preset target folders for “Copy to” and “Move to” in an item’s menu. FlixyPix shows a preview before applying changes; a number is added to names that are already in use.": "Stałe foldery docelowe dla „Kopiuj do” i „Przenieś do” w menu elementu. Przed wykonaniem FlixyPix pokazuje podgląd; zajęte nazwy otrzymują numer.",
@@ -1981,6 +2107,7 @@
   "Quick search is ready.": "Szybkie wyszukiwanie jest gotowe.",
   "Quit": "Zakończ",
   "Random": "Losowo",
+  "random": "losowo",
   "Random clips · videos": "Losowe klipy · filmy",
   "Random pick of the day": "Losowy wybór dnia",
   "Random start": "Losowy początek",
@@ -1993,13 +2120,13 @@
   "Rating saved": "Zapisano ocenę",
   "Rating {0} of 10": "Ocena {0} z 10",
   "Raw data only": "Tylko surowe dane",
-  "Read NFO files": "Wczytaj pliki NFO",
   "Read binary original tag rule structurally": "Odczytaj strukturę binarnej reguły tagów z oryginału",
   "Read hidden folders": "Wczytaj ukryte foldery",
   "Read historical Combine list": "Odczytaj historyczną listę Combine",
   "Read metadata": "Odczytaj metadane",
   "Read metadata from files": "Odczytaj metadane z plików",
   "Read metadata from files …": "Odczytaj metadane z plików…",
+  "Read NFO files": "Wczytaj pliki NFO",
   "Read old Combine list (.ezl) …": "Wczytaj starą listę Combine (.ezl) …",
   "Read technical data": "Odczytaj dane techniczne",
   "Reading image …": "Czytanie obrazu…",
@@ -2036,13 +2163,13 @@
   "Regular expression, case-insensitive": "Wyrażenie regularne, bez uwzględniania wielkości liter",
   "Release date": "Data wydania",
   "Release notes": "Informacje o wydaniu",
+  "released {0}": "wydano {0}",
   "Reload saved values": "Wczytaj ponownie zapisane wartości",
   "Reloading discards this draft and shows the saved values.": "Ponowne wczytanie odrzuci ten szkic i pokaże zapisane wartości.",
   "Remember volume": "Zapamiętaj głośność",
   "Remember window position": "Pamiętaj o pozycji okna",
   "Remembers whether the jump mark panel is shown, including after restarting the application.": "Zapamiętuje widoczność panelu punktów skoku, także po ponownym uruchomieniu aplikacji.",
   "Remove": "Usuń",
-  "Remove PIN": "Usuń PIN",
   "Remove all": "Usuń wszystko",
   "Remove all filters": "Usuń wszystkie filtry",
   "Remove all tag and filter-bar filters": "Usuń wszystkie filtry tagów i paska filtrów",
@@ -2068,6 +2195,7 @@
   "Remove group": "Usuń grupę",
   "Remove image": "Usuń obraz",
   "Remove media artwork": "Usuń grafikę multimediów",
+  "Remove PIN": "Usuń PIN",
   "Remove rating": "Usuń ocenę",
   "Remove scene": "Usuń scenę",
   "Remove selected missing files from the catalog? Personal details of removed items will be lost.": "Usunąć wybrane brakujące pliki z katalogu? Osobiste informacje o usuniętych elementach zostaną utracone.",
@@ -2081,29 +2209,30 @@
   "Remove this view time?": "Usunąć ten punkt widoku?",
   "Remove view": "Usuń widok",
   "Remove {0:N0} items from the catalog?\n\nThe media files stay on the disk.": {
+    "one": "Usunąć 1 element z katalogu?\n\nPliki multimedialne pozostaną na dysku.",
     "few": "Usunąć {0:N0} elementy z katalogu?\n\nPliki multimedialne pozostaną na dysku.",
-    "many": "Usunąć {0:N0} elementów z katalogu?\n\nPliki multimedialne pozostaną na dysku.",
-    "one": "Usunąć 1 element z katalogu?\n\nPliki multimedialne pozostaną na dysku."
+    "many": "Usunąć {0:N0} elementów z katalogu?\n\nPliki multimedialne pozostaną na dysku."
   },
   "Remove {0:N0} items from the catalog? The files stay on the disk.": {
+    "one": "Usunąć 1 element z katalogu? Plik pozostanie na dysku.",
     "few": "Usunąć {0:N0} elementy z katalogu? Pliki pozostaną na dysku.",
-    "many": "Usunąć {0:N0} elementów z katalogu? Pliki pozostaną na dysku.",
-    "one": "Usunąć 1 element z katalogu? Plik pozostanie na dysku."
+    "many": "Usunąć {0:N0} elementów z katalogu? Pliki pozostaną na dysku."
   },
   "Remove “{0}” from the catalog?\n\nThe media file stays on the disk.": "Usunąć „{0}” z katalogu?\n\nPlik multimedialny pozostanie na dysku.",
   "Removed from favorites": "Usunięto z ulubionych",
   "Removed from the watch list": "Usunięto z listy do obejrzenia",
   "Removed from {0:N0} items": {
+    "one": "Elementy, z których usunięto tag: {0:N0}",
     "few": "Elementy, z których usunięto tag: {0:N0}",
-    "many": "Elementy, z których usunięto tag: {0:N0}",
-    "one": "Elementy, z których usunięto tag: {0:N0}"
+    "many": "Elementy, z których usunięto tag: {0:N0}"
   },
   "Removed from {0:N0} items (assignments)": {
+    "one": "Elementy, z których usunięto przypisanie: {0:N0}",
     "few": "Elementy, z których usunięto przypisanie: {0:N0}",
-    "many": "Elementy, z których usunięto przypisanie: {0:N0}",
-    "one": "Elementy, z których usunięto przypisanie: {0:N0}"
+    "many": "Elementy, z których usunięto przypisanie: {0:N0}"
   },
   "Rename": "Zmień nazwę",
+  "rename": "zmień nazwę",
   "Rename / merge tag everywhere": "Zmień nazwę / scal tag wszędzie",
   "Rename / merge tag everywhere …": "Zmień nazwę / scal tag wszędzie …",
   "Rename / merge …": "Zmień nazwę / scal …",
@@ -2121,9 +2250,9 @@
   "Replace existing FlixyPix thumbnails with the old ones": "Zastąp istniejące miniatury FlixyPix starymi",
   "Replace existing generated images: yes/no": "Zastąpić istniejące generowane obrazy: tak/nie",
   "Replace the titles of {0:N0} items with their file names?\n\nExample: “{1}” becomes “{2}”.": {
+    "one": "Zastąpić tytuł 1 elementu nazwą pliku?\n\nPrzykład: „{1}” zmieni się na „{2}”.",
     "few": "Zastąpić tytuły {0:N0} elementów nazwami plików?\n\nPrzykład: „{1}” zmieni się na „{2}”.",
-    "many": "Zastąpić tytuły {0:N0} elementów nazwami plików?\n\nPrzykład: „{1}” zmieni się na „{2}”.",
-    "one": "Zastąpić tytuł 1 elementu nazwą pliku?\n\nPrzykład: „{1}” zmieni się na „{2}”."
+    "many": "Zastąpić tytuły {0:N0} elementów nazwami plików?\n\nPrzykład: „{1}” zmieni się na „{2}”."
   },
   "Replace “{0}” with the current view and its filters?": "Zastąpić „{0}” bieżącym widokiem wraz z filtrami?",
   "Replace: enter yes or no.": "Zastąpienie: wpisz tak lub nie.",
@@ -2132,9 +2261,9 @@
   "Report a problem": "Zgłoś problem",
   "Reserved for quick tags": "Zarezerwowane dla szybkich tagów",
   "Reserved separator": "Zastrzeżony separator",
-  "Reset A–B": "Resetuj A–B",
   "Reset all": "Przywróć wszystkie",
   "Reset all shortcuts to their defaults": "Przywróć domyślne przypisania wszystkich skrótów klawiszowych",
+  "Reset A–B": "Resetuj A–B",
   "Reset offset ({0} s)": "Wyzeruj przesunięcie ({0} s)",
   "Reset the options of this section to their defaults. Takes effect only after saving.": "Przywróć domyślne wartości opcji w tej sekcji. Zmiany zostaną zastosowane dopiero po zapisaniu.",
   "Reset view": "Przywróć widok",
@@ -2180,13 +2309,6 @@
   "Run cancelled.": "Anulowano wykonywanie.",
   "Run finished. Errors are listed in the job details.": "Wykonywanie zakończone. Błędy znajdują się w szczegółach zadań.",
   "Running": "W toku",
-  "SCENES": "SCENY",
-  "SHA-256 compares file content. Visual similarity compares appearance. Searching does not remove items or files.": "SHA-256 porównuje zawartość plików. Podobieństwo wizualne porównuje wygląd. Wyszukiwanie nie usuwa wpisów ani plików.",
-  "SHA-256 · {0}/{1} · {2}": "SHA-256 · {0}/{1} · {2}",
-  "SQL Server Compact 4.0 was not found. FlixyPix uses the copy in the EazyFlixPix program folder or a Microsoft SQL Server Compact 4.0 SP1 (x86) installed on this computer. Microsoft offers it at https://www.microsoft.com/download/details.aspx?id=30709.": "Nie znaleziono SQL Server Compact 4.0. FlixyPix używa kopii z folderu programu EazyFlixPix lub zainstalowanego na tym komputerze Microsoft SQL Server Compact 4.0 SP1 (x86). Microsoft udostępnia go pod adresem https://www.microsoft.com/download/details.aspx?id=30709.",
-  "SQLite checks the catalog file for damaged pages and indexes. Such damage can only be fixed with a backup.": "SQLite sprawdza, czy plik katalogu nie ma uszkodzonych stron i indeksów. Takie uszkodzenia można naprawić tylko za pomocą kopii zapasowej.",
-  "STUDIO": "STUDIO",
-  "SUGGESTIONS": "SUGESTIE",
   "Safety copy of the catalog": "Kopia bezpieczeństwa katalogu",
   "Same start for all": "Ten sam początek dla wszystkich",
   "Save": "Zapisz",
@@ -2203,11 +2325,12 @@
   "Saved": "Zapisano",
   "Saved and recent searches": "Zapisane i ostatnie wyszukiwania",
   "Saved as “{0}”. Clear the quick collection now?": "Zapisano jako „{0}”. Opróżnić teraz szybką kolekcję?",
+  "saved search": "zapisane wyszukiwanie",
   "Saved searches": "Zapisane wyszukiwania",
   "Saved · {0:N0} items changed": {
+    "one": "Zapisano · zmienione elementy: {0:N0}",
     "few": "Zapisano · zmienione elementy: {0:N0}",
-    "many": "Zapisano · zmienione elementy: {0:N0}",
-    "one": "Zapisano · zmienione elementy: {0:N0}"
+    "many": "Zapisano · zmienione elementy: {0:N0}"
   },
   "Saves the directory of tags, performers and studios as a tag package, for example for another library.": "Zapisuje katalog tagów, wykonawców i studiów jako pakiet tagów, np. dla innej biblioteki.",
   "Saves the items of the current view in the main window, in their order, as an M3U playlist.": "Zapisuje elementy bieżącego widoku okna głównego, w ich kolejności, jako listę odtwarzania M3U.",
@@ -2236,6 +2359,7 @@
   "Scene wall: all scenes and bookmarks": "Ściana scen: wszystkie sceny i zakładki",
   "Scene {0}–{1}": "Scena {0}–{1}",
   "Scene/bookmark preview: ": "Podgląd sceny/zakładki: ",
+  "SCENES": "SCENY",
   "Scenes": "Sceny",
   "Scenes and bookmarks": "Sceny i zakładki",
   "Scenes, bookmarks, graphics or tag rows of items that are no longer in the catalog. Fixing removes them.": "Sceny, zakładki, grafiki lub wiersze tagów elementów, których nie ma już w katalogu. Naprawa je usuwa.",
@@ -2259,9 +2383,9 @@
   "Search in browser": "Szukaj w przeglądarce",
   "Search in browser ▾": "Szukaj w przeglądarce ▾",
   "Search index rebuilt · {0:N0} items": {
+    "one": "Indeks wyszukiwania odbudowany · 1 element",
     "few": "Indeks wyszukiwania odbudowany · {0:N0} elementy",
-    "many": "Indeks wyszukiwania odbudowany · {0:N0} elementów",
-    "one": "Indeks wyszukiwania odbudowany · 1 element"
+    "many": "Indeks wyszukiwania odbudowany · {0:N0} elementów"
   },
   "Search items": "Przeglądaj multimedia",
   "Search results": "Wyniki wyszukiwania",
@@ -2281,21 +2405,25 @@
   "Seconds": "Sekundy",
   "Section": "Fragment",
   "Security": "Bezpieczeństwo",
+  "seek": "przewijaj",
   "Seek with the mouse wheel": "Przewijanie kółkiem myszy",
+  "seek, volume with Ctrl": "przewijanie, z Ctrl głośność",
   "Seeking": "Przewijanie",
   "Select at least one library.": "Wybierz co najmniej jedną bibliotekę.",
   "Select media before assigning tags. Ctrl+1–9 uses your fixed quick tags. Enter filters by the focused tag; Ctrl+Enter excludes it.": "Zaznacz media przed przypisaniem tagów. Ctrl+1–9 używa stałych szybkich tagów. Enter filtruje według aktywnego tagu; Ctrl+Enter go wyklucza.",
+  "Select the referenced performer too, or import it first: {0}": "Zaznacz także wskazanego wykonawcę albo najpierw go zaimportuj: {0}",
+  "Select the referenced studio too, or import it first: {0}": "Zaznacz także wskazane studio albo najpierw je zaimportuj: {0}",
   "Selected fields applied": "Zastosowano pojedyncze pola",
   "Selection": "Zaznaczenie",
   "Selection ({0:N0} items)": {
+    "one": "Zaznaczenie (1 element)",
     "few": "Zaznaczenie ({0:N0} elementy)",
-    "many": "Zaznaczenie ({0:N0} elementów)",
-    "one": "Zaznaczenie (1 element)"
+    "many": "Zaznaczenie ({0:N0} elementów)"
   },
   "Selection ({0:N0} items) …": {
+    "one": "Zaznaczenie (1 element)…",
     "few": "Zaznaczenie ({0:N0} elementy)…",
-    "many": "Zaznaczenie ({0:N0} elementów)…",
-    "one": "Zaznaczenie (1 element)…"
+    "many": "Zaznaczenie ({0:N0} elementów)…"
   },
   "Separate elements with semicolons; each becomes a tag category, for example genre → Genre.": "Oddziel elementy średnikami; każdy staje się kategorią tagów, np. genre → Gatunek.",
   "Separate name parts with semicolons, e.g. “thumb; folder; cover”.": "Oddziel fragmenty nazw średnikami, np. „thumb; folder; cover”.",
@@ -2305,20 +2433,21 @@
   "Series": "Seria",
   "Set": "Cykl",
   "Set A": "Ustaw A",
-  "Set B": "Ustaw B",
-  "Set PIN …": "Ustaw PIN …",
-  "Set a PIN or encrypt the library, so the lock can be opened again.": "Ustaw PIN lub zaszyfruj bibliotekę, aby blokadę można było ponownie otworzyć.",
   "Set a bookmark at the current position": "Dodaj zakładkę w bieżącej pozycji",
+  "Set a PIN or encrypt the library, so the lock can be opened again.": "Ustaw PIN lub zaszyfruj bibliotekę, aby blokadę można było ponownie otworzyć.",
   "Set as cover": "Ustaw jako okładkę",
   "Set as desktop background": "Ustaw jako tło pulpitu",
+  "Set B": "Ustaw B",
   "Set bookmark": "Dodaj zakładkę",
   "Set favorite thresholds …": "Ustaw progi ocen dla ulubionych …",
   "Set or remove bookmark": "Dodaj lub usuń zakładkę",
+  "Set PIN …": "Ustaw PIN …",
   "Set the formatting for this parser": "Ustaw formatowanie tego analizatora",
   "Sets a new password; the recovery key stays valid.": "Ustawia nowe hasło; klucz odzyskiwania pozostaje ważny.",
   "Setting": "Ustawienie",
   "Settings": "Ustawienia",
   "Settings are always applied as a complete group. Groups containing values you changed yourself are not preselected.": "Zawsze importowana jest cała grupa. Grupy z samodzielnie zmienionymi wartościami nie są wstępnie zaznaczone.",
+  "settings card\u0004Import from EazyFlixPix 4": "Import z EazyFlixPix 4",
   "Settings saved": "Ustawienia zapisane",
   "Settings saved · the library folder changes after a restart. Exporting or backing up first is recommended.": "Ustawienia zapisane · folder biblioteki zmieni się po ponownym uruchomieniu. Zaleca się wcześniejszy eksport lub kopię zapasową.",
   "Settings · FlixyPix": "Ustawienia · FlixyPix",
@@ -2326,11 +2455,14 @@
   "Several scenes as a grid, or a single image. Applies to newly created thumbnails.": "Kilka scen w siatce lub pojedynczy obraz. Dotyczy nowo tworzonych miniatur.",
   "Several tags: at least one": "Wiele tagów: co najmniej jeden",
   "Several tags: at least one is enough": "Wiele tagów: wystarczy co najmniej jeden",
+  "several versions": "kilka wersji",
+  "SHA-256 compares file content. Visual similarity compares appearance. Searching does not remove items or files.": "SHA-256 porównuje zawartość plików. Podobieństwo wizualne porównuje wygląd. Wyszukiwanie nie usuwa wpisów ani plików.",
+  "SHA-256 · {0}/{1} · {2}": "SHA-256 · {0}/{1} · {2}",
   "Share of a video that must have been seen for the playback to count as watched (filter “watched”, statistics). Plays before the history count as watched.": "Część wideo, którą trzeba obejrzeć, aby odtworzenie liczyło się jako obejrzane (filtr „obejrzane”, statystyki). Odtworzenia sprzed historii liczą się jako obejrzane.",
   "Shared by {0:N0} items · click adds: {1}": {
+    "one": "Powiązane elementy: {0:N0} · kliknięcie dodaje: {1}",
     "few": "Powiązane elementy: {0:N0} · kliknięcie dodaje: {1}",
-    "many": "Powiązane elementy: {0:N0} · kliknięcie dodaje: {1}",
-    "one": "Powiązane elementy: {0:N0} · kliknięcie dodaje: {1}"
+    "many": "Powiązane elementy: {0:N0} · kliknięcie dodaje: {1}"
   },
   "Shift": "Shift",
   "Shift+mouse wheel": "Shift+kółko myszy",
@@ -2345,8 +2477,6 @@
   "Shortcuts need Ctrl or Alt.": "Skróty wymagają Ctrl lub Alt.",
   "Shortcuts · ": "Skróty · ",
   "Show": "Pokaż",
-  "Show FlixyPix": "Pokaż FlixyPix",
-  "Show FlixyPix again": "Pokaż FlixyPix ponownie",
   "Show affected entries": "Pokaż dotknięte wpisy",
   "Show all": "Pokaż wszystko",
   "Show all ›": "Pokaż wszystko ›",
@@ -2355,6 +2485,8 @@
   "Show everything one below the other": "Pokaż wszystko jedno pod drugim",
   "Show file extension": "Pokazuj rozszerzenie pliku",
   "Show film strip (T)": "Pokaż taśmę miniatur (T)",
+  "Show FlixyPix": "Pokaż FlixyPix",
+  "Show FlixyPix again": "Pokaż FlixyPix ponownie",
   "Show image details": "Pokaż szczegóły obrazu",
   "Show image details (I)": "Pokaż szczegóły obrazu (I)",
   "Show in Explorer": "Pokaż w Eksploratorze",
@@ -2388,6 +2520,7 @@
   "Sidebars": "Paski boczne",
   "Sidecar files next to the media": "Pliki towarzyszące obok multimediów",
   "Similar": "Podobnie",
+  "similar\u0004Keep": "Zachowaj",
   "Similar items": "Podobne elementy",
   "Similar items · FlixyPix": "Podobne elementy · FlixyPix",
   "Similar to “{0}” · FlixyPix": "Podobne do „{0}” · FlixyPix",
@@ -2441,6 +2574,8 @@
   "Split off": "Odłącz",
   "Split off as own item": "Odłącz jako osobny element",
   "Spread evenly across the video.": "Rozłożone równomiernie w całym wideo.",
+  "SQL Server Compact 4.0 was not found. FlixyPix uses the copy in the EazyFlixPix program folder or a Microsoft SQL Server Compact 4.0 SP1 (x86) installed on this computer. Microsoft offers it at https://www.microsoft.com/download/details.aspx?id=30709.": "Nie znaleziono SQL Server Compact 4.0. FlixyPix używa kopii z folderu programu EazyFlixPix lub zainstalowanego na tym komputerze Microsoft SQL Server Compact 4.0 SP1 (x86). Microsoft udostępnia go pod adresem https://www.microsoft.com/download/details.aspx?id=30709.",
+  "SQLite checks the catalog file for damaged pages and indexes. Such damage can only be fixed with a backup.": "SQLite sprawdza, czy plik katalogu nie ma uszkodzonych stron i indeksów. Takie uszkodzenia można naprawić tylko za pomocą kopii zapasowej.",
   "Star": "Gwiazdka",
   "Stars": "Gwiazdki",
   "Start": "Uruchom",
@@ -2452,6 +2587,7 @@
   "Start with a delay": "Uruchom z opóźnieniem",
   "Start with the home page": "Zacznij od strony głównej",
   "Starting the player …": "Uruchamianie odtwarzacza …",
+  "starts with": "zaczyna się od",
   "State at start. The shortcut switches at any time.": "Stan przy uruchomieniu. Skrót przełącza w dowolnej chwili.",
   "Statistics": "Statystyki",
   "Statistics not possible · ": "Statystyki niedostępne · ",
@@ -2462,11 +2598,13 @@
   "Steps for back and forward": "Kroki Wstecz i Dalej",
   "Steps for back/forward": "Kroki Wstecz/Dalej",
   "Still as image": "Kadr jako obraz",
+  "still {0}": "jeszcze {0}",
   "Stop collection": "Zatrzymaj kolekcję",
   "Storage": "Miejsce na dysku",
   "Store pictures unencrypted": "Zapisz obrazy bez szyfrowania",
   "Stored entries": "Zapisane wpisy",
   "Stored locally.\nKept for the future.": "Zapisane lokalnie.\nZachowane na przyszłość.",
+  "STUDIO": "STUDIO",
   "Studio": "Studio",
   "Studio with sub-studios": "Studio ze studiami podrzędnymi",
   "Studios": "Studia",
@@ -2483,13 +2621,13 @@
   "Subtitles|*.srt;*.ass;*.ssa;*.vtt;*.sub;*.idx;*.sup|All files|*.*": "Napisy|*.srt;*.ass;*.ssa;*.vtt;*.sub;*.idx;*.sup|Wszystkie pliki|*.*",
   "Succeeded: {0}\nSkipped: {1}\nErrors: {2}": "Powodzenie: {0}\nPominięto: {1}\nBłędy: {2}",
   "Suggest image sets": "Zaproponuj zestawy obrazów",
+  "SUGGESTIONS": "SUGESTIE",
   "Suggestions": "Sugestie",
   "Suggestions from the library": "Sugestie z biblioteki",
   "Suppress the screen saver": "Blokuj wygaszacz ekranu",
   "Switching library …": "Przełączanie biblioteki…",
   "Sync folders": "Synchronizuj foldery",
   "System-wide": "W całym systemie",
-  "TYPICAL COMBINATIONS": "TYPOWE KOMBINACJE",
   "Table": "Tabela",
   "Table for sorting, filters and tags": "Tabela sortowania, filtrów i tagów",
   "Table overview": "Przegląd tabel",
@@ -2505,6 +2643,7 @@
   "Tag favorite": "Ulubiony tag",
   "Tag group rules exported": "Wyeksportowano reguły grupowe tagów",
   "Tag hierarchy": "Hierarchia tagów",
+  "tag image\u0004Remove assignment": "Usuń przypisanie",
   "Tag images": "Obrazy tagów",
   "Tag images · FlixyPix": "Obrazy tagów · FlixyPix",
   "Tag images …": "Obrazy tagów …",
@@ -2519,9 +2658,9 @@
   "Tag “{0}”": "Tag „{0}”",
   "Tags": "Tagi",
   "Tags added to {0} items.": {
+    "one": "Elementy z dodanymi tagami: {0}.",
     "few": "Elementy z dodanymi tagami: {0}.",
-    "many": "Elementy z dodanymi tagami: {0}.",
-    "one": "Elementy z dodanymi tagami: {0}."
+    "many": "Elementy z dodanymi tagami: {0}."
   },
   "Tags after applying": "Tagi po zastosowaniu",
   "Tags by category": "Tagi według kategorii",
@@ -2537,18 +2676,18 @@
   "Take back the last O": "Cofnij ostatnie O",
   "Takes the nearest keyframe per scene instead of the exact second. Several times faster; the time stamp shows the actual position.": "Dla każdej sceny wybiera najbliższą klatkę kluczową zamiast dokładnej sekundy. Działa kilka razy szybciej; znacznik czasu pokazuje rzeczywistą pozycję.",
   "Target": "Cel",
-  "Target ID": "Identyfikator docelowy",
-  "Target IDs": "Identyfikatory docelowe",
   "Target collection for B": "Kolekcja docelowa dla B",
   "Target collection for B: {0}": "Kolekcja docelowa dla B: {0}",
   "Target collection: B adds items here": "Kolekcja docelowa: B dodaje tu elementy",
   "Target folder for the selected files": "Folder docelowy wybranych plików",
   "Target folders": "Foldery docelowe",
+  "Target ID": "Identyfikator docelowy",
+  "Target IDs": "Identyfikatory docelowe",
   "Tattoos": "Tatuaże",
   "Technical data read for {0:N0} items": {
+    "one": "Odczytano dane techniczne 1 elementu",
     "few": "Odczytano dane techniczne {0:N0} elementów",
-    "many": "Odczytano dane techniczne {0:N0} elementów",
-    "one": "Odczytano dane techniczne 1 elementu"
+    "many": "Odczytano dane techniczne {0:N0} elementów"
   },
   "Technical data · {0} · {1}": "Dane techniczne · {0} · {1}",
   "Technical information": "Informacje techniczne",
@@ -2561,10 +2700,6 @@
   "Text, case-insensitive": "Tekst bez uwzględniania wielkości liter",
   "That folder already exists. Please choose a new name.": "Ten folder już istnieje. Wybierz nową nazwę.",
   "That way opening and closing credits don't fill the grid.": "Dzięki temu napisy początkowe i końcowe nie wypełnią siatki.",
-  "The NFO element lists are missing.": "Brakuje list elementów NFO.",
-  "The PIN needs at least {0} characters.\n\n": "PIN musi mieć co najmniej {0} znaki.\n\n",
-  "The PIN opens the lock on this computer. Digits, letters or both.": "PIN otwiera blokadę na tym komputerze. Cyfry, litery lub jedno i drugie.",
-  "The SQLite backup is damaged.": "Kopia zapasowa SQLite jest uszkodzona.",
   "The address needs {0} for the name searched for.": "Adres musi zawierać {0} dla szukanej nazwy.",
   "The arguments need {0} or {1}; otherwise the program does not know what to open.": "Argumenty muszą zawierać {0} lub {1}, inaczej program nie wie, co otworzyć.",
   "The assigned thumbnail is missing. Please assign a new image.": "Brak przypisanej miniatury. Przypisz nową grafikę.",
@@ -2586,6 +2721,7 @@
   "The catalog is then stored unencrypted. Encrypted backups and exports created earlier stay encrypted.": "Katalog zostanie zapisany bez szyfrowania. Wcześniej utworzone zaszyfrowane kopie zapasowe i eksporty pozostają zaszyfrowane.",
   "The catalog was not imported.": "Nie zaimportowano katalogu.",
   "The catalog, backup packages and JSON exports of this library are encrypted with a password of your own. ": "Katalog, pakiety kopii zapasowej i eksporty JSON tej biblioteki są szyfrowane własnym hasłem. ",
+  "The category is already used with another role: {0}": "Kategoria jest już używana z inną rolą: {0}",
   "The change was not applied. If data changed in the meantime, please open a new preview.\n\n": "Zmiana nie została zastosowana. Jeśli dane zmieniły się w międzyczasie, otwórz nowy podgląd.\n\n",
   "The changes have not been saved yet. Discard them?": "Zmiany nie zostały jeszcze zapisane. Odrzucić je?",
   "The checksum of a file in the backup does not match.": "Suma kontrolna pliku kopii zapasowej nie jest zgodna.",
@@ -2677,18 +2813,20 @@
   "The library was not converted and stays unchanged.": "Biblioteka nie została przekonwertowana i pozostaje bez zmian.",
   "The link in the write path cannot be resolved safely: ": "Nie można bezpiecznie rozwiązać dowiązania w ścieżce zapisu: ",
   "The link leads into a write-protected source.": "Dowiązanie prowadzi do źródła chronionego przed zapisem.",
+  "The local target of this Stash record was removed. Choose a target or create a new one: {0}": "Lokalny cel tego rekordu Stash został usunięty. Wybierz cel lub utwórz nowy: {0}",
   "The main window opens again in the same place and size.": "Okno główne otwiera się ponownie w tym samym miejscu i rozmiarze.",
   "The media file is unavailable. Under Tools you can assign its new location.": "Plik multimedialny jest niedostępny. W Narzędziach można przypisać jego nową lokalizację.",
   "The media path has changed in the meantime.": "Ścieżka multimediów zmieniła się w międzyczasie.",
   "The mouse wheel step must be greater than 0 and at most 3600 seconds or 50%; the initial volume must be between 0 and 100%.": "Krok kółka myszy musi być większy od 0 i wynosić najwyżej 3600 sekund lub 50%; głośność początkowa musi mieścić się w zakresie od 0 do 100%.",
   "The name must not be empty.": "Nazwa nie może być pusta.",
   "The name must not contain any of these characters: {0}": "Nazwa nie może zawierać żadnego z tych znaków: {0}",
-  "The new FlixyPix settings folder is already in use. No previous data was changed.": "Nowy folder ustawień FlixyPix jest już zajęty. Dotychczasowe dane nie zostały zmienione.",
   "The new file and the catalog path are kept; the old file could not be removed. Source: {0}; target: {1}. Reassignment failed: {2}": "Nowy plik i ścieżka katalogu zostają zachowane; nie udało się usunąć starego pliku. Źródło: {0}; cel: {1}. Nie udało się przywrócić starego przypisania: {2}",
+  "The new FlixyPix settings folder is already in use. No previous data was changed.": "Nowy folder ustawień FlixyPix jest już zajęty. Dotychczasowe dane nie zostały zmienione.",
   "The new language applies after FlixyPix restarts. Restart now?": "Nowy język zostanie zastosowany po ponownym uruchomieniu FlixyPix. Uruchomić ponownie teraz?",
   "The new passwords do not match.": "Nowe hasła nie są zgodne.",
   "The new settings folder was created in the meantime.": "W tym czasie powstał nowy folder ustawień.",
   "The next image fades in smoothly over the previous one.": "Następny obraz płynnie pojawia się na poprzednim.",
+  "The NFO element lists are missing.": "Brakuje list elementów NFO.",
   "The old catalog was not imported.\n": "Nie zaimportowano starego katalogu.\n",
   "The open library at a glance.": "Otwarta biblioteka w skrócie.",
   "The open library does not contain any imported legacy data yet.": "Otwarta biblioteka nie zawiera jeszcze zaimportowanych danych.",
@@ -2699,14 +2837,16 @@
   "The parent target folder is missing.": "Brak nadrzędnego folderu docelowego.",
   "The parents changed. Reload them before saving.": "Tagi nadrzędne uległy zmianie. Wczytaj je ponownie przed zapisem.",
   "The password must be at least {0} characters long.": {
+    "one": "Minimalna długość hasła (znaki): {0}.",
     "few": "Minimalna długość hasła (znaki): {0}.",
-    "many": "Minimalna długość hasła (znaki): {0}.",
-    "one": "Minimalna długość hasła (znaki): {0}."
+    "many": "Minimalna długość hasła (znaki): {0}."
   },
   "The password or recovery key is wrong.": "Hasło lub klucz do odzyskiwania jest niewłaściwy.",
   "The password or recovery key is wrong.\n\n": "Hasło lub klucz do odzyskiwania jest niewłaściwy.\n\n",
   "The passwords do not match.": "Hasła nie są zgodne.",
   "The picture bytes do not match their checksum.": "Dane obrazu nie zgadzają się z sumą kontrolną.",
+  "The PIN needs at least {0} characters.\n\n": "PIN musi mieć co najmniej {0} znaki.\n\n",
+  "The PIN opens the lock on this computer. Digits, letters or both.": "PIN otwiera blokadę na tym komputerze. Cyfry, litery lub jedno i drugie.",
   "The plan contains duplicate items or targets.": "Plan zawiera podwójne elementy lub cele.",
   "The player is not ready yet.": "Odtwarzacz nie jest jeszcze gotowy.",
   "The player window stays above other windows.": "Okno odtwarzacza pozostaje nad innymi oknami.",
@@ -2730,9 +2870,9 @@
   "The separate library has been created": "Oddzielna biblioteka została stworzona.",
   "The settings file was damaged and has been repaired.": "Plik ustawień był uszkodzony i został naprawiony.",
   "The settings file was damaged and has been repaired; {0:N0} values were reset: {1}.": {
+    "one": "Plik ustawień był uszkodzony i został naprawiony; zresetowano 1 wartość: {1}.",
     "few": "Plik ustawień był uszkodzony i został naprawiony; zresetowano {0:N0} wartości: {1}.",
-    "many": "Plik ustawień był uszkodzony i został naprawiony; zresetowano {0:N0} wartości: {1}.",
-    "one": "Plik ustawień był uszkodzony i został naprawiony; zresetowano 1 wartość: {1}."
+    "many": "Plik ustawień był uszkodzony i został naprawiony; zresetowano {0:N0} wartości: {1}."
   },
   "The settings file was damaged; FlixyPix starts with default settings.": "Plik ustawień był uszkodzony; FlixyPix uruchamia się z ustawieniami domyślnymi.",
   "The settings file was damaged; the last working copy was used.": "Plik ustawień był uszkodzony; użyto ostatniej działającej kopii.",
@@ -2748,7 +2888,11 @@
   "The source is write-protected: ": "Źródło jest chronione przed zapisem: ",
   "The source was changed before moving; both files are kept.": "Źródło zostało zmienione przed przeniesieniem; oba pliki są przechowywane.",
   "The source was changed during the preview.": "Źródło zostało zmienione podczas podglądu.",
+  "The SQLite backup is damaged.": "Kopia zapasowa SQLite jest uszkodzona.",
   "The start must be at least 0 and the length greater than 0.": "Początek musi wynosić co najmniej 0, a długość musi być większa od 0.",
+  "The Stash identities changed. Refresh the preview.": "Tożsamości Stash uległy zmianie. Odśwież podgląd.",
+  "The Stash record has no mapped local file: {0}": "Rekord Stash nie ma przypisanego pliku lokalnego: {0}",
+  "The Stash record needs corrections: {0}": "Rekord Stash wymaga poprawek: {0}",
   "The storage mode changes after a restart. Existing data is preserved.": "Tryb zmieni się po ponownym uruchomieniu. Istniejące dane zostaną zachowane.",
   "The stored comparison value does not match the path, so the same file could be added twice. Fixing recalculates it.": "Zapisana wartość porównawcza nie pasuje do ścieżki, więc ten sam plik mógłby zostać dodany dwukrotnie. Naprawa oblicza ją ponownie.",
   "The studio or network this studio is part of; filters can include sub-studios.": "Studio lub sieć, do której należy to studio; filtry mogą uwzględniać studia podrzędne.",
@@ -2773,8 +2917,8 @@
   "The windows come back once it is open again.": "Okna wrócą, gdy tylko zostanie odblokowany.",
   "The write path cannot be checked safely: ": "Nie można bezpiecznie sprawdzić ścieżki zapisu: ",
   "The write path cannot be resolved safely: ": "Nie można bezpiecznie rozwiązać ścieżki zapisu: ",
-  "There are no FlixyPix backups in the backup folder yet.": "Folder kopii zapasowych nie zawiera jeszcze kopii FlixyPix.",
   "There are no data fields available to import.": "Brak pól danych możliwych do zaimportowania.",
+  "There are no FlixyPix backups in the backup folder yet.": "Folder kopii zapasowych nie zawiera jeszcze kopii FlixyPix.",
   "There are no group rules yet. Simple rules are part of the JSON catalog backup.": "Nie ma jeszcze reguł grupowych. Proste reguły są zawarte w kopii katalogu JSON.",
   "There are no historical entries in this area yet.": "W tym obszarze nie ma jeszcze historycznych wpisów.",
   "There is no {0} in this folder.": "W tym folderze nie ma {0}.",
@@ -2790,6 +2934,7 @@
   "This installation has no catalog. Please choose the open library as the target.": "Ta instalacja nie ma katalogu. Wybierz otwartą bibliotekę jako cel.",
   "This is how EazyFlixPix 4 was set up. Applies on this computer after a restart.": "Tak skonfigurowano EazyFlixPix 4. Dotyczy tego komputera po ponownym uruchomieniu.",
   "This item has no thumbnail.": "Ten element nie ma miniatury.",
+  "This kind of Stash record cannot be imported yet: {0}": "Tego rodzaju rekordu Stash nie można jeszcze zaimportować: {0}",
   "This library does not contain the chosen import.": "Biblioteka nie zawiera wybranego importu.",
   "This library has no migration report yet.": "Biblioteka nie ma jeszcze raportu o migracji.",
   "This library is already in the list.": "Ta biblioteka jest już na liście.",
@@ -2804,9 +2949,9 @@
   "Thumbnail from NFO": "Miniatura z NFO",
   "Thumbnail of “{0}” set": "Ustawiono miniaturę „{0}”",
   "Thumbnail pasted for {0:N0} items": {
+    "one": "Wklejono miniaturę dla 1 elementu",
     "few": "Wklejono miniaturę dla {0:N0} elementów",
-    "many": "Wklejono miniaturę dla {0:N0} elementów",
-    "one": "Wklejono miniaturę dla 1 elementu"
+    "many": "Wklejono miniaturę dla {0:N0} elementów"
   },
   "Thumbnail width": "Szerokość miniatury",
   "Thumbnails": "Miniatury",
@@ -2831,21 +2976,22 @@
   "Times watched": "Liczba obejrzeń",
   "Title": "Tytuł",
   "Title A–Z": "Tytuł A–Z",
-  "Title Z–A": "Tytuł Z–A",
   "Title bar, taskbar, Alt+Tab and the icon in the notification area show this title and a plain icon instead of FlixyPix.": "Pasek tytułu, pasek zadań, Alt+Tab i ikona w obszarze powiadomień pokazują ten tytuł i zwykłą ikonę zamiast FlixyPix.",
-  "Title from NFO": "Tytuł z NFO",
   "Title from file name": "Tytuł z nazwy pliku",
+  "Title from NFO": "Tytuł z NFO",
   "Title instead of file name": "Tytuł zamiast nazwy pliku",
   "Title instead of file name on tiles": "Tytuł zamiast nazwy pliku na kafelkach",
   "Title of the video": "Tytuł wideo",
+  "Title Z–A": "Tytuł Z–A",
   "Title · click to edit, Ctrl+S saves": "Tytuł · kliknij, aby edytować, Ctrl+S zapisuje",
   "Titles and exclusions on import": "Tytuły i pomijanie podczas importu",
   "Titles from file names ({0:N0} items) …": {
+    "one": "Tytuł z nazwy pliku (1 element)…",
     "few": "Tytuły z nazw plików ({0:N0} elementy)…",
-    "many": "Tytuły z nazw plików ({0:N0} elementów)…",
-    "one": "Tytuł z nazwy pliku (1 element)…"
+    "many": "Tytuły z nazw plików ({0:N0} elementów)…"
   },
   "Titles take up to two lines instead of being cut off after one line.": "Tytuły zajmują do dwóch wierszy, zamiast być obcinane po pierwszym.",
+  "to": "do",
   "To date": "Do dnia",
   "To the Recycle Bin": "Do Kosza",
   "Toggle favorite": "Przełącz ulubione",
@@ -2872,11 +3018,14 @@
   "Turn on": "Włącz",
   "Turn on automatic previews": "Włącz automatyczne podglądy",
   "Turn on, change the password or create a new recovery key. The password is asked for on every start and never stored.": "Włącz szyfrowanie, zmień hasło lub utwórz nowy klucz odzyskiwania. Hasło jest wymagane przy każdym uruchomieniu i nigdy nie jest zapisywane.",
+  "Two selected Stash entries would get the same directory name: {0}": "Dwa zaznaczone wpisy Stash otrzymałyby tę samą nazwę w katalogu tagów: {0}",
   "Type": "Typ",
   "Type an extension and confirm with Enter; separate several with semicolons.": "Wpisz rozszerzenie i potwierdź klawiszem Enter; kilka rozszerzeń oddziel średnikami.",
   "Type: {0}\nStatus: {1}\nInput: {2}\nOutput: {3}\n\n{4}": "Typ: {0}\nStan: {1}\nWejście: {2}\nWyjście: {3}\n\n{4}",
+  "TYPICAL COMBINATIONS": "TYPOWE KOMBINACJE",
   "Unable to access": "Dostęp nie jest możliwy",
   "Unassigned · original bytes are kept.": "Nieprzypisane · oryginalne bajty zostają zachowane.",
+  "unavailable": "niedostępny",
   "Unavailable · missing files are not reported here": "Niedostępne · brakujące pliki nie są tutaj zgłaszane",
   "Undo": "Cofnij",
   "Undone": "Cofnięto",
@@ -2885,6 +3034,7 @@
   "Unfold the sidebar": "Rozwiń pasek boczny",
   "Unfold the sidebar (Ctrl+B)": "Rozwiń pasek boczny (Ctrl+B)",
   "Unique": "Unikatowa nazwa",
+  "unknown": "nieznana",
   "Unknown backup format.": "Nieznany format kopii zapasowej.",
   "Unknown backup record.": "Nieznany rekord kopii zapasowej.",
   "Unknown format of the picture folder.": "Nieznany format folderu obrazów.",
@@ -2911,25 +3061,30 @@
   "Unreviewed": "Niesprawdzone",
   "Unsafe path in the backup.": "Niebezpieczna ścieżka w kopii zapasowej.",
   "Unsaved changes": "Niezapisane zmiany",
+  "until {0:d}": "do {0:d}",
   "Unused files in the library folder": "Nieużywane pliki w folderze biblioteki",
   "Unused tags too": "Nieużywane tagi również",
   "Unwatched items with tags from videos you watched recently; if there is no viewing history, highly rated items.": "Nieobejrzane elementy z tagami ostatnio oglądanych filmów; przy braku historii — dobrze oceniane.",
   "Up": "W górę",
+  "up to 5 min": "do 5 min",
   "Up to three rows for tags you have watched frequently recently.": "Do trzech rzędów z tagami często ostatnio oglądanych materiałów.",
-  "Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings.": "Tab przechodzi do elementów sterowania; strzałki zmieniają aktywny suwak. Esc zamyka menu, opuszcza pełny ekran lub zamyka odtwarzacz. Skróty zmienisz w ustawieniach.",
+  "up to {0:0.##} {1}": "do {0:0.##} {1}",
+  "up to {0} MB": "do {0} MB",
+  "up to {0} min": "do {0} min",
   "Use as tag image": "Użyj jako obrazu tagu",
   "Use as tag image …": "Użyj jako obrazu tagu…",
   "Use as thumbnail": "Użyj jako miniatury",
   "Use as thumbnail for …": "Użyj jako miniatury dla…",
   "Use media keys": "Używaj klawiszy multimedialnych",
   "Use still as image …": "Użyj kadru jako obrazu…",
+  "Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings.": "Tab przechodzi do elementów sterowania; strzałki zmieniają aktywny suwak. Esc zamyka menu, opuszcza pełny ekran lub zamyka odtwarzacz. Skróty zmienisz w ustawieniach.",
   "Use the existing destination data": "Użyj istniejących danych docelowych",
   "Use the folder tree to narrow the view. The subfolder switch affects browsing only. Wheel scrolls vertically; Shift+wheel scrolls horizontally.": "Drzewo folderów zawęża widok. Przełącznik podfolderów zmienia tylko wyświetlanie. Kółko przewija pionowo; Shift+kółko poziomo.",
   "Use time-based view": "Wykorzystaj widok oparty na czasie",
   "User settings found": "Znaleziono ustawienia użytkownika",
-  "VIDEO": "WIDEO",
   "Value": "Wartość",
   "Versions": "Wersje",
+  "VIDEO": "WIDEO",
   "Video codec": "Kodek wideo",
   "Video codecs": "Kodeki wideo",
   "Video files": "Pliki wideo",
@@ -2958,9 +3113,9 @@
   "View {0}": "Widok {0}",
   "View …": "Zobacz …",
   "Viewed {0:N0} times": {
+    "one": "Wyświetlono raz",
     "few": "Wyświetlono {0:N0} razy",
-    "many": "Wyświetlono {0:N0} razy",
-    "one": "Wyświetlono raz"
+    "many": "Wyświetlono {0:N0} razy"
   },
   "Visual similarity does not prove identical file content.": "Podobieństwo wizualne nie dowodzi identycznej zawartości plików.",
   "Vocabulary": "Słownik",
@@ -2971,27 +3126,35 @@
   "Waiting": "Oczekuje",
   "Watch later": "Obejrzyj później",
   "Watched": "Obejrzane",
+  "watched": "obejrzane",
   "Watched (history)": "Obejrzano (historia)",
   "Watched up to {0} ({1:P0})": "Obejrzano do {0} ({1:P0})",
+  "watched {0:N0} times": {
+    "one": "obejrzano raz",
+    "few": "obejrzano {0:N0} razy",
+    "many": "obejrzano {0:N0} razy"
+  },
+  "watched {0:N0}×": "obejrzano {0:N0}×",
   "Web address with {0}": "Adres internetowy z {0}",
   "Web address with {0} for the name and optionally {1} for the interface language.": "Adres internetowy z {0} dla nazwy i opcjonalnie {1} dla języka interfejsu.",
   "Weekly": "Co tydzień",
   "Weight (kg)": "Waga (kg)",
   "Welcome to FlixyPix": "Witamy w FlixyPix",
   "Well rated and watched often.": "Dobrze oceniane i często oglądane.",
+  "well rated, not watched yet": "dobrze oceniane, jeszcze nieobejrzane",
   "What happens to a running video. Muted videos get their sound back when FlixyPix returns.": "Co dzieje się z odtwarzanym filmem. Wyciszone filmy odzyskują dźwięk, gdy FlixyPix wraca.",
   "What mouse buttons and wheel do over the image. A double-click always switches to full screen.": "Działanie przycisków i kółka myszy nad obrazem. Dwukrotne kliknięcie zawsze przełącza na pełny ekran.",
   "What should be imported?": "Co zaimportować?",
   "What the home page shows and whether FlixyPix starts with it.": "Co pokazuje strona główna i czy FlixyPix zaczyna się od niej.",
   "What the mouse wheel does without Ctrl; with Ctrl it always zooms.": "Działanie kółka myszy bez Ctrl; z Ctrl zawsze powiększa lub pomniejsza.",
   "Wheel up seeks back instead of forward.": "Kółko w górę przewija wstecz zamiast naprzód.",
-  "When Windows is locked (Win+L) or the computer goes to sleep with a lock.": "Gdy Windows zostanie zablokowany (Win+L) lub komputer przejdzie w uśpienie z blokadą.",
   "When minimized, FlixyPix and all its windows leave the taskbar; only the icon in the notification area remains, and a click on it brings everything back. Playback continues. Applies to this computer.": "Po zminimalizowaniu FlixyPix znika z paska zadań razem ze wszystkimi oknami; zostaje tylko ikona w obszarze powiadomień, a kliknięcie jej przywraca wszystko. Odtwarzanie trwa dalej. Dotyczy tego komputera.",
   "When off, hidden subfolders are skipped in folder imports. Folders chosen explicitly are always imported.": "Po wyłączeniu ukryte podfoldery są pomijane podczas importu folderów. Foldery wybrane jawnie są zawsze importowane.",
   "When off, the player only reacts to Esc, F11 and the media keys.": "Po wyłączeniu odtwarzacz reaguje tylko na Esc, F11 i klawisze multimedialne.",
   "When off, tiles and list show the file name.": "Po wyłączeniu kafelki i lista pokazują nazwę pliku.",
   "When the item was released or recorded; the age of performers at recording counts from it, otherwise from the file date.": "Kiedy element został wydany lub nagrany; od tej daty liczony jest wiek wykonawców w chwili nagrania, a jeśli jej brak – od daty pliku.",
   "When the mouse moves over a video, frames from the video change on the tile. They are created the first time and cached.": "Po wskazaniu filmu myszą na kafelku zmieniają się obrazy z filmu. Są tworzone przy pierwszym użyciu i zapisywane w pamięci podręcznej.",
+  "When Windows is locked (Win+L) or the computer goes to sleep with a lock.": "Gdy Windows zostanie zablokowany (Win+L) lub komputer przejdzie w uśpienie z blokadą.",
   "Where to?": "Dokąd?",
   "Which image files are imported and from which rating they count as favorites.": "Które pliki obrazów są importowane i od jakiej oceny są uznawane za ulubione.",
   "Which source imported earlier should be updated? Local edits are kept; differences are listed in the report afterwards. Media files are not opened.": "Które wcześniej zaimportowane źródło zaktualizować? Lokalne zmiany zostają zachowane; różnice znajdą się w raporcie. Pliki multimedialne nie są otwierane.",
@@ -3000,14 +3163,14 @@
   "Whole files": "Całe pliki",
   "Whole library": "Cała biblioteka",
   "Whole view ({0:N0} items)": {
+    "one": "Cały widok (1 element)",
     "few": "Cały widok ({0:N0} elementy)",
-    "many": "Cały widok ({0:N0} elementów)",
-    "one": "Cały widok (1 element)"
+    "many": "Cały widok ({0:N0} elementów)"
   },
   "Whole view ({0:N0} items) …": {
+    "one": "Cały widok (1 element)…",
     "few": "Cały widok ({0:N0} elementy)…",
-    "many": "Cały widok ({0:N0} elementów)…",
-    "one": "Cały widok (1 element)…"
+    "many": "Cały widok ({0:N0} elementów)…"
   },
   "Width": "Szerokość",
   "Width in pixels": "Szerokość w pikselach",
@@ -3022,17 +3185,20 @@
   "With the most items.": "Z największą liczbą elementów.",
   "With thumbnail": "Z miniaturą",
   "Without a header row, only the first column is read as the name.": "Bez rzędu nagłówków tylko pierwsza kolumna jest odczytana jako nazwa.",
+  "without extension": "bez rozszerzenia",
+  "without HDR": "bez HDR",
   "Without mouse movement the bar disappears after 2.5 seconds; when off it stays.": "Bez ruchu myszy pasek znika po 2,5 sekundy; gdy opcja jest wyłączona, pozostaje widoczny.",
   "Without thumbnail": "Bez miniatury",
+  "without {0}": "bez {0}",
   "Works in all FlixyPix windows. Default: Ctrl+Shift+U.": "Działa we wszystkich oknach FlixyPix. Domyślnie: Ctrl+Shift+U.",
   "Works system-wide only while hidden or minimized by the boss key. Default: Shift+Esc. Choose a different combination from the boss key.": "Działa globalnie tylko wtedy, gdy FlixyPix jest ukryty lub zminimalizowany klawiszem ukrywania. Domyślnie: Shift+Esc. Wybierz inną kombinację niż klawisz ukrywania.",
   "Wrap long titles": "Zawijaj długie tytuły",
   "Write NFO files": "Zapisz pliki NFO",
   "Write NFO files for {0} next to the videos?\n\nExisting NFO files stay unchanged. The videos themselves are not changed.": "Zapisać pliki NFO dla: {0} obok filmów?\n\nIstniejące pliki NFO pozostaną bez zmian. Same filmy nie zostaną zmienione.",
-  "Write XMP sidecars": "Zapisz pliki towarzyszące XMP",
   "Write title, description, rating and tags of {0} into XMP sidecars next to the media files?\n\nExisting sidecars are added to, not replaced. The media files themselves stay unchanged.": "Zapisać tytuł, opis, ocenę i tagi {0} w plikach towarzyszących XMP obok plików multimedialnych?\n\nIstniejące pliki towarzyszące zostaną uzupełnione, a nie zastąpione. Same pliki multimedialne pozostaną niezmienione.",
   "Write to XMP sidecars": "Zapisz w plikach towarzyszących XMP",
   "Write to XMP sidecars …": "Zapisz w plikach towarzyszących XMP…",
+  "Write XMP sidecars": "Zapisz pliki towarzyszące XMP",
   "Writes only the catalog as a readable JSON file, without graphics.": "Zapisuje tylko katalog jako czytelny plik JSON, bez grafik.",
   "Writes tags, title, description and rating beside the files; the media files stay unchanged.": "Zapisuje tagi, tytuł, opis i ocenę obok plików; pliki multimedialne pozostają bez zmian.",
   "Writes title, description, rating and tags of the selected or all videos into NFO files next to them; existing ones stay unchanged.": "Zapisuje tytuł, opis, ocenę i tagi wybranych lub wszystkich filmów w plikach NFO obok nich; istniejące pozostają bez zmian.",
@@ -3042,352 +3208,201 @@
   "Wrong · try again in {0} s": "Błąd · ponowna próba za {0} s",
   "X relative to the playback area (0 = left, negative = outside)": "X względem obszaru odtwarzania (0 = lewa krawędź, ujemne = poza obszarem)",
   "Y relative to the playback area (0 = top)": "Y względem strefy odtwarzania (0 = górna)",
-  "YOUR MEDIA. YOUR ARCHIVE.": "TWOJE MULTIMEDIA. TWOJE ARCHIWUM.",
   "Year": "Rok",
+  "year": "rok",
   "Yes": "Tak",
+  "yes": "tak",
   "Your files stay where they are. Your library grows here.": "Twoje pliki pozostają na miejscu. Tutaj rośnie Twoja biblioteka.",
   "Your library is waiting for its first import": "Twoja biblioteka czeka na swój pierwszy import",
+  "YOUR MEDIA. YOUR ARCHIVE.": "TWOJE MULTIMEDIA. TWOJE ARCHIWUM.",
   "Your watch list.": "Twoja lista do obejrzenia.",
   "Zoom": "Powiększanie",
+  "zoom": "powiększaj",
   "Zoom in (+)": "Powiększ (+)",
   "Zoom out (−)": "Pomniejsz (−)",
-  "about {0} minutes": {
-    "few": "około {0} minut",
-    "many": "około {0} minut",
-    "one": "około 1 minuty"
-  },
-  "all": "wszystkie",
-  "all images and videos in the library": "wszystkie obrazy i filmy w bibliotece",
-  "all videos in the library": "wszystkie filmy w bibliotece",
-  "already exists; additional information will be added": "istnieje, zostanie uzupełnione",
-  "already watched": "już obejrzane",
-  "any": "dowolne",
-  "at least": "co najmniej",
-  "at least one": "co najmniej jeden",
-  "at least one:": "co najmniej jeden:",
-  "at most": "najwyżej",
-  "before ": "przed ",
-  "browse": "przeglądaj",
-  "catalog check\u0004Remove from catalog": "Usuń z katalogu",
-  "category missing": "brak kategorii",
-  "complete": "kompletne",
-  "configsettings: shortcut {0} was assigned more than once; “{1}” stays free.": "configsettings: skrót {0} był przypisany wielokrotnie; „{1}” pozostaje bez przypisania.",
-  "contains": "zawiera",
-  "copy": "kopiuj",
-  "counting …": "liczenie…",
-  "died aged {0}": {
-    "few": "wiek w chwili śmierci: {0} lata",
-    "many": "wiek w chwili śmierci: {0} lat",
-    "one": "wiek w chwili śmierci: 1 rok"
-  },
-  "difference {0}": "różnica {0}",
-  "directory\u0004Position in seconds": "Pozycja w sekundach",
-  "duplicate, already in line {0}": "duplikat, już w wierszu {0}",
-  "empty": "pusty",
-  "empty, created when opened": "pusta, zostanie utworzona przy otwarciu",
-  "encrypted": "zaszyfrowana",
-  "ends with": "kończy się na",
-  "exactly": "dokładnie",
-  "ffprobe is missing. The path can be chosen in Settings › Tools.": "Brak ffprobe. Ścieżkę można wybrać w Ustawienia › Narzędzia.",
-  "for example 34C-24-34": "np. 34C-24-34",
-  "for {0:N0} items": {
-    "few": "dla elementów (liczba: {0:N0})",
-    "many": "dla elementów (liczba: {0:N0})",
-    "one": "dla elementów (liczba: {0:N0})"
-  },
-  "forward ▶": "naprzód ▶",
-  "from 30 fps": "od 30 kl./s",
-  "from 50 fps": "od 50 kl./s",
-  "from 60 fps": "od 60 kl./s",
-  "from {0:0.##} {1}": "od {0:0.##} {1}",
-  "from {0:0.#} {1}": "od {0:0.#} {1}",
-  "from {0:d}": "od {0:d}",
-  "from {0}": "od {0}",
-  "from {0} MB": "od {0} MB",
-  "from {0} fps": "od {0} kl./s",
-  "from {0} min": "od {0} min",
-  "has one of the tags": "ma jeden z tagów",
-  "highest {0:N0}": "najwyżej {0:N0}",
-  "home feed\u0004never watched": "jeszcze nieobejrzane",
-  "home page\u0004Rows": "Rzędy",
-  "imported ": "zaimportowano ",
-  "imported {0:d}": "zaimportowano {0:d}",
-  "imported {0}": "zaimportowano {0}",
-  "in case the password is forgotten. It will not be shown again and cannot be recovered.": "na wypadek zapomnienia hasła. Klucz nie zostanie ponownie wyświetlony i nie można go odzyskać.",
-  "in order": "po kolei",
-  "in the file": "w pliku",
-  "is": "jest",
-  "is known": "jest znany",
-  "is not": "nie jest",
-  "is set": "jest podane",
-  "is unknown": "jest nieznany",
-  "key\u0004Home": "Home",
-  "last 30 days": "ostatnie 30 dni",
-  "last 7 days": "ostatnie 7 dni",
-  "last opened {0}": "ostatnio otwarto {0}",
-  "last year": "ostatni rok",
-  "legacy setting\u0004Font": "Krój czcionki",
-  "less random": "mniej losowo",
-  "less than": "mniej niż",
-  "less than a minute": "mniej niż minuta",
-  "library\u0004View": "Widok",
-  "main file": "plik główny",
-  "matches the pattern (regex)": "pasuje do wzorca (regex)",
-  "matches “{0}”, will be added there": "odpowiada „{0}”, zostanie tam uzupełnione",
-  "migration\u0004Please enter a valid new folder name.": "Podaj prawidłową nową nazwę folderu.",
-  "missing": "brakuje",
-  "more than": "więcej niż",
-  "never watched": "nieobejrzane",
-  "new": "nowy",
-  "new, new category ({0})": "nowe, nowa kategoria ({0})",
-  "no": "nie",
-  "no backup yet · create one under “Backup”": "brak kopii zapasowej · utwórz ją w „Kopia zapasowa”",
-  "no problems": "bez problemów",
-  "no unambiguous match": "brak jednoznacznego przypisania",
-  "none": "brak",
-  "not": "nie",
-  "not assigned": "nieprzypisane",
-  "not checked yet": "jeszcze nie sprawdzono",
-  "not encrypted": "niezaszyfrowana",
-  "not in this catalog": "brak w tym katalogu",
-  "not read yet": "jeszcze nie odczytano",
-  "nothing": "nic",
-  "of": "z",
-  "older than 1 year": "starsze niż 1 rok",
-  "older than 2 years": "starsze niż 2 lata",
-  "older than 5 years": "starsze niż 5 lat",
-  "one file": "jeden plik",
-  "open": "otwarta",
-  "open in another window": "otwarta w innym oknie",
-  "over 1 h": "ponad 1 h",
-  "pan": "przesuwaj",
-  "partly": "częściowo",
-  "played {0:N0} times": {
-    "few": "odtworzono {0:N0} razy",
-    "many": "odtworzono {0:N0} razy",
-    "one": "odtworzono 1 raz"
-  },
-  "player\u0004Audio": "Dźwięk",
-  "player\u0004View": "Widok",
-  "plays": "odtwarzany",
-  "present without a category, gets “{0}”": "istnieje bez kategorii, otrzyma „{0}”",
-  "random": "losowo",
-  "released {0}": "wydano {0}",
-  "rename": "zmień nazwę",
-  "saved search": "zapisane wyszukiwanie",
-  "seek": "przewijaj",
-  "seek, volume with Ctrl": "przewijanie, z Ctrl głośność",
-  "settings card\u0004Import from EazyFlixPix 4": "Import z EazyFlixPix 4",
-  "several versions": "kilka wersji",
-  "similar\u0004Keep": "Zachowaj",
-  "starts with": "zaczyna się od",
-  "still {0}": "jeszcze {0}",
-  "tag image\u0004Remove assignment": "Usuń przypisanie",
-  "to": "do",
-  "unavailable": "niedostępny",
-  "unknown": "nieznana",
-  "until {0:d}": "do {0:d}",
-  "up to 5 min": "do 5 min",
-  "up to {0:0.##} {1}": "do {0:0.##} {1}",
-  "up to {0} MB": "do {0} MB",
-  "up to {0} min": "do {0} min",
-  "watched": "obejrzane",
-  "watched {0:N0} times": {
-    "few": "obejrzano {0:N0} razy",
-    "many": "obejrzano {0:N0} razy",
-    "one": "obejrzano raz"
-  },
-  "watched {0:N0}×": "obejrzano {0:N0}×",
-  "well rated, not watched yet": "dobrze oceniane, jeszcze nieobejrzane",
-  "without HDR": "bez HDR",
-  "without extension": "bez rozszerzenia",
-  "without {0}": "bez {0}",
-  "year": "rok",
-  "yes": "tak",
-  "zoom": "powiększaj",
   "{0:0.###} s · X {1:0.###}, Y {2:0.###} · {3:0.###} × {4:0.###}": "{0:0.###} s · X {1:0.###}, Y {2:0.###} · {3:0.###} × {4:0.###}",
   "{0:0.#} out of 5 stars": "{0:0.#} z 5 gwiazdek",
   "{0:0} min": "{0:0} min",
-  "{0:N0} NFO files written": {
-    "few": "Zapisano {0:N0} pliki NFO",
-    "many": "Zapisano {0:N0} plików NFO",
-    "one": "Zapisano 1 plik NFO"
-  },
   "{0:N0} already imported": "Już zaimportowano: {0:N0}",
   "{0:N0} belong to deleted entries (orphans)": {
+    "one": "Odwołania do usuniętych wpisów (osierocone): {0:N0}",
     "few": "Odwołania do usuniętych wpisów (osierocone): {0:N0}",
-    "many": "Odwołania do usuniętych wpisów (osierocone): {0:N0}",
-    "one": "Odwołania do usuniętych wpisów (osierocone): {0:N0}"
+    "many": "Odwołania do usuniętych wpisów (osierocone): {0:N0}"
   },
   "{0:N0} catalog paths changed. The media files were neither opened nor moved.": {
+    "one": "Zmienione ścieżki katalogu: {0:N0}. Plików multimedialnych nie otwarto ani nie przeniesiono.",
     "few": "Zmienione ścieżki katalogu: {0:N0}. Plików multimedialnych nie otwarto ani nie przeniesiono.",
-    "many": "Zmienione ścieżki katalogu: {0:N0}. Plików multimedialnych nie otwarto ani nie przeniesiono.",
-    "one": "Zmienione ścieżki katalogu: {0:N0}. Plików multimedialnych nie otwarto ani nie przeniesiono."
+    "many": "Zmienione ścieżki katalogu: {0:N0}. Plików multimedialnych nie otwarto ani nie przeniesiono."
   },
   "{0:N0} entries": {
+    "one": "1 wpis",
     "few": "{0:N0} wpisy",
-    "many": "{0:N0} wpisów",
-    "one": "1 wpis"
+    "many": "{0:N0} wpisów"
   },
   "{0:N0} entries exported to “{1}”": {
+    "one": "Wpisy wyeksportowane do „{1}”: {0:N0}",
     "few": "Wpisy wyeksportowane do „{1}”: {0:N0}",
-    "many": "Wpisy wyeksportowane do „{1}”: {0:N0}",
-    "one": "Wpisy wyeksportowane do „{1}”: {0:N0}"
+    "many": "Wpisy wyeksportowane do „{1}”: {0:N0}"
   },
   "{0:N0} entries imported from “{1}”": {
+    "one": "Wpisy zaimportowane z „{1}”: {0:N0}",
     "few": "Wpisy zaimportowane z „{1}”: {0:N0}",
-    "many": "Wpisy zaimportowane z „{1}”: {0:N0}",
-    "one": "Wpisy zaimportowane z „{1}”: {0:N0}"
+    "many": "Wpisy zaimportowane z „{1}”: {0:N0}"
   },
   "{0:N0} entries selected · {1:N0} assignments in total": {
+    "one": "Wybrane wpisy: {0:N0} · przypisania łącznie: {1:N0}",
     "few": "Wybrane wpisy: {0:N0} · przypisania łącznie: {1:N0}",
-    "many": "Wybrane wpisy: {0:N0} · przypisania łącznie: {1:N0}",
-    "one": "Wybrane wpisy: {0:N0} · przypisania łącznie: {1:N0}"
+    "many": "Wybrane wpisy: {0:N0} · przypisania łącznie: {1:N0}"
   },
   "{0:N0} entries without an image": {
+    "one": "Wpisy bez obrazu: {0:N0}",
     "few": "Wpisy bez obrazu: {0:N0}",
-    "many": "Wpisy bez obrazu: {0:N0}",
-    "one": "Wpisy bez obrazu: {0:N0}"
+    "many": "Wpisy bez obrazu: {0:N0}"
   },
   "{0:N0} errors": {
+    "one": "1 błąd",
     "few": "{0:N0} błędy",
-    "many": "{0:N0} błędów",
-    "one": "1 błąd"
+    "many": "{0:N0} błędów"
   },
   "{0:N0} files": {
+    "one": "1 plik",
     "few": "{0:N0} pliki",
-    "many": "{0:N0} plików",
-    "one": "1 plik"
+    "many": "{0:N0} plików"
   },
   "{0:N0} files combined in one item": {
+    "one": "1 plik w jednym elemencie",
     "few": "{0:N0} pliki połączono w jednym elemencie",
-    "many": "{0:N0} plików połączono w jednym elemencie",
-    "one": "1 plik w jednym elemencie"
+    "many": "{0:N0} plików połączono w jednym elemencie"
   },
   "{0:N0} files deleted": {
+    "one": "Usunięto 1 plik",
     "few": "Usunięto {0:N0} pliki",
-    "many": "Usunięto {0:N0} plików",
-    "one": "Usunięto 1 plik"
+    "many": "Usunięto {0:N0} plików"
   },
   "{0:N0} files · {1}": {
+    "one": "Pliki: {0:N0} · {1}",
     "few": "Pliki: {0:N0} · {1}",
-    "many": "Pliki: {0:N0} · {1}",
-    "one": "Pliki: {0:N0} · {1}"
+    "many": "Pliki: {0:N0} · {1}"
   },
   "{0:N0} groups of similar items": {
+    "one": "1 grupa podobnych elementów",
     "few": "{0:N0} grupy podobnych elementów",
-    "many": "{0:N0} grup podobnych elementów",
-    "one": "1 grupa podobnych elementów"
+    "many": "{0:N0} grup podobnych elementów"
   },
   "{0:N0} groups with identical file content.": {
+    "one": "1 grupa z identyczną zawartością plików.",
     "few": "{0:N0} grupy z identyczną zawartością plików.",
-    "many": "{0:N0} grup z identyczną zawartością plików.",
-    "one": "1 grupa z identyczną zawartością plików."
+    "many": "{0:N0} grup z identyczną zawartością plików."
   },
   "{0:N0} h": "{0:N0} godz.",
   "{0:N0} history entries deleted": {
+    "one": "Usunięto 1 wpis historii",
     "few": "Usunięto {0:N0} wpisy historii",
-    "many": "Usunięto {0:N0} wpisów historii",
-    "one": "Usunięto 1 wpis historii"
+    "many": "Usunięto {0:N0} wpisów historii"
   },
   "{0:N0} images": {
+    "one": "1 obraz",
     "few": "{0:N0} obrazy",
-    "many": "{0:N0} obrazów",
-    "one": "1 obraz"
+    "many": "{0:N0} obrazów"
   },
   "{0:N0} imported": "Zaimportowano: {0:N0}",
   "{0:N0} imported, {1:N0} reassigned": "Zaimportowano: {0:N0}, przypisano ponownie: {1:N0}",
   "{0:N0} items": {
+    "one": "1 element",
     "few": "{0:N0} elementy",
-    "many": "{0:N0} elementów",
-    "one": "1 element"
+    "many": "{0:N0} elementów"
   },
   "{0:N0} items added to “{1}”": {
+    "one": "1 element dodano do „{1}”",
     "few": "{0:N0} elementy dodano do „{1}”",
-    "many": "{0:N0} elementów dodano do „{1}”",
-    "one": "1 element dodano do „{1}”"
+    "many": "{0:N0} elementów dodano do „{1}”"
   },
   "{0:N0} items checked": {
+    "one": "Sprawdzone elementy: {0:N0}",
     "few": "Sprawdzone elementy: {0:N0}",
-    "many": "Sprawdzone elementy: {0:N0}",
-    "one": "Sprawdzone elementy: {0:N0}"
+    "many": "Sprawdzone elementy: {0:N0}"
   },
   "{0:N0} items marked for later": {
+    "one": "1 element oznaczono na później",
     "few": "{0:N0} elementy oznaczono na później",
-    "many": "{0:N0} elementów oznaczono na później",
-    "one": "1 element oznaczono na później"
+    "many": "{0:N0} elementów oznaczono na później"
   },
   "{0:N0} items no longer pinned as favorite": {
+    "one": "Odpięto 1 element z ulubionych",
     "few": "Odpięto {0:N0} elementy z ulubionych",
-    "many": "Odpięto {0:N0} elementów z ulubionych",
-    "one": "Odpięto 1 element z ulubionych"
+    "many": "Odpięto {0:N0} elementów z ulubionych"
   },
   "{0:N0} items opened with {1}": {
+    "one": "1 element otwarty w {1}",
     "few": "{0:N0} elementy otwarte w {1}",
-    "many": "{0:N0} elementów otwartych w {1}",
-    "one": "1 element otwarty w {1}"
+    "many": "{0:N0} elementów otwartych w {1}"
   },
   "{0:N0} items pinned as favorite": {
+    "one": "Przypięto 1 element jako ulubiony",
     "few": "Przypięto {0:N0} elementy jako ulubione",
-    "many": "Przypięto {0:N0} elementów jako ulubione",
-    "one": "Przypięto 1 element jako ulubiony"
-  },
-  "{0:N0} items removed from Watch later": {
-    "few": "Usunięto {0:N0} elementy z Obejrzyj później",
-    "many": "Usunięto {0:N0} elementów z Obejrzyj później",
-    "one": "Usunięto 1 element z Obejrzyj później"
+    "many": "Przypięto {0:N0} elementów jako ulubione"
   },
   "{0:N0} items removed from collection": {
+    "one": "Element usunięty z kolekcji",
     "few": "{0:N0} elementy usunięto z kolekcji",
-    "many": "{0:N0} elementów usunięto z kolekcji",
-    "one": "Element usunięty z kolekcji"
+    "many": "{0:N0} elementów usunięto z kolekcji"
   },
   "{0:N0} items removed from the catalog": {
+    "one": "Usunięto 1 element z katalogu",
     "few": "Usunięto {0:N0} elementy z katalogu",
-    "many": "Usunięto {0:N0} elementów z katalogu",
-    "one": "Usunięto 1 element z katalogu"
+    "many": "Usunięto {0:N0} elementów z katalogu"
+  },
+  "{0:N0} items removed from Watch later": {
+    "one": "Usunięto 1 element z Obejrzyj później",
+    "few": "Usunięto {0:N0} elementy z Obejrzyj później",
+    "many": "Usunięto {0:N0} elementów z Obejrzyj później"
   },
   "{0:N0} items removed from “{1}”": {
+    "one": "1 element usunięto z „{1}”",
     "few": "{0:N0} elementy usunięto z „{1}”",
-    "many": "{0:N0} elementów usunięto z „{1}”",
-    "one": "1 element usunięto z „{1}”"
+    "many": "{0:N0} elementów usunięto z „{1}”"
   },
   "{0:N0} items saved as playlist · {1}": {
+    "one": "1 element zapisany jako lista odtwarzania · {1}",
     "few": "{0:N0} elementy zapisane jako lista odtwarzania · {1}",
-    "many": "{0:N0} elementów zapisanych jako lista odtwarzania · {1}",
-    "one": "1 element zapisany jako lista odtwarzania · {1}"
+    "many": "{0:N0} elementów zapisanych jako lista odtwarzania · {1}"
   },
   "{0:N0} items selected": {
+    "one": "Wybrane elementy: {0:N0}",
     "few": "Wybrane elementy: {0:N0}",
-    "many": "Wybrane elementy: {0:N0}",
-    "one": "Wybrane elementy: {0:N0}"
+    "many": "Wybrane elementy: {0:N0}"
   },
   "{0:N0} items · the newest {1:N0}; “Show items” shows all": {
+    "one": "Elementy: {0:N0} · najnowsze {1:N0}; „Pokaż elementy” pokazuje wszystkie",
     "few": "Elementy: {0:N0} · najnowsze {1:N0}; „Pokaż elementy” pokazuje wszystkie",
-    "many": "Elementy: {0:N0} · najnowsze {1:N0}; „Pokaż elementy” pokazuje wszystkie",
-    "one": "Elementy: {0:N0} · najnowsze {1:N0}; „Pokaż elementy” pokazuje wszystkie"
+    "many": "Elementy: {0:N0} · najnowsze {1:N0}; „Pokaż elementy” pokazuje wszystkie"
   },
   "{0:N0} kept": "Zachowano: {0:N0}",
   "{0:N0} kept because FlixyPix already has its own image": "Zachowano {0:N0}, ponieważ FlixyPix ma już własny obraz",
   "{0:N0} matches": {
+    "one": "Wyniki: {0:N0}",
     "few": "Wyniki: {0:N0}",
-    "many": "Wyniki: {0:N0}",
-    "one": "Wyniki: {0:N0}"
+    "many": "Wyniki: {0:N0}"
   },
   "{0:N0} missing files": {
+    "one": "Brakujące pliki: {0:N0}",
     "few": "Brakujące pliki: {0:N0}",
-    "many": "Brakujące pliki: {0:N0}",
-    "one": "Brakujące pliki: {0:N0}"
+    "many": "Brakujące pliki: {0:N0}"
   },
   "{0:N0} moved files": {
+    "one": "Przeniesione pliki: {0:N0}",
     "few": "Przeniesione pliki: {0:N0}",
-    "many": "Przeniesione pliki: {0:N0}",
-    "one": "Przeniesione pliki: {0:N0}"
+    "many": "Przeniesione pliki: {0:N0}"
   },
   "{0:N0} new files": {
+    "one": "Nowe pliki: {0:N0}",
     "few": "Nowe pliki: {0:N0}",
-    "many": "Nowe pliki: {0:N0}",
-    "one": "Nowe pliki: {0:N0}"
+    "many": "Nowe pliki: {0:N0}"
+  },
+  "{0:N0} NFO files written": {
+    "one": "Zapisano 1 plik NFO",
+    "few": "Zapisano {0:N0} pliki NFO",
+    "many": "Zapisano {0:N0} plików NFO"
   },
   "{0:N0} of {1:N0}": "{0:N0} z {1:N0}",
   "{0:N0} of {1:N0} entries": "{0:N0} z {1:N0} wpisów",
@@ -3395,108 +3410,108 @@
   "{0:N0} of {1:N0} video thumbnails recreated": "Utworzono ponownie {0:N0} z {1:N0} miniatur wideo",
   "{0:N0} path changes · {1:N0} conflicts": "Zmiany ścieżek: {0:N0} · konflikty: {1:N0}",
   "{0:N0} pictures": {
+    "one": "1 obraz",
     "few": "{0:N0} obrazy",
-    "many": "{0:N0} obrazów",
-    "one": "1 obraz"
+    "many": "{0:N0} obrazów"
   },
   "{0:N0} preview clips created": {
+    "one": "Utworzone klipy podglądu: {0:N0}",
     "few": "Utworzone klipy podglądu: {0:N0}",
-    "many": "Utworzone klipy podglądu: {0:N0}",
-    "one": "Utworzone klipy podglądu: {0:N0}"
+    "many": "Utworzone klipy podglądu: {0:N0}"
   },
   "{0:N0} problems": {
+    "one": "1 problem",
     "few": "{0:N0} problemy",
-    "many": "{0:N0} problemów",
-    "one": "1 problem"
+    "many": "{0:N0} problemów"
   },
   "{0:N0} problems found": {
+    "one": "Znaleziono 1 problem",
     "few": "Znaleziono {0:N0} problemy",
-    "many": "Znaleziono {0:N0} problemów",
-    "one": "Znaleziono 1 problem"
+    "many": "Znaleziono {0:N0} problemów"
   },
   "{0:N0} programs imported from EazyFlixPix 4 · not saved yet": {
+    "one": "1 program zaimportowany z EazyFlixPix 4 · jeszcze nie zapisano",
     "few": "{0:N0} programy zaimportowane z EazyFlixPix 4 · jeszcze nie zapisano",
-    "many": "{0:N0} programów zaimportowanych z EazyFlixPix 4 · jeszcze nie zapisano",
-    "one": "1 program zaimportowany z EazyFlixPix 4 · jeszcze nie zapisano"
+    "many": "{0:N0} programów zaimportowanych z EazyFlixPix 4 · jeszcze nie zapisano"
   },
   "{0:N0} renamed files": {
+    "one": "Pliki ze zmienioną nazwą: {0:N0}",
     "few": "Pliki ze zmienioną nazwą: {0:N0}",
-    "many": "Pliki ze zmienioną nazwą: {0:N0}",
-    "one": "Pliki ze zmienioną nazwą: {0:N0}"
+    "many": "Pliki ze zmienioną nazwą: {0:N0}"
   },
   "{0:N0} scenes and bookmarks": {
+    "one": "Sceny i zakładki: {0:N0}",
     "few": "Sceny i zakładki: {0:N0}",
-    "many": "Sceny i zakładki: {0:N0}",
-    "one": "Sceny i zakładki: {0:N0}"
+    "many": "Sceny i zakładki: {0:N0}"
   },
   "{0:N0} selected items": {
+    "one": "Wybrane elementy: {0:N0}",
     "few": "Wybrane elementy: {0:N0}",
-    "many": "Wybrane elementy: {0:N0}",
-    "one": "Wybrane elementy: {0:N0}"
+    "many": "Wybrane elementy: {0:N0}"
   },
   "{0:N0} selected videos": {
+    "one": "Wybrane filmy: {0:N0}",
     "few": "Wybrane filmy: {0:N0}",
-    "many": "Wybrane filmy: {0:N0}",
-    "one": "Wybrane filmy: {0:N0}"
+    "many": "Wybrane filmy: {0:N0}"
   },
   "{0:N0} sidecars written": {
+    "one": "Zapisane pliki towarzyszące: {0:N0}",
     "few": "Zapisane pliki towarzyszące: {0:N0}",
-    "many": "Zapisane pliki towarzyszące: {0:N0}",
-    "one": "Zapisane pliki towarzyszące: {0:N0}"
+    "many": "Zapisane pliki towarzyszące: {0:N0}"
   },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "Wiersze źródłowe: {0:N0} · wartości binarne: {1:N0} ({2:N0} bajtów) · konflikty: {3:N0}\n",
   "{0:N0} tags": {
+    "one": "1 tag",
     "few": "{0:N0} tagi",
-    "many": "{0:N0} tagów",
-    "one": "1 tag"
+    "many": "{0:N0} tagów"
   },
   "{0:N0} tags deleted": {
+    "one": "Usunięte tagi: {0:N0}",
     "few": "Usunięte tagi: {0:N0}",
-    "many": "Usunięte tagi: {0:N0}",
-    "one": "Usunięte tagi: {0:N0}"
+    "many": "Usunięte tagi: {0:N0}"
   },
   "{0:N0} thumbnails recreated": {
+    "one": "Ponownie utworzone miniatury: {0:N0}",
     "few": "Ponownie utworzone miniatury: {0:N0}",
-    "many": "Ponownie utworzone miniatury: {0:N0}",
-    "one": "Ponownie utworzone miniatury: {0:N0}"
+    "many": "Ponownie utworzone miniatury: {0:N0}"
   },
   "{0:N0} titles changed": {
+    "one": "Zmieniono 1 tytuł",
     "few": "Zmieniono {0:N0} tytuły",
-    "many": "Zmieniono {0:N0} tytułów",
-    "one": "Zmieniono 1 tytuł"
+    "many": "Zmieniono {0:N0} tytułów"
   },
   "{0:N0} unreadable": "Nieczytelne: {0:N0}",
   "{0:N0} videos": {
+    "one": "1 film",
     "few": "{0:N0} filmy",
-    "many": "{0:N0} filmów",
-    "one": "1 film"
+    "many": "{0:N0} filmów"
   },
   "{0:N0} videos checked": {
+    "one": "Sprawdzone filmy: {0:N0}",
     "few": "Sprawdzone filmy: {0:N0}",
-    "many": "Sprawdzone filmy: {0:N0}",
-    "one": "Sprawdzone filmy: {0:N0}"
+    "many": "Sprawdzone filmy: {0:N0}"
   },
   "{0:N0} videos had no preview clip made; details are in the error log.": {
+    "one": "Wideo bez klipu podglądu: {0:N0}. Szczegóły są w dzienniku błędów.",
     "few": "Wideo bez klipu podglądu: {0:N0}. Szczegóły są w dzienniku błędów.",
-    "many": "Wideo bez klipu podglądu: {0:N0}. Szczegóły są w dzienniku błędów.",
-    "one": "Wideo bez klipu podglądu: {0:N0}. Szczegóły są w dzienniku błędów."
+    "many": "Wideo bez klipu podglądu: {0:N0}. Szczegóły są w dzienniku błędów."
   },
   "{0:N0} were already there": {
+    "one": "Już istniejące: {0:N0}",
     "few": "Już istniejące: {0:N0}",
-    "many": "Już istniejące: {0:N0}",
-    "one": "Już istniejące: {0:N0}"
+    "many": "Już istniejące: {0:N0}"
   },
   "{0:N0} without an assignment": "{0:N0} bez przypisania",
   "{0:N0} without an unambiguous tag": "{0:N0} bez jednoznacznego tagu",
   "{0:N0} × O": {
+    "one": "1 × O",
     "few": "{0:N0} × O",
-    "many": "{0:N0} × O",
-    "one": "1 × O"
+    "many": "{0:N0} × O"
   },
   "{0:N0}×": {
+    "one": "1 raz",
     "few": "{0:N0} razy",
-    "many": "{0:N0} razy",
-    "one": "1 raz"
+    "many": "{0:N0} razy"
   },
   "{0:N0}–{1:N0} of {2:N0}": "{0:N0}–{1:N0} z {2:N0}",
   "{0:P0} copied": "skopiowano {0:P0}",
@@ -3509,108 +3524,108 @@
   "{0} (as of {1})": "{0} (stan z {1})",
   "{0} (copy)": "{0} (kopia)",
   "{0} archive images imported. The ZIP source files stay unchanged.": {
+    "one": "Zaimportowane obrazy z archiwum: {0}. Źródłowe pliki ZIP pozostają bez zmian.",
     "few": "Zaimportowane obrazy z archiwum: {0}. Źródłowe pliki ZIP pozostają bez zmian.",
-    "many": "Zaimportowane obrazy z archiwum: {0}. Źródłowe pliki ZIP pozostają bez zmian.",
-    "one": "Zaimportowane obrazy z archiwum: {0}. Źródłowe pliki ZIP pozostają bez zmian."
+    "many": "Zaimportowane obrazy z archiwum: {0}. Źródłowe pliki ZIP pozostają bez zmian."
   },
   "{0} at {1}": "{0} w {1}",
   "{0} backups": {
+    "one": "1 kopia",
     "few": "{0} kopie",
-    "many": "{0} kopii",
-    "one": "1 kopia"
+    "many": "{0} kopii"
   },
   "{0} clips queued. Click Start to run queued jobs one at a time.": {
+    "one": "Dodano 1 klip do kolejki. Start wykonuje oczekujące zadania po kolei.",
     "few": "Dodano {0} klipy do kolejki. Start wykonuje oczekujące zadania po kolei.",
-    "many": "Dodano {0} klipów do kolejki. Start wykonuje oczekujące zadania po kolei.",
-    "one": "Dodano 1 klip do kolejki. Start wykonuje oczekujące zadania po kolei."
+    "many": "Dodano {0} klipów do kolejki. Start wykonuje oczekujące zadania po kolei."
   },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
+    "one": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian.",
     "few": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian.",
-    "many": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian.",
-    "one": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian."
+    "many": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian."
   },
   "{0} contains “{1}”": "{0} zawiera „{1}”",
   "{0} days ago": {
+    "one": "{0} dzień temu",
     "few": "{0} dni temu",
-    "many": "{0} dni temu",
-    "one": "{0} dzień temu"
+    "many": "{0} dni temu"
   },
   "{0} entries; {1} conflicts. Close keeps the import; undo is available only here.": "Wpisy: {0}; konflikty: {1}. Zamknięcie zachowuje import; cofnąć można tylko tutaj.",
   "{0} extensions": {
+    "one": "Rozszerzenia: {0}",
     "few": "Rozszerzenia: {0}",
-    "many": "Rozszerzenia: {0}",
-    "one": "Rozszerzenia: {0}"
+    "many": "Rozszerzenia: {0}"
   },
   "{0} fanart images": {
+    "one": "1 fanart",
     "few": "{0} fanarty",
-    "many": "{0} fanartów",
-    "one": "1 fanart"
+    "many": "{0} fanartów"
   },
   "{0} files": {
+    "one": "1 plik",
     "few": "{0} pliki",
-    "many": "{0} plików",
-    "one": "1 plik"
+    "many": "{0} plików"
   },
   "{0} files now {1}": "Pliki: {0} · teraz {1}",
   "{0} files {1} · {2} skipped · {3} blocked\nAll entries are listed below. No existing target files are overwritten.": "Pliki: {0} {1} · pominięto {2} · zablokowano {3}\nWszystkie wpisy znajdują się poniżej. Żadne istniejące pliki docelowe nie zostaną nadpisane.",
   "{0} files, {1:N0} bytes\n{2}": {
+    "one": "Pliki: {0}, bajty: {1:N0}\n{2}",
     "few": "Pliki: {0}, bajty: {1:N0}\n{2}",
-    "many": "Pliki: {0}, bajty: {1:N0}\n{2}",
-    "one": "Pliki: {0}, bajty: {1:N0}\n{2}"
+    "many": "Pliki: {0}, bajty: {1:N0}\n{2}"
   },
   "{0} fixed · copy of the catalog before: {1}": "Naprawiono: {0} · kopia katalogu sprzed zmian: {1}",
   "{0} imported · {1} skipped\n\n": "Zaimportowano: {0} · pominięto: {1}\n\n",
   "{0} is not set up for this media type.": "{0} nie jest skonfigurowany dla tego rodzaju mediów.",
   "{0} items changed": {
+    "one": "Zmienione elementy: {0}",
     "few": "Zmienione elementy: {0}",
-    "many": "Zmienione elementy: {0}",
-    "one": "Zmienione elementy: {0}"
+    "many": "Zmienione elementy: {0}"
   },
   "{0} media artwork ({1}), {2} tag images ({3})": "Grafiki multimediów: {0} ({1}), obrazy tagów: {2} ({3})",
   "{0} more files could not be prepared.": {
+    "one": "Inne pliki, których nie udało się przygotować: {0}.",
     "few": "Inne pliki, których nie udało się przygotować: {0}.",
-    "many": "Inne pliki, których nie udało się przygotować: {0}.",
-    "one": "Inne pliki, których nie udało się przygotować: {0}."
+    "many": "Inne pliki, których nie udało się przygotować: {0}."
   },
   "{0} more files.": {
+    "one": "Pozostałe pliki: {0}.",
     "few": "Pozostałe pliki: {0}.",
-    "many": "Pozostałe pliki: {0}.",
-    "one": "Pozostałe pliki: {0}."
+    "many": "Pozostałe pliki: {0}."
   },
   "{0} of {1} items in the same folder have “{2}”": "{0} z {1} elementów w tym samym folderze ma „{2}”",
   "{0} original records, {1} binary data": "Rekordy oryginału: {0}, dane binarne: {1}",
   "{0} projection errors: the original data is kept. Please check the report.": {
+    "one": "Błędy odwzorowania: {0}. Oryginalne dane są zachowane. Sprawdź raport.",
     "few": "Błędy odwzorowania: {0}. Oryginalne dane są zachowane. Sprawdź raport.",
-    "many": "Błędy odwzorowania: {0}. Oryginalne dane są zachowane. Sprawdź raport.",
-    "one": "Błędy odwzorowania: {0}. Oryginalne dane są zachowane. Sprawdź raport."
+    "many": "Błędy odwzorowania: {0}. Oryginalne dane są zachowane. Sprawdź raport."
   },
   "{0} scene images saved in the catalog.": {
+    "one": "Obrazy scen zapisane w katalogu: {0}.",
     "few": "Obrazy scen zapisane w katalogu: {0}.",
-    "many": "Obrazy scen zapisane w katalogu: {0}.",
-    "one": "Obrazy scen zapisane w katalogu: {0}."
+    "many": "Obrazy scen zapisane w katalogu: {0}."
   },
   "{0} scenes · {1:0} × {2:0} pixels each, spread evenly across the video": {
+    "one": "Sceny: {0} · po {1:0} × {2:0} pikseli, rozmieszczone w filmie",
     "few": "Sceny: {0} · po {1:0} × {2:0} pikseli, rozmieszczone w filmie",
-    "many": "Sceny: {0} · po {1:0} × {2:0} pikseli, rozmieszczone w filmie",
-    "one": "Sceny: {0} · po {1:0} × {2:0} pikseli, rozmieszczone w filmie"
+    "many": "Sceny: {0} · po {1:0} × {2:0} pikseli, rozmieszczone w filmie"
   },
   "{0} scenes, {1} bookmarks": "Sceny: {0}, zakładki: {1}",
   "{0} settings match “{1}”. Enter opens the first one.": {
+    "one": "Ustawienia pasujące do „{1}”: {0}. Enter otwiera pierwsze.",
     "few": "Ustawienia pasujące do „{1}”: {0}. Enter otwiera pierwsze.",
-    "many": "Ustawienia pasujące do „{1}”: {0}. Enter otwiera pierwsze.",
-    "one": "Ustawienia pasujące do „{1}”: {0}. Enter otwiera pierwsze."
+    "many": "Ustawienia pasujące do „{1}”: {0}. Enter otwiera pierwsze."
   },
   "{0} stars": {
+    "one": "Gwiazdki: {0}",
     "few": "Gwiazdki: {0}",
-    "many": "Gwiazdki: {0}",
-    "one": "Gwiazdki: {0}"
+    "many": "Gwiazdki: {0}"
   },
   "{0} to {1} {2}": "{0} do {1} {2}",
   "{0} unambiguously assigned images\n{1} ambiguous images\n{2} images without a known assignment\n\n": "Jednoznacznie przypisane obrazy: {0}\nObrazy o niejednoznacznym przypisaniu: {1}\nObrazy bez znanego przypisania: {2}\n\n",
   "{0} years old": {
+    "one": "1 rok",
     "few": "{0} lata",
-    "many": "{0} lat",
-    "one": "1 rok"
+    "many": "{0} lat"
   },
   "{0} · no problems found": "{0} · nie znaleziono problemów",
   "{0} · previous snapshot {1}…": "{0} · poprzednia migawka {1}…",
@@ -3637,11 +3652,11 @@
   "“Import date”: please choose a date.": "„Data importu”: proszę wybrać datę.",
   "“Less random” jumps to a random position and shows a few images in order from there.": "„Mniej losowo” przechodzi do losowego miejsca i pokazuje kilka obrazów po kolei od tej pozycji.",
   "“Name 0001.png”, “Name 0002.png” … instead of the position in the video.": "„Nazwa 0001.png”, „Nazwa 0002.png” … zamiast pozycji w filmie.",
+  "“plot” becomes the text below the details.": "„plot” staje się tekstem poniżej szczegółów.",
   "“Recently watched” covers 1 to 365 days.": "„Ostatnio oglądane” obejmuje od 1 do 365 dni.",
   "“Recently watched” in days": "„Ostatnio oglądane” w dniach",
   "“Seek” jumps by the step under “Seek with the mouse wheel”.": "„Przewijaj” przeskakuje o krok ustawiony w „Przewijanie kółkiem myszy”.",
   "“Tag in category”: please enter the category.": "„Tag w kategorii”: podaj kategorię.",
-  "“plot” becomes the text below the details.": "„plot” staje się tekstem poniżej szczegółów.",
   "“{0}”": "„{0}”",
   "“{0}” already belongs to “{1}”; a studio cannot belong to its own sub-studio.": "„{0}” należy już do „{1}”; studio nie może należeć do własnego studia podrzędnego.",
   "“{0}” already exists. Merge “{1}” into it? The old name is kept as an alias.": "„{0}” już istnieje. Scalić z nim „{1}”? Stara nazwa zostanie zachowana jako alias.",
@@ -3649,8 +3664,8 @@
   "“{0}” could not be started.\n{1}": "Nie udało się uruchomić „{0}”.\n{1}",
   "“{0}” deleted": "Usunięto „{0}”",
   "“{0}” is an item of its own again": "„{0}” jest znowu osobnym elementem",
-  "“{0}” is in the Recycle Bin.": "„{0}” jest w koszu.",
   "“{0}” is in the file or folder name": "„{0}” znajduje się w nazwie pliku lub folderu",
+  "“{0}” is in the Recycle Bin.": "„{0}” jest w koszu.",
   "“{0}” is no date like 1990-03-15.": "„{0}” nie jest datą w postaci 1990-03-15.",
   "“{0}” is no whole number.": "„{0}” nie jest liczbą całkowitą.",
   "“{0}” is now listed under Libraries.": "„{0}” jest teraz na liście Biblioteki.",
@@ -3661,9 +3676,9 @@
   "“{0}” opens in a new window.": "„{0}” otwiera się w nowym oknie.",
   "“{0}” pinned as favorite": "Przypięto „{0}” jako ulubione",
   "“{0}” removed": "Usunięto „{0}”",
-  "“{0}” removed from Watch later": "Usunięto „{0}” z Obejrzyj później",
   "“{0}” removed from the catalog": "Usunięto „{0}” z katalogu",
   "“{0}” removed from the list; the folder stays.": "„{0}” usunięto z listy; folder pozostaje.",
+  "“{0}” removed from Watch later": "Usunięto „{0}” z Obejrzyj później",
   "“{0}”: please enter a number": "„{0}”: wpisz liczbę",
   "“{0}”: please enter a value.": "„{0}”: wpisz wartość.",
   "“{0}”: {1} new, {2} present, {3} recognized by alias, ": "„{0}”: nowe: {1}, istniejące: {2}, rozpoznane przez alias: {3}, ",
@@ -3678,9 +3693,9 @@
   "★★★★ and up": "★★★★ i w górę",
   "⚠ Duplicate shortcuts: {0}. Please change one assignment.": "⚠ Powielone przypisania: {0}. Zmień jedno przypisanie.",
   "⚠ You already changed {0:N0} values in FlixyPix yourself; the import would overwrite them.": {
+    "one": "⚠ Wartości zmienione już w FlixyPix: {0:N0}. Import by je nadpisał.",
     "few": "⚠ Wartości zmienione już w FlixyPix: {0:N0}. Import by je nadpisał.",
-    "many": "⚠ Wartości zmienione już w FlixyPix: {0:N0}. Import by je nadpisał.",
-    "one": "⚠ Wartości zmienione już w FlixyPix: {0:N0}. Import by je nadpisał."
+    "many": "⚠ Wartości zmienione już w FlixyPix: {0:N0}. Import by je nadpisał."
   },
   "＋ Add folder …": "＋ Dodaj folder …",
   "＋ Add program …": "＋ Dodaj program…",

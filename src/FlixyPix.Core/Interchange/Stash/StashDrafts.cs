@@ -39,6 +39,18 @@ public sealed partial class StashExportSnapshot
    return result;
   }
  }
+ /// <summary>The same projection for one record, so the apply step can read exactly the selected rows.</summary>
+ internal (StashSourceDocument Document,StashImportDraft Draft)? ReadDraft(StashSourceProfile profile,long ordinal,Func<string,bool> exists,CancellationToken token)
+ {
+  CatalogRepository.ValidateStashSource(profile);
+  if(CatalogRepository.PathKey(profile.SourceDirectory)!=CatalogRepository.PathKey(SourceDirectory))throw new ArgumentException("The source profile belongs to a different export folder.");
+  var selected=profile with {PathMappings=profile.PathMappings.ToList()};
+  lock(gate)
+  {
+   ObjectDisposedException.ThrowIf(disposed,this);token.ThrowIfCancellationRequested();
+   return ReadDocument(ordinal) is {} record?(record,Project(record,selected,exists,token)):null;
+  }
+ }
  private StashImportDraft Project(StashSourceDocument record,StashSourceProfile profile,Func<string,bool> exists,CancellationToken token)
  {
   var issues=record.Issues.ToList();
