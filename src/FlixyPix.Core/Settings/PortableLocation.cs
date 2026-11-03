@@ -4,7 +4,11 @@ using Microsoft.Data.Sqlite;
 
 namespace FlixyPix.Core;
 
-public sealed record PortableLocation(string Library, string Application, string Volume);
+public sealed record PortableLocation(string Library, string Application, string Volume)
+{
+    /// <summary>The catalog was searched once for paths into an earlier library folder that no record names.</summary>
+    public bool ManagedPathsChecked { get; init; }
+}
 
 /// <summary>Apply the longest matching anchor exactly once, including unchanged anchors.</summary>
 internal sealed class StoragePathMap
@@ -56,9 +60,16 @@ public sealed partial class CatalogRepository
             RecoverRelocation();
             var current=new PortableLocation(Path.GetDirectoryName(DatabasePath)!,Path.GetFullPath(applicationDirectory),Path.GetPathRoot(Path.GetFullPath(applicationDirectory))!);
             var previous=ReadLocation();
-            if(previous==null) { WriteLocation(current,null); return; }
-            var mappings=new List<PathPrefixMapping> {new(previous.Library,current.Library)};
-            if(portable) { mappings.Add(new(previous.Application,current.Application)); mappings.Add(new(previous.Volume,current.Volume)); }
+            var mappings=new List<PathPrefixMapping>();
+            if(previous!=null)
+            {
+                mappings.Add(new(previous.Library,current.Library));
+                if(portable) { mappings.Add(new(previous.Application,current.Application)); mappings.Add(new(previous.Volume,current.Volume)); }
+            }
+            // Catalogs from before the location was recorded never learned their first folder, so a later move kept
+            // pointing into it (thumbnails of a takeover in the profile, opened again from a portable copy).
+            if(previous?.ManagedPathsChecked!=true && FormerLibraryFolder(current.Library) is {} former) mappings.Add(new(former,current.Library));
+            current=current with {ManagedPathsChecked=true};
             if(mappings.Any(m=>!LibraryCatalogs.SameDirectory(m.From,m.To))) ApplyRelocation(new(mappings),current);
             else WriteLocation(current,null);
         }
@@ -76,6 +87,26 @@ public sealed partial class CatalogRepository
     }
     // The legacy transition already publishes its complete staging folder atomically.
     internal void RemapManagedLibraryPaths(string previous,string current,CancellationToken token)=>ApplyDatabaseRelocation(new([new(previous,current)]),null,null,token);
+
+    /// <summary>The earlier library folder that thumbnails still point into: the parent of their "thumbnails" folder,
+    /// when that folder is gone and the same file lies in this library's "thumbnails" folder.</summary>
+    private string? FormerLibraryFolder(string library)
+    {
+        var found=new Dictionary<string,(int Count,string File)>(StringComparer.OrdinalIgnoreCase);
+        using(var read=Command("SELECT json_extract(document,'$.thumbnailPath') FROM media WHERE json_extract(document,'$.thumbnailPath') IS NOT NULL",null))
+        using(var reader=read.ExecuteReader())
+            while(reader.Read())
+            {
+                if(reader.GetValue(0) is not string path || !Path.IsPathFullyQualified(path)) continue;
+                var folder=Path.GetDirectoryName(path);
+                if(folder==null || !Path.GetFileName(folder).Equals("thumbnails",StringComparison.OrdinalIgnoreCase) || Path.GetDirectoryName(folder) is not {} origin) continue;
+                if(LibraryCatalogs.SameDirectory(origin,library)) continue;
+                found[origin]=found.TryGetValue(origin,out var seen)?(seen.Count+1,seen.File):(1,Path.GetFileName(path));
+            }
+        if(found.Count==0) return null;
+        var (former,(_,file))=found.MaxBy(pair=>pair.Value.Count);
+        return !Directory.Exists(Path.Combine(former,"thumbnails")) && File.Exists(Path.Combine(library,"thumbnails",file)) ? former : null;
+    }
 
     private PortableLocation? ReadLocation()
     {
