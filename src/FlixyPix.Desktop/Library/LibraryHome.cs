@@ -37,7 +37,7 @@ public partial class MainWindow
   }, row.Title);
   _home.ShowEntity = entry => ApplyViewState(new ViewState { View = "all", Tag = entry.Tag, TagCategory = entry.Category, SortOrder = 4 }, entry.Tag);
   _home.ContentPack = ShowAdultContentPack;
-  _home.ContentPackAvailable = () => OriginalPresets.FindProgram() != null;
+  _home.ContentPackAvailable = () => System.IO.File.Exists(System.IO.Path.Combine(AppContext.BaseDirectory, "tag-vocabularies", "en" + TagPackages.Extension));
   _home.Import = () => ImportFolder(this, new RoutedEventArgs());
   _home.MenuRequested = item => OpenMediaMenu(item, MediaMenuPlace.Home);
  }

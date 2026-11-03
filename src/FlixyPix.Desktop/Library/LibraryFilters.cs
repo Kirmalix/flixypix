@@ -14,6 +14,7 @@ namespace FlixyPix.Desktop;
 /// section on the right. Every change applies at once.</summary>
 public partial class MainWindow
 {
+ private List<ReviewState> _reviewStates = [];
  private MediaFilter _filter = new();
  private bool _tagsMatchAny;
  private Popup? _filterPopup;
@@ -21,6 +22,10 @@ public partial class MainWindow
  /// <summary>What the main window shows now, as one state (saved searches, restore on start, back and forward).</summary>
  internal ViewState CaptureViewState() => new()
  {
+  ImageSetId = IsImageSetView ? _selectedImageSet : null,
+  PublicationGroupId = IsPublicationGroupView ? _selectedPublicationGroup : null,
+  Directory = IsRoleView ? _roleBrowser?.CaptureDirectoryState() : null,
+  ReviewStates = _reviewStates.ToList(),
   View = _view, PlaylistId = _playlist?.Id, SearchText = SearchBox.Text.Length == 0 ? null : SearchBox.Text, Tag = _tag, TagCategory = _tagGroup, Category = _category,
   Folder = _folder, IncludeSubfolders = IncludeFolderChildren.IsChecked == true, RequiredTags = _requiredTags.ToList(), ExcludedTags = _excludedTags.ToList(), Expression = _advancedExpression, Filter = _filter,
   TagsMatchAny = _tagsMatchAny, MinimumStars = _filter.UnratedOnly ? 0 : Math.Max(RatingFilter.SelectedIndex, 0), SortOrder = Math.Max(SortChoice.SelectedIndex, 0),
@@ -32,10 +37,16 @@ public partial class MainWindow
  /// <summary>Shows a state: view, filters, sort and display; the caller decides about position and selection.</summary>
  internal void ApplyViewState(ViewState state, string? title = null)
  {
+  if (!LeaveRoleView()) { UpdateNavigation(); return; }
+  if (IsRoleView) RecordView();
+  _pendingDirectoryState = state.Directory;
   var initializing = _initializingBrowsing; _initializingBrowsing = true;
   try
   {
    IncludeFolderChildren.IsChecked = state.Folder==null?_repository.GetPreferences().Sidebar.IncludeSubfolders:state.IncludeSubfolders;
+   _selectedImageSet = state.ImageSetId;
+   _selectedPublicationGroup = state.PublicationGroupId;
+   _reviewStates = state.ReviewStates.ToList();
    _view = state.View; _tag = state.Tag; _tagGroup = state.TagCategory; _category = state.Category; _folder = state.Folder;
    _playlist = state.PlaylistId is { } id ? _repository.GetPlaylists().FirstOrDefault(p => p.Id == id) : null;
    _requiredTags.Clear(); _requiredTags.AddRange(state.RequiredTags); _excludedTags.Clear(); _excludedTags.AddRange(state.ExcludedTags);
@@ -65,7 +76,7 @@ public partial class MainWindow
  }
 
  private void ResetFiltersClicked(object sender, RoutedEventArgs e) =>
-  ApplyViewState(CaptureViewState() with { SearchText = null, Tag = null, TagCategory = null, Category = null, Folder = null, RequiredTags = [], ExcludedTags = [], Expression = null, Filter = new(), MinimumStars = 0 });
+  ApplyViewState(CaptureViewState() with { SearchText = null, ReviewStates = [], Tag = null, TagCategory = null, Category = null, Folder = null, RequiredTags = [], ExcludedTags = [], Expression = null, Filter = new(), MinimumStars = 0 });
 
  private void ApplyFilter(MediaFilter filter)
  {
@@ -188,6 +199,7 @@ public partial class MainWindow
    ratings.Children.Add(option);
   }
   panel.Children.Add(ratings);
+  AddReviewFilters(panel);
   panel.Children.Add(Heading(T("Type")));
   var kinds = new WrapPanel();
   foreach (var view in new[] { "all", "Video", "Image", "Audio" })

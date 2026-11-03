@@ -44,7 +44,7 @@ public partial class MainWindow : Window
  private MediaItem? Selected => (MediaList.SelectedItem as MediaCard)?.Item ?? (MediaList.SelectedItems.Count == 0 ? _offWindowSelection.FirstOrDefault() : null);
 
  public MainWindow() : this(DesktopSettings.Load()) { }
- internal MainWindow(DesktopSettings settings, bool persistPreferences = true)
+ internal MainWindow(DesktopSettings settings, bool persistPreferences = true, CatalogKey? unlockedKey = null)
  {
   _persistPreferences = persistPreferences;
   InitializeComponent();
@@ -57,11 +57,15 @@ public partial class MainWindow : Window
   _instance = LibraryInstance.Claim(_settings.DataDirectory, () => Dispatcher.BeginInvoke(BringToFront))
    ?? throw new InvalidOperationException(T("This library is already open in another FlixyPix window."));
   Privacy.Prepare(_settings.Privacy);
-  try { _repository = SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db")); }
+  try { _repository = unlockedKey == null ? SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db"))
+   : new CatalogRepository(Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey); }
   catch { _instance.Dispose(); throw; }
+  _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable);
   _tools = CreateTools();
   InitializeBrowsing();
   InitializeMainView();
+  InitializeReviewEditor();
+  InitializeDetailsDrafts();
   InitializeKeyboardAccess();
   InitializeHoverPreview();
   InitializeScrolling();
@@ -113,6 +117,19 @@ public partial class MainWindow : Window
  private async Task RefreshAsync(Guid? selectId = null,bool includePreviews=true)
  {
   if (_repository == null || _closing) return;
+  if (_roleBrowser?.IsVisible == true && (!IsRoleView || _tag != null || _tagGroup != null || _folder != null || _playlist != null || _requiredTags.Count > 0 || _excludedTags.Count > 0 || !_filter.IsEmpty || _advancedExpression != null))
+  {
+   if (!LeaveRoleView())
+   { _view = _roleBrowserView!; _tag = _tagGroup = _category = _folder = null; _playlist = null; _filter = new(); _advancedExpression = null; ClearTagFilters(); RefreshRoleView(); return; }
+   if (IsRoleView) _view = "all";
+  }
+  if ((IsImageSetView||IsPublicationGroupView) && (_folder != null || _playlist != null || _tag != null || _tagGroup != null || _requiredTags.Count > 0 || !_filter.IsEmpty || _advancedExpression != null)) _view = "all";
+  if(IsPublicationGroupView){HideImageSets();++_refreshVersion;RefreshPublicationGroups();return;}
+  HidePublicationGroups();
+  if (IsImageSetView) { ++_refreshVersion; RefreshImageSets(); return; }
+  HideImageSets();
+  if (IsRoleView) { ++_refreshVersion; RefreshRoleView(); return; }
+  HideRoleView();
   _keyboardIndex=_keyboardAnchor=null;
   var version = ++_refreshVersion;
   LeaveHomeWhenFiltered();
@@ -197,8 +214,10 @@ public partial class MainWindow : Window
  private MediaItem? _detailsShown;
  private void ShowDetails(bool includePreviews=true)
  {
+  RememberDetailsDraft();
   var items = SelectedMedia;
   var item = Selected;
+  UpdateReviewEditor();
   var multiple = items.Count > 1;
   var single = item != null && !multiple;
   foreach (var element in new UIElement[] { SingleDetailsTop, SingleActions, SingleRating, SingleDetailsBottom }) element.Visibility = single ? Visibility.Visible : Visibility.Collapsed;
@@ -215,7 +234,8 @@ public partial class MainWindow : Window
   _showingDetails = true; try { EditRating.Value = item?.Rating ?? 0; } finally { _showingDetails = false; }
   if (previous == null || EditFavorite.IsChecked == previous.IsFavorite) EditFavorite.IsChecked = item?.IsFavorite ?? false;
   if (previous == null || EditWatchLater.IsChecked == previous.WatchLater) EditWatchLater.IsChecked = item?.WatchLater ?? false;
-  _detailsShown = item;
+  _detailsShown = single ? item : null;
+  if (single && item != null && _detailsDrafts.TryGetValue(item.Id, out var draft)) ApplyDetailsDraft(draft);
   if(includePreviews)_previewReady = LoadSelectedPreviewAsync(item);
   else { ++_previewVersion;Preview.Source=null;_previewReady=Task.CompletedTask; }
   MetadataLabel.Text = multiple ? T("Tag changes apply to all selected items.") : item == null ? "" : new MediaCard(item,false).Subtitle + (TechnicalSummary(item.Technical) is { Length: > 0 } technical ? Environment.NewLine + technical : "") + (includePreviews ? (File.Exists(item.Path) ? "" : T("\nFile is currently unavailable")) : T("\nFile path kept · file not checked"));
@@ -230,6 +250,7 @@ public partial class MainWindow : Window
   ShowMemberships(single ? item : null);
   if (item != null && !multiple && includePreviews) _ = EnsureMarkPreviewsAsync(item);
   UpdateTagEditor(items);
+  UpdateDetailsDraftState();
  }
 
  private async Task RunOperation(string title, Func<CancellationToken, Task> action,bool refresh=true)
@@ -285,6 +306,7 @@ public partial class MainWindow : Window
  private void SearchKeyDown(object sender, KeyEventArgs e)
  {
   if (e.Key != Key.Enter || _repository == null) return;
+  if (IsRoleView || IsImageSetView || IsPublicationGroupView) return;
   var parsed = SearchShorthand.Parse(SearchBox.Text);
   if (!parsed.Recognized) return;
   e.Handled = true;
@@ -306,11 +328,9 @@ public partial class MainWindow : Window
  }
  private void Navigate(object sender, RoutedEventArgs e)
  {
-  if ((string)((FrameworkElement)sender).Tag == "home") { GoHome(); return; }
-  _advancedExpression=null;
-  _view = (string)((FrameworkElement)sender).Tag; _tag = null; ClearTagFilters(); _tagGroup = null; _category = null; _folder = null; _playlist = null; _anchor = 0;
-  ViewTitle.Text = ViewName(_view);
-  SaveViewPreferences(); Refresh();
+  if ((string)((FrameworkElement)sender).Tag == "wall") { UpdateNavigation(); ShowSceneWall(); return; }
+  ApplyViewState(new ViewState { View = (string)((FrameworkElement)sender).Tag });
+  SaveViewPreferences();
  }
  private void SaveDetails(object sender, RoutedEventArgs e)
  {
@@ -319,10 +339,17 @@ public partial class MainWindow : Window
   var item = _repository.GetMedia(selected.Id) ?? selected;
   if (!TryDate(EditReleaseDate.Text, out var released))
   { Status.Text = T("The release date cannot be read; please enter it like {0}.", DateTime.Today.ToString("d", System.Globalization.CultureInfo.CurrentCulture)); EditReleaseDate.Focus(); return; }
+  RememberDetailsDraft();
+  var expected = _detailsDrafts.GetValueOrDefault(item.Id)?.Original ?? MetadataValues.From(item);
+  try { _repository.ApplyMetadataPatches([new(item.Id, expected, new(EditTitle.Text.Trim(),
+   string.IsNullOrWhiteSpace(EditCategory.Text) ? null : EditCategory.Text.Trim(), EditDescription.Text, released))], clearDraftIds: [item.Id]); }
+  catch (MetadataConflictException error)
+  { ShowMetadataConflict(error); return; }
+  catch (Exception error) when (error is IOException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
+  { Status.Text = error.Message; return; }
+  _detailsDrafts.Remove(item.Id);
+  _metadataConflicts.Remove(item.Id);
   _detailsShown = null;
-  _repository.Upsert(item with { Title = EditTitle.Text.Trim(), Rating = EditRating.Value, Description = EditDescription.Text,
-   IsFavorite = EditFavorite.IsChecked == true, WatchLater = EditWatchLater.IsChecked == true, ReleaseDate = released,
-   Category = string.IsNullOrWhiteSpace(EditCategory.Text) ? null : EditCategory.Text.Trim() });
   Refresh(item.Id); Status.Text = T("Media details saved");
  }
 
@@ -344,7 +371,7 @@ public partial class MainWindow : Window
  /// <summary>Opens the settings, on <paramref name="page"/> (German rubric name) if given.</summary>
  private void OpenSettings(string? page = null)
  {
-  var window = new SettingsWindow(this, _repository, _settings, _pendingDataDirectory ?? _settings.DataDirectory, EncryptionMenu, ImportOriginalDatabase, RenderSampleSheetAsync, () => ShowDatabase());
+  var window = new SettingsWindow(this, _repository, _settings, _pendingDataDirectory ?? _settings.DataDirectory, EncryptionMenu, ImportOriginalDatabase, RenderSampleSheetAsync, () => ShowDatabase(), ChangeStorageMode, () => OfferProfileImport());
   if (page != null) window.SelectPage(page);
   window.ShowDialog();
   if (window.Result is not { } choice) return;
@@ -380,9 +407,13 @@ public partial class MainWindow : Window
  }
  private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
  {
+  if (_storageTransferring) { e.Cancel = true; _operation?.Cancel(); return; }
   if (_closing) return;
   e.Cancel = true;
   if (_operation != null) { _closeRequested = true; _operation.Cancel(); Status.Text = T("Finishing the operation …"); return; }
+  if (!LeaveRoleView()) { CancelLibrarySwitch(); return; }
+  if (!ResolveDetailsDrafts()) { CancelLibrarySwitch(); return; }
+  _draftTimer.Stop();
   _homeArtworkCancellation.Cancel(); _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
   SaveFolderViewportState();
   SaveViewNow(); if (_persistPreferences) SaveWindowPlace();
@@ -394,14 +425,43 @@ public partial class MainWindow : Window
   _repository.Dispose(); _instance.Dispose();
   // Nothing of this window may run on once it is gone; switching libraries keeps the process.
   _viewSaveTimer.Stop(); _searchTimer.Stop(); AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;
+  if (_storageChange is { } change)
+  {
+   _storageTransferring = true;
+   _operation = new CancellationTokenSource();
+   var transfer = new Window { Owner=this, Title=T("Data and storage"), Width=460, SizeToContent=SizeToContent.Height, WindowStartupLocation=WindowStartupLocation.CenterOwner };
+   var cancel = new Button { Content=T("Cancel"), Margin=new Thickness(24), Padding=new Thickness(12) };
+   cancel.Click += (_,_) => _operation?.Cancel();
+   transfer.Content=new StackPanel { Children={ new TextBlock { Text=T("Copy current libraries; keep the originals"), Margin=new Thickness(24) },cancel } };
+   transfer.Closing += (_,closing) => { if(_storageTransferring) { closing.Cancel=true; _operation?.Cancel(); } };
+   IsEnabled=false; transfer.Show();
+   try { await ApplyStorageChangeAsync(change.Mode, change.Copy); _restartAfterClose = true; }
+   catch (Exception failure)
+   {
+    if(Directory.Exists(Path.Combine(AppContext.BaseDirectory,StorageSwitchRecovery.JournalName)))
+    {
+     try {StorageSwitchRecovery.Recover(AppContext.BaseDirectory,Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FlixyPix"),useCurrentSession:true);_restartAfterClose=true;}
+     catch(Exception recovery) {Message.Show(recovery.Message,T("Data and storage"));Application.Current.Shutdown(1);}
+    }
+    else
+    {
+     Message.Show(failure.Message,T("Data and storage"));
+     new MainWindow(DesktopSettings.Load()).Show();_restartAfterClose=false;
+    }
+   }
+   finally { _storageTransferring=false; _operation.Dispose(); _operation=null; IsEnabled=true; transfer.Close(); }
+  }
   if (_switchTo is { } target) _ = Dispatcher.BeginInvoke(() => { OpenSwitchedLibrary(target); Close(); });
   else _ = Dispatcher.BeginInvoke(Close);
   // A restart (new language) starts the next instance once this one let go of the catalog.
-  if (_restartAfterClose && Environment.ProcessPath is { } exe) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false });
+  if (_restartAfterClose && Environment.ProcessPath is { } exe) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false, ArgumentList = { _storageChange is { } completed && _restartAfterClose ? (completed.Mode == StorageMode.Portable ? "--portable" : "--profile") : AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile" } });
  }
+ private bool _storageTransferring;
  private bool _restartAfterClose;
  private async void OnKeyDown(object sender, KeyEventArgs e)
  {
+  if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && !TextEntry(e.OriginalSource))
+  { e.Handled = true; UndoImmediate(); return; }
   if(await HandleLibraryKeyboardAsync(e)) {e.Handled=true;return;}
   if(Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down)return;
   // Back and forward like a browser; Alt arrives as a system key.

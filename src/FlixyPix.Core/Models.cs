@@ -1,5 +1,7 @@
 namespace FlixyPix.Core;
 
+public enum ReviewState { Unspecified = 0, Unreviewed = 1, NeedsAttention = 2, Reviewed = 3 }
+
 public enum MediaKind { Image, Video, Audio }
 
 public sealed record MediaItem
@@ -8,6 +10,7 @@ public sealed record MediaItem
     public required string Path { get; init; }
     public string Title { get; init; } = "";
     public MediaKind Kind { get; init; }
+    public ReviewState ReviewState { get; init; }
     public long? FileSize { get; init; }
     public DateTimeOffset? FileModifiedAtUtc { get; init; }
     public int? Width { get; init; }
@@ -37,7 +40,10 @@ public sealed record MediaItem
     public string? Category { get; init; }
     public Dictionary<string, List<string>> TagCategories { get; init; } = new();
     public string? ThumbnailPath { get; init; }
+    public ContactSheetMetadata? ContactSheet {get;init;}
     public double PlaybackPositionSeconds { get; init; }
+    public MediaPlaybackSettings Playback { get; init; } = new();
+    public AudioTrackPreference AudioTrack { get; init; } = new();
     /// <summary>Subtitle file chosen in the player and the subtitle offset in seconds; applied on the next playback.</summary>
     public string? SubtitlePath { get; init; }
     public double SubtitleDelaySeconds { get; init; }
@@ -71,6 +77,7 @@ public sealed record TechnicalInfo
 /// <summary>Another file of a medium, with what was measured for it.</summary>
 public sealed record MediaFile
 {
+    public AudioTrackPreference AudioTrack { get; init; } = new();
     public required string Path { get; init; }
     public long? FileSize { get; init; }
     public DateTimeOffset? FileModifiedAtUtc { get; init; }
@@ -155,7 +162,15 @@ public sealed record ScanProgress(string Path, int Processed, int Imported);
 public sealed record CatalogDocument
 {
     public string Format { get; init; } = "flixypix-catalog";
-    public int Version { get; init; } = 4;
+    public int Version { get; init; } = 5;
+    public List<ImageSet> ImageSets { get; init; } = [];
+    public List<PublicationGroup> PublicationGroups { get; init; } = [];
+    public List<TagHierarchy> TagHierarchies { get; init; } = [];
+    public List<StashSourceProfile> StashSources { get; init; } = [];
+    public List<StashIdentity> StashIdentities { get; init; } = [];
+    public List<StashProvenance> StashProvenance { get; init; } = [];
+    public List<StashProvenanceChunk> StashProvenanceChunks { get; init; } = [];
+    public List<StashBinding> StashBindings { get; init; } = [];
     public List<MediaItem> Items { get; init; } = [];
     public List<Playlist> Playlists { get; init; } = [];
     public List<Scene> Scenes { get; init; } = [];

@@ -38,6 +38,7 @@ public partial class MainWindow
 
  internal async Task WalkHistoryAsync(int direction)
  {
+  if (!LeaveRoleView()) return;
   if (CaptureViewState() is var now) _history.Record(now); // keep the current scroll place in the entry we leave
   var target = direction < 0 ? _history.Back() : _history.Forward();
   if (target is null) return;
@@ -96,6 +97,8 @@ public partial class MainWindow
  /// selects what was selected and is loaded.</summary>
  private async Task RestorePlaceAsync(ViewState state)
  {
+  if (IsImageSetView || IsPublicationGroupView) return;
+  if (IsRoleView) { _roleBrowser?.RestoreDirectoryState(state.Directory); return; }
   if (_total == 0 || _window is not { } window) return;
   var index = state.Position;
   if (state.AnchorId is { } anchor && window.Playlist == null && await Task.Run(() => _repository.GetPosition(window.Query, anchor)) is { } found) index = found;

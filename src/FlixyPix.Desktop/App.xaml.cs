@@ -6,17 +6,43 @@ namespace FlixyPix.Desktop;
 
 public partial class App : Application
 {
+ protected override void OnExit(ExitEventArgs e) { AppStorage.Release(); base.OnExit(e); }
  protected override async void OnStartup(StartupEventArgs e)
  {
   base.OnStartup(e);
+  string[] startupArguments = e.Args;
+  try
+  {
+   StorageSwitchRecovery.Recover(AppContext.BaseDirectory, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix"));
+   var portable = e.Args.Contains("--portable"); var profile = e.Args.Contains("--profile");
+   if (portable && profile) throw new ArgumentException("Choose only one storage mode.");
+   var args = e.Args.Where(a => a is not ("--portable" or "--profile")).ToArray();
+   var test = Array.FindIndex(args, a => a is "--draft-crash-test" or "--folder-sync-test" or "--storage-crash-test" or "--storage-test" or "--smoke-test" or "--localization-test" or "--perf-probe" or "--player-input-test");
+   var inputTest=Array.IndexOf(args,"--player-input-test");
+   if(inputTest>=0)
+   {
+    if(args.Length!=inputTest+3||args[inputTest+1] is not ("plain" or "encrypted" or "self-plain" or "self-encrypted"))throw new ArgumentException("Use --player-input-test plain|encrypted|self-plain|self-encrypted <new-output-folder>.");
+    var inputTarget=Path.GetFullPath(args[^1]);
+    if(File.Exists(inputTarget)||Directory.Exists(inputTarget)&&Directory.EnumerateFileSystemEntries(inputTarget).Any())throw new IOException("The input acceptance test requires a new, empty output folder.");
+   }
+   var paths = test >= 0 && args.Length > test + 1
+    ? new AppStoragePaths(StorageMode.Portable, AppContext.BaseDirectory, Path.Combine(Path.GetFullPath(args[^1]), "app-data"))
+    : AppStoragePaths.Resolve(AppContext.BaseDirectory, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix"), portable ? StorageMode.Portable : profile ? StorageMode.Profile : null);
+   if (paths.Mode == StorageMode.Profile)
+    SettingsTransition.EnsureMigrated(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),ProductIdentity.PreviousApplicationDirectory),paths.Root);
+   AppStorage.Initialize(paths);
+   startupArguments = args;
+  }
+  catch (Exception error) { MessageBox.Show(error.Message, "FlixyPix"); Shutdown(1); return; }
+
   EventManager.RegisterClassHandler(typeof(Window),System.Windows.Input.Keyboard.PreviewKeyDownEvent,new System.Windows.Input.KeyEventHandler((sender,key)=>
   {
    if(sender is Window window && window is not (FlixyPix.Desktop.MainWindow or VideoPlayerWindow or ImageViewerWindow or HelpWindow) && key.Key==System.Windows.Input.Key.F1)
    {key.Handled=true;new HelpWindow(window,T("Help"),HelpWindow.Guide()).ShowDialog();}
   }));
   // "--language <code>" in front of the other arguments forces a language for test runs.
-  var arguments = e.Args.Length >= 2 && e.Args[0] == "--language" ? e.Args[2..] : e.Args;
-  string? forcedLanguage = arguments.Length < e.Args.Length ? e.Args[1] : null;
+  var arguments = startupArguments.Length >= 2 && startupArguments[0] == "--language" ? startupArguments[2..] : startupArguments;
+  string? forcedLanguage = arguments.Length < startupArguments.Length ? startupArguments[1] : null;
   // "--library <folder>" opens that library in this instance ("In neuem Fenster öffnen"); otherwise a normal start.
   string? requestedLibrary = null;
   if (arguments.Length == 2 && arguments[0] == "--library") { requestedLibrary = Path.GetFullPath(arguments[1]); arguments = []; }
@@ -64,11 +90,46 @@ public partial class App : Application
     };
     window.Show();
    }
+   else if (arguments.Length == 2 && arguments[0] == "--draft-crash-test")
+   {
+    await MetadataCrashProbe.RunAsync(Path.GetFullPath(arguments[1])); Shutdown(0);
+   }
+   else if (arguments.Length == 2 && arguments[0] == "--storage-crash-test")
+   {
+    StorageCrashProbe.Run(Path.GetFullPath(arguments[1])); Shutdown(1);
+   }
+   else if (arguments.Length == 2 && arguments[0] == "--storage-test")
+   {
+    var directory=Path.GetFullPath(arguments[1]);
+    var window=new MainWindow(new DesktopSettings {DataDirectory=Path.Combine(directory,"catalog"),AutoGeneratePreviews=false},persistPreferences:false);
+    window.Loaded+=async (_,_)=>
+    {
+     try {await window.RunStorageTransitionSmokeAsync(directory);File.WriteAllText(Path.Combine(directory,"result.txt"),"PASS: storage modes, encrypted copies, cancellation, destination preservation, shared files and persistent selection.");window.Close();}
+     catch(Exception error) {File.WriteAllText(Path.Combine(directory,"result.txt"),error.ToString());Shutdown(1);}
+    };
+    window.Show();
+   }
    else if (arguments.Length == 2 && arguments[0] == "--folder-sync-test")
    {
     var directory = Path.GetFullPath(arguments[1]); Directory.CreateDirectory(directory);
     var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog"), AutoGeneratePreviews = false }, persistPreferences: false);
     window.Loaded += async (_, _) => { try { await window.RunFolderSyncVisualTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: watched folders, manual scope, selection, import, themes and folder layout"); window.Close(); } catch(Exception error) { File.WriteAllText(Path.Combine(directory,"result.txt"),error.ToString()); Shutdown(1); } };
+    window.Show();
+   }
+   else if (arguments.Length == 3 && arguments[0] == "--player-input-test" && arguments[1] is "plain" or "encrypted" or "self-plain" or "self-encrypted")
+   {
+    var directory=Path.GetFullPath(arguments[2]);Directory.CreateDirectory(directory);
+    var database=Path.Combine(directory,"catalog","catalog.db");Directory.CreateDirectory(Path.GetDirectoryName(database)!);
+    var encrypted=arguments[1].EndsWith("encrypted",StringComparison.Ordinal);var selfTest=arguments[1].StartsWith("self-",StringComparison.Ordinal);
+    using(var empty=new CatalogRepository(database)){}
+    if(encrypted)CatalogEncryption.EnableEncryption(database,"synthetic-input-acceptance-password");
+    using var key=encrypted?CatalogEncryption.Unlock(database,"synthetic-input-acceptance-password"):null;
+    var window=new MainWindow(new DesktopSettings{DataDirectory=Path.GetDirectoryName(database)!,AutoGeneratePreviews=false},persistPreferences:false,unlockedKey:key);
+    window.Loaded+=async(_,_)=>
+    {
+     try{await window.RunPhysicalInputAcceptanceAsync(directory,selfTest);window.Close();}
+     catch(Exception error){File.WriteAllText(Path.Combine(directory,"result.txt"),error.ToString());Shutdown(1);}
+    };
     window.Show();
    }
    else if (arguments.Length == 2 && arguments[0] == "--smoke-test")
@@ -119,7 +180,11 @@ public partial class App : Application
    else OpenLibraryAtStart(requestedLibrary);
   }
   catch (OperationCanceledException) { Shutdown(0); }
-  catch (Exception ex) { MessageBox.Show(T("The library could not be opened.\n{0}", ex.Message), "FlixyPix", MessageBoxButton.OK, MessageBoxImage.Error); Shutdown(1); }
+  catch (Exception ex)
+  {
+   if(testDirectory!=null){File.WriteAllText(Path.Combine(testDirectory,"result.txt"),ex.ToString());Shutdown(1);return;}
+   MessageBox.Show(T("The library could not be opened.\n{0}", ex.Message), "FlixyPix", MessageBoxButton.OK, MessageBoxImage.Error); Shutdown(1);
+  }
  }
 
  /// <summary>Normal start: with several libraries and "ask at start" (original: database prompt unless bypassed) the
@@ -127,6 +192,7 @@ public partial class App : Application
  /// another instance comes to the front there instead.</summary>
  private void OpenLibraryAtStart(string? requested)
  {
+  var firstPortableStart = AppStorage.Current.Mode == StorageMode.Portable && !File.Exists(DesktopSettings.SettingsPath);
   var settings = DesktopSettings.Load();
   if (requested != null) settings = settings with { DataDirectory = LibraryCatalogs.Normalize(requested) };
   else if (settings.AskForLibraryAtStart && settings.Libraries.Count > 1)
@@ -145,6 +211,8 @@ public partial class App : Application
    settings.Save();
   }
   if (LibraryInstance.IsOpen(settings.DataDirectory)) { LibraryInstance.Activate(settings.DataDirectory); Shutdown(0); return; }
-  new MainWindow(settings).Show();
+  var main = new MainWindow(settings);
+  if (firstPortableStart) main.ContentRendered += (_, _) => main.OfferProfileImport(initial: true);
+  main.Show();
  }
 }
