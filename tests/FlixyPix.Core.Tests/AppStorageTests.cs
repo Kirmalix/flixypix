@@ -66,6 +66,22 @@ public sealed class AppStorageTests : IDisposable
   Assert.Equal(Path.Combine(gone,"thumbnails","a.jpg"),catalog.GetMedia(foreign.Id)!.ThumbnailPath);
  }
 
+ [Fact] public void LargeJsonFilesBesideTheCatalogDoNotStopTheRelocation()
+ {
+  // A takeover keeps its migration report (often far above 16 MB) beside the catalog.
+  var library=Path.Combine(root,"portable","Data","Takeover"); Directory.CreateDirectory(library);
+  var report=Path.Combine(library,"migration-report.json");
+  File.WriteAllText(report,"{\"format\":\"flixypix-migration-report\",\"version\":1,\"rows\":[\""+new string('x',17*1024*1024)+"\"]}");
+  using var catalog=new CatalogRepository(Path.Combine(library,"catalog.db"));
+  var item=catalog.Upsert(new MediaItem {Path=@"E:\Media\a.mp4",Kind=MediaKind.Video});
+  catalog.PreparePortableLocation(@"E:\App",true);
+  catalog.PreparePortableLocation(@"F:\App",true);
+  Assert.Equal(@"F:\Media\a.mp4",catalog.GetMedia(item.Id)!.Path);
+  Assert.Equal("flixypix-migration-report",CatalogRepository.LeadingFormat(report));
+  // A manifest of that size still stops it: its paths could not be rewritten.
+  File.WriteAllText(Path.Combine(library,"queue.json"),"{\"version\":1,\"format\":\"flixypix-media-queue\",\"jobs\":[\""+new string('x',17*1024*1024)+"\"]}");
+  Assert.Throws<InvalidDataException>(()=>catalog.PreparePortableLocation(@"G:\App",true));
+ }
  [Fact] public void ThumbnailsStayWhileTheirFolderStillExists()
  {
   var library=Path.Combine(root,"second"); Directory.CreateDirectory(Path.Combine(library,"thumbnails"));

@@ -135,12 +135,18 @@ public sealed partial class CatalogRepository
         journal.Checkpoint=RelocationCheckpoint;
         foreach(var path in ActiveManifests(library))
         {
+            // Other JSON files lie in the library too (a takeover keeps its migration report of many MB beside the
+            // catalog); only a queue or preview manifest of that size stops the relocation.
+            if(new FileInfo(path).Length>MaxManifestBytes)
+            {
+                if(IsManifestFormat(LeadingFormat(path))) throw new InvalidDataException("An active manifest is too large.");
+                continue;
+            }
             var bytes=File.ReadAllBytes(path);
-            if(bytes.Length>16*1024*1024) throw new InvalidDataException("An active manifest is too large.");
             JsonNode? node; try {node=JsonNode.Parse(bytes);} catch(JsonException) {continue;}
             if(node is not JsonObject obj) continue;
             var marker=obj.FirstOrDefault(p=>p.Key.Equals("format",StringComparison.OrdinalIgnoreCase)).Value;
-            if(marker is not JsonValue value || !value.TryGetValue<string>(out var format) || !new[]{"flixypix-media-queue","flixypix-scene-previews"}.Any(f=>ProductIdentity.IsFormat(format!,f))) continue;
+            if(marker is not JsonValue value || !value.TryGetValue<string>(out var format) || !IsManifestFormat(format)) continue;
             map.Rewrite(obj,manifest:true);
             journal.AddFile("library",Path.GetRelativePath(library,path),JsonSerializer.SerializeToUtf8Bytes(obj),true);
         }
@@ -151,6 +157,28 @@ public sealed partial class CatalogRepository
         journal.Commit();
         // Interrupted operations leave the journal. The token in the SQLite transaction
         // determines whether to discard preparation or finish publishing staged manifests.
+    }
+    private const int MaxManifestBytes=16*1024*1024;
+    private static bool IsManifestFormat(string? format)=>format!=null && new[]{"flixypix-media-queue","flixypix-scene-previews"}.Any(f=>ProductIdentity.IsFormat(format,f));
+    /// <summary>The top-level "format" of a JSON file, read from its first 64 KB; null when it is not there or not JSON.</summary>
+    internal static string? LeadingFormat(string path)
+    {
+        var buffer=new byte[64*1024];int length;
+        using(var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite)) length=stream.ReadAtLeast(buffer,buffer.Length,throwOnEndOfStream:false);
+        var reader=new Utf8JsonReader(buffer.AsSpan(0,length),isFinalBlock:false,state:default);
+        try
+        {
+            if(!reader.Read() || reader.TokenType!=JsonTokenType.StartObject) return null;
+            while(reader.Read() && reader.TokenType==JsonTokenType.PropertyName)
+            {
+                var isFormat=reader.GetString()!.Equals("format",StringComparison.OrdinalIgnoreCase);
+                if(!reader.Read()) return null;
+                if(isFormat) return reader.TokenType==JsonTokenType.String?reader.GetString():null;
+                if(reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray && !reader.TrySkip()) return null;
+            }
+        }
+        catch(JsonException) {}
+        return null;
     }
     private static IEnumerable<string> ActiveManifests(string directory)
     {

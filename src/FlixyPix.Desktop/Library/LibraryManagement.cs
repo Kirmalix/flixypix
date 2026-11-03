@@ -85,7 +85,7 @@ public partial class MainWindow
     break;
    }
    catch (OperationCanceledException) { next = null; }
-   catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or NotSupportedException or Microsoft.Data.Sqlite.SqliteException)
+   catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException or NotSupportedException or Microsoft.Data.Sqlite.SqliteException)
    {
     next = null;
     ErrorLog.Write("Bibliothek wechseln", ex);

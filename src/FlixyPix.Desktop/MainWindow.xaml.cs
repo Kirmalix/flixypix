@@ -60,7 +60,9 @@ public partial class MainWindow : Window
   try { _repository = unlockedKey == null ? SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db"))
    : new CatalogRepository(Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey); }
   catch { _instance.Dispose(); throw; }
-  _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable);
+  // A failed start must let go of the library, or the next attempt finds it "open in another window".
+  try { _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable); }
+  catch { _repository.Dispose(); _instance.Dispose(); throw; }
   _tools = CreateTools();
   InitializeBrowsing();
   InitializeMainView();
@@ -451,7 +453,8 @@ public partial class MainWindow : Window
    }
    finally { _storageTransferring=false; _operation.Dispose(); _operation=null; IsEnabled=true; transfer.Close(); }
   }
-  if (_switchTo is { } target) _ = Dispatcher.BeginInvoke(() => { OpenSwitchedLibrary(target); Close(); });
+  // This window let go of its catalog; it closes even when opening the next library fails unexpectedly.
+  if (_switchTo is { } target) _ = Dispatcher.BeginInvoke(() => { try { OpenSwitchedLibrary(target); } finally { Close(); } });
   else _ = Dispatcher.BeginInvoke(Close);
   // A restart (new language) starts the next instance once this one let go of the catalog.
   if (_restartAfterClose && Environment.ProcessPath is { } exe) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false, ArgumentList = { _storageChange is { } completed && _restartAfterClose ? (completed.Mode == StorageMode.Portable ? "--portable" : "--profile") : AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile" } });

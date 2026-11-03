@@ -177,6 +177,19 @@ public partial class App : Application
     };
     window.Show();
    }
+   else if (arguments.Length == 3 && arguments[0] == "--library-probe")
+   {
+    var directory = Path.GetFullPath(arguments[2]);
+    FileAccessPolicy.Current.EnsureWritable(directory);
+    Directory.CreateDirectory(directory);
+    var window = new MainWindow(new DesktopSettings { DataDirectory = Path.GetFullPath(arguments[1]) }, persistPreferences: false);
+    window.Loaded += async (_, _) =>
+    {
+     try { await window.RunLibraryProbeAsync(directory); window.Close(); }
+     catch (Exception ex) { File.WriteAllText(Path.Combine(directory, "error.txt"), ex.GetType().Name + ": " + ex.Message); Shutdown(1); }
+    };
+    window.Show();
+   }
    else OpenLibraryAtStart(requestedLibrary);
   }
   catch (OperationCanceledException) { Shutdown(0); }
