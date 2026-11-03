@@ -160,7 +160,6 @@
   "A Stash marker has an invalid time range: {0}": "Stash のマーカーの時間範囲が無効です: {0}",
   "A studio also finds the items of the studios that belong to it (directory: “Belongs to”).": "スタジオは、そこに所属するスタジオのメディアも検索します（ディレクトリ:「所属先」）。",
   "A studio cannot belong to itself.": "スタジオを自分自身に所属させることはできません。",
-  "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": "システム全体で使うボスキーには Ctrl、Alt、Win のいずれかが必要です（例: Ctrl+Shift+H）。",
   "A tag cannot be added and removed at the same time.": "同じタグを追加と削除の両方に指定することはできません。",
   "A tag with a category cannot be saved without a category here; change its category instead.": "カテゴリに属するタグを、ここでカテゴリなしに変更することはできません。カテゴリの変更機能を使ってください。",
   "A template for the new file names is missing.": "新しいファイル名のテンプレートが欠けています。",
@@ -347,6 +346,7 @@
   "Available · {0} files hidden": {
     "other": "アクセス可能 · 非表示のファイル：{0} 件"
   },
+  "A–B loop": "A–B リピート",
   "Back": "戻る",
   "Back (Alt+←, mouse button 4)": "戻る (Alt+←、マウスボタン 4)",
   "Back and forward": "戻る・進む",
@@ -2675,7 +2675,7 @@
   "The backup must not itself be included as a media file.": "バックアップ自体をメディアファイルとして含めることはできません。",
   "The backup package is encrypted. Enter the password or recovery key.": "バックアップパッケージは暗号化されています。パスワードまたは回復キーを入力してください。",
   "The backup package is not in order:\n\n{0}": "バックアップ パッケージに問題があります:\n\n{0}",
-  "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": "ほかのプログラムが手前にあるときもボスキーが機能します。FlixyPixが非表示の間はキーを解放します。Ctrl、Alt、Winのいずれかが必要です。",
+  "The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden.": "ほかのプログラムが手前にあるときもボスキーが機能します。Ctrl、Alt、Winを含まないキーは、そのプログラムにもそのまま届きます。FlixyPixが非表示の間はオフです。",
   "The bundled version is used as soon as it is available.": "同梱のバージョンが準備でき次第、そのバージョンを使用します。",
   "The bundled version is used.": "同梱のバージョンを使用します。",
   "The catalog cannot be read: {0}": "カタログを読み取れません: {0}",

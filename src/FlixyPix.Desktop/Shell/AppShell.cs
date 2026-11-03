@@ -211,15 +211,17 @@ internal static class AppShell
   root?.Close();
  }
 
- /// <summary>Registers the boss key with Windows while "system-wide" is on; a key without Ctrl, Alt or Win stays local,
- /// so Esc is never taken from other programs.</summary>
+ /// <summary>Registers the boss key with Windows while "system-wide" is on; a key without Ctrl, Alt or Win is only
+ /// listened to, so Esc is never taken from other programs.</summary>
  private static void RegisterHotkey()
  {
   UnregisterHotkey();
   var restoring = IsHidden || minimizedByBoss;
   var shortcut = restoring ? Privacy.Settings.RestoreKey : BossKey;
   if (!PlayerHotkeys.TryParse(shortcut, out var modifiers, out var key) || PlayerHotkeys.IsModifierOnly(key)) return;
-  if (restoring ? modifiers == ModifierKeys.None : !Privacy.Settings.BossGlobal || !HasGlobalModifier(modifiers)) return;
+  if (restoring ? modifiers == ModifierKeys.None : !Privacy.Settings.BossGlobal) return;
+  // A plain key such as Esc cannot be reserved without taking it from every other program; it is only listened to.
+  if (!restoring && !HasGlobalModifier(modifiers)) { InstallKeyListener(modifiers, key); return; }
   if (restoring && PlayerHotkeys.TryParse(BossKey, out var bossModifiers, out var bossKey) && key == bossKey && modifiers == bossModifiers) return;
   if (hotkeyWindow == null)
   {
@@ -240,6 +242,42 @@ internal static class AppShell
   if (restoreHotkeyRegistered && hotkeyWindow != null) UnregisterHotKey(hotkeyWindow.Handle, RestoreHotkeyId);
   hotkeyRegistered = false;
   restoreHotkeyRegistered = false;
+  if (keyListener != 0) { UnhookWindowsHookEx(keyListener); keyListener = 0; }
+ }
+
+ private static nint keyListener;
+ private static int listenedKey;
+ private static ModifierKeys listenedModifiers;
+ // Kept in a field: the hook calls it until it is removed, so the garbage collector must not take it.
+ private static readonly LowLevelKeyboardProc listenerProc = KeyListened;
+ /// <summary>A boss key without Ctrl, Alt or Win is listened to system-wide while FlixyPix is visible.</summary>
+ internal static bool KeyListenerActive => keyListener != 0;
+
+ private static void InstallKeyListener(ModifierKeys modifiers, Key key)
+ {
+  listenedKey = KeyInterop.VirtualKeyFromKey(key); listenedModifiers = modifiers;
+  keyListener = SetWindowsHookEx(13, listenerProc, GetModuleHandle(null), 0); // WH_KEYBOARD_LL
+ }
+
+ /// <summary>Sees every key press without holding it up: the other program gets the key as before. Inside FlixyPix the
+ /// window key handler is in charge, so only presses while another program is in front count here.</summary>
+ private static nint KeyListened(int code, nint message, nint data)
+ {
+  if (code >= 0 && message is 0x100 or 0x104 && Marshal.ReadInt32(data) == listenedKey && PressedModifiers() == listenedModifiers && !OwnWindowInFront())
+   Application.Current?.Dispatcher.BeginInvoke(() => { if (!IsHidden && root is { IsVisible: true } main && main.WindowState != WindowState.Minimized) Boss(); });
+  return CallNextHookEx(keyListener, code, message, data);
+ }
+
+ private static ModifierKeys PressedModifiers()
+ {
+  static bool Down(int key) => (GetAsyncKeyState(key) & 0x8000) != 0;
+  return (Down(0x10) ? ModifierKeys.Shift : 0) | (Down(0x11) ? ModifierKeys.Control : 0) | (Down(0x12) ? ModifierKeys.Alt : 0) | (Down(0x5B) || Down(0x5C) ? ModifierKeys.Windows : 0);
+ }
+
+ private static bool OwnWindowInFront()
+ {
+  GetWindowThreadProcessId(GetForegroundWindow(), out var process);
+  return process == Environment.ProcessId;
  }
 
  private static nint HotkeyHook(nint window, int message, nint wParam, nint lParam, ref bool handled)
@@ -267,6 +305,13 @@ internal static class AppShell
  [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint handle);
  [DllImport("user32.dll")] private static extern bool RegisterHotKey(nint handle, int id, uint modifiers, uint key);
  [DllImport("user32.dll")] private static extern bool UnregisterHotKey(nint handle, int id);
+ private delegate nint LowLevelKeyboardProc(int code, nint message, nint data);
+ [DllImport("user32.dll", SetLastError = true)] private static extern nint SetWindowsHookEx(int hook, LowLevelKeyboardProc callback, nint module, uint threadId);
+ [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hook);
+ [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
+ [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
+ [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out int process);
+ [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string? module);
 }
 
 /// <summary>The icon in the notification area while FlixyPix is hidden: click shows it again, the context menu also ends it.</summary>

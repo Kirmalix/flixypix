@@ -11,7 +11,7 @@ public partial class MainWindow
  private async Task RunAbLoopControlsSmokeAsync(VideoPlayerWindow window,MpvPlayer player,CatalogRepository db,Guid mediaId,string root)
  {
   static void Require(bool value,string text){if(!value)throw new InvalidOperationException(text);}
-  Button ActionButton(string label)=>Descendants<Button>((FrameworkElement)window.Content).Single(button=>Equals(button.Content,T(label)));
+  Button ActionButton(string label)=>Descendants<Button>((FrameworkElement)window.Content).Single(button=>Equals(System.Windows.Automation.AutomationProperties.GetName(button),T(label)));
   static void Click(Button button)=>button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
   var setA=ActionButton("Set A");var setB=ActionButton("Set B");var reset=ActionButton("Reset A–B");var repeat=window.Repeat;window.Repeat=true;
   Require(window.AbLoop==new AbLoopState()&&!setB.IsEnabled,"Fresh window inherited loop points or allowed B without A.");
@@ -22,6 +22,7 @@ public partial class MainWindow
   var sceneCount=db.GetScenes(mediaId).Count;await window.SeekToAsync(3);Click(ActionButton("Scene start"));await window.SeekToAsync(4);Click(ActionButton("Scene end"));Click(ActionButton("Create scene"));
   Require(db.GetScenes(mediaId).Count==sceneCount+1&&db.GetScenes(mediaId).Any(scene=>scene.StartSeconds==3&&scene.EndSeconds==4)&&window.AbLoop is {Start:1,End:2}&&window.ClipStart==null,"Visible scene actions changed loop points or saved wrong range.");
   var bookmarkCount=db.GetBookmarks(mediaId).Count;Click(ActionButton("Set bookmark"));Require(db.GetBookmarks(mediaId).Count==bookmarkCount+1,"Visible bookmark action did not persist.");
+  var rating=db.GetMedia(mediaId)!.Rating;window.Rate(7);Require(db.GetMedia(mediaId)!.Rating==7&&window.Rating==7,"Player rating was not saved.");window.Rate(rating);
   await window.SeekToAsync(5);Click(setA);await window.AbLoopUpdate;Require(window.AbLoop is {Start:5,End:null}&&(await player.GetAbLoopAsync()).End==null,"A beyond B did not clear B.");
   Click(reset);await window.AbLoopUpdate;Require(window.AbLoop==new AbLoopState()&&await player.GetAbLoopAsync()==new AbLoopState()&&window.Repeat,"Reset did not clear native points or changed repeat.");window.Repeat=repeat;
   await window.SeekToAsync(.25);Click(setA);await window.AbLoopUpdate;await window.SeekToAsync(.75);Click(setB);await window.AbLoopUpdate;

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace FlixyPix.Desktop;
 
@@ -25,8 +26,11 @@ internal sealed record PrivacySettings
  public const int MinimumPinLength = 4;
  public BossAction BossAction { get; init; }
  public BossPlayback BossPlayback { get; init; }
- /// <summary>The boss key works also while another program has the focus (needs a modifier such as Ctrl).</summary>
- public bool BossGlobal { get; init; }
+ /// <summary>The boss key works also while another program has the focus; on by default. A key without Ctrl, Alt or
+ /// Win is only listened to, so the other program still gets it. Stored under a new name: the old "BossGlobal" was off
+ /// by default and could not be switched on for Esc, so it carries no deliberate choice.</summary>
+ [JsonPropertyName("BossSystemWide")]
+ public bool BossGlobal { get; init; } = true;
  /// <summary>Registered only while hidden or minimized by the boss key.</summary>
  public string RestoreKey { get; init; } = "Shift+Escape";
  /// <summary>Lock after this many minutes without input; 0 switches it off.</summary>

@@ -12925,10 +12925,6 @@
       "status": "unchanged",
       "digest": "04c983ec9478280f9bcf87aaea9caab685a58291d076de3782f20fc75a7fbd18"
     },
-    "A system-wide boss key needs Ctrl, Alt or Win, for example Ctrl+Shift+H.": {
-      "status": "unchanged",
-      "digest": "9d8b160cef630a8b4245382955be937779ac5d470efe4400464d79208fe25ebe"
-    },
     "Action": {
       "status": "unchanged",
       "digest": "8575ffd250ae923ad6ae6e924a668ed3941723dbb83eb7500d0233df6de34d46"
@@ -14290,11 +14286,6 @@
       "digest": "e70491bc825ad0b184ee99a2faee5faeeaea03ff262b26e6def17556d8d87d38",
       "previous_digest": "69164db0e632a55261907602f52fe98c42e69e1116418c1e4a76e67599fc95ad"
     },
-    "The boss key also works while another program is in front. It is released while FlixyPix is hidden. Needs Ctrl, Alt or Win.": {
-      "status": "corrected",
-      "digest": "2c5b4944e92db4af590fc0d47360db431357975beea931ae74dbf9d637de0b11",
-      "previous_digest": "7360cfeaef518643d3019c04b0fa454616b0d7a60fc0824f30596437485c0c7a"
-    },
     "Works system-wide only while hidden or minimized by the boss key. Default: Shift+Esc. Choose a different combination from the boss key.": {
       "status": "corrected",
       "digest": "ecd69ddd91fbfe9ba811216b074fe21f70d3d813a019039079182c3c5a12250a",
@@ -14660,6 +14651,14 @@
     "{0:N0} items pinned as favorites": {
       "status": "unchanged",
       "digest": "fa6863d8b7dcf4dac334471f9991c9a88d39a08622b198769abf782414133664"
+    },
+    "The boss key also works while another program is in front. A key without Ctrl, Alt or Win still reaches that program as well. Off while FlixyPix is hidden.": {
+      "status": "unchanged",
+      "digest": "42644e976c7a8a9549df75825b210410288757e4e436c1376ee7521f775b218e"
+    },
+    "A–B loop": {
+      "status": "unchanged",
+      "digest": "33d8c5924a6c3810e49440ab0c095fa185950a252587332f1845c01f3f98e44f"
     }
   }
 }

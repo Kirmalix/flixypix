@@ -170,7 +170,8 @@ internal sealed partial class VideoPlayerWindow
   get
   {
    static IEnumerable<DependencyObject> All(DependencyObject parent) => LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>().SelectMany(c => All(c).Prepend(c));
-   return All(controlBar).OfType<Button>().Select(b => b.Content as string).OfType<string>();
+   // Symbol buttons are known by their accessible name, text buttons by their text.
+   return All(controlBar).OfType<Button>().SelectMany(b => new[] { b.Content as string, AutomationProperties.GetName(b) }).OfType<string>().Where(t => t.Length > 0).Distinct();
   }
  }
  internal string TrackMenuSummary => string.Join(" · ", (audio.SelectedItem as TrackChoice)?.Label, (subtitles.SelectedItem as TrackChoice)?.Label);
@@ -229,11 +230,11 @@ internal sealed partial class VideoPlayerWindow
   speed.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
   speed.SelectionChanged += async (_, _) => { if (!syncing && player != null && speed.SelectedItem is double value) await TrackPreference(() => SaveSpeedAsync(value)); };
   right.Children.Add(speed);
-  var tracks = Labeled("", T("Tracks"), T("Choose audio and subtitle track")); tracks.Click += (_, _) => TrackMenu(tracks);
+  var tracks = Symbol("", T("Choose audio and subtitle track")); AutomationProperties.SetName(tracks, T("Tracks")); tracks.Click += (_, _) => TrackMenu(tracks);
   var view = Labeled("", Tc("player", "View"), T("Time-based view: crop and position of the picture per point in time")); view.Click += (_, _) => ViewMenu(view);
-  marksButton.Style = (Style)Application.Current.Resources["Quiet"]; marksButton.Padding = new Thickness(9, 6, 9, 6); marksButton.Margin = new Thickness(2, 0, 2, 0);
-  right.Children.Add(BuildOCounter()); right.Children.Add(tracks);
-  right.Children.Add(previousMarkButton); right.Children.Add(marksButton); right.Children.Add(nextMarkButton); right.Children.Add(view);
+  right.Children.Add(BuildRating()); right.Children.Add(BuildOCounter()); right.Children.Add(tracks);
+  var marks = Pill(null, null, previousMarkButton, marksButton, nextMarkButton); marks.Margin = new Thickness(4, 0, 4, 0);
+  right.Children.Add(marks); right.Children.Add(view);
   fullscreenButton.Click += (_, _) => ToggleFullscreen(); right.Children.Add(fullscreenButton);
   DockPanel.SetDock(right, Dock.Right); row.Children.Add(right);
   controlBar.Children.Add(row);

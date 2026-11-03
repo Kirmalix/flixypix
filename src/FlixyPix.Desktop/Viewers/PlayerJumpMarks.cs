@@ -29,7 +29,7 @@ internal sealed partial class VideoPlayerWindow
  private readonly Border markPanel = new() { Width = 290, BorderThickness = new Thickness(1, 0, 0, 0), Visibility = Visibility.Collapsed };
  private readonly TextBlock markCount = new() { FontSize = 11, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
  private readonly TextBlock noMarks = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new Thickness(14, 4, 14, 0) };
- private readonly Button marksButton = new() { Content = T("Jump marks") };
+ private readonly Button marksButton = Symbol("", T("Jump marks"));
  private readonly Button previousMarkButton = Symbol("\uE76B", T("Previous bookmark")), nextMarkButton = Symbol("\uE76C", T("Next bookmark"));
  private MarkRow[] markRows = [];
  internal IReadOnlyList<JumpMark> Marks { get; private set; } = [];
@@ -80,7 +80,6 @@ internal sealed partial class VideoPlayerWindow
   body.Children.Add(header); body.Children.Add(hint); body.Children.Add(new Grid { Children = { markList, noMarks } });
   markPanel.Child = body;
   marksButton.Click += (_, _) => ToggleMarkPanel();
-  marksButton.ToolTip = T("Show or hide the jump mark list") + KeyHint(PlayerActions.ToggleMarks);
   foreach (var (button, action) in new[] { (previousMarkButton, PlayerActions.PreviousBookmark), (nextMarkButton, PlayerActions.NextBookmark) })
   { button.ToolTip += KeyHint(action); button.Click += async (_, _) => await Command(() => RunActionAsync(action)); }
   UpdateMarkSteps();
@@ -110,7 +109,7 @@ internal sealed partial class VideoPlayerWindow
   markRows = Marks.Select((mark, index) => new MarkRow(mark, index < 9 ? (index + 1).ToString(CultureInfo.CurrentCulture) : "", Theme.Brush(mark.Kind == JumpMarkKind.Scene ? "SceneMark" : "TimelineMark"))).ToArray();
   markList.ItemsSource = markRows; markCount.Text = Marks.Count.ToString("N0", CultureInfo.CurrentCulture);
   noMarks.Visibility = Marks.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-  marksButton.Content = Marks.Count == 0 ? T("Jump marks") : T("Jump marks · {0:N0}", Marks.Count);
+  marksButton.ToolTip = (Marks.Count == 0 ? T("Jump marks") : T("Jump marks · {0:N0}", Marks.Count)) + " · " + T("Show or hide the jump mark list") + KeyHint(PlayerActions.ToggleMarks);
   // Refreshing the contents never changes the remembered visibility.
   ShowMarkPanel(IsFullscreen?fullscreenMarksWanted:marksWanted);
   UpdateMarkSteps();

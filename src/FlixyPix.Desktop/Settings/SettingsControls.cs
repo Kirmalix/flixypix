@@ -177,16 +177,20 @@ internal sealed class RatingPicker : StackPanel
  private readonly List<Border> fills = [];
  private readonly TextBlock caption = new() { Foreground = SettingsUi.Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), MinWidth = 110 };
  private int value;
+ private readonly double size;
  internal event Action? Changed;
 
- public RatingPicker()
+ public RatingPicker() : this(24) { }
+ /// <param name="size">Width of one star; the player uses smaller ones.</param>
+ internal RatingPicker(double size)
  {
+  this.size = size;
   Orientation = Orientation.Horizontal; Focusable = true; FocusVisualStyle = null; Cursor = Cursors.Hand; Background = Brushes.Transparent;
   for (var index = 0; index < 5; index++)
   {
-   var star = new Grid { Width = 24, Height = 24 };
-   star.Children.Add(new TextBlock { Text = "★", FontSize = 20, Foreground = SettingsUi.FieldBorder, HorizontalAlignment = HorizontalAlignment.Center });
-   var fill = new Border { HorizontalAlignment = HorizontalAlignment.Left, ClipToBounds = true, Width = 0, Child = new TextBlock { Text = "★", FontSize = 20, Foreground = SettingsUi.Gold, Width = 24, TextAlignment = TextAlignment.Center } };
+   var star = new Grid { Width = size, Height = size };
+   star.Children.Add(new TextBlock { Text = "★", FontSize = size * 20 / 24, Foreground = SettingsUi.FieldBorder, HorizontalAlignment = HorizontalAlignment.Center });
+   var fill = new Border { HorizontalAlignment = HorizontalAlignment.Left, ClipToBounds = true, Width = 0, Child = new TextBlock { Text = "★", FontSize = size * 20 / 24, Foreground = SettingsUi.Gold, Width = size, TextAlignment = TextAlignment.Center } };
    star.Children.Add(fill); fills.Add(fill);
    var position = index;
    star.MouseMove += (_, e) => Render(At(position, e.GetPosition(star).X));
@@ -205,14 +209,16 @@ internal sealed class RatingPicker : StackPanel
   ToolTip = T("Click the left half of a star: half a star · click again: clear · use arrow keys to change");
   Render(0);
  }
- private static int At(int index, double x) => index * 2 + (x < 12 ? 1 : 2);
+ private int At(int index, double x) => index * 2 + (x < size / 2 ? 1 : 2);
+ /// <summary>Only the stars, without the caption beside them.</summary>
+ internal bool Compact { set => caption.Visibility = value ? Visibility.Collapsed : Visibility.Visible; }
  internal int Value { get => value; set { var changed = this.value != value; this.value = value; Render(value); if (changed) Changed?.Invoke(); } }
  private Func<int, string> describe = shown => shown == 0 ? T("Off") : T("from {0:0.#} {1}", shown / 2d, (shown == 2 ? T("Star") : "Sternen"));
  /// <summary>Caption for a value; the settings show minimums ("ab 3 Sternen"), the details panel the rating itself.</summary>
  internal Func<int, string> Describe { get => describe; set { describe = value; Render(this.value); } }
  private void Render(int shown)
  {
-  for (var index = 0; index < 5; index++) fills[index].Width = Math.Clamp(shown - index * 2, 0, 2) * 12;
+  for (var index = 0; index < 5; index++) fills[index].Width = Math.Clamp(shown - index * 2, 0, 2) * size / 2;
   caption.Text = describe(shown);
   AutomationProperties.SetItemStatus(this, caption.Text);
  }
