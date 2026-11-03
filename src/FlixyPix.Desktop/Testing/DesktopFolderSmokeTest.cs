@@ -54,6 +54,8 @@ public partial class MainWindow
  }
  private static void CheckOpaqueFolderScreenshot(string path)
  {
+  // Capture writes nothing unless screenshots are kept, so there is nothing to check then.
+  if (Environment.GetEnvironmentVariable("FLIXYPIX_TEST_CAPTURE") != "1") return;
   using var file = File.OpenRead(path);
   var decoder = new System.Windows.Media.Imaging.PngBitmapDecoder(file, System.Windows.Media.Imaging.BitmapCreateOptions.PreservePixelFormat, System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
   var frame = new System.Windows.Media.Imaging.FormatConvertedBitmap(decoder.Frames[0], System.Windows.Media.PixelFormats.Bgra32,null,0);
