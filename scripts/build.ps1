@@ -1,18 +1,21 @@
 # Tests marked Category=Slow (large catalogs, time budgets) run only with -FullTests.
-param([switch]$SkipTests, [switch]$FullTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools)
+param([switch]$BuildOnly, [switch]$KeepTestArtifacts, [switch]$SkipTests, [switch]$FullTests, [switch]$SkipUiSmoke, [switch]$NoMediaTools, [string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
 if (!(Test-Path -LiteralPath $dotnet)) { throw 'Run scripts\bootstrap.ps1 first.' }
 $env:DOTNET_ROOT = Split-Path $dotnet
+$priorCapture = $env:FLIXYPIX_TEST_CAPTURE
+$env:FLIXYPIX_TEST_CAPTURE = if ($KeepTestArtifacts) { "1" } else { "0" }
 Push-Location $projectRoot
 try {
     & $dotnet build FlixyPix.slnx --configuration Release --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
+    if ($BuildOnly) { return }
     if (!$SkipTests) {
         $filter = if ($FullTests) { @() } else { @('--filter', 'Category!=Slow') }
         foreach ($project in (Get-ChildItem -Path tests -Filter '*.csproj' -Recurse)) {
-            & $dotnet test $project.FullName --configuration Release --no-build --nologo @filter --logger 'trx;LogFileName=results.trx' --results-directory (Join-Path 'artifacts\test-results' $project.BaseName)
+            & $dotnet test $project.FullName --configuration Release --no-build --nologo @filter
             if ($LASTEXITCODE -ne 0) { throw "Tests failed: $($project.BaseName)" }
         }
         python -m unittest discover -s scripts\tests -p 'test_*.py'
@@ -30,7 +33,8 @@ try {
     }
     python scripts\checks\i18n.py --complete de,fr,es,it,pt,nl,pl,ja,ru
     if ($LASTEXITCODE -ne 0) { throw 'Translation files or untranslated texts need attention (CONTRIBUTING.md, Translations).' }
-    $portable = Join-Path $projectRoot 'artifacts\portable-FlixyPix'
+    $portable = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $projectRoot 'artifacts\portable-FlixyPix' }
+    if (Test-Path -LiteralPath $portable) { throw 'Publish directory already exists. Preserve its data and move it aside before creating a fresh release.' }
     & $dotnet publish src\FlixyPix.Desktop\FlixyPix.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false --output $portable --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     if (!$NoMediaTools) {
@@ -62,15 +66,29 @@ try {
     Copy-Item -LiteralPath 'THIRD-PARTY-NOTICES.md' -Destination $portable -Force
     Copy-Item -LiteralPath 'docs\release\portable-readme.en.md' -Destination (Join-Path $portable 'README.md') -Force
     Copy-Item -LiteralPath 'docs\release\portable-readme.md' -Destination (Join-Path $portable 'README.de.md') -Force
-    python scripts\release\collect-notices.py
+    python scripts\release\collect-notices.py --publish-directory $portable --output (Join-Path $portable 'tools\notices\dependencies')
     if ($LASTEXITCODE -ne 0) { throw 'Dependency notice collection failed.' }
+    [IO.File]::WriteAllText((Join-Path $portable 'portable.flag'), '')
+    $releaseFiles = @(Get-ChildItem -LiteralPath $portable -Recurse -File | ForEach-Object { $_.FullName.Substring(([IO.Path]::GetFullPath($portable).TrimEnd('\') + '\').Length).Replace('\','/') })
+    [IO.File]::WriteAllText((Join-Path $portable 'release-files.json'), (ConvertTo-Json -InputObject $releaseFiles))
     if (!$SkipUiSmoke) {
-        $smoke = Join-Path $projectRoot ('artifacts\ui-smoke\run-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8))
+        $smoke = Join-Path ([IO.Path]::GetTempPath()) ('FlixyPix-ui-' + [Guid]::NewGuid().ToString('N'))
         $application = Join-Path $portable 'FlixyPix.exe'
         # On an invisible desktop of its own: no window appears on the screen and none takes the focus.
+        try {
         $exitCode = & (Join-Path $PSScriptRoot 'tests\Start-HiddenDesktop.ps1') -FilePath $application -ArgumentList @('--smoke-test', ('"' + $smoke + '"')) -TimeoutSeconds 180
         if ($exitCode -eq -1) { throw 'UI smoke test timed out.' }
         if ($exitCode -ne 0) { throw "UI smoke test failed ($exitCode)." }
+        } finally {
+            if (!$KeepTestArtifacts -and (Test-Path -LiteralPath $smoke)) {
+                $resolvedSmoke = [IO.Path]::GetFullPath($smoke)
+                if ([IO.Path]::GetDirectoryName($resolvedSmoke).TrimEnd('\') -ne [IO.Path]::GetTempPath().TrimEnd('\')) { throw 'Unexpected UI test cleanup path.' }
+                $links = @(Get-Item -LiteralPath $resolvedSmoke; Get-ChildItem -LiteralPath $resolvedSmoke -Recurse -Force) | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
+                if ($links) { Write-Warning "Linked UI test workspace retained: $resolvedSmoke" }
+                else { Remove-Item -LiteralPath $resolvedSmoke -Recurse -Force }
+            }
+        }
+
     }
     Write-Output "Ready: $portable\FlixyPix.exe"
-} finally { Pop-Location }
+} finally { $env:FLIXYPIX_TEST_CAPTURE = $priorCapture; Pop-Location }

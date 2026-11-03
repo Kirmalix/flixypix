@@ -1,5 +1,6 @@
 using FlixyPix.Core;
 using Microsoft.Data.Sqlite;
+using System.IO.Compression;
 using Xunit;
 
 namespace FlixyPix.Core.Tests;
@@ -37,7 +38,17 @@ public sealed class BackupScheduleTests : IDisposable
         var check = await CatalogRepository.VerifyBackupAsync(result.PackagePath);
         Assert.Equal((1, 1), (check.Media, check.Files));
         var broken = Path.Combine(root, "broken.flixypixbackup");
-        var bytes = File.ReadAllBytes(result.PackagePath); bytes[bytes.Length / 3] ^= 0xFF; File.WriteAllBytes(broken, bytes);
+        File.Copy(result.PackagePath, broken);
+        // Change a manifested payload, rather than an arbitrary ZIP byte which may be unused padding.
+        using (var zip = ZipFile.Open(broken, ZipArchiveMode.Update))
+        {
+            var entry = zip.GetEntry("catalog.db")!;
+            using var payload = new MemoryStream();
+            using (var input = entry.Open()) input.CopyTo(payload);
+            var bytes = payload.ToArray(); bytes[0] ^= 0xFF;
+            entry.Delete();
+            using var output = zip.CreateEntry("catalog.db").Open(); output.Write(bytes);
+        }
         await Assert.ThrowsAnyAsync<Exception>(() => CatalogRepository.VerifyBackupAsync(broken));
     }
 }
