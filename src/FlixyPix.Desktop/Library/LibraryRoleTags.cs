@@ -49,9 +49,11 @@ public partial class MainWindow
   if (ids.Count == 0 || add.Count + remove.Count == 0) return;
   try
   {
-   var changed = await Task.Run(() => _repository.UpdateCategoryTags(ids, category, add, remove));
+   var undo = await Task.Run(() => _repository.UpdateCategoryTagsWithUndo(ids, category, add, remove));
+   var changed = undo.Rows.Count;
    Status.Text = (add.Count > 0 ? T("“{0}” assigned", string.Join(T("”, “"), add)) : T("“{0}” removed", string.Join(T("”, “"), remove))) + " · " + category
     + Tn(changed, " · 1 item changed", " · {0:N0} items changed");
+   RememberImmediateUndo(undo, Status.Text);
    if (ViewDependsOnTags) await RefreshAsync(); else await RefreshTagsInPlaceAsync(ids);
   }
   catch (Exception ex) { Message.Show(this, ex.Message, "Tags", MessageBoxButton.OK, MessageBoxImage.Warning); }

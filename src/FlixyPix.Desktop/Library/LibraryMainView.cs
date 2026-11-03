@@ -51,13 +51,13 @@ public partial class MainWindow
  private void TileToggleWatchLater(object sender, RoutedEventArgs e)
  {
   if (CardOf(sender) is not { } card) return; e.Handled = true;
-  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; _repository.Upsert(item with { WatchLater = !item.WatchLater });
+  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.WatchLater, current => current with { WatchLater = !current.WatchLater });
   Status.Text = item.WatchLater ? T("“{0}” removed from Watch later", card.Title) : T("“{0}” marked for later", card.Title); Refresh();
  }
  private void TileToggleFavorite(object sender, RoutedEventArgs e)
  {
   if (CardOf(sender) is not { } card) return; e.Handled = true;
-  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; _repository.Upsert(item with { IsFavorite = !item.IsFavorite });
+  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite });
   Status.Text = item.IsFavorite ? T("“{0}” no longer pinned as favorite", card.Title) : T("“{0}” pinned as favorite", card.Title); Refresh();
  }
 
@@ -66,14 +66,14 @@ public partial class MainWindow
  {
   if (Selected is not { } selected || SelectedMedia.Count > 1) return;
   var item = _repository.GetMedia(selected.Id) ?? selected;
-  _repository.Upsert(change(item)); Status.Text = message; Refresh(item.Id);
+  ApplyImmediate([item.Id], ImmediateEditFields.Rating | ImmediateEditFields.Favorite | ImmediateEditFields.WatchLater, change); Status.Text = message; Refresh(item.Id);
  }
  private void FavoriteClicked(object sender, RoutedEventArgs e) => QuickSave(item => item with { IsFavorite = EditFavorite.IsChecked == true }, EditFavorite.IsChecked == true ? T("Pinned as favorite") : T("Favorite unpinned"));
  private void WatchLaterClicked(object sender, RoutedEventArgs e) => QuickSave(item => item with { WatchLater = EditWatchLater.IsChecked == true }, EditWatchLater.IsChecked == true ? T("Marked for later") : T("No longer marked for later"));
  /// <summary>Digits 0–5 rate every selected medium in whole stars, as in common photo tools.</summary>
  private void RateSelection(int stars) => RateMedia(SelectedMedia, stars);
 
- private static string ViewName(string view) => view switch { "home" => T("Home"), "Video" => T("Videos"), "Image" => T("Images"), "Audio" => T("Audio"), "favorites" => T("Favorites"), "watchlater" => T("Watch later"), _ => T("All items") };
+ private static string ViewName(string view) => view switch { "publication-groups" => T("Publication groups"), "image-sets" => T("Image sets"), "inbox" => T("Review inbox"), "performers" => T("Performers"), "studios" => T("Studios"), "home" => T("Home"), "Video" => T("Videos"), "Image" => T("Images"), "Audio" => T("Audio"), "favorites" => T("Favorites"), "watchlater" => T("Watch later"), _ => T("All items") };
  private void CopyPathClicked(object sender, RoutedEventArgs e) { if (Selected is { } item) { Clipboard.SetText(item.Path); Status.Text = T("Path copied"); } }
  private void RevealClicked(object sender, RoutedEventArgs e) => Reveal();
 }
