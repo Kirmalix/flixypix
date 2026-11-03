@@ -144,3 +144,9 @@ Desktop.ini
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# Portable runtime state; never distribute these files.
+/Data/
+/storage-mode.json
+/storage-mode.*
+/.storage-*

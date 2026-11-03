@@ -4,13 +4,13 @@ This portable release supports Windows 10/11 (64-bit) and has no installer or co
 
 Run `FlixyPix.exe` to open your local media library. The .NET runtime is included. Keep the `tools` folder, containing FFmpeg, ffprobe and mpv, beside the application.
 
-On the first normal start, FlixyPix detects settings from previous releases and copies an earlier default library. Previous data is preserved. A custom library folder continues to be used.
+A fresh portable start uses Data beside the executable. Existing profile data is copied only after you choose to import it. Originals are preserved.
 
 ## Language
 
 FlixyPix follows the Windows display language. Choose another language under **Settings → Appearance → Language**, save, then restart. German, English, French, Spanish, Italian, Brazilian Portuguese, Dutch, Polish, Japanese and Russian are available. Numbers and dates follow your Windows regional format independently of the interface language.
 
-The translations were produced and reviewed with AI assistance, not by native speakers; corrections are welcome. Individual translation overrides can be placed in `%LOCALAPPDATA%\FlixyPix\languages\<code>.json`; see the localization documentation in the source project.
+The translations were produced and reviewed with AI assistance, not by native speakers; corrections are welcome. Portable translation overrides go in `Data/languages/<code>.json`. In profile mode, overrides can be placed in `%LOCALAPPDATA%\FlixyPix\languages\<code>.json`; see the localization documentation in the source project.
 
 ## Getting started
 
@@ -31,7 +31,7 @@ Packages add vocabulary and category roles; they do not tag media automatically.
 
 ## Data, backup and shortcuts
 
-Default catalog: `%LOCALAPPDATA%\FlixyPix\Library`.
+Profile-mode catalog: `%LOCALAPPDATA%\FlixyPix\Library`.
 Computer settings: `%LOCALAPPDATA%\FlixyPix\appsettings.json`.
 A change of library folder takes effect after restart. Older catalogs receive a consistent backup before a schema upgrade.
 
@@ -50,3 +50,12 @@ This is newly written software. Full behavioral parity with EazyFlixPix 4.8.4 ha
 Catalog → Legacy data / Migration → Historical functions offers explicit adoption of supported search, parser and job settings after preview. Unknown active options remain blocked. Adopted jobs start only when separately started in the queue. Legacy tag artwork can be copied after reviewing its mapping.
 
 FlixyPix is free software under the GNU General Public License, version 3 or later; see `LICENSE`. The tool in `legacy-import` is also available under the MIT License. Third-party components keep their own licenses: overview in `THIRD-PARTY-NOTICES.md`, texts under `tools/notices`. Source code: https://github.com/Kirmalix/flixypix. FlixyPix is an independent project, not affiliated with the authors of EazyFlixPix. The German portable instructions are in `README.de.md`.
+
+
+## Storage modes and updates
+
+A fresh portable ZIP uses `Data` beside `FlixyPix.exe`. Settings > Storage shows the active location and lets you switch between portable storage and `%LOCALAPPDATA%\FlixyPix`, with a restart. You can use existing destination data or copy selected libraries; originals are kept and media files are not copied. There is no automatic synchronization between the two data sets.
+
+The persistent choice is in `storage-mode.json` beside the executable. Neither that file nor `Data` is shipped in the ZIP. Close FlixyPix and extract an update over the existing program folder: program files are replaced, user data and the storage choice are retained. Keep a separate backup before updating. `--portable` and `--profile` override the stored choice for a start.
+
+Keep the complete application folder and the media on the same portable drive when moving to another computer. Sources on other drives or network shares remain external. Interrupted storage transfers and relocations are recovered from a local journal on the next start; originals are retained. Portable storage does not guarantee that Windows or external programs leave no traces; generated preview caches may contain unencrypted images even with catalog encryption.

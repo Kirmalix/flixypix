@@ -83,7 +83,7 @@ public partial class MainWindow
   var launchBefore = DatabaseWindow.Launch; System.Diagnostics.ProcessStartInfo? launched = null;
   try { DatabaseWindow.Launch = start => launched = start; manager.OpenInNewWindow(second); }
   finally { DatabaseWindow.Launch = launchBefore; }
-  Require(launched is { ArgumentList: ["--library", var target] } && LibraryCatalogs.SameDirectory(target, second), "Opening in a new window did not start an instance for the library.");
+  Require(launched is { ArgumentList: [var mode, "--library", var target] } && mode == (AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile") && LibraryCatalogs.SameDirectory(target, second), "Opening in a new window did not start an instance for the library.");
   // A library held by another instance comes to the front there instead of opening twice.
   var activated = new TaskCompletionSource();
   using (var otherInstance = LibraryInstance.Claim(second, () => activated.TrySetResult()) ?? throw new InvalidOperationException("The second library could not be held."))

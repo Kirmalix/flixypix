@@ -10,13 +10,13 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 
-def collect(destination: Path):
+def collect(destination: Path, publish_directory: Path | None = None):
     assets = json.loads((ROOT / 'src/FlixyPix.Desktop/obj/project.assets.json').read_text(encoding='utf-8-sig'))
     folders = [Path(p) for p in assets['packageFolders']]
     packages = {name.lower(): data for name, data in assets['libraries'].items() if data['type'] == 'package'}
     # Self-contained framework packs are not regular project libraries, but their
     # license and bundled third-party notices still belong in the local output.
-    runtime = ROOT / 'artifacts/portable-FlixyPix/FlixyPix.runtimeconfig.json'
+    runtime = (publish_directory or ROOT / 'artifacts/portable-FlixyPix') / 'FlixyPix.runtimeconfig.json'
     if runtime.exists():
         config = json.loads(runtime.read_text(encoding='utf-8-sig'))['runtimeOptions']
         for framework in config.get('includedFrameworks', []):
@@ -58,4 +58,6 @@ def collect(destination: Path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts/portable-FlixyPix/tools/notices/dependencies')
-    collect(parser.parse_args().output)
+    parser.add_argument('--publish-directory', type=Path)
+    args = parser.parse_args()
+    collect(args.output, args.publish_directory)

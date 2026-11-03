@@ -55,8 +55,17 @@ public partial class MainWindow
   _switchTo = LibraryCatalogs.Normalize(directory); _pendingDataDirectory = _switchTo;
   _switched = new(TaskCreationOptions.RunContinuationsAsynchronously);
   Status.Text = T("Switching library …");
+  var result = _switched.Task;
   Close();
-  return _switched.Task;
+  return result;
+ }
+
+ private void CancelLibrarySwitch()
+ {
+  if (_switched == null) return;
+  _switchTo = null; _pendingDataDirectory = null;
+  var cancelled = _switched; _switched = null;
+  cancelled.TrySetResult(null);
  }
 
  /// <summary>Runs after this window let go of its catalog.</summary>

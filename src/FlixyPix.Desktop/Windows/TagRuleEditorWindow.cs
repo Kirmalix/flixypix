@@ -58,7 +58,7 @@ internal sealed class TagRuleEditorWindow : Window
  private FilenameTagRule Read()
  {
   var value = original with { Name = name.Text.Trim(), Enabled = enabled.IsChecked == true, FilenameContains = "", Tags = [], Groups = groups.Children.OfType<RuleGroup>().Select(g => g.Read()).ToList() };
-  _ = CatalogRepository.EvaluateTagRule(new() { Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Regelprüfung.mp4") }, value);
+  _ = CatalogRepository.EvaluateTagRule(new() { Path = System.IO.Path.Combine(FlixyPix.Core.AppStorage.WorkDirectory, "Regelprüfung.mp4") }, value);
   return value;
  }
 

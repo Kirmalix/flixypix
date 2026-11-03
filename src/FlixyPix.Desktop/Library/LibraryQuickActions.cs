@@ -22,7 +22,7 @@ public partial class MainWindow
   var items = SelectedMedia;
   if (items.Count == 0) return 0;
   if (DirectoryWindow.ClipboardImage() is not { } image) { Status.Text = T("The clipboard contains no image."); return 0; }
-  var picture = Path.Combine(Path.GetTempPath(), "flixypix-thumbnail-" + Guid.NewGuid().ToString("N") + ".png");
+  var picture = Path.Combine(FlixyPix.Core.AppStorage.WorkDirectory, "flixypix-thumbnail-" + Guid.NewGuid().ToString("N") + ".png");
   try
   {
    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));

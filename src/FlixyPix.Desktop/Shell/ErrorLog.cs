@@ -10,7 +10,7 @@ namespace FlixyPix.Desktop;
 internal static class ErrorLog
 {
  private static readonly object gate = new();
- internal static string Folder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix", "logs");
+ internal static string Folder { get; set; } = FlixyPix.Core.AppStorage.Current.Logs;
  internal static string TodayFile => Path.Combine(Folder, $"fehler-{DateTime.Now:yyyy-MM-dd}.log");
 
  /// <summary>Hooks the process-wide handlers: tasks whose exception nobody observed, and crashes outside the interface thread.</summary>
@@ -28,11 +28,14 @@ internal static class ErrorLog
    var text = new StringBuilder()
     .Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")).Append(" · ").Append(source).Append(T(" · FlixyPix "))
     .Append(typeof(ErrorLog).Assembly.GetName().Version).AppendLine()
-    .AppendLine(error.ToString()).AppendLine();
+    .AppendLine(RedactPaths(error.ToString())).AppendLine();
    lock (gate) { Directory.CreateDirectory(Folder); File.AppendAllText(TodayFile, text.ToString(), new UTF8Encoding(false)); }
   }
   catch (Exception failure) when (failure is IOException or UnauthorizedAccessException) { Debug.WriteLine(failure); }
  }
+
+ internal static string RedactPaths(string text) => System.Text.RegularExpressions.Regex.Replace(
+  text, @"(?i)(?:[a-z]:[\\/]|\\\\)[^\r\n""']+", "<path>");
 
  private static void Cleanup()
  {
