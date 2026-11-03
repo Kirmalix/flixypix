@@ -70,11 +70,13 @@ public sealed partial class CatalogRepository
    ThrowIfDisposed();using var transaction=connection.BeginTransaction();
    var source=ReadEntity<StashSourceProfile>("stash_sources",sourceId,transaction)??throw new ArgumentException("Unknown Stash source.");
    var context=new StashImportContext(source,categories,dependencies,true);var result=new List<StashImportPreviewRow>();
+   // One lookup per page: it reads the directory once, and the preview writes nothing that could change it.
+   var lookup=new StashTargetLookup(this,transaction);
    foreach(var(document,draft)in records)
    {
     token.ThrowIfCancellationRequested();var identity=ResolveStashIdentity(source,document,transaction,token);
     var binding=identity is {State:StashIdentityState.Matched,Candidates:[var only]}?ReadEntity<StashBinding>("stash_bindings",only.Id,transaction):null;
-    var lookup=new StashTargetLookup(this,transaction);if(binding!=null)binding=ObserveStashBinding(binding,draft.Kind,lookup);
+    if(binding!=null)binding=ObserveStashBinding(binding,draft.Kind,lookup);
     var matches=StashImportSupported(draft.Kind)?StashLocalMatches(draft,categories,transaction):[];
     var compared=draft.Kind==StashEntityKind.Tag?new StashTargetReference(StashTargetKind.ProvenanceOnly):binding is {Detached:false}?binding.Target:matches.Count==1?matches[0].Target:null;
     IReadOnlyList<StashFieldDiff> fields=[];
@@ -143,6 +145,8 @@ public sealed partial class CatalogRepository
    }
    // Identities first: every later step refers to one stable source identity per record.
    var identities=new Dictionary<long,(StashIdentity Identity,long? Expected,StashBinding? Binding)>();var seen=new HashSet<Guid>();
+   // Nothing is written while the identities are resolved, so one directory lookup serves every record.
+   var existing=new StashTargetLookup(this,transaction);
    foreach(var record in records)
    {
     token.ThrowIfCancellationRequested();var item=items[record.Document.Ordinal];
@@ -162,7 +166,7 @@ public sealed partial class CatalogRepository
     }
     if(!seen.Add(identity.Id))throw new ArgumentException("Two selected Stash records refer to the same source identity.");
     var binding=expected==null?null:ReadEntity<StashBinding>("stash_bindings",identity.Id,transaction);
-    if(binding!=null)binding=ObserveStashBinding(binding,record.Document.Kind,new(this,transaction));
+    if(binding!=null)binding=ObserveStashBinding(binding,record.Document.Kind,existing);
     identities[record.Document.Ordinal]=(identity,expected,binding);
    }
    var planned=new List<StashPlannedBinding>();var counts=new int[3];
@@ -320,7 +324,7 @@ public sealed partial class CatalogRepository
  {
   var preferences=ReadPreferences(transaction);
   if(preferences.TagVocabulary.Any(entry=>Same(entry.Tag,key.Value)&&Same(entry.Category,key.Category)))return true;
-  using(var command=Command("SELECT 1 FROM media_tags WHERE tag=$tag COLLATE NOCASE AND category=$category COLLATE NOCASE LIMIT 1",transaction,("$tag",key.Value),("$category",key.Category)))
+  using(var command=Command("SELECT 1 FROM media_tags WHERE tag=$tag COLLATE EFP_ORDINAL AND category=$category COLLATE EFP_ORDINAL LIMIT 1",transaction,("$tag",key.Value),("$category",key.Category)))
    if(command.ExecuteScalar()!=null)return true;
   return ReadTagHierarchy(transaction).Edges.Any(edge=>SameHierarchyKey(edge.Parent,key)||SameHierarchyKey(edge.Child,key));
  }
@@ -356,7 +360,7 @@ public sealed partial class CatalogRepository
   if(TagRoles.Of(preferences,key.Category)!=role)
   {
    var used=preferences.TagVocabulary.Any(entry=>Same(entry.Category,key.Category));
-   if(!used){using var command=Command("SELECT 1 FROM media_tags WHERE category=$category COLLATE NOCASE LIMIT 1",transaction,("$category",key.Category));used=command.ExecuteScalar()!=null;}
+   if(!used){using var command=Command("SELECT 1 FROM media_tags WHERE category=$category COLLATE EFP_ORDINAL LIMIT 1",transaction,("$category",key.Category));used=command.ExecuteScalar()!=null;}
    if(used)throw new InvalidOperationException(T("The category is already used with another role: {0}",key.Category));
    roles=TagRoles.Set(roles,key.Category,role);
   }
