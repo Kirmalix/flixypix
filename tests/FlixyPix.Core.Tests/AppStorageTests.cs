@@ -46,4 +46,34 @@ public sealed class AppStorageTests : IDisposable
   catalog.PreparePortableLocation(@"F:\App",true);
   Assert.Equal(@"F:\Media\film.mp4",catalog.GetMedia(id)!.Path);
  }
+
+ [Fact] public void ThumbnailsOfAFolderNoRecordNamesFollowTheLibraryOnce()
+ {
+  // A takeover in the profile, copied into a portable folder before FlixyPix recorded where a library lies.
+  var library=Path.Combine(root,"portable","Data","Takeover"); Directory.CreateDirectory(Path.Combine(library,"thumbnails"));
+  File.WriteAllText(Path.Combine(library,"thumbnails","a.jpg"),"x");
+  var gone=Path.Combine(root,"profile","Takeover");
+  using var catalog=new CatalogRepository(Path.Combine(library,"catalog.db"));
+  var moved=catalog.Upsert(new MediaItem {Path=@"Z:\Media\a.mp4",Kind=MediaKind.Video,ThumbnailPath=Path.Combine(gone,"thumbnails","a.jpg")});
+  var foreign=catalog.Upsert(new MediaItem {Path=@"Z:\Media\b.mp4",Kind=MediaKind.Video,ThumbnailPath=@"Z:\Elsewhere\b.jpg"});
+  catalog.PreparePortableLocation(Path.Combine(root,"portable"),true);
+  Assert.Equal(Path.Combine(library,"thumbnails","a.jpg"),catalog.GetMedia(moved.Id)!.ThumbnailPath);
+  Assert.Equal(@"Z:\Elsewhere\b.jpg",catalog.GetMedia(foreign.Id)!.ThumbnailPath);
+  Assert.Equal(@"Z:\Media\a.mp4",catalog.GetMedia(moved.Id)!.Path);
+  // Checked once: a path into another existing library stays as it is later on.
+  catalog.Upsert(catalog.GetMedia(foreign.Id)! with {ThumbnailPath=Path.Combine(gone,"thumbnails","a.jpg")});
+  catalog.PreparePortableLocation(Path.Combine(root,"portable"),true);
+  Assert.Equal(Path.Combine(gone,"thumbnails","a.jpg"),catalog.GetMedia(foreign.Id)!.ThumbnailPath);
+ }
+
+ [Fact] public void ThumbnailsStayWhileTheirFolderStillExists()
+ {
+  var library=Path.Combine(root,"second"); Directory.CreateDirectory(Path.Combine(library,"thumbnails"));
+  File.WriteAllText(Path.Combine(library,"thumbnails","a.jpg"),"x");
+  var other=Path.Combine(root,"first"); Directory.CreateDirectory(Path.Combine(other,"thumbnails"));
+  using var catalog=new CatalogRepository(Path.Combine(library,"catalog.db"));
+  var item=catalog.Upsert(new MediaItem {Path=@"Z:\a.mp4",Kind=MediaKind.Video,ThumbnailPath=Path.Combine(other,"thumbnails","a.jpg")});
+  catalog.PreparePortableLocation(root,false);
+  Assert.Equal(Path.Combine(other,"thumbnails","a.jpg"),catalog.GetMedia(item.Id)!.ThumbnailPath);
+ }
 }
