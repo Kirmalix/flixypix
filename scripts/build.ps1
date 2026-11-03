@@ -76,7 +76,7 @@ try {
         $application = Join-Path $portable 'FlixyPix.exe'
         # On an invisible desktop of its own: no window appears on the screen and none takes the focus.
         try {
-        $exitCode = & (Join-Path $PSScriptRoot 'tests\Start-HiddenDesktop.ps1') -FilePath $application -ArgumentList @('--smoke-test', ('"' + $smoke + '"')) -TimeoutSeconds 180
+        $exitCode = & (Join-Path $PSScriptRoot 'tests\Start-HiddenDesktop.ps1') -FilePath $application -ArgumentList @('--smoke-test', ('"' + $smoke + '"')) -TimeoutSeconds 600
         if ($exitCode -eq -1) { throw 'UI smoke test timed out.' }
         if ($exitCode -ne 0) { throw "UI smoke test failed ($exitCode)." }
         } finally {

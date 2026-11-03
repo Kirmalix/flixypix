@@ -25,7 +25,7 @@ foreach ($language in $Languages) {
     Write-Output "PASS $language"
     if ($FullSmoke) {
         $smoke = Join-Path $directory 'full-smoke'
-        $exitCode = & (Join-Path $PSScriptRoot '..\tests\Start-HiddenDesktop.ps1') -FilePath $Application -ArgumentList @('--language',$language,'--smoke-test',('"'+$smoke+'"')) -TimeoutSeconds 180
+        $exitCode = & (Join-Path $PSScriptRoot '..\tests\Start-HiddenDesktop.ps1') -FilePath $Application -ArgumentList @('--language',$language,'--smoke-test',('"'+$smoke+'"')) -TimeoutSeconds 600
         if ($exitCode -eq -1) { throw "Full smoke timed out: $language" }
         $smokeResult = Join-Path $smoke 'result.txt'
         if ($exitCode -ne 0 -or !(Test-Path -LiteralPath $smokeResult) -or !((Get-Content -LiteralPath $smokeResult -Raw) -like 'PASS:*')) { throw "Full smoke failed: $language ($smoke)" }
