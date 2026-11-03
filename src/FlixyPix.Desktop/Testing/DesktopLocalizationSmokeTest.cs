@@ -61,6 +61,30 @@ public partial class MainWindow
    Capture((FrameworkElement)tagDirectory.Content, Path.Combine(directory, "directory.png"));
   }
   finally { tagDirectory.Close(); }
+  var roleViewBefore = CaptureViewState(); var roleWidthBefore = Width; var roleThemeBefore = Theme.Mode;
+  _repository.UpsertVocabularyTag(new("Synthetic profile", "Role layout")); _repository.SetTagRole("Role layout", TagRole.Performer);
+  ApplyViewState(new ViewState { View = "performers", SearchText = "Synthetic profile" }); await _lastRefresh;
+  try
+  {
+   foreach (var scheme in new[] { Theme.Mode })
+   foreach (var width in new[] { 1000d, 1600d })
+   {
+    Theme.Apply(scheme); Width = width; await Task.Delay(100); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); UpdateLayout();
+    if (_roleBrowser == null || _roleBrowser.CompactLayout != (width == 1000)) throw new InvalidOperationException("Role layout did not adapt to the window width.");
+    var frame = (WindowFrame)_roleBrowser.Content; var bounds = new Rect(_roleBrowser.RenderSize); bounds.Inflate(1, 1);
+    foreach (var button in frame.Buttons.Children.OfType<Button>())
+     Require(bounds.Contains(button.TransformToAncestor(_roleBrowser).TransformBounds(new Rect(button.RenderSize))), "Role footer action is clipped: " + button.Content);
+    Require(((System.Windows.Media.SolidColorBrush)RootContent.Background).Color == Theme.Color("WindowBackground", scheme == ColorScheme.Dark), "Role theme background did not update.");
+    Require(Theme.ReplacedKeys.Count == 0, "Role theme froze a shared brush.");
+    File.AppendAllText(Path.Combine(directory, "role-theme-state.jsonl"), System.Text.Json.JsonSerializer.Serialize(new { Scheme = scheme.ToString(), Width = width, Actual = Theme.Mode.ToString(), Theme.IsDark, Replaced = Theme.ReplacedKeys.ToArray(), RootColor = ((System.Windows.Media.SolidColorBrush)RootContent.Background).Color.ToString(), SameRootBrush = ReferenceEquals(RootContent.Background, Theme.Brush("WindowBackground")), Colors = new[] { "Text", "WindowBackground", "ChromeBackground" }.Select(k => new { Key = k, Color = ((System.Windows.Media.SolidColorBrush)Theme.Brush(k)).Color.ToString(), Frozen = Theme.Brush(k).IsFrozen }) }) + Environment.NewLine);
+    foreach (var visual in Descendants<UIElement>(RootContent)) visual.InvalidateVisual();
+    RootContent.InvalidateVisual(); RootContent.UpdateLayout();
+    Capture(this, Path.Combine(directory, "role-" + scheme + "-" + width + ".png"));
+   }
+   var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+   File.WriteAllText(Path.Combine(directory, "role-observed-dpi.json"), System.Text.Json.JsonSerializer.Serialize(new { dpi.DpiScaleX, dpi.DpiScaleY, Note = "Observed runtime DPI only; width/theme tests do not establish other physical DPI settings." }));
+  }
+  finally { Width = roleWidthBefore; Theme.Apply(roleThemeBefore); ApplyViewState(roleViewBefore); await _lastRefresh; }
   // Group-mode labels must be complete messages: sentence fragments cannot
   // express all/any/none naturally in languages with different word order.
   var expression = SearchExpression.All(

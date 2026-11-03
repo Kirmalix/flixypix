@@ -15,6 +15,7 @@ public partial class MainWindow
   var scene = _repository.UpsertScene(new Scene { MediaId = videoId, Title = "Wand-Szene", StartSeconds = .1, EndSeconds = .6 });
   var bookmark = _repository.UpsertBookmark(new Bookmark { MediaId = videoId, Title = "Wand-Marke", PositionSeconds = .3 });
   var window = ShowSceneWall();
+  var pagedIds = new List<Guid>();
   try
   {
    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); await window.Loading;
@@ -23,6 +24,12 @@ public partial class MainWindow
    Require(window.Tiles.Count == 1 && window.Tiles[0].Mark.Id == scene.Id, "The text filter did not narrow the wall to the scene.");
    window.Filter("", "", WallMarkKind.Bookmark); await window.Loading;
    Require(window.Tiles.Any(t => t.Mark.Id == bookmark.Id) && window.Tiles.All(t => t.Mark.Kind == WallMarkKind.Bookmark), "The kind filter did not keep only bookmarks.");
+   for (var index = 0; index < 131; index++) pagedIds.Add(_repository.UpsertBookmark(new Bookmark { MediaId = videoId, Title = "Paged wall fixture", PositionSeconds = index / 1000d }).Id);
+   window.Filter("Paged wall fixture", "", null); await window.Loading;
+   Require(window.TotalCount == 131 && window.Tiles.Count == 120, "Scene wall did not load only the first database page.");
+   var firstPageIds = window.Tiles.Select(t => t.Mark.Id).ToHashSet();
+   window.NextPageForTest(); await window.Loading;
+   Require(window.TotalCount == 131 && window.Tiles.Count == 11 && window.Tiles.All(t => !firstPageIds.Contains(t.Mark.Id)), "Scene wall page boundary duplicated or lost marks.");
    window.Filter("Wand", "", null); await window.Loading;
    var tile = window.Tiles.Single(t => t.Mark.Id == scene.Id);
    if (ToolExists(_settings.Ffmpeg, "ffmpeg"))
@@ -53,6 +60,7 @@ public partial class MainWindow
   finally
   {
    window.Close();
+   foreach (var id in pagedIds) _repository.DeleteBookmark(id);
    _repository.DeleteScene(scene.Id); _repository.DeleteBookmark(bookmark.Id);
   }
  }
