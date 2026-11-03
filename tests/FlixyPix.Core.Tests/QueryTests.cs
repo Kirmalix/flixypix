@@ -108,7 +108,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using var version = backup.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(6L, version.ExecuteScalar());
         using var count = backup.CreateCommand(); count.CommandText = "SELECT count(*) FROM media"; Assert.Equal(1L, count.ExecuteScalar());
         Assert.Equal(item.Id, Assert.Single(migrated.QueryPage(new() { Text = "münchen" }).Items).Id);
-        using var verify = original.CreateCommand(); verify.CommandText = "PRAGMA user_version"; Assert.Equal(17L, verify.ExecuteScalar());
+        using var verify = original.CreateCommand(); verify.CommandText = "PRAGMA user_version"; Assert.Equal(CatalogRepository.SchemaVersion, verify.ExecuteScalar());
     }
 
     [Fact]
@@ -224,14 +224,16 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
     }
 
     [Theory]
-    [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
+    [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
     public void PortableVersionsRoundTripThroughStreamingExport(int version)
     {
         using var catalog = Open();
         catalog.Upsert(Item("portable.jpg", "Portable"));
         var export = Path.Combine(directory, "catalog.json"); catalog.Export(export);
-        var content = File.ReadAllText(export); Assert.Contains("\"version\": 4", content);
-        File.WriteAllText(export, content.Replace("\"version\": 4", $"\"version\": {version}"));
+        var content = File.ReadAllText(export); Assert.Contains("\"version\": 5", content);
+        var document=System.Text.Json.Nodes.JsonNode.Parse(content)!.AsObject();document["version"]=version;
+        if(version<5){document.Remove("imageSets");document.Remove("publicationGroups");document.Remove("tagHierarchies");document.Remove("stashSources");document.Remove("stashIdentities");document.Remove("stashProvenance");document.Remove("stashProvenanceChunks");document.Remove("stashBindings");}
+        File.WriteAllText(export,document.ToJsonString());
         using var target = new CatalogRepository(Path.Combine(directory, "target.db"));
         Assert.Empty(target.ImportJson(export).Errors); Assert.Single(target.QueryPage(new()).Items);
     }

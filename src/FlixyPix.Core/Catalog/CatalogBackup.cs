@@ -7,6 +7,7 @@ using Microsoft.Data.Sqlite;
 namespace FlixyPix.Core;
 
 public sealed record CatalogBackupResult(string PackagePath, int FileCount, long TotalBytes, IReadOnlyList<string> Warnings);
+/// <summary>RestoredMediaFiles counts contained main and additional version files, not logical media items.</summary>
 public sealed record CatalogRestoreResult(string DirectoryPath, string DatabasePath, int RestoredMediaFiles, IReadOnlyList<string> Warnings);
 public sealed record CatalogBackupProgress(string Phase, string Name, long CompletedFiles);
 /// <summary>Result of <see cref="CatalogRepository.VerifyBackupAsync"/>: media in the catalog, files and bytes checked, media files contained.</summary>
@@ -22,7 +23,8 @@ public sealed partial class CatalogRepository
     private static readonly string BackupAssetFolder = Path.GetFileName(AssetStore.DirectoryFor("catalog.db"));
     private static readonly JsonSerializerOptions BackupJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private sealed record BackupRecord(string Type, string? Format = null, int Version = 1, string? Name = null,
-        long Size = 0, string? Sha256 = null, Guid? MediaId = null, string? Kind = null, string? SourcePath = null, int FileCount = 0);
+        long Size = 0, string? Sha256 = null, Guid? MediaId = null, string? Kind = null, string? SourcePath = null, int FileCount = 0,
+        DateTimeOffset? ModifiedAtUtc = null, int? VersionIndex = null);
 
     /// <summary>Snapshot includes committed WAL contents. External media are read without modifying them.</summary>
     public async Task<CatalogBackupResult> CreateBackupAsync(string packagePath, bool includeExternalMedia,
@@ -53,14 +55,18 @@ public sealed partial class CatalogRepository
             using (var zip = new ZipArchive(output,ZipArchiveMode.Create,true,Encoding.UTF8))
             await using (var manifest = new StreamWriter(new FileStream(manifestFile,FileMode.CreateNew,FileAccess.Write,FileShare.None,81920,true),new UTF8Encoding(false)))
             {
-                await WriteRecord(manifest,new("header",Format:"flixypix-backup"),cancellationToken);
+                await WriteRecord(manifest,new("header",Format:"flixypix-backup",Version:2),cancellationToken);
                 await AddFile(snapshot,"catalog.db",null,"catalog",null);
                 using (var db = new CatalogRepository(snapshot,key))
                 {
                     foreach (var item in db.BackupMediaRows())
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        if (includeExternalMedia) await AddOptional(item.Path,item.Id,"media");
+                        if (includeExternalMedia)
+                        {
+                            var versions=MediaVersions.All(item);
+                            for(var index=0;index<versions.Count;index++)await AddOptional(versions[index].Path,item.Id,"media",index);
+                        }
                         if (includeCachedThumbnails && !string.IsNullOrEmpty(item.ThumbnailPath)) await AddOptional(item.ThumbnailPath,item.Id,"thumbnail");
                     }
                     // The picture files the snapshot uses, as they are (encrypted ones stay encrypted), and the store's state.
@@ -81,23 +87,25 @@ public sealed partial class CatalogRepository
                 await using var manifestOutput = manifestEntry.Open(); await using var manifestInput = File.OpenRead(manifestFile);
                 await manifestInput.CopyToAsync(manifestOutput,cancellationToken);
 
-                async Task AddOptional(string path,Guid id,string kind)
+                async Task AddOptional(string path,Guid id,string kind,int? versionIndex=null)
                 {
                     if (!File.Exists(path))
                     {
                         warnings.Add(T("Missing file ({0}): {1}", kind, path));
-                        await WriteRecord(manifest,new("missing",MediaId:id,Kind:kind,SourcePath:path),cancellationToken); return;
+                        await WriteRecord(manifest,new("missing",MediaId:id,Kind:kind,SourcePath:path,VersionIndex:versionIndex),cancellationToken); return;
                     }
                     if (Path.GetFullPath(path).Equals(target,StringComparison.OrdinalIgnoreCase)) throw new IOException(T("The backup must not itself be included as a media file."));
                     var extension = Path.GetExtension(path).ToLowerInvariant();
                     if (extension.Length > 16 || extension.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '.')) extension = ".bin";
-                    await AddFile(path,$"{kind}/{id:N}/content{extension}",id,kind,path);
+                    var prefix=kind=="media"&&versionIndex is >0?$"media/{id:N}/version-{versionIndex.Value}/content":$"{kind}/{id:N}/content";
+                    await AddFile(path,prefix+extension,id,kind,path,versionIndex);
                 }
-                async Task AddFile(string path,string name,Guid? id,string kind,string? original)
+                async Task AddFile(string path,string name,Guid? id,string kind,string? original,int? versionIndex=null)
                 {
                     RejectBackupLinks(path); cancellationToken.ThrowIfCancellationRequested();
                     await using var source = new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read,81920,true);
                     var size = source.Length;
+                    var modified = new DateTimeOffset(File.GetLastWriteTimeUtc(path));
                     if (size > MaximumBackupFileBytes || size > MaximumBackupTotalBytes - total || count >= MaximumBackupEntries - 2)
                         throw new InvalidDataException(T("The backup exceeds the size or file limits."));
                     var entry = zip.CreateEntry(name,kind == "catalog" ? CompressionLevel.Fastest : CompressionLevel.NoCompression);
@@ -105,10 +113,10 @@ public sealed partial class CatalogRepository
                     await using (var destination = entry.Open()) checksum = await CopyBackupStream(source,destination,size,cancellationToken);
                     source.Position = 0;
                     var rechecked = await SHA256.HashDataAsync(source,cancellationToken);
-                    if (!CryptographicOperations.FixedTimeEquals(checksum,rechecked))
+                    if (!CryptographicOperations.FixedTimeEquals(checksum,rechecked) || File.GetLastWriteTimeUtc(path).Ticks != modified.UtcTicks)
                         throw new IOException(T("A source file was changed during the backup."));
                     count++; total += size;
-                    await WriteRecord(manifest,new("file",Name:name,Size:size,Sha256:Convert.ToHexStringLower(checksum),MediaId:id,Kind:kind,SourcePath:original),cancellationToken);
+                    await WriteRecord(manifest,new("file",Name:name,Size:size,Sha256:Convert.ToHexStringLower(checksum),MediaId:id,Kind:kind,SourcePath:original,ModifiedAtUtc:modified,VersionIndex:versionIndex),cancellationToken);
                     progress?.Report(new(T("Backing up"),original ?? name,count));
                 }
             }
@@ -137,7 +145,7 @@ public sealed partial class CatalogRepository
         IProgress<CatalogBackupProgress>? progress = null,string? secret = null)
     {
         RejectBackupLinks(packagePath);
-        var work = Path.Combine(Path.GetTempPath(),".flixypix-verify-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(work);
+        var work = Path.Combine(AppStorage.WorkDirectory,".flixypix-verify-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(work);
         var (restored,media,files,bytes) = await ReadBackupAsync(packagePath,work,null,cancellationToken,progress,secret);
         return new(media,files,bytes,restored.RestoredMediaFiles,restored.Warnings);
     }
@@ -188,15 +196,18 @@ public sealed partial class CatalogRepository
                 var unpack = !verifyOnly || record.Kind == "catalog";
                 if (unpack) Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
                 // Verifying hashes media and thumbnails without writing them anywhere.
-                await using var input = entry.Open(); await using var output = unpack ? new FileStream(outputPath,FileMode.CreateNew,FileAccess.Write,FileShare.None,81920,true) : Stream.Null;
-                var hash = await CopyBackupStream(input,output,record.Size,cancellationToken);
+                await using var input = entry.Open();
+                byte[] hash;
+                await using (var output = unpack ? new FileStream(outputPath,FileMode.CreateNew,FileAccess.Write,FileShare.None,81920,true) : Stream.Null)
+                    hash = await CopyBackupStream(input,output,record.Size,cancellationToken);
                 if (!Convert.ToHexStringLower(hash).Equals(record.Sha256,StringComparison.Ordinal)) throw new InvalidDataException(T("The checksum of a file in the backup does not match."));
+                if (unpack && record.ModifiedAtUtc is {} modified) File.SetLastWriteTimeUtc(outputPath,modified.UtcDateTime);
                 completed++; progress?.Report(new(T("Check and extract"),record.Name,completed));
             }
             var fileCount = completed; var fileBytes = total;
             // Every hash is verified before SQLite opens or any path is remapped.
-            var mediaFiles = expected.Where(record => record.Kind == "media").ToDictionary(record => record.MediaId!.Value);
-            var thumbnails = expected.Where(record => record.Kind == "thumbnail").ToDictionary(record => record.MediaId!.Value);
+            var mediaFiles = records.Where(record => record.Kind == "media").ToDictionary(record => (record.MediaId!.Value,record.VersionIndex??0));
+            var thumbnails = records.Where(record => record.Kind == "thumbnail").ToDictionary(record => record.MediaId!.Value);
             var database = Path.Combine(work,"catalog.db");
             if (slots is not null) File.WriteAllText(CatalogEncryption.KeyFilePath(database),CatalogEncryption.SerializeSlots(slots),new UTF8Encoding(false));
             using (var db = new CatalogRepository(database,key))
@@ -211,8 +222,21 @@ public sealed partial class CatalogRepository
                 foreach (var item in db.BackupMediaRows())
                 {
                     cancellationToken.ThrowIfCancellationRequested(); var updated = item; mediaCount++;
-                    if (mediaFiles.Remove(item.Id,out var media)) { updated = updated with { Path = Path.Combine(target ?? work,media.Name!.Replace('/',Path.DirectorySeparatorChar)) }; restoredMedia++; }
-                    if (thumbnails.Remove(item.Id,out var thumb)) updated = updated with { ThumbnailPath = Path.Combine(target ?? work,thumb.Name!.Replace('/',Path.DirectorySeparatorChar)) };
+                    var versions=MediaVersions.All(item).ToArray();var mapped=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
+                    for(var index=0;index<versions.Length;index++)
+                    {
+                        if(!mediaFiles.Remove((item.Id,index),out var media))continue;
+                        if(!BackupSourceMatches(media.SourcePath,versions[index].Path))throw new InvalidDataException(T("The backup file refers to unknown items."));
+                        if(media.Type!="file")continue;
+                        var path=Path.Combine(target??work,media.Name!.Replace('/',Path.DirectorySeparatorChar));mapped.Add(PathKey(versions[index].Path),path);
+                        versions[index]=versions[index] with {Path=path};restoredMedia++;
+                    }
+                    if(mapped.Count>0)updated=updated with {Path=versions[0].Path,Files=versions.Skip(1).ToList(),ContactSheet=item.ContactSheet is {} sheet&&mapped.TryGetValue(PathKey(sheet.SourcePath),out var sheetPath)?sheet with {SourcePath=sheetPath}:item.ContactSheet};
+                    if (thumbnails.Remove(item.Id,out var thumb))
+                    {
+                        if(!BackupSourceMatches(thumb.SourcePath,item.ThumbnailPath))throw new InvalidDataException(T("The backup file refers to unknown items."));
+                        if(thumb.Type=="file")updated = updated with { ThumbnailPath = Path.Combine(target ?? work,thumb.Name!.Replace('/',Path.DirectorySeparatorChar)) };
+                    }
                     if (updated != item && !verifyOnly) db.Upsert(updated);
                 }
                 if (mediaFiles.Count > 0 || thumbnails.Count > 0) throw new InvalidDataException(T("The backup file refers to unknown items."));
@@ -251,7 +275,7 @@ public sealed partial class CatalogRepository
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase); var mapping = new HashSet<string>(StringComparer.Ordinal); long total = 0; bool footer = false;
         var first = await reader.ReadLineAsync(token);
         var header = first is null ? null : JsonSerializer.Deserialize<BackupRecord>(first,BackupJson);
-        if (header?.Type != "header" || !ProductIdentity.IsFormat(header.Format!,"flixypix-backup") || header.Version != 1) throw new InvalidDataException(T("Unknown backup format."));
+        if (header?.Type != "header" || !ProductIdentity.IsFormat(header.Format!,"flixypix-backup") || header.Version is not (1 or 2)) throw new InvalidDataException(T("Unknown backup format."));
         string? line;
         while ((line = await reader.ReadLineAsync(token)) is not null)
         {
@@ -265,14 +289,16 @@ public sealed partial class CatalogRepository
             if (record.Type is not ("file" or "missing") || record.Kind is not ("catalog" or "media" or "thumbnail" or "asset")) throw new InvalidDataException(T("Unknown backup record."));
             if (record.Kind == "asset" && (record.Type != "file" || record.MediaId is not null || record.Name?.StartsWith(BackupAssetFolder + "/", StringComparison.Ordinal) != true))
                 throw new InvalidDataException(T("Invalid file assignment in the backup manifest."));
-            if (record.Kind is not ("catalog" or "asset") && (record.MediaId is null || record.MediaId == Guid.Empty || !mapping.Add($"{record.Kind}:{record.MediaId}"))) throw new InvalidDataException(T("Duplicate or invalid media assignment."));
+            if(record.Kind!="media"&&record.VersionIndex!=null||record.Kind=="media"&&(header.Version==1?record.VersionIndex!=null:record.VersionIndex is null or <0 or >100000))throw new InvalidDataException(T("Invalid file assignment in the backup manifest."));
+            if (record.Kind is not ("catalog" or "asset") && (record.MediaId is null || record.MediaId == Guid.Empty || !mapping.Add($"{record.Kind}:{record.MediaId}:{record.VersionIndex??0}"))) throw new InvalidDataException(T("Duplicate or invalid media assignment."));
             if (record.Type == "file")
             {
                 ValidateBackupName(record.Name!);
                 if (!names.Add(record.Name!) || record.Size < 0 || record.Size > MaximumBackupFileBytes || record.Size > MaximumBackupTotalBytes - total ||
+                    record.ModifiedAtUtc is {} modified && modified.UtcDateTime.Year < 1601 ||
                     record.Sha256?.Length != 64 || record.Sha256.Any(c => !char.IsAsciiHexDigit(c)) ||
                     record.Kind == "catalog" && record.Name != "catalog.db" ||
-                    record.Kind is "media" or "thumbnail" && !record.Name!.StartsWith($"{record.Kind}/{record.MediaId:N}/content",StringComparison.Ordinal))
+                    record.Kind is "media" or "thumbnail" && !record.Name!.StartsWith(record.Kind=="media"&&record.VersionIndex is >0?$"media/{record.MediaId:N}/version-{record.VersionIndex.Value}/content":$"{record.Kind}/{record.MediaId:N}/content",StringComparison.Ordinal))
                     throw new InvalidDataException(T("Invalid file assignment in the backup manifest."));
                 total += record.Size;
             }
@@ -284,6 +310,13 @@ public sealed partial class CatalogRepository
 
     private static Task WriteRecord(StreamWriter writer,BackupRecord record,CancellationToken token) =>
         writer.WriteLineAsync(JsonSerializer.Serialize(record,BackupJson).AsMemory(),token);
+
+    private static bool BackupSourceMatches(string? source,string? expected)
+    {
+        if(string.IsNullOrWhiteSpace(source)||string.IsNullOrWhiteSpace(expected))return false;
+        try{return PathKey(source)==PathKey(expected);}
+        catch(Exception error)when(error is ArgumentException or NotSupportedException or PathTooLongException){return false;}
+    }
 
     private static async Task<byte[]> CopyBackupStream(Stream input,Stream output,long expected,CancellationToken token)
     {
