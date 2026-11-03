@@ -43,6 +43,24 @@ public partial class MainWindow
    Status.Text = Tn(count, "1 archive image imported. The ZIP source files stay unchanged.", "{0} archive images imported. The ZIP source files stay unchanged.");
   });
  }
+ /// <summary>The Stash import wizard; images inside archives are extracted into the archive cache like an archive import.</summary>
+ /// <param name="catalog">Another catalog than the open one, for tests.</param>
+ internal StashImportWindow OpenStashImport(CatalogRepository? catalog = null)
+ {
+  var cache = new ImageArchiveService(Path.Combine(_settings.DataDirectory, "archive-cache"));
+  var inspected = new Dictionary<string, IReadOnlyList<ArchiveImageEntry>>(StringComparer.Ordinal);
+  async Task<StashArchiveMember> Resolve(string archive, string entryName, CancellationToken token)
+  {
+   var key = CatalogRepository.PathKey(archive);
+   if (!inspected.TryGetValue(key, out var entries)) inspected[key] = entries = await Task.Run(() => cache.Inspect(archive), token);
+   var entry = entries.SingleOrDefault(e => e.EntryName.Equals(entryName, StringComparison.Ordinal))
+    ?? throw new IOException(T("The image is missing from the original image archive: ") + entryName);
+   var path = await cache.ExtractAsync(entry, token);
+   return new(entry.ArchivePath, entry.EntryName, path, entry.ArchiveSha256, entry.UncompressedSize);
+  }
+  return new StashImportWindow(this, catalog ?? _repository, Resolve, () => Refresh());
+ }
+ private void ImportFromStash() => OpenStashImport().ShowDialog();
  private void ExportCsv()
  {
   var picker = new SaveFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Export catalog as CSV (new file)"), Filter = T("CSV catalog|*.csv"), FileName = $"FlixyPix-{DateTime.Now:yyyyMMdd-HHmmss}.csv" };

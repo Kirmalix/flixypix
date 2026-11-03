@@ -725,6 +725,7 @@ public partial class MainWindow
   await RunMetadataSmokeTestAsync(directory);
   await RunMetadataCrashSmokeAsync(directory);
   await RunPlaybackPreferencesSmokeAsync(directory);
+  await RunStashImportSmokeAsync(directory);
   await RunHomeSmokeTestAsync(directory);
   await RunCollectionSmokeTestAsync(directory);
   await RunLibrarySettingsSmokeTestAsync(directory, fixtureDirectory);
