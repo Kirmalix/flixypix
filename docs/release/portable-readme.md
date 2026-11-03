@@ -8,7 +8,7 @@ Unter `tag-vocabularies` liegt für jede der zehn Sprachen ein `.flixytags.csv`-
 
 „Adult Content Pack“ im Verzeichnis bietet mit einer installierten EazyFlixPix 4 außerdem deren Darsteller- und Studiolisten und die Originalnamen der Genres („English (original)“) an. FlixyPix liest sie aus dieser Installation und liefert sie nicht mit; nur dann erscheint das Angebot auch auf der leeren Startseite. Ein abgeschlossener Import lässt sich nur im noch offenen Dialog rückgängig machen.
 
-`FlixyPix.exe` startet die lokale Medienbibliothek. Beim ersten normalen Start werden bisherige Einstellungen erkannt und eine frühere Standardbibliothek kopiert; die bisherigen Daten bleiben erhalten. Eigene Bibliotheksordner werden weiterverwendet. Die .NET-Laufzeit ist enthalten. Den Unterordner `tools` mit FFmpeg, ffprobe und mpv zusammen mit der Anwendung aufbewahren.
+Die portable Ausgabe startet mit einem eigenen Datenordner neben der EXE. Eine vorhandene Profilbibliothek wird nur nach Auswahl kopiert. Die .NET-Laufzeit ist enthalten; den Unterordner `tools` mit FFmpeg, ffprobe und mpv zusammen mit der Anwendung aufbewahren.
 
 Dateien und Ordner importieren oder auf das Fenster ziehen. Beim Import bleiben Quelldateien an ihrem Ort. Bilder, Tags, Bewertungen, Beschreibungen, Kategorien, Sammlungen und Suchvorgaben werden im eigenen SQLite-Katalog gespeichert. Automatische Vorschauen und Bildseiten verwenden einen gemeinsamen Decoder.
 
@@ -20,8 +20,8 @@ Dateien und Ordner importieren oder auf das Fenster ziehen. Beim Import bleiben 
 
 Der Player bietet Pause, Seek, Lautstärke, Geschwindigkeit, Audio-/Untertitelwahl, Vollbild und zeitabhängige Ansichten. Szenen und Bookmarks lassen sich bearbeiten, ordnen und mit gespeicherten Grafiken verknüpfen. Bildfenster bieten Zoom, Rotation, Seiten-/Framewechsel und Animation mit Pause.
 
-Katalog: `%LOCALAPPDATA%\FlixyPix\Library`.
-Einstellungen: `%LOCALAPPDATA%\FlixyPix\appsettings.json`.
+Katalog im Profilmodus: `%LOCALAPPDATA%\FlixyPix\Library`.
+Einstellungen im Profilmodus: `%LOCALAPPDATA%\FlixyPix\appsettings.json`.
 Ein anderer Bibliotheksordner wird nach Neustart wirksam. Ältere Kataloge erhalten vor der Schemamigration eine konsistente Sicherung.
 
 JSON-Version 4 enthält Katalog, gespeicherte Grafikbytes, historische Entwürfe und bewahrte Binärdaten in geprüften Abschnitten. Ältere Versionen 1, 2 und 3 bleiben lesbar. Externe Mediendateien werden nur auf ausdrückliche Auswahl im vollständigen `.flixypixbackup`-Paket mitgesichert. Wiederherstellung prüft alle Prüfsummen und benötigt einen neuen Zielordner. Der bestehende Katalog wird dabei nicht ersetzt.
@@ -37,3 +37,12 @@ Dies ist neu geschriebene Software, keine vollständige Paritätsbescheinigung f
 FlixyPix ist freie Software unter der GNU General Public License, Version 3 oder später, siehe `LICENSE`. Das Werkzeug unter `legacy-import` steht zusätzlich unter der MIT-Lizenz. Drittkomponenten behalten ihre eigenen Lizenzen: Übersicht in `THIRD-PARTY-NOTICES.md`, Texte unter `tools/notices`. Quellcode: https://github.com/Kirmalix/flixypix. FlixyPix ist ein unabhängiges Projekt ohne Verbindung zu den Autoren von EazyFlixPix.
 
 Unter Katalog → Altdaten / Migration → Historische Funktionen übernehmen lassen sich belegte Such-, Parser- und Auftragsvorgaben nach Vorschau ausdrücklich übernehmen. Unbekannte aktive Optionen bleiben blockiert. Übernommene Aufträge starten erst nach dem separaten Start im Warteschlangenfenster. Alte Tagbildordner können im Tagbildfenster mit Zuordnungsvorschau kopiert werden.
+
+
+## Speichermodi und Updates
+
+Ein frisch entpacktes portables ZIP verwendet `Data` neben `FlixyPix.exe`. Unter Einstellungen → Speicher wird der aktuelle Datenpfad angezeigt. Dort lässt sich zwischen portabler Speicherung und `%LOCALAPPDATA%\FlixyPix` wechseln; die Änderung gilt nach dem Neustart. Vorhandene Zieldaten lassen sich weiterverwenden oder ausgewählte Bibliotheken kopieren. Die Originale bleiben erhalten, Mediendateien werden nicht kopiert. Zwischen den beiden Beständen findet keine automatische Synchronisation statt.
+
+Die dauerhafte Auswahl steht in `storage-mode.json` neben der EXE. Weder diese Datei noch `Data` werden im ZIP ausgeliefert. FlixyPix vor einem Update schließen und das neue ZIP über den vorhandenen Programmordner entpacken: Programmdateien werden ersetzt, Nutzerdaten und Moduswahl bleiben erhalten. Vor dem Update eine unabhängige Sicherung anlegen. `--portable` und `--profile` überschreiben die gespeicherte Auswahl für einen Start.
+
+Für einen Umzug den vollständigen Programmordner und die Medien auf demselben portablen Laufwerk mitnehmen. Andere Laufwerke und Netzwerkquellen bleiben externe Abhängigkeiten. Unterbrochene Speicherwechsel und Umzüge werden beim nächsten Start anhand eines lokalen Journals abgeschlossen; die Originale bleiben erhalten. Portable Speicherung garantiert keinen spurlosen Betrieb: Windows und externe Programme können eigene Spuren erzeugen. Vorschaucaches können auch bei verschlüsseltem Katalog unverschlüsselte Bilder enthalten.

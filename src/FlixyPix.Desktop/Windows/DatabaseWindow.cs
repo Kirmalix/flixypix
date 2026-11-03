@@ -30,7 +30,7 @@ internal sealed class DatabaseWindow : Window
  internal static readonly string LibrariesSection = TKey("Libraries");
 
  /// <summary>Folder of new libraries unless the user adds a folder of their own.</summary>
- internal static string DefaultParent => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix", "Libraries");
+ internal static string DefaultParent => AppStorage.Current.Libraries;
 
  private readonly string? _openDirectory;
  private readonly CatalogRepository? _openCatalog;
@@ -319,7 +319,7 @@ internal sealed class DatabaseWindow : Window
   if (LibraryInstance.Activate(directory)) { _frame.Status.Text = T("This library is already open in another window; it was brought to the front."); return; }
   if (Environment.ProcessPath is not { } program) return;
   var start = new System.Diagnostics.ProcessStartInfo(program) { UseShellExecute = false };
-  start.ArgumentList.Add("--library"); start.ArgumentList.Add(LibraryCatalogs.Normalize(directory));
+  start.ArgumentList.Add(AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile"); start.ArgumentList.Add("--library"); start.ArgumentList.Add(LibraryCatalogs.Normalize(directory));
   Launch(start);
   _frame.Status.Text = T("“{0}” opens in a new window.", LibraryCatalogs.DisplayName(_libraries.FirstOrDefault(l => LibraryCatalogs.SameDirectory(l.Directory, directory)) ?? new KnownLibrary(directory)));
  }

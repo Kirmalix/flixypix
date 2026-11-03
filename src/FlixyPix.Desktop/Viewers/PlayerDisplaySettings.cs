@@ -15,7 +15,7 @@ internal sealed class PlayerDisplaySettings
  internal readonly PathPicker Folder = new(true, null, DescribeFolder);
  internal readonly TextBox Prefix = new() { Width = 220, HorizontalAlignment = HorizontalAlignment.Left, MaxLength = 80 };
  internal readonly SegmentedChoice Format = new([((int)ScreenshotFormat.Png, "PNG"), ((int)ScreenshotFormat.Jpg, "JPG")]);
- internal static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "FlixyPix");
+ internal static string DefaultFolder => FlixyPix.Core.AppStorage.Current.Screenshots;
 
  internal PlayerDisplaySettings()
  {

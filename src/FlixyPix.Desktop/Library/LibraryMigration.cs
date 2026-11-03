@@ -97,7 +97,7 @@ public partial class MainWindow
    // A fresh process opens the new library cleanly; the current catalog closes normally first.
    FileAccessPolicy.Current.EnsureWritable(migrated.DirectoryPath);_pendingDataDirectory=migrated.DirectoryPath;
    if(_persistPreferences)(_settings with { DataDirectory=migrated.DirectoryPath }).Save();
-   dialog.Close();if(_persistPreferences&&Environment.ProcessPath is {} exe){Process.Start(new ProcessStartInfo(exe){UseShellExecute=false});Close();}
+   dialog.Close();if(_persistPreferences&&Environment.ProcessPath is {} exe){Process.Start(new ProcessStartInfo(exe){UseShellExecute=false,ArgumentList={AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile"}});Close();}
   };if(_persistPreferences)buttons.Children.Add(restart);
   frame.Add(T("Close"),dialog.Close,cancel:true);dialog.ShowDialog();
  }

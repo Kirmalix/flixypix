@@ -36,6 +36,7 @@ docs/reviews/localization-review/
 scripts/bootstrap.ps1
 scripts/build.ps1
 scripts/checks/Test-Localization.ps1
+scripts/checks/Test-PortableStorageTrace.ps1
 scripts/checks/i18n-allowlist.txt
 scripts/checks/i18n.py
 scripts/checks/translation_review.py
@@ -48,3 +49,5 @@ scripts/tests/Start-HiddenDesktop.ps1
 scripts/tests/test_i18n.py
 scripts/tests/test_source_package.py
 scripts/tests/test_translation_review.py
+
+scripts/tests/test_portable_storage.py

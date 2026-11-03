@@ -186,7 +186,7 @@ public static class Texts
     public static Translator Current { get; private set; } = Translator.English;
 
     /// <summary>Folder for the user's own translation files (<c>%LOCALAPPDATA%\FlixyPix\languages</c>).</summary>
-    public static string CustomDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductIdentity.Name, "languages");
+    public static string CustomDirectory => AppStorage.Current.Languages;
 
     public static void Use(Translator translator) => Current = translator;
 

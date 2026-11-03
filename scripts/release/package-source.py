@@ -48,6 +48,8 @@ def select(rules, paths):
 
 def validate_public_path(name):
     path = PurePosixPath(name)
+    if path.parts[0].lower() == 'data' or path.name.lower().startswith('storage-mode.') or any(part.lower().startswith(('.storage-', '.relocation-')) for part in path.parts):
+        raise ValueError('Portable runtime state excluded: ' + name)
     if path.is_absolute() or '..' in path.parts or any(part in {'bin', 'obj', '.tools', 'derived', 'artifacts', 'archive', 'evidence', '__pycache__'} for part in path.parts):
         raise ValueError('Private/build artifact reached source package: ' + name)
     if path.suffix.lower() in PRIVATE_SUFFIXES or path.name.lower() == 'mmvdb-password.txt':
@@ -65,7 +67,7 @@ def validate_public_data(name, data):
         value = json.loads(data.decode('utf-8-sig'))
         if isinstance(value, dict) and value.get('format', '').replace('eazyflixpix-', 'flixypix-', 1) in {
                 'flixypix-migration-report', 'flixypix-migration-audit', 'flixypix-catalog', 'flixypix-legacy', 'flixypix-backup',
-                'flixypix-original-reference', 'flixypix-offline-input-v2', 'flixypix-legacy-validation-v1'}:
+                'flixypix-original-reference', 'flixypix-offline-input-v2', 'flixypix-legacy-validation-v1', 'flixypix-storage-journal'}:
             raise ValueError('Private catalog/migration report excluded: ' + name)
     if USER_PROFILE.search(data):
         raise ValueError('Absolute user profile path in ' + name)

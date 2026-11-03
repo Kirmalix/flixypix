@@ -16,7 +16,9 @@ internal sealed record WindowPlace(double Left, double Top, double Width, double
 
 internal sealed partial record DesktopSettings
 {
- public string DataDirectory { get; init; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix", "Library");
+ public string? StorageOrigin { get; init; }
+ public string? ApplicationOrigin { get; init; }
+ public string DataDirectory { get; init; } = AppStorage.Current.Library;
  public string? Ffmpeg { get; init; }
  public string? Ffprobe { get; init; }
  public string? Mpv { get; init; }
@@ -63,20 +65,37 @@ internal sealed partial record DesktopSettings
  public List<string> QuickAccessFolders { get; init; } = [];
  /// <summary>Providers of "Im Browser suchen"; null means the defaults.</summary>
  public List<WebSearchProvider>? WebSearchProviders { get; init; }
- public static string SettingsPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FlixyPix", "appsettings.json");
+ public static string SettingsPath => AppStorage.Current.Settings;
  public static DesktopSettings Load()
  {
   var basePath=Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-  SettingsTransition.EnsureMigrated(Path.Combine(basePath,ProductIdentity.PreviousApplicationDirectory),Path.Combine(basePath,ProductIdentity.Name));
-  return LoadFrom(SettingsPath);
+  if (AppStorage.Current.Mode == StorageMode.Profile) SettingsTransition.EnsureMigrated(Path.Combine(basePath,ProductIdentity.PreviousApplicationDirectory),Path.Combine(basePath,ProductIdentity.Name));
+  var settings = LoadFrom(SettingsPath);
+  if (AppStorage.Current.Mode != StorageMode.Portable || settings.StorageOrigin == null) return settings;
+  string Map(string value)
+  {
+   foreach (var (from,to) in new[] { (settings.StorageOrigin,AppStorage.Current.Root), (settings.ApplicationOrigin,AppStorage.Current.ApplicationDirectory), (Path.GetPathRoot(settings.StorageOrigin),Path.GetPathRoot(AppStorage.Current.Root)) })
+   {
+    if (from == null || to == null) continue;
+    var prefix = from.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);
+    if (value.Equals(prefix,StringComparison.OrdinalIgnoreCase) || value.StartsWith(prefix + Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))
+     return to.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar) + value[prefix.Length..];
+   }
+   return value;
+  }
+  return settings with { DataDirectory = Map(settings.DataDirectory), Libraries = settings.Libraries.Select(l=>l with { Directory=Map(l.Directory) }).ToList(),
+   Ffmpeg=settings.Ffmpeg==null?null:Map(settings.Ffmpeg),Ffprobe=settings.Ffprobe==null?null:Map(settings.Ffprobe),Mpv=settings.Mpv==null?null:Map(settings.Mpv),
+   ExternalPrograms=settings.ExternalPrograms.Select(p=>p with {Path=Map(p.Path)}).ToList(),QuickAccessFolders=settings.QuickAccessFolders.Select(Map).ToList(),ProtectedSourcePaths=settings.ProtectedSourcePaths.Select(Map).ToList() };
+
  }
+ internal byte[] SerializeFor(string root,string applicationDirectory) => JsonSerializer.SerializeToUtf8Bytes(this with { StorageOrigin=Path.GetFullPath(root),ApplicationOrigin=Path.GetFullPath(applicationDirectory) },new JsonSerializerOptions {WriteIndented=true});
  public void Save() => SaveTo(SettingsPath);
  internal void SaveTo(string path)
  {
   FileAccessPolicy.Current.EnsureWritable(path);
   Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-  var temp = path + ".tmp";
-  File.WriteAllText(temp, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+  var temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+  File.WriteAllText(temp, JsonSerializer.Serialize(this with { StorageOrigin = Path.GetDirectoryName(Path.GetFullPath(path)), ApplicationOrigin = AppStorage.Current.ApplicationDirectory }, new JsonSerializerOptions { WriteIndented = true }));
   File.Move(temp, path, true);
   // The copy stands in when the file is later damaged beyond repair.
   try { File.Copy(path, LastGoodPath(path), true); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -85,7 +104,7 @@ internal sealed partial record DesktopSettings
 
 internal static class DesktopImaging
 {
- internal static ImageService Service { get; private set; } = new(Path.Combine(Path.GetTempPath(), "FlixyPix", "image-cache"));
+ internal static ImageService Service { get; private set; } = new(Path.Combine(AppStorage.Current.Root, "image-cache"));
  internal static void Configure(string dataDirectory) => Service = new(Path.Combine(dataDirectory,"image-cache"));
  internal static BitmapImage Bitmap(byte[] bytes)
  {

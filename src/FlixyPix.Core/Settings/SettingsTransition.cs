@@ -92,7 +92,7 @@ public static class SettingsTransition
    }
   }
  }
- private static void RewriteManagedManifests(string directory,string oldLibrary,string newLibrary,CancellationToken token)
+ internal static void RewriteManagedManifests(string directory,string oldLibrary,string newLibrary,CancellationToken token)
  {
   foreach(var path in Directory.EnumerateFiles(directory,"*.json",SearchOption.AllDirectories))
   {
@@ -111,9 +111,9 @@ public static class SettingsTransition
    else if(value is JsonArray array)for(var i=0;i<array.Count;i++){if(array[i] is JsonValue scalar&&scalar.TryGetValue<string>(out var text))array[i]=Remap(text,oldLibrary,newLibrary);else if(array[i] is {} child)Rewrite(child);}
   }
  }
- internal static string Remap(string path,string previous,string current)=>Within(path,previous)?current+path[Path.TrimEndingDirectorySeparator(previous).Length..]:path;
+ internal static string Remap(string path,string previous,string current)=>Within(path,previous)?current.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar)+path[previous.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar).Length..]:path;
  private static bool Within(string path,string root)
- {root=Path.TrimEndingDirectorySeparator(root);return path.Equals(root,StringComparison.OrdinalIgnoreCase)||path.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||path.StartsWith(root+Path.AltDirectorySeparatorChar,StringComparison.OrdinalIgnoreCase);}
+ {root=root.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);return path.Equals(root,StringComparison.OrdinalIgnoreCase)||path.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||path.StartsWith(root+Path.AltDirectorySeparatorChar,StringComparison.OrdinalIgnoreCase);}
  private static void RejectLinks(string path)
  {
   for(string? current=Path.GetFullPath(path);current!=null;current=Path.GetDirectoryName(current))
@@ -134,24 +134,5 @@ public static class SettingsTransition
    DirectoryInfo(path).EnumerateFileSystemInfos()){FileAccessPolicy.Current.EnsureWritable(entry.FullName);if(entry is
    DirectoryInfo)Remove(entry.FullName);else{if((entry.Attributes&FileAttributes.ReparsePoint)!=0)throw new
    IOException("Unexpected file link.");File.Delete(entry.FullName);}}Directory.Delete(path,false);}
- }
-}
-
-public sealed partial class CatalogRepository
-{
- internal void RemapManagedLibraryPaths(string previous,string current,CancellationToken token)
- {
-  lock(gate)
-  {
-   ThrowIfDisposed();using var tx=connection.BeginTransaction();
-   using(var select=Command("SELECT document FROM media ORDER BY id",tx))using(var reader=select.ExecuteReader())while(reader.Read())
-   {
-    token.ThrowIfCancellationRequested();var item=JsonSerializer.Deserialize<MediaItem>(reader.GetString(0),Json)!;
-    var extra=new Dictionary<string,string?>(item.Extra);if(extra.TryGetValue("archivePath",out var archive)&&archive!=null)extra["archivePath"]=SettingsTransition.Remap(archive,previous,current);
-    UpsertCore(item with{Path=SettingsTransition.Remap(item.Path,previous,current),ThumbnailPath=item.ThumbnailPath==null?null:SettingsTransition.Remap(item.ThumbnailPath,previous,current),Extra=extra},tx);
-   }
-   var preferences=ReadPreferences(tx);SaveDocument("preferences",Guid.Empty,preferences with{FolderFavorites=preferences.FolderFavorites.Select(f=>f with{Path=SettingsTransition.Remap(f.Path,previous,current)}).ToList()},tx);
-   token.ThrowIfCancellationRequested();tx.Commit();
-  }
  }
 }

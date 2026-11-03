@@ -43,6 +43,7 @@ internal sealed partial class SettingsWindow : Window
   (TKey("Privacy"), "", T("Boss key, lock, blurred pictures and traces in Windows.")),
   (TKey("Security"), "", T("Protect the library with encryption.")),
   (TKey("Database"), "", T("Location of the library and import from the original.")),
+  (TKey("Storage"), "\uE8B7", T("Data and storage")),
   (TKey("Tools"), "", T("Programs for playback, thumbnails and media information.")),
  ];
  private static readonly (string Title, string[] Actions)[] HotkeyGroups =
@@ -144,8 +145,15 @@ internal sealed partial class SettingsWindow : Window
  private bool loading = true, dirty;
 
  internal SettingsWindow(Window owner, CatalogRepository repository, DesktopSettings settings, string displayedDataDirectory, Action manageEncryption, Action takeOverOriginal,
-  Func<PreviewPreferences, CancellationToken, Task<string?>>? renderSample = null, Action? manageLibraries = null)
+  Func<PreviewPreferences, CancellationToken, Task<string?>>? renderSample = null, Action? manageLibraries = null, Action? storage = null, Action? importProfile = null)
  {
+  var storageButton = SettingsUi.SmallButton(T("Change storage mode"));
+  storageButton.IsEnabled = storage != null;
+  storageButton.Click += (_, _) => { if (!ConfirmDiscard()) return; dirty = false; Close(); storage?.Invoke(); };
+  var importButton=SettingsUi.SmallButton(T("Copy profile data"));
+  importButton.IsEnabled=importProfile!=null && AppStorage.Current.Mode==StorageMode.Portable;
+  importButton.Click+=(_,_)=> {if(!ConfirmDiscard())return;dirty=false;Close();importProfile?.Invoke();};
+  var openStorage=SettingsUi.SmallButton(T("Open folder"));openStorage.Click+=(_,_)=>OpenFolder(AppStorage.Current.Root);
   Owner = owner; this.repository = repository; libraryDirectory = settings.DataDirectory; this.renderSample = renderSample;
   displayedDirectory = displayedDataDirectory; this.manageLibraries = manageLibraries; programs = [.. settings.ExternalPrograms]; quickFolders = [.. settings.QuickAccessFolders]; searchProviders = [.. settings.WebSearchProviders ?? WebSearch.Defaults];
   Title = T("Settings · FlixyPix"); Width = 1020; Height = 740; MinWidth = 820; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -203,6 +211,9 @@ internal sealed partial class SettingsWindow : Window
   ffmpeg.Text = settings.Ffmpeg ?? ""; ffprobe.Text = settings.Ffprobe ?? ""; mpv.Text = settings.Mpv ?? "";
 
   AddPages(manageEncryption, takeOverOriginal, settings.Privacy);
+  AddPage("Storage", SettingsUi.Card(T("Data and storage"), AppStorage.Current.Root,
+   new SettingRow(AppStorage.Current.Mode == StorageMode.Portable ? T("Portable") : T("Windows profile"), T("The storage mode changes after a restart. Existing data is preserved."), storageButton),
+   new SettingRow(T("Copy profile data"), null, importButton),new SettingRow(T("Open folder"),null,openStorage)));
 
   scroller = new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(0, 0, 12, 0) };
   navigation.SelectionChanged += (_, _) => ShowSelectedPage();

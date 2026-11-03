@@ -135,8 +135,13 @@ public static class LibraryCatalogs
     public static async Task CopyAsync(string source, string destination, IProgress<double>? progress = null, CancellationToken token = default)
     {
         var from = Normalize(source); var to = Normalize(destination);
+        if (SameDirectory(from,to) || to.StartsWith(from + Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)) throw new IOException("A library cannot be copied into itself.");
         if (Directory.Exists(to) || File.Exists(to)) throw new IOException(T("The folder “{0}” is already in use.", to));
         FileAccessPolicy.Current.EnsureWritable(to);
+        if ((File.GetAttributes(from) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked library roots cannot be copied.");
+        using var sourceLease = File.Exists(CatalogPath(from)) ? new FileStream(CatalogPath(from), FileMode.Open, FileAccess.Read, FileShare.Read) : null;
+        foreach (var entry in new DirectoryInfo(from).EnumerateFileSystemInfos("*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = 0 }))
+            if ((entry.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Library links cannot be copied.");
         var files = new DirectoryInfo(from).GetFiles("*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint });
         var total = Math.Max(1, files.Sum(f => f.Length)); long done = 0;
         try
@@ -152,6 +157,14 @@ public static class LibraryCatalogs
                 await using (var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 16, true))
                     await input.CopyToAsync(output, token);
                 if (new FileInfo(target).Length != file.Length) throw new IOException(T("The copy of “{0}” is incomplete.", file.Name));
+                await using (var verifySource = File.OpenRead(file.FullName))
+                await using (var verifyTarget = File.OpenRead(target))
+                {
+                    var sourceHash = await System.Security.Cryptography.SHA256.HashDataAsync(verifySource, token);
+                    var targetHash = await System.Security.Cryptography.SHA256.HashDataAsync(verifyTarget, token);
+                    if (!System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(sourceHash,targetHash))
+                        throw new IOException("Copied library checksum mismatch.");
+                }
                 File.SetLastWriteTimeUtc(target, file.LastWriteTimeUtc);
                 done += file.Length; progress?.Report((double)done / total);
             }
