@@ -99,7 +99,7 @@ public sealed partial class CatalogRepository
  }
  private T? ReadEntity<T>(string table,Guid id,SqliteTransaction? tx=null)
  {
-  if(table is not "scenes" and not "bookmarks" and not "playlists" and not "collection_sets")throw new ArgumentException("Unsupported document table.");
+  if(table is not "scenes" and not "bookmarks" and not "playlists" and not "collection_sets" and not "image_sets" and not "publication_groups" and not "stash_sources" and not "stash_identities" and not "stash_provenance" and not "stash_bindings")throw new ArgumentException("Unsupported document table.");
   using var command=Command($"SELECT document FROM {table} WHERE id=$id",tx,("$id",id.ToString()));
   return command.ExecuteScalar() is string document?JsonSerializer.Deserialize<T>(document,Json):default;
  }

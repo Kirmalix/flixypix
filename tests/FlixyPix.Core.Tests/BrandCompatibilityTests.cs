@@ -14,7 +14,7 @@ public sealed class BrandCompatibilityTests:IDisposable
   var id=Guid.NewGuid();var path=Path.Combine(root,"previous.json");File.WriteAllText(path,JsonSerializer.Serialize(new{format=ProductIdentity.PreviousFormatPrefix+"-catalog",version,items=new[]{new{id,path=@"U:\offline\image.jpg",title="Keep",rating=9,tags=new[]{"Preserved"}}}}));
   using var db=new CatalogRepository(Path.Combine(root,"catalog.db"));Assert.Empty(db.ImportJson(path).Errors);Assert.Equal(id,Assert.Single(db.QueryPage(new()).Items).Id);var
    export=Path.Combine(root,"new.json");db.Export(export);using var
-   json=JsonDocument.Parse(File.ReadAllText(export));Assert.Equal("flixypix-catalog",json.RootElement.GetProperty("format").GetString());Assert.Equal(4,json.RootElement.GetProperty("version").GetInt32());
+   json=JsonDocument.Parse(File.ReadAllText(export));Assert.Equal("flixypix-catalog",json.RootElement.GetProperty("format").GetString());Assert.Equal(5,json.RootElement.GetProperty("version").GetInt32());
  }
  [Theory][InlineData(1)][InlineData(2)]public void PreviousLegacyExchangeIsReadableWithoutMediaAccess(int version)
  {

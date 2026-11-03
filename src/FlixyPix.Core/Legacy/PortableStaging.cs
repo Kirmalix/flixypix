@@ -10,7 +10,7 @@ public sealed partial class CatalogRepository
     private static readonly HashSet<string> PortableArrays = new(StringComparer.Ordinal)
     { "items", "playlists", "scenes", "savedsearches", "filenametagrules", "bookmarks", "mediaassets", "collectionsets", "legacyrecords", "migrationstate",
      "legacyblobs", "tagpresets", "legacysearchdrafts", "legacyjobdrafts", "legacyparserdrafts", "tagassets", "historicalparserdefinitions",
-     "legacycombinelists", "historicalcontentfolders" };
+     "legacycombinelists", "historicalcontentfolders", "imagesets", "publicationgroups", "taghierarchies", "stashsources", "stashidentities", "stashprovenance", "stashprovenancechunks", "stashbindings" };
 
     private void StagePortable(string path, int maximumEntityBytes, SqliteTransaction transaction, CancellationToken cancellationToken, string? secret)
     {
@@ -54,7 +54,12 @@ public sealed partial class CatalogRepository
             }
         }
         input.RequireEnd();
-        if (!ProductIdentity.IsFormat(format!,"flixypix-catalog") || version is not (1 or 2 or 3 or 4)) throw new InvalidDataException("Unsupported or missing portable catalog format/version (expected version 1, 2, 3 or 4).");
+        if (!ProductIdentity.IsFormat(format!,"flixypix-catalog") || version is not (1 or 2 or 3 or 4 or 5)) throw new InvalidDataException("Unsupported or missing portable catalog format/version (expected version 1, 2, 3, 4 or 5).");
+        if(version<5)
+        {
+            using var check=Command("SELECT 1 FROM temp.portable_stage WHERE section IN ('imagesets','publicationgroups','taghierarchies','stashsources','stashidentities','stashprovenance','stashprovenancechunks','stashbindings') LIMIT 1",transaction);
+            if(check.ExecuteScalar()!=null)throw new InvalidDataException("Organizer sections require catalog format5.");
+        }
     }
 
     private void SavePortableStage(string section, int ordinal, string json, SqliteTransaction transaction)
