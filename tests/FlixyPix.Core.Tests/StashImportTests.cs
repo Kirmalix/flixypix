@@ -185,6 +185,53 @@ public sealed class StashImportTests:IDisposable
  }
 
  [Fact]
+ public async Task FurtherFilesBecomeVersionsOnlyWhenConfirmedAndAreNeverRemoved()
+ {
+  foreach(var name in new[]{"main.mp4","4k.mp4"})File.WriteAllText(Path.Combine(Target,name),"synthetic "+name);
+  Add("scenes/a.json","""{"title":"Versions","files":["/library/main.mp4","/library/4k.mp4"]}""");
+  using var db=Open(false);var source=Profile(db);using var snapshot=await Read();
+  var first=await db.ApplyStashImportAsync(snapshot,Request(source,Preview(db,snapshot,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  Assert.Contains(first.Warnings,warning=>warning.Contains("Versions",StringComparison.Ordinal));Assert.Empty(Assert.Single(db.Search()).Files);
+  var confirmed=await db.ApplyStashImportAsync(snapshot,Request(source,Confirmed(Preview(db,snapshot,source)).Select(item=>item with {ConfirmVersions=true})));
+  Assert.Equal(1,confirmed.Updated);var media=Assert.Single(db.Search());
+  Assert.Equal((Path.Combine(Target,"main.mp4"),Path.Combine(Target,"4k.mp4")),(media.Path,Assert.Single(media.Files).Path));
+  var again=await db.ApplyStashImportAsync(snapshot,Request(source,Confirmed(Preview(db,snapshot,source)).Select(item=>item with {ConfirmVersions=true})));
+  Assert.Equal(1,again.Unchanged);Assert.Single(Assert.Single(db.Search()).Files);
+  Add("scenes/a.json","""{"title":"Versions","files":["/library/main.mp4"]}""");
+  using var fewer=await Read();await db.ApplyStashImportAsync(fewer,Request(source,Confirmed(Preview(db,fewer,source)).Select(item=>item with {ConfirmVersions=true})));
+  Assert.Single(Assert.Single(db.Search()).Files);
+ }
+
+ [Fact]
+ public async Task ArchiveImagesAreResolvedOutsideTheCatalogAndRefusedWithoutAResolver()
+ {
+  Add("images/a.json","""{"title":"Inside","files":["/library/photos.zip/inner/a.jpg"]}""");
+  Add("files/a.json","""{"type":"image","path":"/library/photos.zip/inner/a.jpg","size":42,"width":640,"height":480,"zip_file":"/library/photos.zip"}""");
+  using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var row=Preview(db,snapshot,source).Single(row=>row.Draft.Kind==StashEntityKind.Image);
+  await Assert.ThrowsAsync<ArgumentException>(()=>db.ApplyStashImportAsync(snapshot,Request(source,[new(row.Draft.SourceOrdinal)])));RequireNothingImported(db,source);
+  var cache=Path.Combine(root,"archive-cache","a.jpg");var calls=new List<(string,string)>();var hash=new string('a',64);
+  await db.ApplyStashImportAsync(snapshot,Request(source,[new(row.Draft.SourceOrdinal)]),archives:(archive,entry,_)=>
+  {calls.Add((archive,entry));return Task.FromResult(new StashArchiveMember(archive,entry,cache,hash,42));});
+  Assert.Equal((Path.Combine(Target,"photos.zip"),"inner/a.jpg"),Assert.Single(calls));
+  var media=Assert.Single(db.Search());
+  Assert.Equal((cache,"Inside",MediaKind.Image,42L,640),(media.Path,media.Title,media.Kind,media.FileSize!.Value,media.Width!.Value));
+  Assert.Equal((Path.Combine(Target,"photos.zip"),"inner/a.jpg",hash),(media.Extra["archivePath"],media.Extra["entryName"],media.Extra["sha256"]));
+  // A resolver answering for another member is not trusted.
+  await Assert.ThrowsAsync<InvalidDataException>(()=>db.ApplyStashImportAsync(snapshot,Request(source,Confirmed([Preview(db,snapshot,source).Single(row=>row.Draft.Kind==StashEntityKind.Image)])),
+   archives:(archive,_,_)=>Task.FromResult(new StashArchiveMember(archive,"other.jpg",cache,hash,42))));
+ }
+
+ [Theory]
+ [InlineData(@"C:\Lib\Photos.zip\Sub\A.jpg",@"c:\lib\photos.zip","Sub/A.jpg")]
+ [InlineData("/lib/photos.zip/Sub/A.jpg","/lib/photos.zip","Sub/A.jpg")]
+ [InlineData("/lib/Photos.zip/a.jpg","/lib/photos.zip",null)]
+ [InlineData("/lib/photos.zipped/a.jpg","/lib/photos.zip",null)]
+ [InlineData("/lib/photos.zip","/lib/photos.zip",null)]
+ [InlineData(@"C:\lib\photos.zip\a.jpg","/lib/photos.zip",null)]
+ public void ArchiveEntriesFollowTheSourceSystemForTheArchiveAndAreExactInside(string member,string archive,string? expected)
+  =>Assert.Equal(expected,StashPaths.ArchiveEntry(member,archive));
+
+ [Fact]
  public async Task TagParentsGoIntoTheHierarchyAndCyclesRefuseTheImport()
  {
   Add("tags/outdoor.json","""{"name":"Outdoor","parents":["Place"]}""");Add("tags/place.json","""{"name":"Place"}""");

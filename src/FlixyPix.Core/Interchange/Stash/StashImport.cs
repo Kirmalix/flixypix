@@ -25,7 +25,13 @@ public sealed record StashImportItem(long SourceOrdinal)
  public IReadOnlyList<StashFieldChoice> Fields {get;init;}=[];
  /// <summary>Directory name for a new performer or studio, for example to separate two source entries of the same name.</summary>
  public string? TargetName {get;init;}
+ /// <summary>Adds the further mapped files of a scene or image as versions; without it they stay proposals. Versions are only added, never removed.</summary>
+ public bool ConfirmVersions {get;init;}
 }
+/// <summary>An image inside an archive, resolved by the archive service: the cache file the catalog points to and the archive hash it was read from.</summary>
+public sealed record StashArchiveMember(string ArchivePath,string EntryName,string CachePath,string ArchiveSha256,long Size);
+/// <summary>Reads one archive member for an import, for example by extracting it into the archive cache.</summary>
+public delegate Task<StashArchiveMember> StashArchiveResolver(string archivePath,string entryName,CancellationToken token);
 public sealed record StashImportRequest(Guid SourceId,long ExpectedSourceRevision,string PerformerCategory,string StudioCategory,IReadOnlyList<StashImportItem> Items);
 public sealed record StashImportResult(IReadOnlyList<StashBinding> Bindings,int Created,int Updated,int Unchanged,IReadOnlyList<string> Warnings);
 
@@ -47,6 +53,8 @@ public sealed partial class CatalogRepository
   public bool Preview=>preview;
   public Dictionary<long,TagKey> Directory {get;}=[];
   public Dictionary<long,Guid> Media {get;}=[];
+  /// <summary>Archive members resolved before the transaction, by source ordinal.</summary>
+  public Dictionary<long,StashArchiveMember> Archives {get;}=[];
   public List<string> Warnings {get;}=[];
  }
 
@@ -83,7 +91,8 @@ public sealed partial class CatalogRepository
 
  /// <summary>Applies the selected records in one transaction: target writes, source identities, raw provenance and field decisions
  /// are published together or not at all. The source folder must still match the snapshot.</summary>
- public async Task<StashImportResult> ApplyStashImportAsync(StashExportSnapshot snapshot,StashImportRequest request,CancellationToken token=default)
+ /// <param name="archives">Resolves images that live inside archives; selecting such an image without it is refused.</param>
+ public async Task<StashImportResult> ApplyStashImportAsync(StashExportSnapshot snapshot,StashImportRequest request,CancellationToken token=default,StashArchiveResolver? archives=null)
  {
   ArgumentNullException.ThrowIfNull(snapshot);ArgumentNullException.ThrowIfNull(request);ArgumentNullException.ThrowIfNull(request.Items);
   var categories=StashCategories(request.PerformerCategory,request.StudioCategory);
@@ -100,11 +109,25 @@ public sealed partial class CatalogRepository
    records.Add(new(read.Document,read.Draft));
   }
   var dependencies=ReadStashDependencies(snapshot,records.Select(record=>record.Draft),token);
-  return await Task.Run(()=>ApplyStashImport(records,request,categories,dependencies,token),token).ConfigureAwait(false);
+  // Archive members are read outside the catalog lock; the transaction only records the resolved cache files.
+  var members=new Dictionary<long,StashArchiveMember>();
+  foreach(var record in records)
+  {
+   if(record.Draft.Media is not {} media||StashMainPath(record.Draft)!=null||media.Files.FirstOrDefault(file=>file.ArchiveSource!=null) is not {} member)continue;
+   if(media.Kind!=MediaKind.Image)throw new ArgumentException(T("Only images can be imported from inside an archive: {0}",record.Draft.RelativePath));
+   if(member.ArchiveTarget==null||StashPaths.ArchiveEntry(member.OriginalPath,member.ArchiveSource!) is not {} entry)
+    throw new ArgumentException(T("The image cannot be located inside its archive: {0}",member.OriginalPath));
+   if(archives==null)throw new ArgumentException("Images inside archives need an archive resolver.");
+   token.ThrowIfCancellationRequested();var resolved=await archives(member.ArchiveTarget,entry,token).ConfigureAwait(false);
+   if(resolved==null||PathKey(resolved.ArchivePath)!=PathKey(member.ArchiveTarget)||resolved.EntryName!=entry||string.IsNullOrWhiteSpace(resolved.CachePath)||resolved.Size<0||
+    resolved.ArchiveSha256.Length!=64||resolved.ArchiveSha256.Any(c=>!char.IsAsciiHexDigit(c)))throw new InvalidDataException("The archive resolver returned a different member.");
+   members[record.Document.Ordinal]=resolved;
+  }
+  return await Task.Run(()=>ApplyStashImport(records,request,categories,dependencies,members,token),token).ConfigureAwait(false);
  }
 
  private StashImportResult ApplyStashImport(IReadOnlyList<StashImportRecord> records,StashImportRequest request,(string Performer,string Studio) categories,
-  IReadOnlyDictionary<long,StashSourceDocument> dependencies,CancellationToken token)
+  IReadOnlyDictionary<long,StashSourceDocument> dependencies,IReadOnlyDictionary<long,StashArchiveMember> members,CancellationToken token)
  {
   lock(gate)
   {
@@ -112,6 +135,7 @@ public sealed partial class CatalogRepository
    var source=ReadEntity<StashSourceProfile>("stash_sources",request.SourceId,transaction)??throw new ArgumentException("Unknown Stash source.");
    if(source.Revision!=request.ExpectedSourceRevision)throw new InvalidOperationException("The Stash source changed after preview.");
    var context=new StashImportContext(source,categories,dependencies,false);var items=request.Items.ToDictionary(item=>item.SourceOrdinal);
+   foreach(var(ordinal,member)in members)context.Archives[ordinal]=member;
    foreach(var record in records)
    {
     if(!StashImportSupported(record.Draft.Kind))throw new ArgumentException(T("This kind of Stash record cannot be imported yet: {0}",record.Draft.RelativePath));
@@ -168,7 +192,7 @@ public sealed partial class CatalogRepository
     }
     else if(isNew)target=new(target.Kind,record.Draft.Kind switch
     {
-     StashEntityKind.Scene or StashEntityKind.Image=>CreateStashMedia(record,context,transaction).Id,
+     StashEntityKind.Scene or StashEntityKind.Image=>CreateStashMedia(record,item,context,transaction).Id,
      StashEntityKind.Gallery=>CreateStashImageSet(record,context,transaction).Id,
      _=>CreateStashPublicationGroup(record,context,transaction).Id,
     });
@@ -282,7 +306,8 @@ public sealed partial class CatalogRepository
   if(item.TargetName!=null)throw new ArgumentException("A directory name is only used for a new entry.");
   if(kind is StashTargetKind.Video or StashTargetKind.Image)
   {
-   var path=StashMainPath(record.Draft)??throw new ArgumentException(T("The Stash record has no mapped local file: {0}",record.Draft.RelativePath));
+   var path=StashMainPath(record.Draft)??(context.Archives.TryGetValue(record.Document.Ordinal,out var member)?member.CachePath:null)
+    ??throw new ArgumentException(T("The Stash record has no mapped local file: {0}",record.Draft.RelativePath));
    using var existing=Command("SELECT id FROM media WHERE path_key=$path",transaction,("$path",PathKey(path)));
    if(existing.ExecuteScalar()!=null)throw new InvalidOperationException(T("A local medium already uses this file. Choose it as the target: {0}",path));
   }
@@ -341,20 +366,43 @@ public sealed partial class CatalogRepository
   ValidatePreferences(updated);SaveDocument("preferences",Guid.Empty,updated,transaction);
  }
 
- private MediaItem CreateStashMedia(StashImportRecord record,StashImportContext context,SqliteTransaction transaction)
+ private MediaItem CreateStashMedia(StashImportRecord record,StashImportItem selection,StashImportContext context,SqliteTransaction transaction)
  {
-  var media=record.Draft.Media!;var file=media.Files.First(f=>f.TargetPath!=null&&f.ArchiveSource==null);
-  if(media.Files.Count>1)context.Warnings.Add(T("Further files stay proposals and are not added as versions yet: {0}",record.Draft.Name));
-  var(plain,categorized)=StashSourceTags(record.Draft,context,transaction);
-  var item=new MediaItem
+  var media=record.Draft.Media!;var(plain,categorized)=StashSourceTags(record.Draft,context,transaction);
+  MediaItem item;
+  if(context.Archives.TryGetValue(record.Document.Ordinal,out var member))
   {
-   Path=file.TargetPath!,Kind=media.Kind,Title=media.Title??Path.GetFileNameWithoutExtension(file.TargetPath!),Description=media.Description,Rating=Math.Clamp(media.Rating??0,0,10),
-   ReleaseDate=media.ReleaseDate,Tags=plain.ToList(),TagCategories=categorized,FileSize=file.Bytes,Width=file.Width is >0?file.Width:null,Height=file.Height is >0?file.Height:null,
-   DurationSeconds=file.DurationSeconds,Technical=file.Technical,ReviewState=media.InitialReviewState,
+   var file=media.Files.First(f=>f.ArchiveSource!=null);
+   item=new MediaItem{Path=member.CachePath,Kind=MediaKind.Image,FileSize=member.Size,Width=file.Width is >0?file.Width:null,Height=file.Height is >0?file.Height:null,
+    Extra=new(){["archivePath"]=member.ArchivePath,["entryName"]=member.EntryName,["sha256"]=member.ArchiveSha256}};
+  }
+  else
+  {
+   var file=media.Files.First(f=>f.TargetPath!=null&&f.ArchiveSource==null);
+   item=new MediaItem{Path=file.TargetPath!,Kind=media.Kind,FileSize=file.Bytes,Width=file.Width is >0?file.Width:null,Height=file.Height is >0?file.Height:null,
+    DurationSeconds=file.DurationSeconds,Technical=file.Technical};
+  }
+  item=item with
+  {
+   Title=media.Title??Path.GetFileNameWithoutExtension(item.Extra.GetValueOrDefault("entryName")??item.Path),Description=media.Description,Rating=Math.Clamp(media.Rating??0,0,10),
+   ReleaseDate=media.ReleaseDate,Tags=plain.ToList(),TagCategories=categorized,ReviewState=media.InitialReviewState,
   };
   var saved=UpsertCore(item,transaction);
+  AddStashVersions(saved.Id,record.Draft,selection,context,transaction);
   if(media.Kind==MediaKind.Video)AddStashMarkers(saved.Id,media.Markers,transaction);
   return saved;
+ }
+
+ /// <summary>Further mapped files outside archives become versions once confirmed; otherwise the import only mentions them. Returns whether a version was added.</summary>
+ private bool AddStashVersions(Guid id,StashImportDraft draft,StashImportItem selection,StashImportContext context,SqliteTransaction transaction)
+ {
+  var item=ReadMediaDocument(id,transaction)!;var known=MediaVersions.All(item).Select(file=>PathKey(file.Path)).ToHashSet(StringComparer.Ordinal);
+  var further=draft.Media!.Files.Where(file=>file.TargetPath!=null&&file.ArchiveSource==null&&!known.Contains(PathKey(file.TargetPath))).ToArray();
+  if(further.Length==0)return false;
+  if(!selection.ConfirmVersions){context.Warnings.Add(T("Further files stay proposals and are not added as versions yet: {0}",draft.Name));return false;}
+  var files=item.Files.Concat(further.Select(file=>new MediaFile{Path=file.TargetPath!,FileSize=file.Bytes,Width=file.Width is >0?file.Width:null,Height=file.Height is >0?file.Height:null,
+   DurationSeconds=file.DurationSeconds,Technical=file.Technical})).ToList();
+  UpsertCore(item with {Files=files},transaction);return true;
  }
 
  private static string? StashText(StashSourceDocument document,string property)=>document.Document is {} root&&root.TryGetProperty(property,out var value)&&value.ValueKind==JsonValueKind.String?value.GetString():null;
@@ -505,7 +553,9 @@ public sealed partial class CatalogRepository
   var previous=binding!=null&&binding.Target==target?binding.Fields:[];
   var baselines=StashFieldConflicts.Record(observations,item.Fields,previous);
   var used=item.Fields.Where(choice=>choice.Decision==StashFieldDecision.UseSource).Select(choice=>choice.Field).ToHashSet(StringComparer.Ordinal);
-  if(used.Count>0)
+  var versioned=record.Draft.Media!=null&&AddStashVersions(target.Id!.Value,record.Draft,item,context,transaction);
+  if(versioned&&used.Count==0)counts[1]++;
+  else if(used.Count>0)
   {
    if(record.Draft.Media is {} media)ApplyStashMediaFields(target.Id!.Value,media,used,record.Draft,context,transaction);
    else if(record.Draft.Kind==StashEntityKind.Tag)ChangeStashTagParents(StashTagKey(record.Draft),_=>StashSourceParents(record.Draft),transaction);

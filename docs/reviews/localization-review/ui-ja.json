@@ -14205,6 +14205,14 @@
     "Select the referenced media too, or import them first: {0}": {
       "status": "unchanged",
       "digest": "e443d5e37c672740ec387e4651d66f18b5069c88dcd1551fad97cb462621ac6d"
+    },
+    "Only images can be imported from inside an archive: {0}": {
+      "status": "unchanged",
+      "digest": "b9b4d37d7a947251ef611e0a77db4236fc830ab7dee5fc6bc6b4fa419698a743"
+    },
+    "The image cannot be located inside its archive: {0}": {
+      "status": "unchanged",
+      "digest": "2ddfb887283b863933afb4b20b92b018e22f41fa9a7e47cf001a5419bff541ce"
     }
   }
 }

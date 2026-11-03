@@ -33,6 +33,17 @@ public static class StashPaths
   if(!ContainsLocal(root,target))throw new ArgumentException("Mapped Stash path leaves the selected destination.");
   return new(source,target,chosen.Index);
  }
+ /// <summary>The entry name of an archive member: Stash stores it as the archive path, a separator of the source system and the
+ /// slash-separated path inside the archive. Null when the member path does not lie inside the archive path.</summary>
+ public static string? ArchiveEntry(string memberPath,string archivePath)
+ {
+  var member=Foreign(memberPath);var archive=Foreign(archivePath);
+  if(member.Windows!=archive.Windows||member.Path.Length<=archive.Path.Length+1||member.Path[archive.Path.Length]!='/')return null;
+  // The archive part follows the source system's rules; names inside the archive are compared exactly.
+  if(!member.Path.StartsWith(archive.Path,member.Windows?StringComparison.OrdinalIgnoreCase:StringComparison.Ordinal))return null;
+  var entry=member.Path[(archive.Path.Length+1)..];
+  return entry.Split('/').Any(segment=>segment.Length==0)?null:entry;
+ }
  internal static void Validate(IReadOnlyList<StashPathPrefix> mappings)
  {
   if(mappings.Count>128)throw new ArgumentException("Too many Stash path prefix mappings.");
