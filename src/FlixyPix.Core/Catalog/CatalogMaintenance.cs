@@ -10,6 +10,22 @@ public sealed record CatalogStatistics(long Videos, long Images, long Audio, lon
     public long Media => Videos + Images + Audio;
 }
 
+/// <summary>What the sidebar needs to decide which library entries it shows: audio only with audio media, the review
+/// inbox only while reviewing is in use. Imports mark every new medium unreviewed, so unreviewed media alone do not
+/// prove that anybody reviews.</summary>
+public sealed record NavigationCounts(long Audio, long Unreviewed, long NeedsAttention, long Reviewed)
+{
+    /// <summary>Media the review inbox lists.</summary>
+    public long Inbox => Unreviewed + NeedsAttention;
+
+    public bool ShowsReviewInbox(ReviewInboxMode mode) => mode switch
+    {
+        ReviewInboxMode.Always => true,
+        ReviewInboxMode.Never => false,
+        _ => NeedsAttention > 0 || Reviewed > 0 && Unreviewed > 0,
+    };
+}
+
 /// <summary>When the library was last backed up and checked, kept in the catalog so a restored or moved library keeps it.</summary>
 public sealed record CatalogMaintenanceLog
 {
@@ -46,6 +62,21 @@ public sealed partial class CatalogRepository
                 Scalar("SELECT count(*) FROM tag_assets"), Scalar("SELECT coalesce(sum(json_extract(document,'$.byteLength')),0) FROM tag_assets"),
                 Scalar("SELECT count(*) FROM legacy_records"), Scalar("SELECT coalesce(sum(length),0) FROM legacy_blobs"),
                 Scalar("SELECT page_count*page_size FROM pragma_page_count(),pragma_page_size()"));
+        }
+    }
+
+    /// <summary>Counts for the sidebar; both queries run on indexes of the query table.</summary>
+    public NavigationCounts GetNavigationCounts()
+    {
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            var states = new Dictionary<long, long>();
+            using (var command = Command("SELECT review_state,count(*) FROM media_query GROUP BY review_state", null))
+            using (var reader = command.ExecuteReader()) while (reader.Read()) states[reader.GetInt64(0)] = reader.GetInt64(1);
+            using var audio = Command("SELECT count(*) FROM media_query WHERE kind=$kind", null, ("$kind", nameof(MediaKind.Audio)));
+            return new(Convert.ToInt64(audio.ExecuteScalar() ?? 0L), states.GetValueOrDefault((long)ReviewState.Unreviewed),
+                states.GetValueOrDefault((long)ReviewState.NeedsAttention), states.GetValueOrDefault((long)ReviewState.Reviewed));
         }
     }
 

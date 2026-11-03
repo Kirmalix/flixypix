@@ -165,7 +165,7 @@ public partial class MainWindow : Window
      query = query with { Offset = result.Offset }; page = result.Page;
     }
     var facets = _repository.GetFacets();
-    return (Page: page, Browse: PrepareBrowsing(facets, _repository.GetPreferences(), _repository.GetTagUsage()), Playlists: _repository.GetPlaylists(), Searches: _repository.GetSavedSearches(),
+    return (Page: page, Browse: PrepareBrowsing(facets, _repository.GetPreferences(), _repository.GetTagUsage(), _repository.GetNavigationCounts()), Playlists: _repository.GetPlaylists(), Searches: _repository.GetSavedSearches(),
      Sets: _repository.GetCollectionSets(), Target: _repository.FindTargetCollection(), CatalogEmpty: facets.MediaCount == 0);
    });
    if (version != _refreshVersion || _closing) return;

@@ -278,6 +278,7 @@ public sealed partial class CatalogRepository
     public void SaveGeneralPreferences(GeneralPreferences general)
     {
         if (!Enum.IsDefined(general.ImageWheel)) throw new ArgumentException(T("Unknown mouse wheel action for the image viewer."));
+        if (!Enum.IsDefined(general.ReviewInbox)) general = general with { ReviewInbox = ReviewInboxMode.Automatic };
         SavePreferences(GetPreferences() with { General = general });
     }
 
