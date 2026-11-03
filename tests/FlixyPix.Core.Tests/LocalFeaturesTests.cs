@@ -116,6 +116,21 @@ public sealed class LocalFeaturesTests : IDisposable
     }
 
     [Fact]
+    public async Task DuplicateFinderRejectsFilesChangedAfterTheirHashAndCanRepeat()
+    {
+        var a=PathFor("changing.jpg");var b=PathFor("copy.jpg");File.WriteAllText(a,"same bytes");File.WriteAllText(b,"same bytes");
+        var items=new[]{a,b}.Select(p=>new MediaItem{Path=p}).ToArray();
+        var progress=new InlineDuplicateProgress(p=>{if(p.Processed==1)File.WriteAllText(a,"changed bytes");});
+        var result=await DuplicateFinder.FindAsync(items,progress);Assert.Empty(result.Groups);Assert.Single(result.Errors);Assert.Equal("same bytes",File.ReadAllText(b));
+        File.WriteAllText(a,"same bytes");Assert.Single((await DuplicateFinder.FindAsync(items)).Groups);
+        using var cancellation=new CancellationTokenSource();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(()=>DuplicateFinder.FindAsync(items,new InlineDuplicateProgress(_=>cancellation.Cancel()),cancellation.Token));
+        Assert.Equal("same bytes",File.ReadAllText(a));Assert.Equal("same bytes",File.ReadAllText(b));
+    }
+    private sealed class InlineDuplicateProgress(Action<DuplicateScanProgress> report):IProgress<DuplicateScanProgress>
+    {public void Report(DuplicateScanProgress value)=>report(value);}
+
+    [Fact]
     public async Task DuplicateFinderHonorsCancellation()
     {
         using var cancellation = new CancellationTokenSource();

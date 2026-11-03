@@ -38,6 +38,10 @@ public sealed class LegacyImportTests : IDisposable
         var item = Assert.Single(catalog.Search());
         Assert.Equal(("Alt", 6, 60d), (item.Title, item.Rating, item.DurationSeconds!.Value));
         Assert.Equal(["Alt"], item.Tags);
+        Assert.Equal(ReviewState.Unreviewed, item.ReviewState);
+        catalog.Upsert(item with { ReviewState = ReviewState.Reviewed });
+        catalog.ImportLegacyJsonl(path);
+        Assert.Equal(ReviewState.Reviewed, catalog.GetMedia(item.Id)!.ReviewState);
         var report = Assert.IsType<LegacyCompatibilityReport>(result.Compatibility);
         Assert.False(report.IsComplete);
         var media = report.Areas.Single(a => a.Area == "Media");

@@ -471,7 +471,10 @@ public sealed partial class CatalogRepository
         }
     }
 
-    public int ApplyHistoricalParser(HistoricalParserPreview preview, CancellationToken cancellationToken = default)
+    public int ApplyHistoricalParser(HistoricalParserPreview preview, CancellationToken cancellationToken = default) =>
+        ApplyHistoricalParserSelected(preview, null, cancellationToken);
+
+    public int ApplyHistoricalParserSelected(HistoricalParserPreview preview, IReadOnlyCollection<ParserChangeKey>? selected, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(preview);
         if (preview.MediaIds == null || preview.MediaIds.Count is < 1 or > 10000 || preview.MediaIds.Distinct().Count() != preview.MediaIds.Count) throw new ArgumentException("Invalid historical parser preview selection.");
@@ -480,8 +483,33 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed(); using var transaction = connection.BeginTransaction();
             var current = PreviewHistoricalParserCore(preview.DefinitionId, preview.MediaIds, transaction, cancellationToken);
             if (preview.StateSha256 != current.StateSha256) throw new InvalidOperationException("Parser application preview is stale; create a new preview.");
-            foreach (var change in current.Changes) { cancellationToken.ThrowIfCancellationRequested(); UpsertCore(change.After, transaction); }
-            cancellationToken.ThrowIfCancellationRequested(); transaction.Commit(); return current.Changes.Count;
+            var available = ParserChanges(current).ToDictionary(row => row.Key);
+            var chosen = selected == null ? available.Keys.ToHashSet() : selected.ToHashSet();
+            if (chosen.Any(key => !available.ContainsKey(key))) throw new ArgumentException("Selected change is absent from validated parser preview.", nameof(selected));
+            var count = 0;
+            foreach (var change in current.Changes)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var fields = chosen.Where(key => key.MediaId == change.MediaId).ToArray(); if (fields.Length == 0) continue;
+                var after = change.Before;
+                foreach (var key in fields)
+                {
+                    switch (key.Kind)
+                    {
+                        case ParserChangeKind.Title: after = after with { Title = change.After.Title }; break;
+                        case ParserChangeKind.Tag: after = after with { Tags = after.Tags.Append(key.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToList() }; break;
+                        case ParserChangeKind.CategoryTag:
+                            var categories = after.TagCategories.ToDictionary(pair => pair.Key, pair => pair.Value.ToList(), StringComparer.OrdinalIgnoreCase);
+                            categories[key.Category] = categories.GetValueOrDefault(key.Category, []).Append(key.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                            after = after with { TagCategories = categories }; break;
+                        case ParserChangeKind.Property:
+                            var extra = new Dictionary<string,string?>(after.Extra) { [key.Value] = change.After.Extra[key.Value] };
+                            after = after with { Extra = extra }; break;
+                    }
+                }
+                UpsertCore(after, transaction); count++;
+            }
+            cancellationToken.ThrowIfCancellationRequested(); transaction.Commit(); return count;
         }
     }
 

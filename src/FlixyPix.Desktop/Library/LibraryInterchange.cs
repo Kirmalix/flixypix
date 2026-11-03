@@ -36,7 +36,7 @@ public partial class MainWindow
      var existing = _repository.GetMediaByPath(cachePath);
      var extra = existing == null ? new Dictionary<string, string?>() : new Dictionary<string, string?>(existing.Extra);
      extra["archivePath"] = entry.ArchivePath; extra["entryName"] = entry.EntryName; extra["sha256"] = entry.ArchiveSha256;
-     var item = existing ?? new MediaItem { Path = cachePath, Kind = MediaKind.Image, Title = Path.GetFileNameWithoutExtension(entry.EntryName), FileSize = entry.UncompressedSize, Category = Path.GetFileNameWithoutExtension(zip) };
+     var item = existing ?? new MediaItem { Path = cachePath, Kind = MediaKind.Image, ReviewState = ReviewState.Unreviewed, Title = Path.GetFileNameWithoutExtension(entry.EntryName), FileSize = entry.UncompressedSize, Category = Path.GetFileNameWithoutExtension(zip) };
      _repository.Upsert(item with { Extra = extra });
     }
    }

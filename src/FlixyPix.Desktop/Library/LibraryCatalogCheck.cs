@@ -40,6 +40,11 @@ public partial class MainWindow
   CatalogFindingKind.OfflineFiles => T("Items on disconnected drives"),
   CatalogFindingKind.OrphanFiles => T("Unused files in the library folder"),
   CatalogFindingKind.MissingPictures => T("Missing or damaged pictures"),
+  CatalogFindingKind.ImageSetDocuments => T("Invalid image sets"),
+  CatalogFindingKind.ImageSetMembership => T("Image-set membership"),
+  CatalogFindingKind.PublicationGroupDocuments => T("Invalid publication groups"),
+  CatalogFindingKind.PublicationGroupMembership => T("Publication-group membership"),
+  CatalogFindingKind.TagHierarchyDocuments => T("Tag hierarchy"),
   _ => T("Videos without thumbnail"),
  };
 
@@ -48,6 +53,11 @@ public partial class MainWindow
   CatalogFindingKind.Integrity => T("SQLite checks the catalog file for damaged pages and indexes. Such damage can only be fixed with a backup."),
   CatalogFindingKind.OrphanRows => T("Scenes, bookmarks, graphics or tag rows of items that are no longer in the catalog. Fixing removes them."),
   CatalogFindingKind.UnreadableEntries => T("Entries whose stored details cannot be read. They stay unchanged; a backup restores them."),
+  CatalogFindingKind.TagHierarchyDocuments => T("The tag hierarchy is invalid. It stays unchanged; restore it from a backup or correct it explicitly."),
+  CatalogFindingKind.ImageSetDocuments => T("Image-set details or references are invalid. They stay unchanged; restore them from a backup or correct them explicitly."),
+  CatalogFindingKind.PublicationGroupDocuments => T("Publication-group details or references are invalid. They stay unchanged; restore them from a backup or correct them explicitly."),
+  CatalogFindingKind.PublicationGroupMembership => T("Membership differs from valid publication groups. Fixing rebuilds the ordered references without changing groups or files."),
+  CatalogFindingKind.ImageSetMembership => T("Membership differs from valid image sets. Fixing rebuilds the ordered references without changing sets or files."),
   CatalogFindingKind.QueryTable => T("Differs from the item entries, so sorting, filters or tags can give wrong results. Fixing rebuilds it."),
   CatalogFindingKind.SearchIndex => T("Differs from the items, so quick search can miss results. Fixing rebuilds it."),
   CatalogFindingKind.PathKeys => T("The stored comparison value does not match the path, so the same file could be added twice. Fixing recalculates it."),
@@ -62,8 +72,11 @@ public partial class MainWindow
  private static string CheckStepText(CatalogCheckProgress step) => step.Step switch
  {
   CatalogFindingKind.Integrity => T("Checking the catalog file …"),
+  CatalogFindingKind.TagHierarchyDocuments => T("Tag hierarchy"),
   CatalogFindingKind.UnreadableEntries => T("Reading item entries … {0:N0} of {1:N0}", step.Done, step.Total),
   CatalogFindingKind.QueryTable => T("Comparing the table for sorting, filters and tags …"),
+  CatalogFindingKind.ImageSetDocuments or CatalogFindingKind.ImageSetMembership => T("Image-set membership"),
+  CatalogFindingKind.PublicationGroupDocuments or CatalogFindingKind.PublicationGroupMembership => T("Publication-group membership"),
   CatalogFindingKind.SearchIndex => T("Comparing the quick search index …"),
   CatalogFindingKind.MissingFiles => T("Looking for media files … {0:N0} of {1:N0}", step.Done, step.Total),
   CatalogFindingKind.MissingPictures => T("Checking pictures … {0:N0} of {1:N0}", step.Done, step.Total),

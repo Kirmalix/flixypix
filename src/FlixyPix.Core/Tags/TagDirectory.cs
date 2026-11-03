@@ -43,6 +43,8 @@ public sealed partial class CatalogRepository
                 entries[key] = new(entries.TryGetValue(key, out var used) ? used.Tag : entry.Tag, entry.Category, TagRoles.Of(preferences, entry.Category),
                     count, entry.IsFavorite, entry.Aliases, entry.Description, entry.LegacyId, entry.Profile);
             }
+            foreach(var key in ReadTagHierarchy().Edges.SelectMany(e=>new[]{e.Parent,e.Child}).Distinct(TagAssetTagComparer.Instance))
+                entries.TryAdd((key.Value,key.Category),new(key.Value,key.Category,key.Category.Length==0?TagRole.Tag:TagRoles.Of(preferences,key.Category),counts.GetValueOrDefault((key.Value,key.Category))));
             return entries.Values.OrderBy(e => e.Tag, StringComparer.CurrentCultureIgnoreCase).ThenBy(e => e.Category, StringComparer.CurrentCultureIgnoreCase).ToList();
         }
     }
@@ -50,10 +52,11 @@ public sealed partial class CatalogRepository
     /// <summary>Saves the entry that was shown as (<paramref name="tag"/>, <paramref name="category"/>): a new name renames
     /// (or merges into an existing tag), a new category moves the tag's media there, and aliases, favourite and description
     /// are stored in the vocabulary. Everything happens in one transaction.</summary>
-    public TagChangeResult SaveDirectoryEntry(string tag, string category, DirectoryEntry edited, CancellationToken cancellationToken = default)
+    public TagChangeResult SaveDirectoryEntry(string tag, string category, DirectoryEntry edited, CancellationToken cancellationToken = default,TagRole? categoryRole=null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tag); ArgumentNullException.ThrowIfNull(category); ArgumentNullException.ThrowIfNull(edited);
         ArgumentException.ThrowIfNullOrWhiteSpace(edited.Tag);
+        if(categoryRole is {} requestedRole&&!Enum.IsDefined(requestedRole))throw new ArgumentException("Unknown tag role.",nameof(categoryRole));
         if (edited.Tag.Length > 256 || edited.Category.Length > 256 || edited.AliasList.Any(a => string.IsNullOrWhiteSpace(a) || a.Length > 256))
             throw new ArgumentException(T("Name, category and aliases must not be empty and may be at most 256 characters long."), nameof(edited));
         var name = edited.Tag.Trim(); var target = edited.Category.Trim();
@@ -64,6 +67,10 @@ public sealed partial class CatalogRepository
         {
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
+            var structural=!string.Equals(tag.Trim(),name,StringComparison.Ordinal)||!Same(category,target);
+            var roleChange=target.Length>0&&categoryRole is {} requested&&TagRoles.Of(ReadPreferences(transaction),target)!=requested;
+            var mediaIds=structural?MediaIdsWithTags(new[]{tag,name},transaction):[];
+            var before=structural?SnapshotTagChange(mediaIds,transaction):roleChange?SnapshotDirectorySettings(transaction):null;
             var result = new TagChangeResult(0, 0, 0);
             if (!string.Equals(tag.Trim(), name, StringComparison.Ordinal)) result = ChangeTagCore(tag, name, transaction, cancellationToken);
             if (!Same(category, target))
@@ -82,12 +89,20 @@ public sealed partial class CatalogRepository
                     throw new ArgumentException(T("“{0}” already belongs to “{1}”; a studio cannot belong to its own sub-studio.", network, name), nameof(edited));
                 others.Add(new TagVocabularyEntry(name, target, edited.IsFavorite, existing?.LegacyId, aliases.Count == 0 ? null : aliases,
                     string.IsNullOrWhiteSpace(edited.Description) ? null : edited.Description.Trim(), profile));
-                SaveDocument("preferences", Guid.Empty, preferences with { TagVocabulary = others }, transaction);
+                SaveDocument("preferences", Guid.Empty, preferences with { TagVocabulary = others,TagCategoryRoles=categoryRole is {} role?TagRoles.Set(preferences.TagCategoryRoles,target,role):preferences.TagCategoryRoles }, transaction);
             }
+            var undo=before==null?null:UndoBetween(before,structural?SnapshotTagChange(mediaIds,transaction):SnapshotDirectorySettings(transaction));
             cancellationToken.ThrowIfCancellationRequested();
             transaction.Commit();
-            return result;
+            return result with {Undo=undo};
         }
+    }
+
+    private Dictionary<(string Table,string Id),string> SnapshotDirectorySettings(SqliteTransaction transaction)
+    {
+        var rows=HierarchyUndoSnapshot(transaction);
+        if(ReadUndoDocument("preferences",Guid.Empty.ToString(),transaction) is {} document)rows[("preferences",Guid.Empty.ToString())]=document;
+        return rows;
     }
 
     /// <summary>What deleting a tag (or renaming it into <paramref name="replacement"/>) would change, found by doing it
@@ -186,6 +201,7 @@ public sealed partial class CatalogRepository
             categories[category] = categories.GetValueOrDefault(category, []).Append(tag).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             UpsertCore(item with { TagCategories = categories }, transaction);
         }
+        var from=new TagKey("",tag.Trim());RewriteTagHierarchy(key=>SameHierarchyKey(key,from)?new TagKey(category.Trim(),key.Value):key,transaction,cancellationToken);
         return ids.Count;
     }
 

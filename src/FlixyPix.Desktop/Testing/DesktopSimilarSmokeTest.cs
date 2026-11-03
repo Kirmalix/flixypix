@@ -48,6 +48,7 @@ public partial class MainWindow
    foreach (var id in new[] { kept.Id, different.Id }) _repository.Delete(id);
   }
   await RunFingerprintsOnImportSmokeTestAsync(folder);
+  await RunDuplicateSearchSmokeAsync(directory);
  }
 
  /// <summary>"Find similar items on import": off, an import leaves the fingerprint to the next search; on, the import

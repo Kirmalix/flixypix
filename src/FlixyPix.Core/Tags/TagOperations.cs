@@ -23,6 +23,7 @@ public sealed partial class CatalogRepository
  private TagChangeResult ChangeTagCore(string tag,string? replacement,Microsoft.Data.Sqlite.SqliteTransaction transaction,CancellationToken cancellationToken)
  {
   tag=tag.Trim();replacement=replacement?.Trim();
+  RewriteTagHierarchy(key=>Same(key.Value,tag)?replacement==null?null:new TagKey(key.Category,replacement):key,transaction,cancellationToken);
   {
    var mediaChanged=0;var searchesChanged=0;var rulesChanged=0;
    using var select=Command("SELECT DISTINCT media_id FROM media_tags WHERE tag=$tag COLLATE EFP_ORDINAL",transaction,("$tag",tag));
@@ -51,6 +52,11 @@ public sealed partial class CatalogRepository
    {
     cancellationToken.ThrowIfCancellationRequested();
     if(scene.Tags.Any(t=>Same(t,tag)))SaveScene(scene with {Tags=Replace(scene.Tags)},transaction);
+   }
+   foreach(var bookmark in ReadDocuments<Bookmark>("bookmarks",transaction))
+   {
+    cancellationToken.ThrowIfCancellationRequested();
+    if(bookmark.Tags.Any(t=>Same(t,tag)))SaveBookmark(bookmark with {Tags=Replace(bookmark.Tags)},transaction);
    }
    foreach(var rule in ReadDocuments<FilenameTagRule>("filename_rules",transaction))
    {
@@ -149,6 +155,8 @@ public sealed partial class CatalogRepository
    MoveHistoricalTagPresetCategory(tag,fromCategory,toCategory,transaction,cancellationToken);
    MoveTagAssetCategory(tag,fromCategory,toCategory,transaction,cancellationToken);
    MoveCategorizedTagSearchReferences(new(fromCategory,tag),new(toCategory,tag),transaction,cancellationToken);
+   var from=new TagKey(fromCategory.Trim(),tag.Trim());
+   RewriteTagHierarchy(key=>SameHierarchyKey(key,from)?new TagKey(toCategory.Trim(),key.Value):key,transaction,cancellationToken);
    return changed;
   }
  }

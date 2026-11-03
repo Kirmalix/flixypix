@@ -159,11 +159,13 @@ public sealed partial class CatalogRepository
 
     /// <summary>Groups of media that look alike, from the stored fingerprints; pairs marked "kein Duplikat" are not joined.
     /// Videos are only compared with videos of nearly the same length (2 % or 5 s), images with images.</summary>
-    public IReadOnlyList<SimilarGroup> FindSimilarMedia(SimilarityLevel level, MediaKind? kind = null, CancellationToken cancellationToken = default)
+    public IReadOnlyList<SimilarGroup> FindSimilarMedia(SimilarityLevel level, MediaKind? kind = null, CancellationToken cancellationToken = default,IReadOnlySet<Guid>? scope=null)
     {
         if (!Enum.IsDefined(level) || kind == MediaKind.Audio) throw new ArgumentException("Unknown similarity level or media kind.");
         List<(Guid Id, MediaKind Kind, double Duration, ulong[] Hashes)> prints; HashSet<DuplicatePair> excluded;
         lock (gate) { ThrowIfDisposed(); prints = ReadFingerprints(kind); excluded = ReadPreferences().NotDuplicates.ToHashSet(); }
+        cancellationToken.ThrowIfCancellationRequested();
+        if(scope!=null)prints.RemoveAll(p=>!scope.Contains(p.Id));
         var threshold = PerceptualHash.Threshold(level);
         var parent = Enumerable.Range(0, prints.Count).ToArray();
         var reach = new double[prints.Count];
