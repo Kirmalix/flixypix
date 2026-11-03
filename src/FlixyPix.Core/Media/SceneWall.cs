@@ -47,7 +47,7 @@ public sealed partial class CatalogRepository
             if (query.Bookmarks) Read("bookmarks", (json, media) =>
             {
                 var bookmark = JsonSerializer.Deserialize<Bookmark>(json, Json) ?? throw new InvalidDataException("Invalid bookmarks record.");
-                return new(WallMarkKind.Bookmark, bookmark.Id, media, bookmark.Title, bookmark.Description, bookmark.PositionSeconds, null, [], bookmark.PreviewAssetId);
+                return new(WallMarkKind.Bookmark, bookmark.Id, media, bookmark.Title, bookmark.Description, bookmark.PositionSeconds, null, bookmark.Tags, bookmark.PreviewAssetId);
             });
         }
         bool Matches(WallMark mark) =>

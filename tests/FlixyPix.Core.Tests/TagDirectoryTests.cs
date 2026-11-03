@@ -21,6 +21,35 @@ public sealed class TagDirectoryTests : IDisposable
     private string PathFor(string name) => Path.Combine(directory, name);
     private DirectoryEntry Entry(string tag) => catalog.GetDirectory().Single(e => e.Tag == tag);
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GlobalTagChangesAndUndoIncludeBookmarkOnlyTags(bool delete)
+    {
+        var media = catalog.Search()[0];
+        var bookmark = catalog.UpsertBookmark(new Bookmark { MediaId = media.Id, Title = "Moment", Tags = ["OnlyBookmark", "Keep"], PositionSeconds = 12 });
+        var change = delete ? catalog.DeleteTags(["OnlyBookmark"]) : catalog.MergeTags(["OnlyBookmark"], "Renamed");
+        var changed = catalog.GetBookmarks(media.Id).Single();
+        Assert.DoesNotContain("OnlyBookmark", changed.Tags);
+        Assert.Contains("Keep", changed.Tags);
+        if (!delete) Assert.Contains("Renamed", changed.Tags);
+        Assert.True(catalog.UndoTagChange(change.Undo!));
+        Assert.Equal(bookmark.Tags, catalog.GetBookmarks(media.Id).Single().Tags);
+        Assert.Single(catalog.GetWallMarks(new WallQuery(Tags: ["OnlyBookmark"])));
+    }
+
+    [Fact]
+    public void BookmarkEditAfterMergePreventsUndoWithoutLosingChanges()
+    {
+        var media = catalog.Search()[0];
+        var bookmark = catalog.UpsertBookmark(new Bookmark { MediaId = media.Id, Tags = ["OnlyBookmark"], PositionSeconds = 12 });
+        var change = catalog.MergeTags(["OnlyBookmark"], "Renamed");
+        catalog.UpsertBookmark(catalog.GetBookmarks(media.Id).Single() with { Title = "Edited" });
+        Assert.False(catalog.UndoTagChange(change.Undo!));
+        Assert.Equal("Edited", catalog.GetBookmarks(media.Id).Single().Title);
+        Assert.Contains("Renamed", catalog.GetBookmarks(media.Id).Single().Tags);
+    }
+
     [Fact]
     public void DirectoryListsMediaTagsAndVocabularyWithRoleAndCount()
     {

@@ -12,6 +12,27 @@ public sealed class ViewStateTests : IDisposable
     private string PathFor(string name) => Path.Combine(directory, name);
 
     [Fact]
+    public void RoleStateRoundTripsAndMissingProfilesAreSanitized()
+    {
+        var path = PathFor("roles.db");
+        var key = new TagKey("Cast", "Person");
+        using (var catalog = new CatalogRepository(path))
+        {
+            catalog.UpsertVocabularyTag(new("Person", "Cast")); catalog.SetTagRole("Cast", TagRole.Performer);
+            var state = new ViewState { View = "performers", SearchText = "pers", Directory = new(key, 5, 140) };
+            catalog.SaveViewState(state);
+            Assert.Equal(state.Directory, catalog.Sanitize(state, out _).Directory);
+            Assert.Null(state.Restricted(RestoreScope.View).Directory);
+            Assert.True(state.SameView(state with { Directory = new(key, 8, 200) }));
+            Assert.False(state.SameView(state with { Directory = new(null) }));
+        }
+        using var reopened = new CatalogRepository(path);
+        Assert.Equal(new DirectoryViewState(key, 5, 140), reopened.GetViewState()!.Directory);
+        var missing = reopened.Sanitize(new ViewState { View = "studios", Directory = new(key) }, out var dropped);
+        Assert.Null(missing.Directory!.Selected); Assert.Contains("Person", dropped);
+    }
+
+    [Fact]
     public void StateSurvivesReopeningWithoutDroppingTheBrowsingCaches()
     {
         var database = PathFor("catalog.db");

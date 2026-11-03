@@ -7,7 +7,7 @@ namespace FlixyPix.Desktop;
 
 /// <summary>The properties of a performer (gender, dates, looks, active years) or a studio (network) in the profile, with
 /// links for both. Choice fields suggest the values already given in the library.</summary>
-internal sealed partial class DirectoryWindow
+internal sealed partial class DirectoryBrowser
 {
  private readonly ComboBox gender = new(), breasts = new();
  private readonly ComboBox country = Suggesting(), ethnicity = Suggesting(), hair = Suggesting(), eyes = Suggesting(), parentStudio = Suggesting();

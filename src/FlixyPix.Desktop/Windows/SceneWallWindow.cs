@@ -77,8 +77,16 @@ internal sealed class SceneWallWindow : Window
  private CancellationTokenSource? loading, hovering, autoRun;
  private WallTile? hovered;
  private int first = -1, last = -1;
+ private const int PageSize = 120;
+ private int pageOffset;
+ private long totalCount;
+ private readonly Button previousPage = new() { Content = T("Previous"), Margin = new Thickness(0, 0, 8, 0) };
+ private readonly Button nextPage = new() { Content = T("Next") };
+ private readonly TextBlock pageNumber = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
 
  internal IReadOnlyList<WallTile> Tiles { get; private set; } = [];
+ internal long TotalCount => totalCount;
+ internal void NextPageForTest() => nextPage.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
  internal Task Loading { get; private set; } = Task.CompletedTask;
  internal Task Hovering { get; private set; } = Task.CompletedTask;
 
@@ -129,7 +137,12 @@ internal sealed class SceneWallWindow : Window
   {
    if ((e.Key == Key.Apps || e.Key == Key.System && e.SystemKey == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) && wall.SelectedItem is WallTile tile) { e.Handled = true; MenuRequested?.Invoke(tile); }
   };
-  var body = new DockPanel(); DockPanel.SetDock(bar, Dock.Top); body.Children.Add(bar); body.Children.Add(wall);
+  var pager = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
+  pager.Children.Add(previousPage); pager.Children.Add(nextPage); pager.Children.Add(pageNumber);
+  previousPage.Click += (_, _) => { pageOffset = Math.Max(0, pageOffset - PageSize); Reload(resetPage: false); };
+  nextPage.Click += (_, _) => { if ((long)pageOffset + PageSize < totalCount) { pageOffset += PageSize; Reload(resetPage: false); } };
+  var body = new DockPanel(); DockPanel.SetDock(bar, Dock.Top); body.Children.Add(bar);
+  DockPanel.SetDock(pager, Dock.Bottom); body.Children.Add(pager); body.Children.Add(wall);
   frame = new WindowFrame(T("Scene wall"), T("All scenes and bookmarks of the library. Point at a tile to see a short clip from its place; a click plays the video from there."), body, "", scroll: false);
   frame.Add(T("Close"), Close, primary: true, cancel: true);
   Content = frame;
@@ -184,9 +197,10 @@ internal sealed class SceneWallWindow : Window
   typing.Stop(); Reload();
  }
 
- private void Reload()
+ private void Reload(bool resetPage = true)
  {
   if (!IsLoaded) return;
+  if (resetPage) pageOffset = 0;
   loading?.Cancel(); var source = loading = new CancellationTokenSource(); var token = source.Token;
   var query = new WallQuery(text.Text, tags.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
    Scenes: kinds[2].IsChecked != true, Bookmarks: kinds[1].IsChecked != true);
@@ -196,15 +210,31 @@ internal sealed class SceneWallWindow : Window
   {
    try
    {
-    var marks = await Task.Run(() => repository.GetWallMarks(query, token), token);
+    var requestedOffset = pageOffset;
+    var page = await Task.Run(() => repository.QueryWallPage(query, requestedOffset, PageSize, token), token);
     if (token.IsCancellationRequested) return;
     HoverOver(null);
     foreach (var tile in playing) tile.ShowClip(null);
     playing.Clear(); first = last = -1;
-    Tiles = marks.Select(mark => new WallTile(mark)).ToList(); wall.ItemsSource = Tiles;
-    frame.Status.Text = Tn(Tiles.Count, "1 scene or bookmark", "{0:N0} scenes and bookmarks");
+    totalCount = page.TotalCount;
+    if (totalCount == 0) requestedOffset = pageOffset = 0;
+    if (totalCount > 0 && requestedOffset >= totalCount)
+    { pageOffset = checked((int)((totalCount - 1) / PageSize * PageSize)); Reload(resetPage: false); return; }
+    Tiles = page.Items.Select(mark => new WallTile(mark)).ToList(); wall.ItemsSource = Tiles;
+    previousPage.IsEnabled = requestedOffset > 0;
+    nextPage.IsEnabled = (long)requestedOffset + PageSize < totalCount;
+    pageNumber.Text = ((totalCount == 0 ? 0 : requestedOffset / PageSize + 1)).ToString(System.Globalization.CultureInfo.CurrentCulture)
+     + " / " + ((totalCount + PageSize - 1) / PageSize).ToString(System.Globalization.CultureInfo.CurrentCulture);
+    frame.Status.Text = Tn(totalCount, "1 scene or bookmark", "{0:N0} scenes and bookmarks");
    }
    catch (OperationCanceledException) { }
+   catch (Exception error) when (!token.IsCancellationRequested && error is IOException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
+   { frame.Status.Text = error.Message; }
+   finally
+   {
+    if (ReferenceEquals(loading, source)) loading = null;
+    source.Dispose();
+   }
   }
  }
 
