@@ -84,13 +84,15 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
     }
 
     [Fact]
-    public void SchemaSixMigrationBacksUpCommittedWalAndPreservesDocuments()
+    public void OlderSchemaMigrationBacksUpCommittedWalAndPreservesDocuments()
     {
         Directory.CreateDirectory(directory);
+        Open().Dispose();
         using var original = new SqliteConnection($"Data Source={Database};Pooling=False"); original.Open();
+        CatalogRepository.AddOrdinalCollation(original);
         using (var schema = original.CreateCommand())
         {
-            schema.CommandText = "PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE media(id TEXT PRIMARY KEY,path_key TEXT NOT NULL UNIQUE,document TEXT NOT NULL); PRAGMA user_version=6;";
+            schema.CommandText = $"PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; PRAGMA user_version={CatalogRepository.OldestUpgradableSchema};";
             schema.ExecuteNonQuery();
         }
         var item = Item("old.jpg", "WAL München");
@@ -105,7 +107,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using var migrated = Open();
         Assert.NotNull(migrated.MigrationBackupPath);
         using var backup = new SqliteConnection($"Data Source={migrated.MigrationBackupPath};Mode=ReadOnly;Pooling=False"); backup.Open();
-        using var version = backup.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(6L, version.ExecuteScalar());
+        using var version = backup.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(CatalogRepository.OldestUpgradableSchema, version.ExecuteScalar());
         using var count = backup.CreateCommand(); count.CommandText = "SELECT count(*) FROM media"; Assert.Equal(1L, count.ExecuteScalar());
         Assert.Equal(item.Id, Assert.Single(migrated.QueryPage(new() { Text = "münchen" }).Items).Id);
         using var verify = original.CreateCommand(); verify.CommandText = "PRAGMA user_version"; Assert.Equal(CatalogRepository.SchemaVersion, verify.ExecuteScalar());
@@ -118,13 +120,13 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using (var source = new SqliteConnection($"Data Source={Database};Pooling=False"))
         {
             source.Open(); using var command = source.CreateCommand();
-            command.CommandText = "CREATE TABLE media(id TEXT PRIMARY KEY,path_key TEXT NOT NULL UNIQUE,document TEXT NOT NULL); INSERT INTO media VALUES('broken','broken','not-json'); PRAGMA user_version=6;";
+            command.CommandText = "CREATE TABLE media(id TEXT PRIMARY KEY,path_key TEXT NOT NULL UNIQUE,document TEXT NOT NULL); INSERT INTO media VALUES('broken','broken','not-json'); PRAGMA user_version=" + CatalogRepository.OldestUpgradableSchema + ";";
             command.ExecuteNonQuery();
         }
         Assert.Throws<SqliteException>(() => Open());
         Assert.Single(Directory.GetFiles(directory, "*.bak"));
         using var verify = new SqliteConnection($"Data Source={Database};Pooling=False"); verify.Open();
-        using var version = verify.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(6L, version.ExecuteScalar());
+        using var version = verify.CreateCommand(); version.CommandText = "PRAGMA user_version"; Assert.Equal(CatalogRepository.OldestUpgradableSchema, version.ExecuteScalar());
         using var table = verify.CreateCommand(); table.CommandText = "SELECT count(*) FROM sqlite_master WHERE name='media_query'"; Assert.Equal(0L, table.ExecuteScalar());
     }
 

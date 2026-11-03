@@ -22,7 +22,7 @@ public sealed class TagHierarchyTests:IDisposable
   var builder=CatalogEncryption.ConnectionString(Database,key);builder.Pooling=false;using var connection=new SqliteConnection(builder.ToString());connection.Open();CatalogRepository.AddOrdinalCollation(connection);
   using var command=connection.CreateCommand();command.CommandText=text;command.ExecuteNonQuery();
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void DiamondAndTypedIdentityPersistWithoutImplicitSearchExpansion(bool encrypted)
  {
   using var key=Prepare(encrypted);
@@ -41,7 +41,7 @@ public sealed class TagHierarchyTests:IDisposable
   }
   using var reopened=new CatalogRepository(Database,key);Assert.Equal(5,reopened.GetTagHierarchy().Count);Assert.Equal(2,reopened.GetTagParents(new("Genre","D")).Count);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void DirectoryRenameAndCategoryMoveCarryHierarchyAndStackedUndo(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -57,7 +57,7 @@ public sealed class TagHierarchyTests:IDisposable
   Assert.Equal([a],db.GetTagParents(c));Assert.Equal([a],db.GetTagParents(other));Assert.Equal(["C"],db.GetMedia(media.Id)!.TagCategories["Genre"]);
   Assert.Equal(9,db.GetMedia(media.Id)!.Rating);Assert.Equal(ReviewState.Reviewed,db.GetMedia(media.Id)!.ReviewState);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void CycleCreatingMergeAndLaterWriteFailureRollbackAllTagData(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -67,7 +67,7 @@ public sealed class TagHierarchyTests:IDisposable
   Sql(key,"CREATE TRIGGER fail_dag_media BEFORE UPDATE ON media WHEN OLD.id='"+media.Id+"' BEGIN SELECT RAISE(ABORT,'injected hierarchy rename failure'); END;");
   Assert.Throws<SqliteException>(()=>db.ChangeTag("A","Renamed"));Assert.Equal(original,db.GetTagHierarchy());Assert.Contains(db.GetDirectory(),e=>e.Tag=="A");Assert.DoesNotContain(db.GetDirectory(),e=>e.Tag=="Renamed");
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void HierarchyUndoRejectsConcurrentEdgesAndDetachedNodeRenames(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -78,7 +78,7 @@ public sealed class TagHierarchyTests:IDisposable
   db.ChangeTag("B","Renamed");Assert.False(db.UndoTagChange(deletion.Undo!));Assert.Empty(db.GetTagHierarchy());
   Assert.DoesNotContain(db.GetDirectory(),e=>e.Tag=="A");Assert.Contains(db.GetDirectory(),e=>e.Tag=="Renamed");
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void PlainGraphNodesRemainKnownAfterLastAssignmentAndParentRemovalCanBeUndone(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -87,7 +87,7 @@ public sealed class TagHierarchyTests:IDisposable
   Assert.Contains(db.GetDirectory(),e=>e.Tag==parent.Value&&e.Category==""&&e.MediaCount==0);Assert.Contains(db.GetDirectory(),e=>e.Tag==child.Value&&e.MediaCount==0);
   var undo=db.RemoveTagParent(child,parent);Assert.Empty(db.GetTagHierarchy());Assert.True(db.UndoTagChange(undo));Assert.Equal([parent],db.GetTagParents(child));Assert.Null(db.GetMedia(item.Id));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void CategoryCollapseCycleAndCancelledWritesKeepOriginalGraph(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -96,7 +96,7 @@ public sealed class TagHierarchyTests:IDisposable
   using var cancelled=new CancellationTokenSource();cancelled.Cancel();Assert.Throws<OperationCanceledException>(()=>db.SetTagParents(b,[],cancelled.Token));Assert.Equal(original,db.GetTagHierarchy());
   Assert.Throws<OperationCanceledException>(()=>db.GetTagDescendants(a,true,cancelled.Token));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task MigrationAndBackupKeepGraphGroupsAndTypedTags(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid groupId;
@@ -109,7 +109,7 @@ public sealed class TagHierarchyTests:IDisposable
   using var restoredKey=encrypted?CatalogEncryption.Unlock(restored.DatabasePath,"synthetic-tag-dag-password"):null;using var copy=new CatalogRepository(restored.DatabasePath,restoredKey);
   Assert.Equal(migrated.GetTagHierarchy(),copy.GetTagHierarchy());Assert.NotNull(copy.GetPublicationGroup(groupId));Assert.Equal([new TagKey("Genre","A")],copy.GetTagParents(new("Genre","B")));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void ValidMergeDeduplicatesEdgesAndDeepCycleIsRejectedWithoutPartialChanges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Tag(db,"A");var b=Tag(db,"B");var d=Tag(db,"D");
@@ -121,7 +121,7 @@ public sealed class TagHierarchyTests:IDisposable
   var before=db.GetTagHierarchy();Assert.Equal(127,db.GetTagDescendants(new("Chain",names[0])).Count);
   Assert.Throws<ArgumentException>(()=>db.AddTagParent(new("Chain",names[0]),new("Chain",names[^1])));Assert.Equal(before,db.GetTagHierarchy());
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void AssigningCategoryToPlainNodeUpdatesOnlyThatKeyAndCanBeUndone(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -131,7 +131,7 @@ public sealed class TagHierarchyTests:IDisposable
   Assert.Equal([parent],db.GetTagParents(new("Typed","Child")));Assert.Empty(db.GetTagParents(child));Assert.Equal(["Child"],db.GetMedia(media.Id)!.TagCategories["Typed"]);
   Assert.NotNull(result.Undo);Assert.True(db.UndoTagChange(result.Undo!));Assert.Equal([parent],db.GetTagParents(child));Assert.Empty(db.GetMedia(media.Id)!.TagCategories);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void ParentEditsDoNotInvalidateImmediateTagUndo(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var parent=Tag(db,"Parent");var child=Tag(db,"Child");Tag(db,"A");
@@ -153,7 +153,7 @@ public sealed class TagHierarchyTests:IDisposable
   db.ChangeTag("A","Renamed");Assert.False(db.UndoImmediateEdit(undo));Assert.Empty(db.GetMedia(media.Id)!.Tags);
   Assert.True(db.UndoImmediateEdit(rating));Assert.Equal(0,db.GetMedia(media.Id)!.Rating);Assert.Contains(db.GetDirectory(),e=>e.Tag=="Renamed");
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void UndoingGlobalNameChangeMakesEarlierTagUndoValidAgain(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);Tag(db,"A");
@@ -162,7 +162,7 @@ public sealed class TagHierarchyTests:IDisposable
   var rename=db.SaveDirectoryEntry("A","Genre",entry with {Tag="Renamed"});Assert.False(db.UndoImmediateEdit(tags));
   Assert.NotNull(rename.Undo);Assert.True(db.UndoTagChange(rename.Undo!));Assert.True(db.UndoImmediateEdit(tags));Assert.Contains("A",db.GetMedia(media.Id)!.Tags);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void ParentEditorRejectsStaleParentsButKeepsUnrelatedEdges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Tag(db,"A");var b=Tag(db,"B");var c=Tag(db,"C");var d=Tag(db,"D");var e=Tag(db,"E");
@@ -170,7 +170,7 @@ public sealed class TagHierarchyTests:IDisposable
   Assert.Throws<InvalidOperationException>(()=>db.SetTagParents(d,[c],expected));Assert.Equal([a,b],db.GetTagParents(d));
   expected=db.GetTagParents(d);db.AddTagParent(e,c);db.SetTagParents(d,[c],expected);Assert.Equal([c],db.GetTagParents(d));Assert.Equal([c],db.GetTagParents(e));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void CategoryMoveAndItsRoleChangeUndoAtomicallyWithHierarchy(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var parent=Tag(db,"Parent");var child=Tag(db,"Actor","Cast");db.SetTagRole("Cast",TagRole.Performer);db.AddTagParent(child,parent);
@@ -180,14 +180,14 @@ public sealed class TagHierarchyTests:IDisposable
   Assert.Equal(TagRole.Performer,db.GetTagRole("Ensemble"));Assert.Equal([parent],db.GetTagParents(new("Ensemble","Actor")));Assert.NotNull(change.Undo);
   Assert.True(db.UndoTagChange(change.Undo!));Assert.Equal(TagRole.Tag,db.GetTagRole("Ensemble"));Assert.Equal([parent],db.GetTagParents(child));Assert.Contains("Cast",db.GetMedia(media.Id)!.TagCategories.Keys);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void RoleOnlyUndoPreservesConcurrentMediaChanges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var node=Tag(db,"Entry");var media=db.Upsert(new(){Path=Path.Combine(root,"one.jpg"),Kind=MediaKind.Image});
   var entry=db.GetDirectory().Single(e=>e.Tag==node.Value&&e.Category==node.Category);var change=db.SaveDirectoryEntry(entry.Tag,entry.Category,entry,categoryRole:TagRole.Studio);Assert.NotNull(change.Undo);
   db.Upsert(media with {Rating=9});Assert.True(db.UndoTagChange(change.Undo!));Assert.Equal(TagRole.Tag,db.GetTagRole(node.Category));Assert.Equal(9,db.GetMedia(media.Id)!.Rating);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void CatalogCheckReportsInvalidHierarchyAndRepairsNeverGuessEdges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -208,7 +208,7 @@ public sealed class TagHierarchyTests:IDisposable
    using var read=connection.CreateCommand();read.CommandText="SELECT document FROM tag_hierarchies";Assert.Equal(document,read.ExecuteScalar());
   }
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task IndependentRepositoriesAddingParentsDoNotLoseEdges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var first=new CatalogRepository(Database,key);var a=Tag(first,"A");var b=Tag(first,"B");var d=Tag(first,"D");

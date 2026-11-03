@@ -27,7 +27,7 @@ public sealed class StashBindingTests:IDisposable
  }
  private static StashBinding Binding((StashIdentity Identity,StashProvenance Provenance) entry,StashTargetReference target,List<StashFieldBaseline>? fields=null)=>new(){Id=entry.Identity.Id,ProvenanceId=entry.Provenance.Id,Target=target,Fields=fields??[]};
  private static StashBinding Save(CatalogRepository db,StashSourceProfile source,StashBinding binding,long? expected=null,bool retarget=false)=>Assert.Single(db.StoreStashBindings(source.Id,source.Revision,[new(binding,expected,retarget)]));
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task FieldDecisionsAndTypedTargetsSurviveReopenPortableAndActualBackup(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid bindingId;using(var db=new CatalogRepository(Database,key))

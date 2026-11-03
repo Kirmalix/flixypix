@@ -182,23 +182,5 @@ public sealed class LocalFeaturesTests : IDisposable
         Assert.Equal(lines.Length, again.RootElement.GetProperty("legacyRecords").GetArrayLength());
     }
 
-    [Fact]
-    public void V1LegacyRecordsMigrateWithoutDiscardingData()
-    {
-        using (var connection = new SqliteConnection($"Data Source={PathFor("old.sqlite")};Pooling=False"))
-        {
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TABLE legacy_records(id INTEGER PRIMARY KEY,record TEXT NOT NULL UNIQUE); INSERT INTO legacy_records(record) VALUES ('{}'); PRAGMA user_version=1;";
-            command.ExecuteNonQuery();
-        }
-        using var catalog = new CatalogRepository(PathFor("old.sqlite"));
-        catalog.Export(PathFor("export.json"));
-        using var exported = JsonDocument.Parse(File.ReadAllText(PathFor("export.json")));
-        Assert.Equal("{}", exported.RootElement.GetProperty("legacyRecords")[0].GetString());
-        catalog.UpsertSavedSearch(new SavedSearch { Name = "Works after migration" });
-        Assert.Single(catalog.GetSavedSearches());
-    }
-
     public void Dispose() => Directory.Delete(directory, recursive: true);
 }

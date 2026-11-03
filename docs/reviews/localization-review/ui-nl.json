@@ -13484,10 +13484,6 @@
       "status": "unchanged",
       "digest": "6b21ca31cff6059944c4729fe76a53b6bd91e0faa71684d1653ba92ea25aa83a"
     },
-    "Moving pictures into files beside the catalog": {
-      "status": "unchanged",
-      "digest": "41251dd138c13fa3e47106dfccbd7dc8fa023d07259d291a00f1f27b834877c1"
-    },
     "Not enough free space for the safety copy of the catalog: {0:N0} MB needed, {1:N0} MB free.": {
       "status": "unchanged",
       "digest": "4f8d793870c777ea0e717e57e09329e4be329e0e8d82ed32727a0ecd1a568f5e"
@@ -13547,10 +13543,6 @@
     "There is not enough free space for the safety copy. Free up space on the drive and open the library again.": {
       "status": "unchanged",
       "digest": "3b7205d1cf705cadd14ca1ae7de16cae2ace84b59b8db4a83df4ed20dd29fa66"
-    },
-    "Writing the entries anew and filling the tables for sorting and filters": {
-      "status": "unchanged",
-      "digest": "7d5f538683f775c1eaa4cdde06a0684e587a0b6684162cca1664b2d976f34405"
     },
     "{0:N0} of {1:N0}": {
       "status": "unchanged",

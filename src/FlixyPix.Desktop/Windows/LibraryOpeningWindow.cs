@@ -74,8 +74,6 @@ internal sealed class LibraryOpeningWindow : Window
  private static string PhaseText(CatalogOpenPhase phase) => phase switch
  {
   CatalogOpenPhase.SafetyCopy => T("Safety copy of the catalog"),
-  CatalogOpenPhase.Pictures => T("Moving pictures into files beside the catalog"),
-  CatalogOpenPhase.Entries => T("Writing the entries anew and filling the tables for sorting and filters"),
   _ => T("Finishing the encryption of the pictures"),
  };
 

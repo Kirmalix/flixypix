@@ -166,26 +166,4 @@ public sealed class PlayHistoryTests : IDisposable
         Assert.Equal(0, new PlaybackCoverage(null).Share);
     }
 
-    [Fact]
-    public void UpgradesAVersion11Library()
-    {
-        var video = catalog.Upsert(Add("Alt") with { OCount = 4 });
-        catalog.Dispose(); SqliteConnection.ClearAllPools();
-        using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString()))
-        {
-            connection.Open();
-            connection.CreateCollation("EFP_ORDINAL", (left, right) => StringComparer.OrdinalIgnoreCase.Compare(left, right));
-            using var downgrade = connection.CreateCommand();
-            downgrade.CommandText = """
-                DROP INDEX media_query_o_page; DROP TRIGGER media_query_insert; DROP TRIGGER media_query_update;
-                ALTER TABLE media_query DROP COLUMN o_count; DROP TABLE play_history; PRAGMA user_version=11;
-                """;
-            downgrade.ExecuteNonQuery();
-        }
-        catalog = new CatalogRepository(path);
-        Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v11", catalog.MigrationBackupPath!);
-        Assert.Equal(["Alt"], Titles(new MediaQuery { Expression = SearchExpression.Where(new() { Field = SearchField.OCount, Comparison = SearchComparison.Equals, Number = 4 }) }));
-        Assert.Equal(5, catalog.AddO(video.Id, DateTimeOffset.UtcNow)!.OCount);
-        Assert.Equal(1, catalog.CountHistory());
-    }
 }

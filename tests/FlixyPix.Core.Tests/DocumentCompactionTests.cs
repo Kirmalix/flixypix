@@ -4,8 +4,7 @@ using Xunit;
 
 namespace FlixyPix.Core.Tests;
 
-/// <summary>Schema 16: documents without indentation, media without null properties and without the copy of the
-/// original's row; the original's dates still reach the query table.</summary>
+/// <summary>Documents are stored without indentation, media documents also without null properties.</summary>
 public sealed class DocumentCompactionTests : IDisposable
 {
  private readonly string root = Path.Combine(Path.GetTempPath(), "flixypix-compact-" + Guid.NewGuid().ToString("N"));
@@ -36,30 +35,6 @@ public sealed class DocumentCompactionTests : IDisposable
    catalog.Upsert(read with { Description = "Text" }); catalog.Upsert(catalog.GetMedia(item.Id)! with { Description = null });
    Assert.Null(catalog.GetMedia(item.Id)!.Description); Assert.DoesNotContain("description", (string)Scalar("SELECT document FROM media")!);
   }
- }
-
- [Fact]
- public void Version15CatalogDropsTheCopiedRowAndKeepsTheOriginalsDates()
- {
-  Guid id;
-  using (var catalog = new CatalogRepository(Database))
-  {
-   id = catalog.Upsert(new() { Path = Path.Combine(root, "a.mp4"), Kind = MediaKind.Video, LegacyId = "movies:7",
-    Extra = new() { ["legacy.table"] = "movies", ["legacy.sourceSha256"] = new string('a', 64),
-     ["legacy.values"] = """{"ID":7,"addedDate":{"$datetime":"2019-05-04T10:00:00"},"filedate":{"$datetime":"2018-01-02T03:04:05"},"categoryid":3}""" } }).Id;
-  }
-  Scalar("UPDATE media SET document=json_remove(document,'$.originalAddedAt','$.originalFileDate'); PRAGMA user_version=15;");
-  using (var catalog = new CatalogRepository(Database))
-  {
-   var item = catalog.GetMedia(id)!;
-   Assert.Equal("2019-05-04T10:00:00", item.OriginalAddedAt); Assert.Equal("2018-01-02T03:04:05", item.OriginalFileDate);
-   Assert.False(item.Extra.ContainsKey("legacy.values")); Assert.False(item.Extra.ContainsKey("legacy.sourceSha256"));
-   Assert.Equal("movies", item.Extra["legacy.table"]);
-   Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v15", catalog.MigrationBackupPath!);
-  }
-  Assert.Equal(Scalar("SELECT julianday('2018-01-02T03:04:05')"), Scalar("SELECT file_date FROM media_query WHERE id=$id", id.ToString()));
-  Assert.Equal(Scalar("SELECT julianday('2019-05-04T10:00:00')"), Scalar("SELECT imported FROM media_query WHERE id=$id", id.ToString()));
-  Assert.Equal(CatalogRepository.SchemaVersion, Scalar("PRAGMA user_version"));
  }
 
  public void Dispose()

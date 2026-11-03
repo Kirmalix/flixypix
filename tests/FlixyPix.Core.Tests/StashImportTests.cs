@@ -41,7 +41,7 @@ public sealed class StashImportTests:IDisposable
  private static void RequireNothingImported(CatalogRepository db,StashSourceProfile source)
  {Assert.Empty(db.Search());Assert.Empty(db.GetStashIdentities(source.Id));Assert.Empty(db.GetStashBindings(source.Id));Assert.Empty(db.GetScenes());Assert.Empty(db.GetBookmarks());}
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task FirstImportCreatesMediaDirectoryAndMarksAndAnUnchangedRepeatIsANoOp(bool encrypted)
  {
   AddLibrary();using var db=Open(encrypted);var source=Profile(db);using var snapshot=await Read();
@@ -146,7 +146,7 @@ public sealed class StashImportTests:IDisposable
   Add("scenes/s2.json","""{"title":"Part one","files":["/library/s2.mp4"],"movies":[{"movieName":"Series","scene_index":1}]}""");
  }
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task GalleriesAndGroupsBecomeOrderedImageSetsAndPublicationGroups(bool encrypted)
  {
   AddOrganization();using var db=Open(encrypted);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);

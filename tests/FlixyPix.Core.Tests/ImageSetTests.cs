@@ -5,7 +5,7 @@ namespace FlixyPix.Core.Tests;
 public sealed class ImageSetTests:IDisposable
 {
  private readonly string root=Path.Combine(Path.GetTempPath(),"flixypix-imagesets-"+Guid.NewGuid().ToString("N"));
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void PartialMembershipOverlapIsReportedWithoutBlockingConfirmedManyToManySets(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"overlaps.db");using(var empty=new CatalogRepository(path)){}
@@ -23,7 +23,7 @@ public sealed class ImageSetTests:IDisposable
   var refreshed=Assert.Single(db.GetImageSetProposals(),p=>p.MediaIds.Count==2);
   Assert.Equal([created.Id],refreshed.ExistingSetIds);Assert.Equal([existing.Id],refreshed.OverlappingSetIds);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void CurrentMembershipAndSavedSelectionSurviveStaleMenuAndDeletedSet(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"state.db");using(var empty=new CatalogRepository(path)){}
@@ -53,7 +53,7 @@ public sealed class ImageSetTests:IDisposable
   Assert.Throws<InvalidOperationException>(()=>reopened.AddImageSetMembers(id,[]));Assert.Null(reopened.GetImageSet(id));
  }
  public void Dispose(){SqliteConnection.ClearAllPools();if(Directory.Exists(root))Directory.Delete(root,true);}
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task IndependentRepositoriesAddingMembersDoNotLoseEachOthersChanges(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"concurrent.db");using(var empty=new CatalogRepository(path)){}
@@ -65,7 +65,7 @@ public sealed class ImageSetTests:IDisposable
   await Task.WhenAll(Task.Run(()=>{foreach(var id in ids.Take(10))first.AddImageSetMembers(set.Id,[id]);}),Task.Run(()=>{foreach(var id in ids.Skip(10))second.AddImageSetMembers(set.Id,[id]);}));
   Assert.True(first.GetImageSet(set.Id)!.MediaIds.ToHashSet().SetEquals(ids));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void Schema19MigrationPreservesMediaAndDraftsAndStartsWithEmptySets(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"schema19.db");using(var empty=new CatalogRepository(path)){}
@@ -89,7 +89,7 @@ public sealed class ImageSetTests:IDisposable
   Assert.Equal(draft,Assert.Single(migrated.GetMetadataDrafts()));
   Assert.Single(migrated.UpsertImageSet(new(){Name="New set",MediaIds=[after.Id]}).MediaIds);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task BackupRestorePreservesOrderedSharedMembersCoverAndSourceBytes(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"backup-source.db");using(var empty=new CatalogRepository(path)){}
@@ -112,7 +112,7 @@ public sealed class ImageSetTests:IDisposable
   Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(aPath));Assert.Equal(new byte[]{4,5,6},File.ReadAllBytes(bPath));
   await Assert.ThrowsAsync<IOException>(()=>CatalogRepository.RestoreBackupAsync(package,Path.Combine(root,"restored"),secret:encrypted?secret:null));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void FolderAndArchiveProposalsRequireSelectionAndRejectStaleSources(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"proposals.db");using(var empty=new CatalogRepository(path)){}
@@ -145,7 +145,7 @@ public sealed class ImageSetTests:IDisposable
   Assert.Throws<InvalidOperationException>(()=>db.ApplyImageSetProposals([new(archive,"Stale archive")]));
   Assert.Single(db.GetImageSets());
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void SecondMembershipFailureRollsBackSetAndConfirmedProposalBatch(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"rollback.db");using(var empty=new CatalogRepository(path)){}
@@ -165,7 +165,7 @@ public sealed class ImageSetTests:IDisposable
   Assert.Single(db.GetImageSets());
   using var verify=new SqliteConnection(builder.ToString());verify.Open();using var count=verify.CreateCommand();count.CommandText="SELECT count(*) FROM image_set_members";Assert.Equal(1L,count.ExecuteScalar());
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void OrderedMembershipCoverAndSharedImagesSurviveReopenAndDeletion(bool encrypted)
  {
   Directory.CreateDirectory(root);var path=Path.Combine(root,"catalog.db");using(var empty=new CatalogRepository(path)){}

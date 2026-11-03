@@ -107,36 +107,4 @@ public sealed class TagRoleAndDateTests : IDisposable
         Assert.Equal(0, catalog.GetPosition(new() { Sort = MediaSort.FileDate }, item.Id));
     }
 
-    [Fact]
-    public void Schema9LibraryGainsTheDateColumnsWithBackupAndAWorkingTextIndex()
-    {
-        var path = PathFor("catalog.db");
-        Guid id;
-        using (var catalog = new CatalogRepository(path))
-        {
-            id = catalog.Upsert(new() { Path = PathFor("Ferien Sommer.mp4"), Kind = MediaKind.Video, FileCreatedAt = new DateTimeOffset(2001, 1, 1, 0, 0, 0, TimeSpan.Zero) }).Id;
-            catalog.PrepareSearchIndex();
-        }
-        using (var old = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString()))
-        {
-            old.Open();
-            old.CreateCollation("EFP_ORDINAL", (left, right) => StringComparer.OrdinalIgnoreCase.Compare(left, right));
-            using var downgrade = old.CreateCommand();
-            downgrade.CommandText = """
-                DROP INDEX media_query_imported_page;
-                DROP TRIGGER media_query_insert; DROP TRIGGER media_query_update;
-                ALTER TABLE media_query DROP COLUMN file_date; ALTER TABLE media_query DROP COLUMN imported;
-                PRAGMA user_version=9;
-                """;
-            downgrade.ExecuteNonQuery();
-        }
-        using var upgraded = new CatalogRepository(path);
-        Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v9", upgraded.MigrationBackupPath!);
-        var before2002 = new SearchExpression { Condition = new() { Field = SearchField.FileDate, Comparison = SearchComparison.LessThan, Date = new DateTimeOffset(2002, 1, 1, 0, 0, 0, TimeSpan.Zero) } };
-        Assert.Equal(id, Assert.Single(upgraded.QueryPage(new() { Expression = before2002 }).Items).Id);
-        Assert.Equal(id, Assert.Single(upgraded.QueryPage(new() { Text = "sommer" }).Items).Id);
-        upgraded.Upsert(new() { Path = PathFor("Neu.mp4"), Kind = MediaKind.Video, FileCreatedAt = new DateTimeOffset(2000, 6, 1, 0, 0, 0, TimeSpan.Zero) });
-        Assert.Equal(2, upgraded.QueryPage(new() { Expression = before2002 }).TotalCount);
-        Assert.True(upgraded.CheckIntegrity().IsValid);
-    }
 }

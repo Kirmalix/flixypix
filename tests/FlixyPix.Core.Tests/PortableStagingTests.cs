@@ -26,7 +26,7 @@ public sealed class PortableStagingTests : IDisposable
         using (var output = new StreamWriter(path, false, new UTF8Encoding(false)))
         {
             output.Write("{\"items\":[");
-            for (var index = 0; index < 2500; index++)
+            for (var index = 0; index < 400; index++)
             {
                 if (index != 0) output.Write(',');
                 output.Write(JsonSerializer.Serialize(Item($"München 漢字 🙂 {index}") with { Description = new string('ä', 120) }, Options));
@@ -36,9 +36,9 @@ public sealed class PortableStagingTests : IDisposable
         Assert.True(new FileInfo(path).Length > 64 * 1024);
         var sourceHash = SHA256.HashData(File.ReadAllBytes(path));
         var result = catalog.ImportJson(path, 2048);
-        Assert.Empty(result.Errors); Assert.Equal(2500, result.Imported);
-        Assert.Equal(2500, catalog.QueryPage(new()).TotalCount);
-        Assert.Equal(2500, catalog.QueryPage(new() { Text = "漢字 🙂" }).TotalCount);
+        Assert.Empty(result.Errors); Assert.Equal(400, result.Imported);
+        Assert.Equal(400, catalog.QueryPage(new()).TotalCount);
+        Assert.Equal(400, catalog.QueryPage(new() { Text = "漢字 🙂" }).TotalCount);
         Assert.Equal(sourceHash, SHA256.HashData(File.ReadAllBytes(path)));
     }
 

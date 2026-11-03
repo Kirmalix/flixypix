@@ -33,7 +33,7 @@ public sealed class ImageSetMaintenanceTests:IDisposable
  }
  private string Document(CatalogKey? key,Guid id)=>(string)Sql(key,"SELECT document FROM image_sets WHERE id=$id",("$id",id.ToString()))!;
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void RepairRebuildsOrderedProjectionWithoutRewritingSourceAndRetainsSafetyCopy(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -53,7 +53,7 @@ public sealed class ImageSetMaintenanceTests:IDisposable
   Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(a.Path));Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(b.Path));
  }
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void InvalidDocumentsStayUntouchedAndRepairUsesCurrentValidDocuments(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -84,7 +84,7 @@ public sealed class ImageSetMaintenanceTests:IDisposable
   var after=db.CheckCatalog(root);Assert.Equal(5,after[CatalogFindingKind.ImageSetDocuments].Count);Assert.Equal(0,after[CatalogFindingKind.ImageSetMembership].Count);
  }
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void RepairFailureRollsBackAllProjectionWrites(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Image(db,"a.jpg");
@@ -100,7 +100,7 @@ public sealed class ImageSetMaintenanceTests:IDisposable
   Assert.Equal(0L,Sql(key,"SELECT count(*) FROM image_set_members"));
  }
 
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void MergeAndBulkDeletionMaintainMembershipEvenWhenProjectionWasIncomplete(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);

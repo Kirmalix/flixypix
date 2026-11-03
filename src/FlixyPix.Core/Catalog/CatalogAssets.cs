@@ -42,50 +42,6 @@ public sealed partial class CatalogRepository
         command.ExecuteNonQuery();
     }
 
-    /// <summary>Schema 15: moves the base64 text of media graphics and tag images and the blob column of the original's
-    /// binary values into files, reporting each row.</summary>
-    private void MoveBinariesIntoFiles(SqliteTransaction transaction, IProgress<CatalogOpenProgress>? progress, CancellationToken token)
-    {
-        var rows = new List<(string Table, string Id)>();
-        foreach (var table in new[] { "media_assets", "tag_assets" })
-        {
-            using var select = Command($"SELECT id FROM {table} WHERE json_type(document,'$.data')='text'", transaction);
-            using var reader = select.ExecuteReader(); while (reader.Read()) rows.Add((table, reader.GetString(0)));
-        }
-        var blobs = new List<(long Row, string Hash, long Length)>();
-        var hasBlobColumn = false;
-        using (var probe = Command("SELECT 1 FROM pragma_table_info('legacy_blobs') WHERE name='data'", transaction)) hasBlobColumn = probe.ExecuteScalar() is not null;
-        if (hasBlobColumn)
-        {
-            using var select = Command("SELECT rowid,sha256,length FROM legacy_blobs", transaction);
-            using var reader = select.ExecuteReader(); while (reader.Read()) blobs.Add((reader.GetInt64(0), reader.GetString(1), reader.GetInt64(2)));
-        }
-        long done = 0, total = rows.Count + blobs.Count;
-        void Step() { token.ThrowIfCancellationRequested(); if (++done % 100 == 0 || done == total) progress?.Report(new(CatalogOpenPhase.Pictures, done, total)); }
-        progress?.Report(new(CatalogOpenPhase.Pictures, 0, total));
-        foreach (var (table, id) in rows)
-        {
-            byte[] data;
-            using (var read = Command($"SELECT json_extract(document,'$.data') FROM {table} WHERE id=$id", transaction, ("$id", id))) data = Convert.FromBase64String((string)read.ExecuteScalar()!);
-            var sha256 = assets.Write(data);
-            using var update = Command($"UPDATE {table} SET document=json_set(json_remove(document,'$.data'),'$.sha256',$hash,'$.byteLength',$length) WHERE id=$id", transaction,
-                ("$hash", sha256), ("$length", data.LongLength), ("$id", id));
-            update.ExecuteNonQuery(); Step();
-        }
-        if (!hasBlobColumn) return;
-        foreach (var (row, hash, length) in blobs)
-        {
-            using (var input = new SqliteBlob(connection, "legacy_blobs", "data", row, readOnly: true)) assets.Write(input, hash, length, token);
-            Step();
-        }
-        using var rebuild = Command("""
-            CREATE TABLE legacy_blob_files(sha256 TEXT NOT NULL UNIQUE,length INTEGER NOT NULL);
-            INSERT INTO legacy_blob_files SELECT sha256,length FROM legacy_blobs;
-            DROP TABLE legacy_blobs; ALTER TABLE legacy_blob_files RENAME TO legacy_blobs;
-            """, transaction);
-        rebuild.ExecuteNonQuery();
-    }
-
     /// <summary>Bytes of a row, or empty when their file is missing or damaged (the catalog check reports it).</summary>
     private byte[] LoadAssetBytes(string? sha256, long length)
     {

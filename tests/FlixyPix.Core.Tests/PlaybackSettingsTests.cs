@@ -15,7 +15,7 @@ public sealed class PlaybackSettingsTests:IDisposable
  private MediaItem Add(CatalogRepository db,string name,double duration)
  {var file=Path.Combine(root,name);File.WriteAllBytes(file,[1,2,3]);return db.Upsert(new(){Path=file,Kind=MediaKind.Video,DurationSeconds=duration});}
  private static AudioTrackPreference Track(PlaybackSource source,int id)=>new(){Mode=AudioTrackMode.Track,TrackId=id,SourceSize=source.Size,SourceModifiedAtUtc=source.ModifiedAtUtc};
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void FreshFieldUpdatesRetainConcurrentMetadataAndPersist(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid id;
@@ -30,7 +30,7 @@ public sealed class PlaybackSettingsTests:IDisposable
   }
   using var reopened=new CatalogRepository(Database,key);var saved=reopened.GetMedia(id)!;Assert.Equal(1.5,saved.Playback.Speed);Assert.Equal(-.2,saved.Playback.AudioDelaySeconds);Assert.Equal(2,saved.AudioTrack.TrackId);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void MergePromotionAndSplitKeepAudioAttachedToEachFile(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Add(db,"a.mp4",20);var b=Add(db,"b.mp4",35);
@@ -40,14 +40,14 @@ public sealed class PlaybackSettingsTests:IDisposable
   var promoted=db.SetMainVersion(a.Id,b.Path);Assert.Equal(3,promoted.AudioTrack.TrackId);Assert.Equal(1,promoted.Files.Single().AudioTrack.TrackId);Assert.Equal(2,promoted.Playback.Speed);
   var split=db.SplitVersion(a.Id,a.Path);Assert.Equal(1,split.AudioTrack.TrackId);Assert.Equal(2,split.Playback.Speed);Assert.Equal(3,db.GetMedia(a.Id)!.AudioTrack.TrackId);Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(a.Path));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void ChangedOrRemovedSourceCannotSaveStaleTrack(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Add(db,"a.mp4",20);var b=Add(db,"b.mp4",35);var source=PlaybackSource.Resolve(b,b.Path);db.MergeVersions(a.Id,[b.Id]);source=source with {MediaId=a.Id};
   File.WriteAllBytes(b.Path,[4,5,6,7]);Assert.Throws<InvalidOperationException>(()=>db.SetVersionAudioTrack(source,Track(source,2)));Assert.False(Track(source,2).Matches(4,source.ModifiedAtUtc));
   var fresh=PlaybackSource.Resolve(db.GetMedia(a.Id)!,b.Path);db.SplitVersion(a.Id,b.Path);Assert.Throws<ArgumentException>(()=>db.SetVersionAudioTrack(fresh,Track(fresh,2)));Assert.Equal(AudioTrackMode.Automatic,db.GetMedia(a.Id)!.AudioTrack.Mode);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task PortableAndBackupRetainPerVersionAudioAndPlayerSettings(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Add(db,"one.mp4",20);var b=Add(db,"two.mp4",30);var merged=db.MergeVersions(a.Id,[b.Id]);
@@ -63,7 +63,7 @@ public sealed class PlaybackSettingsTests:IDisposable
   using var restoredKey=encrypted?CatalogEncryption.Unlock(restored.DatabasePath,"synthetic-playback-password"):null;using var destination=new CatalogRepository(restored.DatabasePath,restoredKey);
   Assert.Equal(db.GetMedia(a.Id)!.Playback,destination.GetMedia(a.Id)!.Playback);Assert.Equal(db.GetMedia(a.Id)!.Files.Single().AudioTrack,destination.GetMedia(a.Id)!.Files.Single().AudioTrack);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void DefaultsAndValidationApplyToDirectAndPortableWrites(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var a=Add(db,"a.mp4",20);

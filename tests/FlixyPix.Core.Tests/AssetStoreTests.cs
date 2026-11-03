@@ -184,46 +184,6 @@ public sealed class AssetStoreTests : IDisposable
   Assert.Single(Files(target.AssetDirectory));
  }
 
- [Fact]
- public void Version14CatalogMovesItsBytesIntoFiles()
- {
-  Guid mediaId, assetId;
-  using (var catalog = new CatalogRepository(Database))
-  {
-   var media = catalog.Upsert(new() { Path = Path.Combine(root, "a.mp4"), Kind = MediaKind.Video }); mediaId = media.Id;
-   assetId = catalog.UpsertMediaAsset(new() { MediaId = media.Id, Data = Png }).Id;
-   catalog.UpsertTagAsset(new() { Tag = new("People", "Alex"), Data = Png });
-  }
-  // Back to the form of schema 14: base64 text in the documents, a blob column for the original's binary values.
-  var blob = RandomNumberGenerator.GetBytes(5000);
-  using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = Database, Pooling = false }.ToString()))
-  {
-   connection.Open(); connection.CreateCollation("EFP_ORDINAL", string.CompareOrdinal); using var command = connection.CreateCommand();
-   command.CommandText = """
-    UPDATE media_assets SET document=json_set(json_remove(document,'$.sha256','$.byteLength'),'$.data',$png);
-    UPDATE tag_assets SET document=json_set(document,'$.data',$png);
-    DROP TABLE legacy_blobs; CREATE TABLE legacy_blobs(sha256 TEXT NOT NULL UNIQUE,length INTEGER NOT NULL,data BLOB NOT NULL);
-    INSERT INTO legacy_blobs VALUES($hash,$length,$blob);
-    PRAGMA user_version=14;
-    """;
-   command.Parameters.AddWithValue("$png", Convert.ToBase64String(Png)); command.Parameters.AddWithValue("$hash", Hash(blob));
-   command.Parameters.AddWithValue("$length", blob.Length); command.Parameters.AddWithValue("$blob", blob);
-   command.ExecuteNonQuery();
-  }
-  Directory.Delete(Path.Combine(root, "catalog-assets"), true);
-  using (var catalog = new CatalogRepository(Database))
-  {
-   Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v14", catalog.MigrationBackupPath!);
-   Assert.Equal(Png, catalog.GetMediaAsset(assetId)!.Data); Assert.Equal(Hash(Png), catalog.GetMediaAsset(assetId)!.Sha256);
-   Assert.Equal(Png, catalog.GetTagAsset(catalog.GetTagAssetSummaries().Single().Id)!.Data);
-   var exported = Path.Combine(root, "blob.bin"); catalog.ExportLegacyBlob(Hash(blob), exported); Assert.Equal(blob, File.ReadAllBytes(exported));
-   Assert.Equal(2, Files(catalog.AssetDirectory).Length);
-  }
-  Assert.Equal("0", Scalar("SELECT count(*) FROM pragma_table_info('legacy_blobs') WHERE name='data'"));
-  Assert.Equal("0", Scalar("SELECT count(*) FROM media_assets WHERE json_type(document,'$.data') IS NOT NULL"));
-  Assert.Equal(CatalogRepository.SchemaVersion.ToString(System.Globalization.CultureInfo.InvariantCulture), Scalar("PRAGMA user_version"));
- }
-
  public void Dispose()
  {
   try { Directory.Delete(root, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }

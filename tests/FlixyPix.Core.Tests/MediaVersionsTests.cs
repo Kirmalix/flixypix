@@ -140,29 +140,4 @@ public sealed class MediaVersionsTests : IDisposable
         Assert.DoesNotContain(plan.Changes, c => c.Kind == FolderChangeKind.New);
     }
 
-    [Fact]
-    public void UpgradeFromVersion13AddsTheTechnicalColumns()
-    {
-        var video = Add("Alt", 1080, "vp9", 25, 5_000_000);
-        catalog.Dispose(); SqliteConnection.ClearAllPools();
-        using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString()))
-        {
-            connection.Open();
-            connection.CreateCollation("EFP_ORDINAL", (left, right) => StringComparer.OrdinalIgnoreCase.Compare(left, right));
-            using var downgrade = connection.CreateCommand();
-            downgrade.CommandText = """
-                DROP INDEX media_query_lines_page; DROP INDEX media_query_bit_rate_page; DROP INDEX media_query_video_codec;
-                DROP TRIGGER media_query_insert; DROP TRIGGER media_query_update;
-                ALTER TABLE media_query DROP COLUMN video_codec; ALTER TABLE media_query DROP COLUMN frame_rate; ALTER TABLE media_query DROP COLUMN bit_rate;
-                ALTER TABLE media_query DROP COLUMN hdr; ALTER TABLE media_query DROP COLUMN versions; ALTER TABLE media_query DROP COLUMN lines;
-                DROP TABLE media_files; PRAGMA user_version=13;
-                """;
-            downgrade.ExecuteNonQuery();
-        }
-        catalog = new CatalogRepository(path);
-        Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v13", catalog.MigrationBackupPath!);
-        Assert.Equal(["Alt"], Filtered(new MediaFilter { VideoCodecs = ["vp9"] }));
-        Assert.Equal(["Alt"], Filtered(new MediaFilter { Resolution = ResolutionClass.FullHD }));
-        Assert.Equal(video.Id, catalog.GetMediaByPath(video.Path)?.Id);
-    }
 }

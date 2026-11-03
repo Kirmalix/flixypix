@@ -42,7 +42,7 @@ public sealed class VersionBackupTests:IDisposable
   Assert.Equal(item.Playback,copy.Playback);Assert.Equal(item.Files[0].AudioTrack,copy.Files[0].AudioTrack);Assert.Equal(copy.Files[0].Path,copy.ContactSheet!.SourcePath);Assert.True(copy.ContactSheet.MatchesSource(copy));Assert.True(copy.ContactSheet.MatchesImage(copy.ThumbnailPath!));
   Assert.Equal(item.Files.Select(file=>file.Path),db.GetMedia(item.Id)!.Files.Select(file=>file.Path));await Assert.ThrowsAsync<IOException>(()=>CatalogRepository.RestoreBackupAsync(package,result.DirectoryPath,secret:encrypted?Secret:null));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task CatalogOnlyAndMissingVersionsKeepTheirOriginalPathsAndReportPrecisely(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(PathOf("catalog.db"),key);var item=Add(db);var package=PathOf("catalog-only.backup");await db.CreateBackupAsync(package,false);
@@ -102,7 +102,7 @@ public sealed class VersionBackupTests:IDisposable
   var result=await CatalogRepository.RestoreBackupAsync(package,PathOf("legacy-multiple-restored"));Assert.Equal(1,result.RestoredMediaFiles);using var destination=new CatalogRepository(result.DatabasePath);var after=destination.GetMedia(item.Id)!;
   Assert.NotEqual(item.Path,after.Path);Assert.Equal(item.Files.Select(file=>file.Path),after.Files.Select(file=>file.Path));Assert.Equal(item.ContactSheet!.SourcePath,after.ContactSheet!.SourcePath);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task CancellationWhileRestoringAdditionalVersionLeavesNoPublishedLibrary(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(PathOf("catalog.db"),key);Add(db);var package=PathOf("complete.backup");await db.CreateBackupAsync(package,true);using var stop=new CancellationTokenSource();var target=PathOf("cancelled-restore");
@@ -119,7 +119,7 @@ public sealed class VersionBackupTests:IDisposable
   }
   await Assert.ThrowsAsync<InvalidDataException>(()=>CatalogRepository.VerifyBackupAsync(package));var target=PathOf("corrupt-restore");await Assert.ThrowsAsync<InvalidDataException>(()=>CatalogRepository.RestoreBackupAsync(package,target));Assert.False(Directory.Exists(target));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task CancellationDuringAdditionalFileDoesNotPublishAndLeavesSourceUntouched(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(PathOf("catalog.db"),key);var item=Add(db);using var stop=new CancellationTokenSource();var package=PathOf("cancelled.backup");

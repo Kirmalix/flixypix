@@ -21,10 +21,10 @@ public partial class MainWindow
    for (var index = 0; index < 3; index++) old.Upsert(new() { Path = Path.Combine(library, $"clip{index}.mp4"), Kind = MediaKind.Video, Title = $"Clip {index}" });
   }
   using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = database, Pooling = false }.ToString()))
-  { connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "PRAGMA user_version=15"; command.ExecuteNonQuery(); }
+  { connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "PRAGMA user_version=17"; command.ExecuteNonQuery(); }
 
   var plan = CatalogRepository.Inspect(database);
-  Require(plan.Upgrades && plan.HasRoom && plan.Media == 3 && plan.Phases.SequenceEqual([CatalogOpenPhase.SafetyCopy, CatalogOpenPhase.Entries]),
+  Require(plan.Upgrades && plan.HasRoom && plan.Media == 3 && plan.Phases.SequenceEqual([CatalogOpenPhase.SafetyCopy]),
    "The plan for an older library is wrong: " + string.Join(", ", plan.Phases));
   var question = LibraryOpeningWindow.Preview(this, database, plan); question.Show();
   try { await Settled(); Capture((FrameworkElement)question.Content, Path.Combine(directory, "library-upgrade-question.png")); }
@@ -36,7 +36,7 @@ public partial class MainWindow
   try
   {
    using var opened = SecretDialogs.OpenLibrary(this, database);
-   Require(progressShown && opened.UpgradedOnOpen && opened.Search().Count == 3 && opened.GetMaintenanceLog().LastUpgradeFrom == 15,
+   Require(progressShown && opened.UpgradedOnOpen && opened.Search().Count == 3 && opened.GetMaintenanceLog().LastUpgradeFrom == 17,
     "The older library was not converted through the progress window.");
   }
   finally { LibraryOpeningWindow.ConfirmAutomatically = false; LibraryOpeningWindow.ProgressShown = null; }

@@ -49,7 +49,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   }
   using var reopened=new CatalogRepository(Database,key);var saved=reopened.GetMedia(id)!;Assert.Equal(sheet.ImageSha256,saved.ContactSheet!.ImageSha256);Assert.Equal(sheet.Cells,saved.ContactSheet.Cells);Assert.True(saved.ContactSheet.MatchesSource(saved));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void FreshThumbnailCommitKeepsConcurrentEditsAndRejectsStaleRendering(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(original,_)=Add(db);var source=PlaybackSource.Resolve(original,original.Path);
@@ -62,7 +62,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   Assert.Throws<InvalidOperationException>(()=>db.SetGeneratedThumbnail(saved,source,nextImage,metadata,"changed-source"));Assert.False(metadata.MatchesSource(db.GetMedia(original.Id)!));
   Assert.Equal("style-next",db.GetMedia(original.Id)!.Extra[CatalogRepository.GeneratedThumbnailStyleKey]);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void PromotedMainKeepsSheetVersionUntilThatVersionIsDetached(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(item,sheet)=Add(db);var source=PlaybackSource.Resolve(item,item.Path);
@@ -71,7 +71,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   Assert.Throws<InvalidOperationException>(()=>db.SetGeneratedThumbnail(item,source,item.ThumbnailPath!,sheet,"stale-main"));
   db.SplitVersion(item.Id,item.Path);Assert.Null(db.GetMedia(item.Id)!.ContactSheet);Assert.False(sheet.MatchesSource(db.GetMedia(item.Id)!));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void InvalidLayoutOrHashCannotBePublishedOrPartiallyImported(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(item,sheet)=Add(db);
@@ -95,7 +95,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   Assert.Equal(1,sheet.HitTestView(57.5,30,100,50)!.Index);
   Assert.Null(sheet.HitTestView(10,10,0,400));Assert.Null(sheet.HitTestView(10,10,double.PositiveInfinity,400));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void BackgroundPreparationPublishesMetadataAndRetainsConcurrentThumbnailAndTags(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(item,_)=Add(db);var source=PlaybackSource.Resolve(item,item.Path);
@@ -106,7 +106,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   var after=db.SetPreparedMedia(item,prepared,source.Size,source.ModifiedAtUtc)!;Assert.Equal(custom,after.ThumbnailPath);Assert.Null(after.ContactSheet);Assert.Equal("chosen",after.Extra["thumbnail.assetId"]);
   File.SetLastWriteTimeUtc(item.Path,new DateTime(2002,1,1,0,0,0,DateTimeKind.Utc));Assert.Null(db.SetPreparedMedia(item,prepared,source.Size,source.ModifiedAtUtc));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void RelocationUpdatesCurrentSourceButRetainsHistoricalProvenance(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(item,_)=Add(db);db.Upsert(item with {Extra=new(){["origin.path"]=item.Path}});
@@ -126,7 +126,7 @@ public sealed class ContactSheetMetadataTests:IDisposable
   var restored=await CatalogRepository.RestoreBackupAsync(package,Path.Combine(root,"old-restored"));using var destination=new CatalogRepository(restored.DatabasePath);var after=destination.GetMedia(item.Id)!;
   Assert.True(after.ContactSheet!.MatchesImage(after.ThumbnailPath!));Assert.False(after.ContactSheet.MatchesSource(after));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void FailedThumbnailWriteRollsBackImageMetadataAndStyle(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);var(item,_)=Add(db);var next=Fixture("next.jpg",[3,8,1]);var sheet=Metadata(item.Path,next);

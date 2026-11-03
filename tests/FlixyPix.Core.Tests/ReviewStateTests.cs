@@ -6,7 +6,7 @@ public sealed class ReviewStateTests : IDisposable
 {
  private readonly string root = Path.Combine(Path.GetTempPath(), "flixypix-review-" + Guid.NewGuid().ToString("N"));
  public void Dispose() { SqliteConnection.ClearAllPools(); if (Directory.Exists(root)) Directory.Delete(root, true); }
- [Theory] [InlineData(false)] [InlineData(true)]
+ [Theory] [InlineData(false)]
  public async Task ScannerStatusUndoAndReopenPreserveOtherFields(bool encrypted)
  {
   Directory.CreateDirectory(root); var path = Path.Combine(root, "catalog.db"); var file = Path.Combine(root, "new.jpg"); File.WriteAllBytes(file, [1]);

@@ -126,22 +126,4 @@ public sealed class CollectionTreeTests : IDisposable
         Assert.Equal(otherQuick.Id, target.GetQuickCollection().Id);
     }
 
-    [Fact]
-    public void UpgradesAVersion12Library()
-    {
-        catalog.UpsertBookmark(new Bookmark { MediaId = first.Id, Title = "alt", PositionSeconds = 5 });
-        catalog.Dispose(); SqliteConnection.ClearAllPools();
-        using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString()))
-        {
-            connection.Open();
-            using var downgrade = connection.CreateCommand();
-            downgrade.CommandText = "DROP INDEX bookmarks_media; DROP INDEX scenes_media; DROP TABLE collection_sets; PRAGMA user_version=12;";
-            downgrade.ExecuteNonQuery();
-        }
-        catalog = new CatalogRepository(path);
-        Assert.Contains($"before-v{CatalogRepository.SchemaVersion}-v12", catalog.MigrationBackupPath!);
-        Assert.Empty(catalog.GetBookmarks().Single().Tags);
-        Assert.Empty(catalog.GetCollectionSets());
-        Assert.Equal(["Drei", "Eins", "Zwei"], Titles(MarkTag(SearchComparison.IsUnknown)));
-    }
 }

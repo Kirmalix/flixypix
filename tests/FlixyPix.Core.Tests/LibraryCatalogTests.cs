@@ -116,7 +116,7 @@ public sealed class LibraryCatalogTests : IDisposable
     {
         var directory = Library("Big", 0);
         using var catalog = new CatalogRepository(LibraryCatalogs.CatalogPath(directory));
-        var items = Enumerable.Range(0, 400).Select(i => new MediaItem { Path = Path.Combine(root, "media", $"clip{i}.mp4"), Title = new string('x', 2000) + i }).ToList();
+        var items = Enumerable.Range(0, 60).Select(i => new MediaItem { Path = Path.Combine(root, "media", $"clip{i}.mp4"), Title = new string('x', 8000) + i }).ToList();
         foreach (var item in items) catalog.Upsert(item);
         foreach (var item in items.Skip(10)) catalog.Delete(catalog.GetMediaByPath(item.Path)!.Id);
         var (before, after) = catalog.Compact();

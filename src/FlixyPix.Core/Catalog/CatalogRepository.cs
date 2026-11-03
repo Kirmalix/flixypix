@@ -20,16 +20,16 @@ public sealed partial class CatalogRepository : IDisposable
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter() }
     };
-    /// <summary>Options for media documents in the catalog: as <see cref="Json"/>, without null properties (see
-    /// <see cref="CompactDocuments"/>). Declared here, after <see cref="Json"/>, so it is initialized after it.</summary>
+    /// <summary>Options for media documents in the catalog: as <see cref="Json"/>, without null properties (SQLite reads
+    /// a missing property as null as well). Declared here, after <see cref="Json"/>, so it is initialized after it.</summary>
     internal static readonly JsonSerializerOptions MediaJson = new(Json) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
-    /// <summary>10 adds the file date and import date to the query table, 11 progress and last playback, 12 the O counter
-    /// and the playback history, 13 bookmark tags, collection sets and the quick collection (older versions would drop them
-    /// when they save), 14 technical data and further versions of a medium (query columns and the table media_files), 15 picture
-    /// bytes in files beside the catalog instead of inside it (see <see cref="AssetStore"/>), 16 smaller documents (see
-    /// <see cref="CompactDocuments"/>), 18 indexed scene-wall projections.</summary>
+    /// <summary>18 adds indexed scene-wall projections; later versions add tables that are created when missing.</summary>
     internal const long SchemaVersion = 26;
+    /// <summary>The schema of 0.5.0, the first public release. Older catalogs only came from test versions before it; their
+    /// conversion steps are gone, so they are refused instead of being converted halfway.</summary>
+    internal const long OldestUpgradableSchema = 17;
+    internal const string TooOldSchemaMessage = "This catalog comes from a test version before FlixyPix 0.5.0 and cannot be opened.";
 
     public string DatabasePath { get; }
     /// <summary>Data key of an encrypted library; snapshots and backups reuse it.</summary>
@@ -65,19 +65,10 @@ public sealed partial class CatalogRepository : IDisposable
             RegisterQueryFunctions();
             using (var schemaCommand = Command("PRAGMA user_version", null)) schemaVersion = Convert.ToInt64(schemaCommand.ExecuteScalar());
             if (schemaVersion > SchemaVersion) throw new NotSupportedException("This catalog uses a newer database schema.");
+            if (schemaVersion is > 0 and < OldestUpgradableSchema) throw new NotSupportedException(TooOldSchemaMessage);
             if (schemaVersion is > 0 and < SchemaVersion) CreateMigrationBackup(schemaVersion, progress, token);
             using (var pragmas = Command("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;", null)) pragmas.ExecuteNonQuery();
             using var transaction = connection.BeginTransaction();
-            if (schemaVersion == 1)
-            {
-                using var migration = Command("""
-                    ALTER TABLE legacy_records RENAME TO legacy_records_v1;
-                    CREATE TABLE legacy_records(id INTEGER PRIMARY KEY, batch TEXT NOT NULL, ordinal INTEGER NOT NULL, record TEXT NOT NULL, UNIQUE(batch,ordinal));
-                    INSERT INTO legacy_records(batch,ordinal,record) SELECT 'legacy-v1',id,record FROM legacy_records_v1 ORDER BY id;
-                    DROP TABLE legacy_records_v1;
-                    """, transaction);
-                migration.ExecuteNonQuery();
-            }
             using var command = Command("""
                 CREATE TABLE IF NOT EXISTS media(id TEXT PRIMARY KEY, path_key TEXT NOT NULL UNIQUE, document TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS playlists(id TEXT PRIMARY KEY, document TEXT NOT NULL);
@@ -95,8 +86,6 @@ public sealed partial class CatalogRepository : IDisposable
                 CREATE TABLE IF NOT EXISTS collection_sets(id TEXT PRIMARY KEY, document TEXT NOT NULL);
                 """, transaction);
             command.ExecuteNonQuery();
-            // Schema 16 reads the original's dates from the medium itself; the triggers are created anew.
-            if (schemaVersion is > 0 and < 16) using (var drop = Command("DROP TRIGGER IF EXISTS media_query_insert; DROP TRIGGER IF EXISTS media_query_update;", transaction)) drop.ExecuteNonQuery();
             InitializeImageSets(transaction);
             InitializePublicationGroups(transaction);
             InitializeTagHierarchy(transaction);
@@ -104,7 +93,7 @@ public sealed partial class CatalogRepository : IDisposable
             InitializeStashIdentities(transaction);
             InitializeStashProvenance(transaction);
             InitializeStashBindings(transaction);
-            InitializeQuerySchema(transaction, schemaVersion < 7);
+            InitializeQuerySchema(transaction, schemaVersion == 0);
             InitializeWallSchema(transaction, schemaVersion < 18);
             using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id);", transaction)) health.ExecuteNonQuery();
             InitializeSearchIndexSchema(transaction);
@@ -116,9 +105,7 @@ public sealed partial class CatalogRepository : IDisposable
             InitializeHistoricalParserExecutionSchema(transaction);
             InitializeLegacyCombineListSchema(transaction);
             InitializeHistoricalLocalSettingsSchema(transaction);
-            if (schemaVersion is > 0 and < 15) MoveBinariesIntoFiles(transaction, progress, token);
             InitializeAssetSchema(transaction);
-            if (schemaVersion is > 0 and < 16) CompactDocuments(transaction, progress, token);
             token.ThrowIfCancellationRequested();
             using (var version = Command($"PRAGMA user_version={SchemaVersion}", transaction)) version.ExecuteNonQuery();
             transaction.Commit();

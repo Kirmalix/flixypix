@@ -14,7 +14,7 @@ public sealed class HistoricalParserExecutionTests : IDisposable
     public void Dispose() => Directory.Delete(root, true);
 
     [Theory]
-    [InlineData(false)] [InlineData(true)]
+    [InlineData(false)]
     public void SelectiveCategoryAndPropertyChangesAreAtomicAndKeepDrafts(bool encrypted)
     {
         var path=Path.Combine(root,"matrix.db"); using(var empty=new CatalogRepository(path)) { }

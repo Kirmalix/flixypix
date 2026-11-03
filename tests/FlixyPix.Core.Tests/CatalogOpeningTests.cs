@@ -35,7 +35,7 @@ public sealed class CatalogOpeningTests : IDisposable
  {
   using (var catalog = new CatalogRepository(Database))
    for (var index = 0; index < media; index++) catalog.Upsert(new() { Path = Path.Combine(root, $"m{index}.mp4"), Kind = MediaKind.Video });
-  SetVersion(15);
+  SetVersion(CatalogRepository.OldestUpgradableSchema);
  }
 
  [Fact]
@@ -53,48 +53,44 @@ public sealed class CatalogOpeningTests : IDisposable
  {
   OlderLibrary();
   var plan = CatalogRepository.Inspect(Database);
-  Assert.True(plan.Upgrades); Assert.Equal(15, plan.FromVersion); Assert.Equal(5, plan.Media);
-  Assert.Equal([CatalogOpenPhase.SafetyCopy, CatalogOpenPhase.Entries], plan.Phases);
+  Assert.True(plan.Upgrades); Assert.Equal(CatalogRepository.OldestUpgradableSchema, plan.FromVersion); Assert.Equal(5, plan.Media);
+  Assert.Equal([CatalogOpenPhase.SafetyCopy], plan.Phases);
   Assert.True(plan.RequiredBytes > plan.CatalogBytes); Assert.True(plan.HasRoom); Assert.True(plan.Estimate > TimeSpan.Zero);
   var steps = new List<CatalogOpenProgress>();
   using (var catalog = new CatalogRepository(Database, null, new Steps(steps.Add)))
   {
    Assert.True(catalog.UpgradedOnOpen);
    var log = catalog.GetMaintenanceLog();
-   Assert.Equal(15, log.LastUpgradeFrom); Assert.Equal(CatalogRepository.SchemaVersion, log.LastUpgradeTo); Assert.NotNull(log.LastUpgradeAt); Assert.True(log.LastUpgradeSeconds >= 0);
+   Assert.Equal(CatalogRepository.OldestUpgradableSchema, log.LastUpgradeFrom); Assert.Equal(CatalogRepository.SchemaVersion, log.LastUpgradeTo); Assert.NotNull(log.LastUpgradeAt); Assert.True(log.LastUpgradeSeconds >= 0);
   }
   Assert.Equal(plan.Phases, steps.Select(s => s.Phase).Distinct());
   var copy = steps.Last(s => s.Phase == CatalogOpenPhase.SafetyCopy); Assert.True(copy.Total > 0 && copy.Done == copy.Total);
-  var entries = steps.Last(s => s.Phase == CatalogOpenPhase.Entries); Assert.Equal((5L, 5L), (entries.Done, entries.Total));
   Assert.False(CatalogRepository.Inspect(Database).HasWork);
- }
-
- [Fact]
- public void PicturesOfAVersion14LibraryAreAPhaseOfTheirOwn()
- {
-  using (var catalog = new CatalogRepository(Database))
-  {
-   var media = catalog.Upsert(new() { Path = Path.Combine(root, "a.mp4"), Kind = MediaKind.Video });
-   catalog.UpsertMediaAsset(new() { MediaId = media.Id, Data = Png });
-  }
-  SetVersion(14);
-  var plan = CatalogRepository.Inspect(Database);
-  Assert.Equal([CatalogOpenPhase.SafetyCopy, CatalogOpenPhase.Pictures, CatalogOpenPhase.Entries], plan.Phases);
-  Assert.Equal(1, plan.Pictures);
  }
 
  [Fact]
  public void CancellingLeavesTheLibraryAsItWasWithoutASafetyCopy()
  {
-  OlderLibrary(1200);
+  OlderLibrary(50);
   using var cancel = new CancellationTokenSource();
-  var progress = new Steps(step => { if (step.Phase == CatalogOpenPhase.Entries && step.Done > 0) cancel.Cancel(); });
+  var progress = new Steps(step => { if (step.Phase == CatalogOpenPhase.SafetyCopy && step.Done > 0) cancel.Cancel(); });
   Assert.ThrowsAny<OperationCanceledException>(() => new CatalogRepository(Database, null, progress, cancel.Token));
-  Assert.Equal(15, Version());
+  Assert.Equal(CatalogRepository.OldestUpgradableSchema, Version());
   Assert.Empty(Directory.GetFiles(root, "catalog.db.before-*"));
   Assert.True(CatalogRepository.Inspect(Database).Upgrades);
   using var again = new CatalogRepository(Database);
-  Assert.True(again.UpgradedOnOpen); Assert.Equal(1200, again.Search().Count);
+  Assert.True(again.UpgradedOnOpen); Assert.Equal(50, again.Search().Count);
+ }
+
+ [Fact]
+ public void LibrariesOfTestVersionsBeforeTheFirstReleaseAreRefusedUnchanged()
+ {
+  OlderLibrary();
+  SetVersion(CatalogRepository.OldestUpgradableSchema - 1);
+  Assert.Throws<NotSupportedException>(() => CatalogRepository.Inspect(Database));
+  Assert.Throws<NotSupportedException>(() => new CatalogRepository(Database));
+  Assert.Equal(CatalogRepository.OldestUpgradableSchema - 1, Version());
+  Assert.Empty(Directory.GetFiles(root, "catalog.db.before-*"));
  }
 
  [Fact]

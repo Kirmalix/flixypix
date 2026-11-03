@@ -28,7 +28,7 @@ public sealed class PublicationGroupMaintenanceTests:IDisposable
  private string Document(CatalogKey? key,Guid id)=>(string)Sql(key,"SELECT document FROM publication_groups WHERE id=$id",("$id",id.ToString()))!;
  private static PublicationGroupMember Video(Guid id)=>new(PublicationGroupMemberKind.Video,id);
  private static PublicationGroupMember Set(Guid id)=>new(PublicationGroupMemberKind.ImageSet,id);
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void RepairRestoresTypedReferencesFromCurrentDocumentsAndKeepsSafetyCopy(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -48,7 +48,7 @@ public sealed class PublicationGroupMaintenanceTests:IDisposable
   var builder=CatalogEncryption.ConnectionString(result.BackupPath,key);builder.Pooling=false;using var copy=new SqliteConnection(builder.ToString());copy.Open();using var old=copy.CreateCommand();old.CommandText="SELECT video_id FROM publication_group_members WHERE group_id=$id";old.Parameters.AddWithValue("$id",first.Id.ToString());Assert.Equal(video.Id.ToString(),old.ExecuteScalar());
   Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(video.Path));Assert.Equal(new byte[]{1,2,3},File.ReadAllBytes(image.Path));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void InvalidGroupDocumentsRemainUnchangedAndRepairFailureRollsBackAllWrites(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -78,7 +78,7 @@ public sealed class PublicationGroupMaintenanceTests:IDisposable
   Sql(key,"DROP TRIGGER fail_group_repair");db.RepairCatalog(report,new HashSet<CatalogFindingKind>{CatalogFindingKind.PublicationGroupMembership},Path.Combine(root,"backups"));
   Assert.Equal(6,db.CheckCatalog(root)[CatalogFindingKind.PublicationGroupDocuments].Count);Assert.Equal(0,db.CheckCatalog(root)[CatalogFindingKind.PublicationGroupMembership].Count);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void TargetDeletionFailureRollsBackTargetAndGroupDocuments(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);

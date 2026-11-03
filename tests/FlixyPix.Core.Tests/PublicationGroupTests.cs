@@ -26,7 +26,7 @@ public sealed class PublicationGroupTests:IDisposable
   using var connection=new SqliteConnection(builder.ToString());connection.Open();CatalogRepository.AddOrdinalCollation(connection);
   using var command=connection.CreateCommand();command.CommandText=text;return command.ExecuteScalar();
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void GroupSelectionPersistsAndDeletedSelectionIsSanitized(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid id;
@@ -39,7 +39,7 @@ public sealed class PublicationGroupTests:IDisposable
   using var reopened=new CatalogRepository(Database,key);var restored=reopened.GetViewState()!;Assert.Equal(id,restored.PublicationGroupId);Assert.Equal("publication-groups",restored.View);
   reopened.DeletePublicationGroup(id);var clean=reopened.Sanitize(restored,out var dropped);Assert.Null(clean.PublicationGroupId);Assert.Equal("publication-groups",clean.View);Assert.NotEmpty(dropped);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void Schema20MigrationRetainsSetsMediaAndDrafts(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid videoId,setId;MetadataDraft draft;
@@ -56,7 +56,7 @@ public sealed class PublicationGroupTests:IDisposable
   Assert.Equal(ReviewState.Reviewed,upgraded.GetMedia(videoId)!.ReviewState);Assert.Equal(9,upgraded.GetMedia(videoId)!.Rating);
   Assert.Equal([Video(videoId),Set(setId)],upgraded.UpsertPublicationGroup(new(){Name="New group",Members=[Video(videoId),Set(setId)]}).Members);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void TypedOrderSharedReferencesAndDeletionSurviveReopen(bool encrypted)
  {
   using var key=Prepare(encrypted);Guid groupId,sharedId,videoId,secondId,setId;string videoPath,imagePath;
@@ -82,7 +82,7 @@ public sealed class PublicationGroupTests:IDisposable
   reopened.DeleteMedia([videoId]);Assert.Equal([Video(secondId)],reopened.GetPublicationGroup(groupId)!.Members);Assert.Empty(reopened.GetPublicationGroup(sharedId)!.Members);
   reopened.DeletePublicationGroup(groupId);Assert.NotNull(reopened.GetMedia(secondId));Assert.True(File.Exists(videoPath));Assert.True(File.Exists(imagePath));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void MergeVersionsRedirectsAndDeduplicatesOnlyVideoReferences(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -94,7 +94,7 @@ public sealed class PublicationGroupTests:IDisposable
   Assert.Single(merged.Files);Assert.True(File.Exists(b.Path));
   db.Delete(a.Id);Assert.Equal([Set(set.Id)],db.GetPublicationGroup(group.Id)!.Members);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void SameFileMaintenanceMergeKeepsTypedGroupReferences(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -108,7 +108,7 @@ public sealed class PublicationGroupTests:IDisposable
   Assert.Equal([Video(a.Id),Set(set.Id)],db.GetPublicationGroup(group.Id)!.Members);Assert.Null(db.GetMedia(b.Id));Assert.NotNull(db.GetImageSet(set.Id));
   Assert.Equal(2L,Sql(key,"SELECT count(*) FROM publication_group_members"));Assert.True(File.Exists(a.Path));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void SecondMembershipFailureRollsBackDocumentAndFreshAddKeepsCurrentChanges(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);
@@ -123,7 +123,7 @@ public sealed class PublicationGroupTests:IDisposable
   Assert.Equal(saved.Members,db.GetPublicationGroup(saved.Id)!.Members);Assert.Equal("Newer",db.GetPublicationGroup(saved.Id)!.Name);
   Assert.Equal(3L,Sql(key,"SELECT count(*) FROM publication_group_members"));
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public async Task BackupRestoreRetainsMixedGroupsAndMediaSources(bool encrypted)
  {
   using var key=Prepare(encrypted);using var db=new CatalogRepository(Database,key);

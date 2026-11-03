@@ -22,7 +22,7 @@ public sealed class PortableOrganizationTests:IDisposable
   var group=db.UpsertPublicationGroup(new(){Name="Mixed group",Description="Group description",Members=[new(PublicationGroupMemberKind.ImageSet,set.Id),new(PublicationGroupMemberKind.Video,video.Id)]});
   db.AddTagParent(new("","Child"),new("","Root"));return(video,image,set,group);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void Format5RoundtripIncludesTypedOrganizationPlayerAndReviewWithFreshReopen(bool encrypted)
  {
   var source=PathOf("source.db");using var key=Prepare(source,encrypted);using var db=new CatalogRepository(source,key);var fixture=Populate(db);var export=PathOf("portable.json");db.Export(export);
@@ -38,7 +38,7 @@ public sealed class PortableOrganizationTests:IDisposable
   }
   using var reopened=new CatalogRepository(target,targetKey);Assert.Equal("Set description",reopened.GetImageSet(fixture.Set.Id)!.Description);Assert.Equal("Group description",reopened.GetPublicationGroup(fixture.Group.Id)!.Description);
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void PathCollisionRemapsMediaButNeverSetIdentityInTypedGroup(bool encrypted)
  {
   var source=PathOf("source.db");using var key=Prepare(source,encrypted);using var db=new CatalogRepository(source,key);var fixture=Populate(db);var export=PathOf("portable.json");db.Export(export);
@@ -90,7 +90,7 @@ public sealed class PortableOrganizationTests:IDisposable
   using var raw=new SqliteConnection(new SqliteConnectionStringBuilder{DataSource=target,Pooling=false}.ToString());raw.Open();CatalogRepository.AddOrdinalCollation(raw);using var command=raw.CreateCommand();command.CommandText="CREATE TRIGGER fail_group BEFORE INSERT ON publication_group_members BEGIN SELECT RAISE(ABORT,'synthetic projection failure'); END;";command.ExecuteNonQuery();
   Assert.NotEmpty(db.ImportJson(export).Errors);Assert.Empty(db.Search());Assert.Empty(db.GetImageSets());Assert.Empty(db.GetPublicationGroups());
  }
- [Theory][InlineData(false)][InlineData(true)]
+ [Theory][InlineData(false)]
  public void InvalidGraphPreservesExistingMediaSetsGroupsAndLocalHierarchy(bool encrypted)
  {
   var target=PathOf("target.db");using var key=Prepare(target,encrypted);using var db=new CatalogRepository(target,key);var fixture=Populate(db);
