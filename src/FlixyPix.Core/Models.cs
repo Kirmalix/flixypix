@@ -219,6 +219,8 @@ public sealed record CatalogPreferences
 /// <summary>Library behaviour from the original's general settings that still applies today.</summary>
 /// <summary>Badges on tiles: resolution (4K, 1080p …), HDR, high frame rate, video codec, number of files.</summary>
 public enum TileBadge { Resolution, Hdr, FrameRate, Codec, Versions }
+/// <summary>Whether the sidebar lists the review inbox: automatically once reviewing is in use, always or never.</summary>
+public enum ReviewInboxMode { Automatic, Always, Never }
 
 public sealed record GeneralPreferences
 {
@@ -275,6 +277,8 @@ public sealed record GeneralPreferences
     public bool ShowCategoryCounts { get; init; } = true;
     /// <summary>The tag categories show how many media have one of their tags (original "showvideotagcategorycounts").</summary>
     public bool ShowTagCategoryCounts { get; init; } = true;
+    /// <summary>When the sidebar offers the review inbox; automatic hides it until the review status is in use.</summary>
+    public ReviewInboxMode ReviewInbox { get; init; } = ReviewInboxMode.Automatic;
 
     public const int MaximumHistoryLength = 500;
 

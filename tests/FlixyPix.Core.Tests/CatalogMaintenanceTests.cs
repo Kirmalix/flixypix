@@ -26,6 +26,29 @@ public sealed class CatalogMaintenanceTests : IDisposable
     }
 
     [Fact]
+    public void NavigationCountsHideTheInboxUntilReviewingIsInUse()
+    {
+        using var catalog = new CatalogRepository(Path.Combine(root, "catalog.db"));
+        catalog.Upsert(new MediaItem { Path = @"U:\a.mp4", Kind = MediaKind.Video, ReviewState = ReviewState.Unreviewed });
+        catalog.Upsert(new MediaItem { Path = @"U:\b.jpg", Kind = MediaKind.Image, ReviewState = ReviewState.Unreviewed });
+        var imported = catalog.GetNavigationCounts();
+        Assert.Equal((0, 2, 0, 0, 2), (imported.Audio, imported.Unreviewed, imported.NeedsAttention, imported.Reviewed, imported.Inbox));
+        // Fresh imports are all unreviewed; that alone does not mean the inbox is wanted.
+        Assert.False(imported.ShowsReviewInbox(ReviewInboxMode.Automatic));
+        Assert.True(imported.ShowsReviewInbox(ReviewInboxMode.Always));
+
+        catalog.Upsert(new MediaItem { Path = @"U:\c.mp3", Kind = MediaKind.Audio, ReviewState = ReviewState.Reviewed });
+        var reviewing = catalog.GetNavigationCounts();
+        Assert.Equal((1, 1), (reviewing.Audio, reviewing.Reviewed));
+        Assert.True(reviewing.ShowsReviewInbox(ReviewInboxMode.Automatic));
+        Assert.False(reviewing.ShowsReviewInbox(ReviewInboxMode.Never));
+
+        var flagged = new NavigationCounts(0, 0, 1, 0);
+        Assert.True(flagged.ShowsReviewInbox(ReviewInboxMode.Automatic));
+        Assert.False(new NavigationCounts(0, 0, 0, 5).ShowsReviewInbox(ReviewInboxMode.Automatic));
+    }
+
+    [Fact]
     public async Task BackupAndCheckAreRecordedAndKeptInTheCatalog()
     {
         var path = Path.Combine(root, "catalog.db");

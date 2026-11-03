@@ -19,6 +19,16 @@ public partial class MainWindow
   action.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));await Idle();
   if(_sidebarToolsMenu!=null)_sidebarToolsMenu.IsOpen=false;
   Check(_sidebarSections["tags"].IsExpanded==expanded,"Header tools changed collapse state.");
+  // Library entries: groups fold like cards, the review inbox waits until reviewing is in use, audio until there is audio.
+  Check(_sidebarSections.ContainsKey("media")&&_sidebarSections.ContainsKey("discover"),"Library groups missing.");
+  var view=_view;_view="all";
+  ApplyNavigationEntries(new NavigationCounts(0,6,0,0),ReviewInboxMode.Automatic);
+  Check(InboxNav.Visibility!=Visibility.Visible&&AudioNav.Visibility!=Visibility.Visible,"Inbox or audio shown without use.");
+  ApplyNavigationEntries(new NavigationCounts(2,5,1,3),ReviewInboxMode.Automatic);
+  Check(InboxNav.Visibility==Visibility.Visible&&SidebarCard.GetBadge(InboxNav)==6.ToString("N0")&&AudioNav.Visibility==Visibility.Visible,"Inbox badge or audio entry missing.");
+  ApplyNavigationEntries(new NavigationCounts(0,5,1,3),ReviewInboxMode.Never);
+  Check(InboxNav.Visibility!=Visibility.Visible,"Inbox shown although switched off.");
+  _view=view;ApplyNavigationEntries(_repository.GetNavigationCounts(),_repository.GetPreferences().General.ReviewInbox);
   var height=_folderDesiredHeight;
   FolderHeightDragging(this,new DragDeltaEventArgs(0,40));await Idle();SaveFolderViewportState();
   Check(_repository.GetPreferences().Sidebar.FolderHeight==height+40,"Folder height was not persisted.");

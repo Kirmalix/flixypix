@@ -90,6 +90,8 @@ internal sealed partial class SettingsWindow : Window
   FolderCounts = SettingsUi.Switch(), CategoryCounts = SettingsUi.Switch(), TagCategoryCounts = SettingsUi.Switch();
  /// <summary>Restore on start: 0 off, 1 the view only, 2 everything.</summary>
  internal readonly SegmentedChoice RestoreChoice = new([(0, T("Off")), (1, T("View only")), (2, T("Everything"))]);
+ /// <summary>When the sidebar lists the review inbox (catalog preference, values of <see cref="ReviewInboxMode"/>).</summary>
+ internal readonly SegmentedChoice ReviewInboxChoice = new([((int)ReviewInboxMode.Automatic, T("Automatic")), ((int)ReviewInboxMode.Always, T("Always")), ((int)ReviewInboxMode.Never, T("Never"))]);
  internal readonly CheckBox StartOnHome = SettingsUi.Switch();
  /// <summary>One switch per start page row; the order of the rows stays as the library keeps it.</summary>
  internal readonly Dictionary<HomeRowKind, CheckBox> HomeRows = HomePreferences.DefaultRows.ToDictionary(kind => kind, _ => SettingsUi.Switch());
@@ -190,7 +192,7 @@ internal sealed partial class SettingsWindow : Window
    ConfirmRemove, ShowExtension, MarkMissing, FolderCounts, CategoryCounts, TagCategoryCounts, AlwaysReport, PreventSleep, MediaKeys, SlideFade, SlidePan, SlideInfo, NfoTitle, NfoTags,
    NfoDescription, NfoSubfolders, NfoThumbnail, NfoFanart, HistoryEnabled, ShowOCounter }.Concat(HomeRows.Values).Append(StartOnHome)) { check.Checked += (_, _) => Touch();
    check.Unchecked += (_, _) => Touch(); }
-  foreach (var choice in new[] { columns, rows, processes, hoverSpeed, hoverMode, ImageWheel, SlideOrder, slideSpeed, RestoreChoice }) choice.Changed += Touch;
+  foreach (var choice in new[] { columns, rows, processes, hoverSpeed, hoverMode, ImageWheel, SlideOrder, slideSpeed, RestoreChoice, ReviewInboxChoice }) choice.Changed += Touch;
   foreach (var combo in new[] { MouseLeft, mouseRight, mouseMiddle, mouseBack, mouseForward, PlayerWheel }) { combo.SelectionChanged += (_, _) => Touch(); AutomationProperties.SetName(combo, T("Mouse action")); }
   foreach (var box in new[] { nfoTagElements, nfoDescriptionElements }) box.TextChanged += (_, _) => Touch();
   AutomationProperties.SetName(nfoTagElements, T("NFO elements as tags")); AutomationProperties.SetName(nfoDescriptionElements, T("NFO elements of the description"));

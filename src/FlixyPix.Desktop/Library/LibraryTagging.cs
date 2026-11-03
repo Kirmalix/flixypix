@@ -180,7 +180,7 @@ public partial class MainWindow
  private async Task RefreshTagsInPlaceAsync(IReadOnlyCollection<Guid> ids)
  {
   var cards = (MediaList.ItemsSource as IEnumerable<MediaCard> ?? []).Where(c => ids.Contains(c.Item.Id)).ToList();
-  var (items, browse) = await Task.Run(() => (cards.Select(c => _repository.GetMedia(c.Item.Id)).ToList(), PrepareBrowsing(_repository.GetFacets(), _repository.GetPreferences(), _repository.GetTagUsage())));
+  var (items, browse) = await Task.Run(() => (cards.Select(c => _repository.GetMedia(c.Item.Id)).ToList(), PrepareBrowsing(_repository.GetFacets(), _repository.GetPreferences(), _repository.GetTagUsage(), _repository.GetNavigationCounts())));
   if (_closing) return;
   for (var i = 0; i < cards.Count; i++) if (items[i] is { } item) cards[i].Replace(item);
   if (_offWindowSelection.Any(i => ids.Contains(i.Id)))

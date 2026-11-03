@@ -46,7 +46,8 @@ internal sealed partial class SettingsWindow
      T("View only: media type, collection or saved search, sorting and display. Everything: also search text, filters, position and selection plus a continue watching notice. Window size and position follow “Remember window position” under Navigation."),
      RestoreChoice)),
    SettingsUi.Card(T("Sidebars"), T("Both sidebars fold to a narrow bar of symbols: Ctrl+B on the left, Ctrl+D on the right, or the arrow at their edge. Drag their inner edge to change the width."),
-    new SettingRow(T("Details as tabs"), T("Shows details, tags and scenes on the right as tabs instead of one below the other. The button at the top of the details switches as well. Applies to this computer."), DetailsTabs)),
+    new SettingRow(T("Details as tabs"), T("Shows details, tags and scenes on the right as tabs instead of one below the other. The button at the top of the details switches as well. Applies to this computer."), DetailsTabs),
+    new SettingRow(T("Show the review inbox"), T("Automatic: as soon as an item needs attention or you have marked items as reviewed. New imports alone count as unreviewed and do not show it."), ReviewInboxChoice)),
    SettingsUi.Card(T("Confirmations"), null,
     new SettingRow(T("Confirm removing from the catalog"), T("Permanently deleting a file always requires confirmation."), ConfirmRemove)),
    libraryCards[0], libraryCards[1], libraryCards[2], libraryCards[3], QuickAccessCard());

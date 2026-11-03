@@ -14595,6 +14595,30 @@
     "{0:N0} records read.": {
       "status": "unchanged",
       "digest": "f2ca1f7f5939ded7d1f41a3ffbdcc79742ee8264741c053b141e521205e3c41d"
+    },
+    "Always": {
+      "status": "unchanged",
+      "digest": "3d460aec014024500ad263b387bc853597db7c57218645a3b802b45634ba847f"
+    },
+    "Automatic: as soon as an item needs attention or you have marked items as reviewed. New imports alone count as unreviewed and do not show it.": {
+      "status": "unchanged",
+      "digest": "0afb4328bec6a97dfe4a619546b118490629cea57e16cb2decf3a08e998f4a81"
+    },
+    "DISCOVER": {
+      "status": "unchanged",
+      "digest": "698a4f5bed1380e72515cc5e0fd18e0f764703c993839e079d3dd17e50b09097"
+    },
+    "MEDIA": {
+      "status": "unchanged",
+      "digest": "e27efa0f7e83c445b6902e203fa73420fa09c4a25e9fe1b368a546fc1143b729"
+    },
+    "Never": {
+      "status": "unchanged",
+      "digest": "42a95825b81b02018fc719c75b14f776bae1929ff2c12626aafa58445e7e7ab5"
+    },
+    "Show the review inbox": {
+      "status": "unchanged",
+      "digest": "29acdcb3eb6bef800865d6def60c7b677230475b49530494f948db1c49582659"
     }
   }
 }

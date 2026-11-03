@@ -40,7 +40,7 @@ internal sealed partial class SettingsWindow
   IncludeHidden.IsChecked = general.IncludeHiddenFolders; ConfirmRemove.IsChecked = general.ConfirmRemove; ShowExtension.IsChecked = general.ShowExtension;
   FolderCounts.IsChecked = general.ShowFolderCounts; CategoryCounts.IsChecked = general.ShowCategoryCounts; TagCategoryCounts.IsChecked = general.ShowTagCategoryCounts;
   MarkMissing.IsChecked = general.MarkMissingFiles; AlwaysReport.IsChecked = general.AlwaysShowImportReport; RestoreChoice.Value = !general.RestoreLastView ? 0 : general.RestoreScope == RestoreScope.View ? 1 : 2;
-  ImageWheel.Value = (int)general.ImageWheel;
+  ImageWheel.Value = (int)general.ImageWheel; ReviewInboxChoice.Value = (int)general.ReviewInbox;
   Library.Load(general, repository.GetPreferences().Home);
  }
  private void LoadNfo(NfoPreferences nfo)
@@ -180,7 +180,7 @@ internal sealed partial class SettingsWindow
     {
      IncludeHiddenFolders = IncludeHidden.IsChecked == true, ConfirmRemove = ConfirmRemove.IsChecked == true, ShowExtension = ShowExtension.IsChecked == true,
      ShowFolderCounts = FolderCounts.IsChecked == true, ShowCategoryCounts = CategoryCounts.IsChecked == true, ShowTagCategoryCounts = TagCategoryCounts.IsChecked == true,
-     MarkMissingFiles = MarkMissing.IsChecked == true, AlwaysShowImportReport = AlwaysReport.IsChecked == true, RestoreLastView = RestoreChoice.Value > 0, RestoreScope = RestoreChoice.Value == 1 ? RestoreScope.View : RestoreScope.All,
+     MarkMissingFiles = MarkMissing.IsChecked == true, AlwaysShowImportReport = AlwaysReport.IsChecked == true, RestoreLastView = RestoreChoice.Value > 0, RestoreScope = RestoreChoice.Value == 1 ? RestoreScope.View : RestoreScope.All, ReviewInbox = (ReviewInboxMode)ReviewInboxChoice.Value,
      ImageWheel = (ImageWheelAction)ImageWheel.Value,
     },
     VideoFavoriteMinimumRating = videoFavorite.Value, ImageFavoriteMinimumRating = imageFavorite.Value, AudioFavoriteMinimumRating = audioFavorite.Value,

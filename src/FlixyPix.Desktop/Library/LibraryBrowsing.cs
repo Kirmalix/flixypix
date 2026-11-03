@@ -106,9 +106,10 @@ public partial class MainWindow
  /// <param name="FolderCounts">Media per folder path including subfolders ("" is all folders); empty when counts are off.</param>
  /// <param name="TagCategoryCounts">Media per tag category; empty when counts are off.</param>
  private sealed record BrowseSnapshot(IReadOnlyList<CategoryOption> Categories, TagListEntry[] Tags, string TagListFingerprint, string FolderFingerprint, Func<BrowseNode[]> FolderTree, string TagFingerprint, BrowseNode[] CategorizedTags,
-  IReadOnlyDictionary<string, TagRole> CategoryRoles, RoleName[] RoleNames, IReadOnlyDictionary<string, long> FolderCounts, IReadOnlyDictionary<string, long> TagCategoryCounts);
+  IReadOnlyDictionary<string, TagRole> CategoryRoles, RoleName[] RoleNames, IReadOnlyDictionary<string, long> FolderCounts, IReadOnlyDictionary<string, long> TagCategoryCounts,
+  NavigationCounts Navigation, ReviewInboxMode ReviewInbox);
  // Runs off the UI thread: large catalogs carry thousands of vocabulary tags and folders.
- private static BrowseSnapshot PrepareBrowsing(CatalogFacets facets, CatalogPreferences preferences, IReadOnlyList<TagUsage> usage)
+ private static BrowseSnapshot PrepareBrowsing(CatalogFacets facets, CatalogPreferences preferences, IReadOnlyList<TagUsage> usage, NavigationCounts navigation)
  {
   var general = preferences.General;
   var categoryCounts = general.ShowCategoryCounts ? facets.CategoryCounts : null;
@@ -124,7 +125,8 @@ public partial class MainWindow
   var roles = vocabulary.ToDictionary(g => g.Name, g => TagRoles.Of(preferences, g.Name), StringComparer.OrdinalIgnoreCase);
   var categorized = vocabulary.Select(group => { var node = new BrowseNode(group.Name, category: group.Name); node.Children.AddRange(group.Tags.Select(tag => new BrowseNode(tag, category: group.Name, tag: tag))); return node; }).ToArray();
   return new(categories, tags, string.Join('\n', tags.Select(t => $"{t.Tag}\t{t.Count}\t{t.IsFavorite}")), string.Join('\n', directories.Concat(preferences.LibraryFolders.Select(f=>f.Path))), () => FolderTree(directories, preferences.LibraryFolders),
-   string.Join("|", vocabulary.Select(g => g.Name + ":" + string.Join(",", g.Tags))), categorized, roles, RoleNames(vocabulary, roles, preferences, tags), folderCounts, tagCategoryCounts);
+   string.Join("|", vocabulary.Select(g => g.Name + ":" + string.Join(",", g.Tags))), categorized, roles, RoleNames(vocabulary, roles, preferences, tags), folderCounts, tagCategoryCounts,
+   navigation, general.ReviewInbox);
  }
  /// <summary>Media of each folder with all its subfolders, from the counts of media directly in a folder; "" holds all.</summary>
  private static Dictionary<string, long> FolderTotals(IReadOnlyDictionary<string, long> direct)
@@ -179,6 +181,7 @@ public partial class MainWindow
   foreach (var node in CategorizedTags.ItemsSource as IEnumerable<BrowseNode> ?? [])
    node.Count = node.Category is { } name && browse.TagCategoryCounts.TryGetValue(name, out var count) ? CountText(count) : "";
   _categoryRoles = browse.CategoryRoles; _roleNames = browse.RoleNames;
+  ApplyNavigationEntries(browse.Navigation, browse.ReviewInbox);
  }
  private static bool IsWithinFolder(string path, string folder)
  {

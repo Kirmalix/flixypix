@@ -34,7 +34,34 @@ public partial class MainWindow
  private void UpdateNavigation()
  {
   var active = _playlist == null && _folder == null && _tagGroup == null && _tag == null && _advancedExpression == null ? _view : null;
-  foreach (var entry in NavItems.Children.OfType<RadioButton>()) entry.IsChecked = (string)entry.Tag == active;
+  foreach (var entry in Logicals<RadioButton>(NavItems)) entry.IsChecked = (string)entry.Tag == active;
+  // An entry that is hidden for lack of content stays while it is open, so the view never loses its place.
+  if (_view == "inbox") InboxNav.Visibility = Visibility.Visible;
+  if (_view == "Audio") AudioNav.Visibility = Visibility.Visible;
+ }
+
+ /// <summary>The review inbox shows once reviewing is in use (or as set), with its open items as a badge; audio only
+ /// when the library holds audio.</summary>
+ private void ApplyNavigationEntries(NavigationCounts counts, ReviewInboxMode mode)
+ {
+  var inbox = counts.ShowsReviewInbox(mode) || _view == "inbox";
+  InboxNav.Visibility = inbox ? Visibility.Visible : Visibility.Collapsed;
+  SidebarCard.SetBadge(InboxNav, counts.Inbox > 0 ? counts.Inbox.ToString("N0") : null);
+  AudioNav.Visibility = counts.Audio > 0 || _view == "Audio" ? Visibility.Visible : Visibility.Collapsed;
+ }
+
+ /// <summary>A list inside the sidebar scrolls itself up to its end; from there the wheel moves the whole sidebar on,
+ /// so the pointer never gets stuck in a nested list.</summary>
+ private void NestedListWheel(object sender, MouseWheelEventArgs e)
+ {
+  if (e.Handled || Keyboard.Modifiers != ModifierKeys.None || sender is not DependencyObject list) return;
+  var inner = Visuals<ScrollViewer>(list).FirstOrDefault();
+  var atEdge = inner == null || inner.ScrollableHeight <= 0 || e.Delta > 0 && inner.VerticalOffset <= 0 || e.Delta < 0 && inner.VerticalOffset >= inner.ScrollableHeight;
+  if (!atEdge) return;
+  e.Handled = true;
+  var lines = SystemParameters.WheelScrollLines;
+  var distance = lines < 0 ? SidebarScroll.ViewportHeight : lines * 16;
+  SidebarScroll.ScrollToVerticalOffset(SidebarScroll.VerticalOffset - e.Delta / 120d * distance);
  }
 
  private void TileSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => ApplyTileSize(e.NewValue);
