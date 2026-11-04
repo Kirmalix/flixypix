@@ -65,6 +65,7 @@
     "other": " · {0:N0} existaient déjà"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} modifiés entre-temps, ignorés",
+  " · {0:N0} done": " · {0:N0} terminés",
   " · {0:N0} entries not in the catalog": {
     "one": " · {0:N0} entrée absente du catalogue",
     "many": " · {0:N0} d’entrées absentes du catalogue",
@@ -736,6 +737,7 @@
   "Create tag group rule": "Créer une règle de groupe de tags",
   "Create the preview clips right after the import.": "Crée les clips d'aperçu juste après l'importation.",
   "Create thumbnails and media information right after the import.": "Créer des miniatures et des informations médias immédiatement après l'importation.",
+  "Create thumbnails for this list": "Créer les miniatures de cette liste",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Généré en {0:0.0} s. Si une valeur change, l'aperçu est régénéré.",
   "Created thumbnails. They are kept.": "Miniatures générées. Elles sont conservées.",
   "Created with the first screenshot.": "Créé lors de la première capture d'écran.",
@@ -858,6 +860,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "Ne pas générer de nouvelle miniature si une miniature a été choisie manuellement.",
   "Don't offer deselected new files again": "Ne plus proposer les nouveaux fichiers désélectionnés",
   "Done": "Terminé",
+  "Done · stays here until the list is updated": "Terminé · reste ici jusqu’à la mise à jour de la liste",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Double-clic : lecture à partir d’ici · F2 renomme · clic droit : tags et plus",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Double-clic : lit la scène · F2 renomme · clic droit : tags et plus",
   "Down": "Descendre",
@@ -2298,6 +2301,7 @@
     "many": "Médias dont l’association a été retirée : {0:N0}",
     "other": "Médias dont l’association a été retirée : {0:N0}"
   },
+  "Removes the finished items from this list.": "Retire les éléments terminés de cette liste.",
   "Rename": "Renommer",
   "rename": "renommer",
   "Rename / merge tag everywhere": "Renommer / fusionner le tag partout",
@@ -3157,6 +3161,7 @@
   "up to {0:0.##} {1}": "jusqu'à {0:0.##} {1}",
   "up to {0} MB": "jusqu'à {0} Mo",
   "up to {0} min": "jusqu'à {0} min",
+  "Update list": "Mettre à jour la liste",
   "Use as tag image": "Utiliser comme image de tag",
   "Use as tag image …": "Utiliser comme image de tag…",
   "Use as thumbnail": "Utiliser comme miniature",

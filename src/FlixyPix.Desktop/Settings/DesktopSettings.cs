@@ -175,6 +175,10 @@ internal sealed class MediaCard : INotifyPropertyChanged
  public Visibility WatchLaterVisibility => Item.WatchLater ? Visibility.Visible : Visibility.Collapsed;
  /// <summary>Media in the collection key B fills; set by the main window before it makes tiles.</summary>
  internal static HashSet<Guid> TargetMembers { get; set; } = [];
+ /// <summary>Media an edit moved out of the current filter; they stay in the list until it is updated.</summary>
+ internal static HashSet<Guid> FinishedMembers { get; set; } = [];
+ public bool IsFinished => FinishedMembers.Contains(Item.Id);
+ public Visibility FinishedVisibility => IsFinished ? Visibility.Visible : Visibility.Collapsed;
  internal static HashSet<Guid> QuickMembers { get; set; } = [];
  public Visibility QuickVisibility => QuickMembers.Contains(Item.Id)?Visibility.Visible:Visibility.Collapsed;
  public string QuickGlyph => QuickMembers.Contains(Item.Id)?"●":"○";

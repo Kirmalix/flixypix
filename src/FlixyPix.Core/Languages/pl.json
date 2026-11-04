@@ -65,6 +65,7 @@
     "many": " · {0:N0} już istniało"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} zmieniono w międzyczasie i pominięto",
+  " · {0:N0} done": " · ukończono: {0:N0}",
   " · {0:N0} entries not in the catalog": {
     "one": " · 1 wpis spoza katalogu",
     "few": " · {0:N0} wpisy spoza katalogu",
@@ -736,6 +737,7 @@
   "Create tag group rule": "Utwórz regułę grupową tagów",
   "Create the preview clips right after the import.": "Tworzy klipy podglądu zaraz po imporcie.",
   "Create thumbnails and media information right after the import.": "Twórz miniatury i informacje o multimediach od razu po imporcie.",
+  "Create thumbnails for this list": "Utwórz miniatury dla tej listy",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Utworzono w {0:0.0} s. Zmiana wartości spowoduje ponowne utworzenie podglądu.",
   "Created thumbnails. They are kept.": "Utworzone miniatury. Zostają zachowane.",
   "Created with the first screenshot.": "Tworzony przy pierwszym zrzucie ekranu.",
@@ -858,6 +860,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "Nie twórz nowej miniatury, jeśli wybrano własną.",
   "Don't offer deselected new files again": "Nie proponuj ponownie nowych plików, których zaznaczenie usunięto",
   "Done": "Gotowe",
+  "Done · stays here until the list is updated": "Ukończono · pozostaje tutaj do czasu aktualizacji listy",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Dwuklik odtwarza od tego miejsca · F2 zmienia nazwę · prawy przycisk: tagi i więcej",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Dwuklik odtwarza scenę · F2 zmienia nazwę · prawy przycisk: tagi i więcej",
   "Down": "W dół",
@@ -2298,6 +2301,7 @@
     "few": "Elementy, z których usunięto przypisanie: {0:N0}",
     "many": "Elementy, z których usunięto przypisanie: {0:N0}"
   },
+  "Removes the finished items from this list.": "Usuwa ukończone elementy z tej listy.",
   "Rename": "Zmień nazwę",
   "rename": "zmień nazwę",
   "Rename / merge tag everywhere": "Zmień nazwę / scal tag wszędzie",
@@ -3157,6 +3161,7 @@
   "up to {0:0.##} {1}": "do {0:0.##} {1}",
   "up to {0} MB": "do {0} MB",
   "up to {0} min": "do {0} min",
+  "Update list": "Aktualizuj listę",
   "Use as tag image": "Użyj jako obrazu tagu",
   "Use as tag image …": "Użyj jako obrazu tagu…",
   "Use as thumbnail": "Użyj jako miniatury",

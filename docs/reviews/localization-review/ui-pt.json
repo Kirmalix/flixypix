@@ -14619,6 +14619,31 @@
     "A–B loop": {
       "status": "unchanged",
       "digest": "d1b0ae10b1b9e46f038f5a72eee102b063c0d8f344a8d5cbfbcc9f9940b7e311"
+    },
+    " · {0:N0} done": {
+      "status": "corrected",
+      "digest": "c594e483869b35290865806f335392e9fb4c77c6d6923c1c4541b4680be5670e",
+      "previous_digest": "5fbf67de928a63087a74b6410fd4aa5a746acb58c8b97383ed51257aa7fe7e9f"
+    },
+    "Create thumbnails for this list": {
+      "status": "corrected",
+      "digest": "a3c324f747b012e25ab620f683ba4bdca3e00b7b6fee1412d5aa44a792081a44",
+      "previous_digest": "698023a57ac4cd3c9d96adb82606c29c08b1bdec05210449e4e59db0b3f4b6be"
+    },
+    "Done · stays here until the list is updated": {
+      "status": "corrected",
+      "digest": "cbda414f4bc28296a22d4238c3395ace8c9faeb04d6691bf6d007931bb4d5357",
+      "previous_digest": "7fdf4741a813b8bdf427f9f4060f2e65d8797b187e8e9944edafe6e5a13276cf"
+    },
+    "Removes the finished items from this list.": {
+      "status": "corrected",
+      "digest": "12a4636a5d72df89d4fe0f3816704f6045c37f81b5c632863524d1ee0810334d",
+      "previous_digest": "cbb197f5b8fdaa8d63b87871ed113fa99dee200b5dd3a7a2a9ea847fa08e51fc"
+    },
+    "Update list": {
+      "status": "corrected",
+      "digest": "957c95a91f833cb6a8e6722b775fb56e8496c1d2df96c59e74257f07dec2f65e",
+      "previous_digest": "ea8456c59bf80ee2f7c70a735f37c1c0eef5670ba40c5629c43b797743d08381"
     }
   }
 }

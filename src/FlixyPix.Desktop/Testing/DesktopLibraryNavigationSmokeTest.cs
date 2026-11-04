@@ -42,9 +42,16 @@ public partial class MainWindow
    {
     var media=_repository.Upsert(new(){Title="nav-health",Path=Path.Combine(directory,Guid.NewGuid()+".mp4"),Kind=MediaKind.Video,ThumbnailPath=path});healthIds.Add(media.Id);
    }
-   ApplyViewState(new(){View="Video",SearchText="nav-health",Filter=new(){HasThumbnail=false,UnratedOnly=true}});await _lastRefresh;
+   ApplyViewState(new(){View="Video",SearchText="nav-health",Filter=new(){HasThumbnail=false,UnratedOnly=true}});await _thumbnailCheckRun;await _lastRefresh;
    Check(MediaList.Items.Count==2,"Missing and corrupt thumbnails were not found.");
    Check(MediaList.Items.Cast<MediaCard>().All(c=>c.Item.Rating==0&&_repository.GetThumbnailHealth(c.Item.Id) is {Available:false}),"Missing thumbnail results are unchecked or rated.");
+   Check(CreateListThumbnailsButton.Visibility==Visibility.Visible,"The action for the whole list is missing.");
+   var repaired=MediaList.Items.Cast<MediaCard>().First().Item;MediaList.SelectedItem=MediaList.Items[0];
+   _repository.Upsert(repaired with {ThumbnailPath=item.ThumbnailPath??item.Path});Refresh(repaired.Id);await _lastRefresh;
+   Check(MediaList.Items.Count==2&&MediaList.Items.Cast<MediaCard>().Single(c=>c.Item.Id==repaired.Id).IsFinished,"A repaired medium left the list instead of staying as done.");
+   Check(Selected?.Id==repaired.Id&&UpdateListButton.Visibility==Visibility.Visible&&CountLabel.Text.Contains(T(" · {0:N0} done",1)),"The finished medium is not selected and announced.");
+   UpdateListClicked(this,new());await _lastRefresh;
+   Check(MediaList.Items.Count==1&&UpdateListButton.Visibility==Visibility.Collapsed,"Updating the list did not remove the finished medium.");
    Capture(RootContent,Path.Combine(directory,"desktop-navigation.png"));
   }
   finally {foreach(var id in healthIds)_repository.Delete(id);foreach(var media in _repository.Search().Where(m=>m.Tags.Contains("stable-smoke")))_repository.Upsert(media with {Tags=media.Tags.Where(t=>t!="stable-smoke").ToList()});_repository.SavePreferences(before);_requiredTags.Clear();ApplyViewState(state);await _lastRefresh;}

@@ -65,6 +65,7 @@
     "other": " · {0:N0} ya existían"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} modificados desde la comprobación, omitidos",
+  " · {0:N0} done": " · {0:N0} terminados",
   " · {0:N0} entries not in the catalog": {
     "one": " · 1 entrada no está en el catálogo",
     "many": " · {0:N0} de entradas no están en el catálogo",
@@ -736,6 +737,7 @@
   "Create tag group rule": "Crear regla de grupo de etiquetas",
   "Create the preview clips right after the import.": "Crea los clips de vista previa justo después de importar.",
   "Create thumbnails and media information right after the import.": "Generar miniaturas e información multimedia inmediatamente después de importar.",
+  "Create thumbnails for this list": "Crear miniaturas para esta lista",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Generada en {0:0.0} s. Si cambia algún valor, se vuelve a generar la vista previa.",
   "Created thumbnails. They are kept.": "Miniaturas generadas. Se conservan.",
   "Created with the first screenshot.": "Se crea al hacer la primera captura de pantalla.",
@@ -858,6 +860,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "No generar una nueva miniatura si se ha elegido una manualmente.",
   "Don't offer deselected new files again": "No volver a ofrecer los archivos nuevos desmarcados",
   "Done": "Listo",
+  "Done · stays here until the list is updated": "Terminado · permanece aquí hasta que se actualice la lista",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Doble clic reproduce desde aquí · F2 cambia el nombre · clic derecho: etiquetas y más",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Doble clic reproduce la escena · F2 cambia el nombre · clic derecho: etiquetas y más",
   "Down": "Abajo",
@@ -2298,6 +2301,7 @@
     "many": "Elementos de los que se eliminó la asignación: {0:N0}",
     "other": "Elementos de los que se eliminó la asignación: {0:N0}"
   },
+  "Removes the finished items from this list.": "Quita de esta lista los elementos terminados.",
   "Rename": "Cambiar nombre",
   "rename": "cambiar nombre",
   "Rename / merge tag everywhere": "Cambiar nombre / Fusionar etiqueta en todos los elementos",
@@ -3157,6 +3161,7 @@
   "up to {0:0.##} {1}": "hasta {0:0.##} {1}",
   "up to {0} MB": "hasta {0} MB",
   "up to {0} min": "hasta {0} min",
+  "Update list": "Actualizar lista",
   "Use as tag image": "Usar como imagen de etiqueta",
   "Use as tag image …": "Usar como imagen de etiqueta…",
   "Use as thumbnail": "Usar como miniatura",

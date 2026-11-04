@@ -95,7 +95,9 @@ public sealed partial class CatalogRepository : IDisposable
             InitializeStashBindings(transaction);
             InitializeQuerySchema(transaction, schemaVersion == 0);
             InitializeWallSchema(transaction, schemaVersion < 18);
-            using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id);", transaction)) health.ExecuteNonQuery();
+            using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
+                // A checked result belongs to one thumbnail; with another thumbnail it says nothing any more.
+                "CREATE TRIGGER IF NOT EXISTS media_thumbnail_changed AFTER UPDATE OF document ON media WHEN json_extract(OLD.document,'$.thumbnailPath') IS NOT json_extract(NEW.document,'$.thumbnailPath') BEGIN DELETE FROM media_thumbnail_state WHERE media_id=NEW.id; END;", transaction)) health.ExecuteNonQuery();
             InitializeSearchIndexSchema(transaction);
             InitializeHistorySchema(transaction);
             InitializeMigrationSchema(transaction);

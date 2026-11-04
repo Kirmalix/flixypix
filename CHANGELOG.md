@@ -25,6 +25,13 @@ are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept befo
 - Portable storage with safe switching between portable and profile mode. Libraries taken over
   before their location was recorded find their thumbnails again after a move.
 - Folder synchronization, media folder tabs and undo of immediate edits per field.
+- Thumbnail filter: the list appears at once and missing or damaged thumbnail files join it from
+  a check in the background; audio without a picture no longer counts as missing a thumbnail.
+- Lists to work through: what an edit moves out of the "without thumbnail" or "unrated" filter
+  stays visible as done until "Update list" or another view. "Create thumbnails for this list"
+  handles all its videos.
+- Folder tree: levels shared by all folders without media of their own are left out; the tooltip
+  of "All folders" names them.
 
 ## 0.5.0
 

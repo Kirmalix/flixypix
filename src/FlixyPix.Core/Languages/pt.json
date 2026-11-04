@@ -65,6 +65,7 @@
     "other": " · {0:N0} já existiam"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} alterados desde a verificação, ignorados",
+  " · {0:N0} done": " · {0:N0} concluídos",
   " · {0:N0} entries not in the catalog": {
     "one": " · {0:N0} entrada fora do catálogo",
     "many": " · {0:N0} de entradas fora do catálogo",
@@ -736,6 +737,7 @@
   "Create tag group rule": "Criar regra de grupo de tags",
   "Create the preview clips right after the import.": "Cria os clipes de prévia logo após a importação.",
   "Create thumbnails and media information right after the import.": "Crie miniaturas e informações de mídia logo após a importação.",
+  "Create thumbnails for this list": "Criar miniaturas para esta lista",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Gerada em {0:0.0} s. Se um valor mudar, a prévia será gerada novamente.",
   "Created thumbnails. They are kept.": "Miniaturas geradas. São preservadas.",
   "Created with the first screenshot.": "Criado com a primeira captura.",
@@ -858,6 +860,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "Não gerar uma nova miniatura se uma foi escolhida manualmente.",
   "Don't offer deselected new files again": "Não oferecer novamente os novos arquivos desmarcados",
   "Done": "Concluído",
+  "Done · stays here until the list is updated": "Concluído · fica aqui até a lista ser atualizada",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Clique duplo reproduz daqui · F2 renomeia · clique direito: tags e mais",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Clique duplo reproduz a cena · F2 renomeia · clique direito: tags e mais",
   "Down": "Para baixo",
@@ -2298,6 +2301,7 @@
     "many": "Itens dos quais a associação foi removida: {0:N0}",
     "other": "Itens dos quais a associação foi removida: {0:N0}"
   },
+  "Removes the finished items from this list.": "Remove desta lista os itens concluídos.",
   "Rename": "Renomear",
   "rename": "renomear",
   "Rename / merge tag everywhere": "Renomear / mesclar tag em todos os lugares",
@@ -3157,6 +3161,7 @@
   "up to {0:0.##} {1}": "até {0:0.##} {1}",
   "up to {0} MB": "até {0} MB",
   "up to {0} min": "até {0} min",
+  "Update list": "Atualizar lista",
   "Use as tag image": "Usar como imagem de tag",
   "Use as tag image …": "Usar como imagem de tag…",
   "Use as thumbnail": "Usar como miniatura",

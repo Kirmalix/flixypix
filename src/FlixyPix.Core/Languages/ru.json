@@ -65,6 +65,7 @@
     "many": " · {0:N0} уже существовали"
   },
   " · {0:N0} changed in the meantime, skipped": " · пропущено после изменений с момента проверки: {0:N0}",
+  " · {0:N0} done": " · готово: {0:N0}",
   " · {0:N0} entries not in the catalog": {
     "one": " · {0:N0} запись не найдена в каталоге",
     "few": " · {0:N0} записи не найдены в каталоге",
@@ -736,6 +737,7 @@
   "Create tag group rule": "Создать групповое правило тегов",
   "Create the preview clips right after the import.": "Создаёт клипы предпросмотра сразу после импорта.",
   "Create thumbnails and media information right after the import.": "Создавать миниатюры и считывать информацию о медиа сразу после импорта.",
+  "Create thumbnails for this list": "Создать эскизы для этого списка",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Создано за {0:0.0} с. При изменении значения предпросмотр создаётся заново.",
   "Created thumbnails. They are kept.": "Созданные миниатюры. Сохраняются.",
   "Created with the first screenshot.": "Создаётся при первом снимке экрана.",
@@ -858,6 +860,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "Не создавать новую миниатюру, если она выбрана вручную.",
   "Don't offer deselected new files again": "Больше не предлагать новые файлы, с которых снят выбор",
   "Done": "Готово",
+  "Done · stays here until the list is updated": "Готово · остаётся здесь до обновления списка",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Двойной щелчок — воспроизвести отсюда · F2 — переименовать · правый щелчок: теги и другое",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Двойной щелчок — воспроизвести сцену · F2 — переименовать · правый щелчок: теги и другое",
   "Down": "Вниз",
@@ -2298,6 +2301,7 @@
     "few": "Элементы, из которых удалена связь: {0:N0}",
     "many": "Элементы, из которых удалена связь: {0:N0}"
   },
+  "Removes the finished items from this list.": "Убирает готовые элементы из этого списка.",
   "Rename": "Переименовать",
   "rename": "переименовать",
   "Rename / merge tag everywhere": "Переименовать / объединить тег везде",
@@ -3157,6 +3161,7 @@
   "up to {0:0.##} {1}": "до {0:0.##} {1}",
   "up to {0} MB": "до {0} МБ",
   "up to {0} min": "До {0} мин",
+  "Update list": "Обновить список",
   "Use as tag image": "Использовать как изображение тега",
   "Use as tag image …": "Использовать как изображение тега…",
   "Use as thumbnail": "Использовать как миниатюру",

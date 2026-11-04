@@ -61,6 +61,7 @@
     "other": " · {0:N0} bestonden al"
   },
   " · {0:N0} changed in the meantime, skipped": " · {0:N0} tussentijds gewijzigd en overgeslagen",
+  " · {0:N0} done": " · {0:N0} klaar",
   " · {0:N0} entries not in the catalog": {
     "one": " · 1 vermelding niet in de catalogus",
     "other": " · {0:N0} vermeldingen niet in de catalogus"
@@ -712,6 +713,7 @@
   "Create tag group rule": "Taggroepsregel aanmaken",
   "Create the preview clips right after the import.": "Maakt de voorbeeldclips direct na het importeren.",
   "Create thumbnails and media information right after the import.": "Miniaturen en media-informatie direct na het importeren aanmaken.",
+  "Create thumbnails for this list": "Miniaturen voor deze lijst maken",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "Aangemaakt in {0:0.0} s. Als een waarde verandert, wordt het voorbeeld opnieuw aangemaakt.",
   "Created thumbnails. They are kept.": "Aangemaakte miniaturen. Blijven behouden.",
   "Created with the first screenshot.": "Wordt bij het eerste screenshot aangemaakt.",
@@ -831,6 +833,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "Geen nieuwe miniatuur maken als er handmatig een is gekozen.",
   "Don't offer deselected new files again": "Niet-geselecteerde nieuwe bestanden voortaan niet meer aanbieden",
   "Done": "Gereed",
+  "Done · stays here until the list is updated": "Klaar · blijft hier staan tot de lijst wordt bijgewerkt",
   "Double-click plays from here · F2 renames · right-click: tags and more": "Dubbelklik speelt vanaf hier af · F2 hernoemt · rechtsklik: tags en meer",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "Dubbelklik speelt de scène af · F2 hernoemt · rechtsklik: tags en meer",
   "Down": "Omlaag",
@@ -2249,6 +2252,7 @@
     "one": "Verwijderd van {0:N0} item (koppelingen)",
     "other": "Verwijderd van {0:N0} items (koppelingen)"
   },
+  "Removes the finished items from this list.": "Haalt de afgehandelde items uit deze lijst.",
   "Rename": "Hernoemen",
   "rename": "hernoemen",
   "Rename / merge tag everywhere": "Tag overal hernoemen / samenvoegen",
@@ -3096,6 +3100,7 @@
   "up to {0:0.##} {1}": "tot {0:0.##} {1}",
   "up to {0} MB": "tot {0} MB",
   "up to {0} min": "tot {0} min",
+  "Update list": "Lijst bijwerken",
   "Use as tag image": "Als tagafbeelding gebruiken",
   "Use as tag image …": "Als tagafbeelding gebruiken…",
   "Use as thumbnail": "Gebruik als miniatuur",

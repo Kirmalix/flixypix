@@ -31,6 +31,9 @@ public partial class MainWindow
   public string FolderName => root && Path!=null ? System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(Path)) is {Length:>0} name?name:Path : Label;
   /// <summary>A media folder shows its full path as a tooltip; the row itself keeps to the folder name.</summary>
   public string? RootTip => root?Path:null;
+  /// <summary>On "All folders": the path shared by everything below it, which the tree leaves out.</summary>
+  public string? HiddenBase { get; init; }
+  public string? FolderTip => HiddenBase ?? Path;
   public string FolderGlyph => Path==null?"\uE8B7":IsExpanded?"\uE838":"\uE8B7";
   private bool expanded;
   public Action? ExpandedChanged { get; set; }
@@ -56,7 +59,7 @@ public partial class MainWindow
   Folders.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate); CategorizedTags.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate);
   Folders.ItemTemplate=(HierarchicalDataTemplate)XamlReader.Parse("""
   <HierarchicalDataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ItemsSource="{Binding Children}">
-   <Grid MinHeight="28" ToolTip="{Binding Path}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Grid MinHeight="28" ToolTip="{Binding FolderTip}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding FolderGlyph}" FontFamily="{DynamicResource IconFont}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
     <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding FolderName}" ToolTip="{Binding RootTip}" Foreground="{DynamicResource TextSoft}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2"/>
     <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="10"/></Border>
@@ -85,7 +88,7 @@ public partial class MainWindow
   if (ViewChoice.SelectedIndex != 1) { MediaList.ItemTemplate = _tileTemplate; MediaList.ItemsPanel = _tilePanel; return; }
   var rows = new FrameworkElementFactory(typeof(VirtualizingTilePanel)); rows.SetValue(VirtualizingTilePanel.SingleColumnProperty, true); MediaList.ItemsPanel = new ItemsPanelTemplate(rows);
   MediaList.ItemTemplate = (DataTemplate)XamlReader.Parse("""
-  <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:FlixyPix.Desktop;assembly=FlixyPix"><Border Background="{DynamicResource CardBackground}" Padding="9" CornerRadius="6"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/><ColumnDefinition Width="105"/></Grid.ColumnDefinitions><Grid Height="52" Width="68" Background="{DynamicResource MediaBackground}" ClipToBounds="True" local:Privacy.Blur="True"><TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource IconMuted}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20"/><Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/></Grid><StackPanel Grid.Column="1" Margin="10,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,5,0,0"/><TextBlock Text="{Binding Path}" Foreground="{DynamicResource Subtle}" FontSize="10" TextTrimming="CharacterEllipsis"/></StackPanel><StackPanel Grid.Column="2"><Button Tag="quick-collection" Content="{Binding QuickGlyph}" ToolTip="{Binding QuickHint}" Padding="6,2"/><TextBlock Text="{Binding KindLabel}" Foreground="{DynamicResource Muted}" FontSize="10"/><TextBlock Text="{Binding DurationLabel}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,3,0,0"/><TextBlock Text="{Binding Stars}" Foreground="{DynamicResource Gold}" Margin="0,5,0,0" FontSize="11"/></StackPanel></Grid></Border></DataTemplate>
+  <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:FlixyPix.Desktop;assembly=FlixyPix"><Border Background="{DynamicResource CardBackground}" Padding="9" CornerRadius="6"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/><ColumnDefinition Width="105"/></Grid.ColumnDefinitions><Grid Height="52" Width="68" Background="{DynamicResource MediaBackground}" ClipToBounds="True" local:Privacy.Blur="True"><TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource IconMuted}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20"/><Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/></Grid><StackPanel Grid.Column="1" Margin="10,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,5,0,0"/><TextBlock Text="{Binding Path}" Foreground="{DynamicResource Subtle}" FontSize="10" TextTrimming="CharacterEllipsis"/></StackPanel><StackPanel Grid.Column="2"><Button Tag="quick-collection" Content="{Binding QuickGlyph}" ToolTip="{Binding QuickHint}" Padding="6,2"/><TextBlock Text="{Binding KindLabel}" Foreground="{DynamicResource Muted}" FontSize="10"/><TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource Accent}" FontSize="11" Margin="0,3,0,0" Visibility="{Binding FinishedVisibility}"/><TextBlock Text="{Binding DurationLabel}" Foreground="{DynamicResource Muted}" FontSize="11" Margin="0,3,0,0"/><TextBlock Text="{Binding Stars}" Foreground="{DynamicResource Gold}" Margin="0,5,0,0" FontSize="11"/></StackPanel></Grid></Border></DataTemplate>
   """);
  }
  private void SortChanged(object sender, SelectionChangedEventArgs e) { if (_repository == null || _refreshing || _initializingBrowsing) return; _anchor = 0; SaveViewPreferences(); Refresh(); }
@@ -156,7 +159,11 @@ public partial class MainWindow
     parent = child;
    }
   }
-  var all = new BrowseNode(T("All folders"));
+  // Levels that everything shares say nothing and cost a click each; registered folders already stand at the top.
+  var hidden = registered.Count == 0 ? FolderPaths.HiddenBase(directories) : null;
+  BrowseNode? hiddenNode = null;
+  if (hidden != null && !index.TryGetValue(hidden, out hiddenNode)) index.TryGetValue(Path.TrimEndingDirectorySeparator(hidden), out hiddenNode);
+  var all = new BrowseNode(T("All folders")) { HiddenBase = hiddenNode?.Path };
   BrowseNode Build(string path,string label)
   {
    var node=new BrowseNode(label,path,root:true);
@@ -165,7 +172,7 @@ public partial class MainWindow
   }
   foreach(var source in registered) all.Children.Add(Build(source.Path,Path.GetFileName(Path.TrimEndingDirectorySeparator(source.Path))+" · "+source.Path));
   var others=directories.Where(d=>!registered.Any(r=>IsWithinFolder(d+Path.DirectorySeparatorChar,r.Path))).ToArray();
-  if(registered.Count==0) all.Children.AddRange(root.Children);
+  if(registered.Count==0) all.Children.AddRange((hiddenNode??root).Children);
   else if(others.Length>0) { var other=new BrowseNode(T("Other catalog folders")); other.Children.AddRange(FolderTree(others,[]).Single().Children); all.Children.Add(other); }
   return [all];
  }

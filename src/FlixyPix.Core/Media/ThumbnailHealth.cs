@@ -6,8 +6,21 @@ public sealed partial class CatalogRepository
  {
   lock(gate) { using var command=Command("SELECT signature,available FROM media_thumbnail_state WHERE media_id=$id",null,("$id",id.ToString())); using var reader=command.ExecuteReader(); return reader.Read() ? (reader.GetString(0),reader.GetInt32(1)!=0) : null; }
  }
- public void SaveThumbnailHealth(Guid id,string signature,bool available)
+ public void SaveThumbnailHealth(Guid id,string signature,bool available)=>SaveThumbnailHealth([(id,signature,available)]);
+ /// <summary>Stores several results in one transaction, which a check of a large library needs to stay fast.</summary>
+ public void SaveThumbnailHealth(IReadOnlyCollection<(Guid Id,string Signature,bool Available)> results)
  {
-  lock(gate) { using var command=Command("INSERT INTO media_thumbnail_state(media_id,signature,available) SELECT $id,$stamp,$value WHERE EXISTS(SELECT 1 FROM media WHERE id=$id) ON CONFLICT(media_id) DO UPDATE SET signature=$stamp,available=$value",null,("$id",id.ToString()),("$stamp",signature),("$value",available?1:0));command.ExecuteNonQuery(); }
+  if(results.Count==0)return;
+  lock(gate)
+  {
+   ThrowIfDisposed();
+   using var transaction=connection.BeginTransaction();
+   foreach(var (id,signature,available) in results)
+   {
+    using var command=Command("INSERT INTO media_thumbnail_state(media_id,signature,available) SELECT $id,$stamp,$value WHERE EXISTS(SELECT 1 FROM media WHERE id=$id) ON CONFLICT(media_id) DO UPDATE SET signature=$stamp,available=$value",transaction,("$id",id.ToString()),("$stamp",signature),("$value",available?1:0));
+    command.ExecuteNonQuery();
+   }
+   transaction.Commit();
+  }
  }
 }

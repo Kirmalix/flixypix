@@ -57,6 +57,7 @@
     "other": " · {0:N0} 件は既に存在"
   },
   " · {0:N0} changed in the meantime, skipped": " · 確認後に変更されたためスキップ：{0:N0} 件",
+  " · {0:N0} done": " · {0:N0} 件完了",
   " · {0:N0} entries not in the catalog": {
     "other": " · カタログにない項目 {0:N0} 件"
   },
@@ -688,6 +689,7 @@
   "Create tag group rule": "タググループルールを作成する",
   "Create the preview clips right after the import.": "インポート直後にプレビュークリップを作成します。",
   "Create thumbnails and media information right after the import.": "インポート直後にサムネイルを生成し、メディア情報を取得します。",
+  "Create thumbnails for this list": "このリストのサムネイルを作成",
   "Created in {0:0.0} s. If a value changes, the preview is created again.": "{0:0.0} 秒で生成しました。値を変更すると、プレビューを再生成します。",
   "Created thumbnails. They are kept.": "生成済みのサムネイル。削除されずに保持されます。",
   "Created with the first screenshot.": "最初のスクリーンショットを保存するときに作成します。",
@@ -804,6 +806,7 @@
   "Don't create a new thumbnail if one was chosen manually.": "手動でサムネイルを選んである場合は、新しいサムネイルを生成しません。",
   "Don't offer deselected new files again": "選択を解除した新しいファイルを今後は候補に表示しない",
   "Done": "完了",
+  "Done · stays here until the list is updated": "完了 · リストを更新するまでここに残ります",
   "Double-click plays from here · F2 renames · right-click: tags and more": "ダブルクリックでここから再生 · F2 で名前を変更 · 右クリック: タグなど",
   "Double-click plays the scene · F2 renames · right-click: tags and more": "ダブルクリックでシーンを再生 · F2 で名前を変更 · 右クリック: タグなど",
   "Down": "下へ",
@@ -2200,6 +2203,7 @@
   "Removed from {0:N0} items (assignments)": {
     "other": "割り当てを削除したメディア：{0:N0} 件"
   },
+  "Removes the finished items from this list.": "完了した項目をこのリストから削除します。",
   "Rename": "名前を変更",
   "rename": "名前を変更",
   "Rename / merge tag everywhere": "すべてのメディアでタグの名前変更／統合",
@@ -3035,6 +3039,7 @@
   "up to {0:0.##} {1}": "{0:0.##} {1} まで",
   "up to {0} MB": "最大 {0} MB",
   "up to {0} min": "{0}分まで",
+  "Update list": "リストを更新",
   "Use as tag image": "タグ画像として使用",
   "Use as tag image …": "タグ画像として使用…",
   "Use as thumbnail": "サムネイルとして使用",

@@ -153,7 +153,10 @@ public sealed partial class CatalogRepository
         if (condition.Field == SearchField.MarkTag) return BuildMarkTagSql(condition, parameter);
         var column = condition.Field switch
         {
-            SearchField.HasThumbnail => "(SELECT available FROM media_thumbnail_state WHERE media_id=q.id)",
+            // Known without touching a file: a checked result counts, otherwise an entered thumbnail is taken as present and
+            // an image shows itself. Audio without a picture has nothing to be missing, so it matches neither way.
+            SearchField.HasThumbnail => "(SELECT CASE WHEN q.kind='Audio' AND nullif(json_extract(document,'$.thumbnailPath'),'') IS NULL THEN NULL " +
+                "ELSE coalesce((SELECT available FROM media_thumbnail_state WHERE media_id=q.id),q.kind='Image' OR nullif(json_extract(document,'$.thumbnailPath'),'') IS NOT NULL) END FROM media WHERE id=q.id)",
             SearchField.Text => "q.search_text", SearchField.Title => "q.title", SearchField.Path => "q.path",
             SearchField.Filename => "efp_filename(q.path)", SearchField.Extension => "efp_extension(q.path)",
             SearchField.Directory => "efp_directory(q.path)",

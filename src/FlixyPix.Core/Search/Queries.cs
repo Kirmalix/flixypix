@@ -28,6 +28,8 @@ public sealed record MediaQuery
     public bool Descending { get; init; }
     public int Offset { get; init; }
     public int Limit { get; init; } = 120;
+    /// <summary>Media that stay in the result whether they match or not: a list being worked through keeps what was just edited.</summary>
+    public IReadOnlyCollection<Guid> KeepIds { get; init; } = [];
 }
 
 public sealed record MediaPage(IReadOnlyList<MediaItem> Items, long TotalCount);
@@ -325,7 +327,29 @@ public sealed partial class CatalogRepository
             ValidateSearchExpression(query.Expression);
             conditions.Add(BuildExpressionSql(query.Expression, Parameter, transaction));
         }
-        return (conditions.Count == 0 ? "" : "WHERE " + string.Join(" AND ", conditions), parameters.ToArray());
+        if (conditions.Count == 0) return ("", parameters.ToArray());
+        var where = string.Join(" AND ", conditions);
+        if (query.KeepIds.Count > 0) where = $"({where}) OR q.id IN (SELECT value FROM json_each({Parameter(JsonSerializer.Serialize(query.KeepIds.Select(id => id.ToString())))}))";
+        return ("WHERE " + where, parameters.ToArray());
+    }
+
+    /// <summary>Those of the given media that exist and match the query; paging and <see cref="MediaQuery.KeepIds"/> do not count.</summary>
+    public IReadOnlySet<Guid> MatchingMedia(MediaQuery query, IReadOnlyCollection<Guid> ids)
+    {
+        ArgumentNullException.ThrowIfNull(query); ArgumentNullException.ThrowIfNull(ids);
+        var result = new HashSet<Guid>();
+        if (ids.Count == 0) return result;
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            using var transaction = connection.BeginTransaction();
+            var (where, parameters) = BuildQuery(query with { KeepIds = [] }, transaction);
+            using (var command = Command($"SELECT q.id FROM media_query q {(where.Length == 0 ? "WHERE" : where + " AND")} q.id IN (SELECT value FROM json_each($ids))", transaction,
+                [.. parameters, ("$ids", JsonSerializer.Serialize(ids.Select(id => id.ToString())))]))
+            using (var reader = command.ExecuteReader()) while (reader.Read()) result.Add(Guid.Parse(reader.GetString(0)));
+            CommitAfterIndexing(transaction);
+        }
+        return result;
     }
 
     private CatalogFacets? cachedFacets;
