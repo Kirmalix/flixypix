@@ -47,6 +47,32 @@ public sealed class AppStorageTests : IDisposable
   Assert.Equal(@"F:\Media\film.mp4",catalog.GetMedia(id)!.Path);
  }
 
+ [Fact] public void MoveWritesOnlyMediaWhosePathsChange()
+ {
+  var database=Path.Combine(root,"catalog.db");
+  using var catalog=new CatalogRepository(database);
+  var kept=catalog.Upsert(new MediaItem {Path=@"Z:\External\kept.mp4",ThumbnailPath=@"Z:\External\kept.jpg"});
+  var moved=catalog.Upsert(new MediaItem {Path=@"E:\Media\moved.mp4"});
+  catalog.PreparePortableLocation(@"E:\App",true);
+  using var audit=new Microsoft.Data.Sqlite.SqliteConnection("Data Source="+database+";Pooling=False");
+  audit.Open(); audit.CreateCollation("EFP_ORDINAL",string.CompareOrdinal);
+  using (var setup=audit.CreateCommand()) { setup.CommandText="CREATE TABLE test_writes(id TEXT); CREATE TRIGGER test_writes_media AFTER UPDATE ON media BEGIN INSERT INTO test_writes VALUES(NEW.id); END;"; setup.ExecuteNonQuery(); }
+  catalog.PreparePortableLocation(@"F:\App",true);
+  Assert.Equal(@"F:\Media\moved.mp4",catalog.GetMedia(moved.Id)!.Path);
+  long Writes(Guid id) { using var count=audit.CreateCommand(); count.CommandText="SELECT count(*) FROM test_writes WHERE id=$id"; count.Parameters.AddWithValue("$id",id.ToString()); return (long)count.ExecuteScalar()!; }
+  Assert.Equal(0,Writes(kept.Id));
+  Assert.True(Writes(moved.Id)>0);
+ }
+ [Fact] public void MoveKeepsTheSpellingOfPathsUnderAnUnchangedLibrary()
+ {
+  using var catalog=new CatalogRepository(Path.Combine(root,"catalog.db"));
+  var spelled=root.ToUpperInvariant()+@"\thumbnails\a.jpg";
+  var item=catalog.Upsert(new MediaItem {Path=@"Z:\External\a.mp4",ThumbnailPath=spelled});
+  catalog.PreparePortableLocation(@"E:\App",true);
+  catalog.PreparePortableLocation(@"F:\App",true);
+  Assert.Equal(spelled,catalog.GetMedia(item.Id)!.ThumbnailPath);
+ }
+
  [Fact] public void ThumbnailsOfAFolderNoRecordNamesFollowTheLibraryOnce()
  {
   // A takeover in the profile, copied into a portable folder before FlixyPix recorded where a library lies.

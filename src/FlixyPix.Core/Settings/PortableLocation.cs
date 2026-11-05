@@ -26,7 +26,8 @@ internal sealed class StoragePathMap
     {
         if (!Path.IsPathFullyQualified(path)) return path;
         foreach (var m in mappings)
-            if (path.Equals(m.From, StringComparison.OrdinalIgnoreCase) || path.StartsWith(m.From + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || path.StartsWith(m.From + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return m.To + path[m.From.Length..];
+            if (path.Equals(m.From, StringComparison.OrdinalIgnoreCase) || path.StartsWith(m.From + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || path.StartsWith(m.From + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                return m.From.Equals(m.To, StringComparison.OrdinalIgnoreCase) ? path : m.To + path[m.From.Length..]; // An unchanged anchor keeps the path as it is spelled.
         return path;
     }
     internal string? Optional(string? path) => path == null ? null : Map(path);
@@ -201,20 +202,23 @@ public sealed partial class CatalogRepository
     {
         lock (gate)
         {
-            ThrowIfDisposed(); var items = new List<MediaItem>();
+            ThrowIfDisposed(); var items = new List<MediaItem>(); var originals = new List<string>();
             using (var select = Command("SELECT document FROM media ORDER BY id", null)) using (var reader = select.ExecuteReader()) while (reader.Read())
             {
                 token.ThrowIfCancellationRequested();
                 var item = JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!;
                 var extra = new Dictionary<string, string?>(item.Extra);
                 if (extra.TryGetValue("archivePath", out var archive) && archive != null) extra["archivePath"] = map.Map(archive);
+                originals.Add(JsonSerializer.Serialize(item, Json));
                 items.Add(item with { Path = map.Map(item.Path), ThumbnailPath = map.Optional(item.ThumbnailPath), SubtitlePath = map.Optional(item.SubtitlePath), Files = item.Files.Select(f => f with { Path = map.Map(f.Path) }).ToList(), ContactSheet = item.ContactSheet is { } sheet ? sheet with { SourcePath = map.Map(sheet.SourcePath) } : null, Extra = extra });
             }
             if (items.GroupBy(i => PathKey(i.Path)).Any(g => g.Count() > 1)) throw new IOException("Relocation would merge different catalog paths.");
+            // Rows whose paths stay as they are keep their data and search entry; on a large library this is minutes of work.
+            var changed = items.Where((item, index) => JsonSerializer.Serialize(item, Json) != originals[index]).ToArray();
             using var tx = connection.BeginTransaction();
-            foreach (var item in items)
+            foreach (var item in changed)
             { using var reserve = Command("UPDATE media SET path_key=$key WHERE id=$id", tx, ("$key", "relocation:" + Guid.NewGuid()), ("$id", item.Id.ToString())); reserve.ExecuteNonQuery(); }
-            foreach (var item in items) { token.ThrowIfCancellationRequested(); UpsertCore(item, tx); }
+            foreach (var item in changed) { token.ThrowIfCancellationRequested(); UpsertCore(item, tx); }
             foreach (var source in ReadDocuments<StashSourceProfile>("stash_sources", tx))
             {
                 token.ThrowIfCancellationRequested(); var directory = map.Map(source.SourceDirectory);
