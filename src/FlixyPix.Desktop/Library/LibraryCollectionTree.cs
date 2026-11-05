@@ -134,12 +134,13 @@ public partial class MainWindow
   {
    case CollectionNodeKind.Set: node.IsExpanded = !node.IsExpanded; break;
    case CollectionNodeKind.Smart: ApplySavedSearch(node.Search!); break;
-   case CollectionNodeKind.View: ApplyViewState(new ViewState { View = node.View!, SortOrder = Math.Max(0, SortChoice.SelectedIndex) }); SaveViewPreferences(); break;
+   case CollectionNodeKind.View: _ = NavigateAreaAsync(node.View!); break;
    default: OpenCollection(node.Collection ?? _repository.GetQuickCollection()); break;
   }
  }
  private void OpenCollection(Playlist playlist)
  {
+  RememberCurrentArea();
   _playlist = playlist; _tag = null; ClearTagFilters(); _tagGroup = null; _advancedExpression = null;
   _category = null; _folder = null; _view = "all"; _anchor = 0; SortChoice.SelectedIndex = 5; ViewTitle.Text = CollectionName(playlist); Refresh();
  }

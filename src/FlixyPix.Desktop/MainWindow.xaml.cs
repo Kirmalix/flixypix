@@ -409,11 +409,10 @@ public partial class MainWindow : Window
         if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) == 0) _offWindowSelection = [];
         ShowDetails();
     }
-    private void Navigate(object sender, RoutedEventArgs e)
+    private async void Navigate(object sender, RoutedEventArgs e)
     {
         if ((string)((FrameworkElement)sender).Tag == "wall") { UpdateNavigation(); ShowSceneWall(); return; }
-        ApplyViewState(new ViewState { View = (string)((FrameworkElement)sender).Tag, SortOrder = Math.Max(0, SortChoice.SelectedIndex) });
-        SaveViewPreferences();
+        await NavigateAreaAsync((string)((FrameworkElement)sender).Tag);
     }
     private void SaveDetails(object sender, RoutedEventArgs e)
     {

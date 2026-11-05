@@ -53,7 +53,7 @@ public partial class MainWindow
   var folders = facets.Folders.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray();
   for (var round = 0; round < rounds; round++)
   {
-  Navigate(new Button { Tag = "all" }, new RoutedEventArgs()); await _lastRefresh;
+  await NavigateAreaAsync("all"); await _lastRefresh;
   // Endless scrolling: jumps across the whole result load the window around the new place.
   await Step("scroll-screen", () => ScrollToAsync(_visibleLast + 1));
   await Step("scroll-middle", () => ScrollToAsync(_total / 2));
@@ -63,7 +63,7 @@ public partial class MainWindow
    await Step("search-" + term.Length + "-chars" + (term == "zzqxv" ? "-no-hit" : ""), () => Refreshed(() => SearchBox.Text = term));
   await Step("search-clear", () => Refreshed(() => SearchBox.Text = ""));
   foreach (var view in new[] { "Video", "Image", "Audio", "favorites", "watchlater", "all" })
-   await Step("navigate-" + view, () => { Navigate(new Button { Tag = view }, new RoutedEventArgs()); return Task.CompletedTask; });
+   await Step("navigate-" + view, () => NavigateAreaAsync(view));
   for (var index = 1; index <= 5; index++) { var sort = index; await Step("sort-" + sort, () => { SortChoice.SelectedIndex = sort; return Task.CompletedTask; }); }
   SortChoice.SelectedIndex = 0; await _lastRefresh;
   await Step("rating-filter-4", () => { RatingFilter.SelectedIndex = 4; return Task.CompletedTask; });

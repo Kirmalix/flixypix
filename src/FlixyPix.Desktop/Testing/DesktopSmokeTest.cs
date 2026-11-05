@@ -23,17 +23,7 @@ public partial class MainWindow
     {
         await Startup;
         ConfigureSmokeTools();
-        var markResolver = MarkThumbnailConverter.Resolve;
-        var encryptedCatalog = AppLock.EncryptedCatalog;
-        try { await RunViewRestoreSmokeAsync(directory); }
-        finally
-        {
-            MarkThumbnailConverter.Resolve = markResolver;
-            AppLock.EncryptedCatalog = encryptedCatalog;
-            DesktopImaging.Configure(_settings.DataDirectory);
-            AppShell.Install(this);
-            AppShell.Configure(_settings);
-        }
+        await RunViewRestoreHostSmokeAsync(directory);
         await RunStorageTransitionSmokeAsync(directory);
         static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }
         Require(Title == ProductIdentity.Name, "The application window did not use the new product name.");
