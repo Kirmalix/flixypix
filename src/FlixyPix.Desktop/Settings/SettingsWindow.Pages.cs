@@ -33,6 +33,10 @@ internal sealed partial class SettingsWindow
  {
   var libraryCards = Library.GeneralCards();
   AddPage("General",
+   SettingsUi.Card(T("Restore on start"), null,
+    new SettingRow(T("Startup behavior"),
+     T("Home page or all items: start fresh. View only: remember the media area, sorting and display. Everything: also restore search, filters, page position and selection. The state is remembered automatically. Window size follows Remember window position."),
+     RestoreChoice, wide: true)),
    SettingsUi.Card(T("Import"), null,
     new SettingRow(T("Include hidden folders"), T("When off, hidden subfolders are skipped in folder imports. Folders chosen explicitly are always imported."), IncludeHidden),
     new SettingRow(T("Always show the import report"), T("Otherwise the report only opens on errors or notes."), AlwaysReport)),
@@ -41,10 +45,7 @@ internal sealed partial class SettingsWindow
     new SettingRow(T("Mark missing files"), T("Tiles of unavailable files are dimmed and marked “Missing”."), MarkMissing),
     new SettingRow(T("Item counts by folder"), T("Shows the number of items in each folder, including its subfolders, in the sidebar."), FolderCounts),
     new SettingRow(T("Item counts by category"), T("Shows the number of items in each category in the category selector."), CategoryCounts),
-    new SettingRow(T("Item counts by tag category"), T("Shows the number of items with a tag from each category in the sidebar."), TagCategoryCounts),
-    new SettingRow(T("Restore on start"),
-     T("View only: media type, collection or saved search, sorting and display. Everything: also search text, filters, position and selection plus a continue watching notice. Window size and position follow “Remember window position” under Navigation."),
-     RestoreChoice)),
+    new SettingRow(T("Item counts by tag category"), T("Shows the number of items with a tag from each category in the sidebar."), TagCategoryCounts)),
    SettingsUi.Card(T("Sidebars"), T("Both sidebars fold to a narrow bar of symbols: Ctrl+B on the left, Ctrl+D on the right, or the arrow at their edge. Drag their inner edge to change the width."),
     new SettingRow(T("Details as tabs"), T("Shows details, tags and scenes on the right as tabs instead of one below the other. The button at the top of the details switches as well. Applies to this computer."), DetailsTabs),
     new SettingRow(T("Show the review inbox"), T("Automatic: as soon as an item needs attention or you have marked items as reviewed. New imports alone count as unreviewed and do not show it."), ReviewInboxChoice)),
@@ -58,7 +59,7 @@ internal sealed partial class SettingsWindow
   AddPage("Home page",
    SettingsUi.Card(T("On start"), null,
     new SettingRow(T("Recently watched"), T("How many days the row “Recently watched” goes back."), Library.RecentDays),
-    new SettingRow(T("Start with the home page"), T("FlixyPix opens on the home page. A restored view is then one step back (Alt+←). Ctrl+Home opens the home page at any time."), StartOnHome)),
+    new TextBlock { Text = T("Choose startup behavior under General."), TextWrapping = TextWrapping.Wrap }),
    SettingsUi.Card(Tc("home page", "Rows"), T("Empty rows are not shown. FlixyPix computes suggestions locally from the tags of what you watched recently."),
     HomePreferences.DefaultRows.Select(kind => (UIElement)new SettingRow(HomePreferences.Label(kind), HomeRowHint(kind), HomeRows[kind])).ToArray()));
  }

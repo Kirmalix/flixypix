@@ -59,7 +59,7 @@ public partial class MainWindow
     /// <summary>Stores the view in the catalog when it changed since the last save; cheap, it keeps the browsing caches.</summary>
     internal void SaveViewNow()
     {
-        if (_repository == null) return;
+        if (_repository == null || !_startupReady || _restoringView) return;
         try
         {
             var state = CaptureViewState() with { LastPlayedId = _lastPlayedId };
@@ -70,15 +70,22 @@ public partial class MainWindow
         catch (Exception error) when (error is ObjectDisposedException or ArgumentException or Microsoft.Data.Sqlite.SqliteException or InvalidOperationException) { ErrorLog.Write("Ansicht merken", error); }
     }
 
-    /// <summary>Restores the last view as the library's setting asks; without a stored state the original's last view counts.</summary>
+    /// <summary>Restores the last view as the library's setting asks; without a usable stored state the media overview opens.</summary>
     internal async Task RestoreLastViewAsync()
+    {
+        _restoringView = true;
+        try { await RestoreLastViewCoreAsync(); }
+        finally { _restoringView = false; }
+    }
+
+    private async Task RestoreLastViewCoreAsync()
     {
         var general = _repository.GetPreferences().General;
         var stored = general.RestoreLastView ? _repository.GetViewState() : null;
         if (!general.RestoreLastView) { Refresh(); await _lastRefresh; RecordView(); return; }
         if (stored is null)
         {
-            ApplyViewState(new ViewState { View = ViewState.Views.Contains(_settings.LastView) ? _settings.LastView : "all", SortOrder = _settings.SortOrder, ViewMode = _settings.ViewMode, TileWidth = _settings.TileWidth });
+            ApplyViewState(new ViewState { View = "all", SortOrder = _settings.SortOrder, ViewMode = _settings.ViewMode, TileWidth = _settings.TileWidth });
             await _lastRefresh; RecordView(); return;
         }
         var restored = await Task.Run(() => { var sanitized = _repository.Sanitize(stored, out var removed); return (State: sanitized.Restricted(general.RestoreScope), Dropped: removed); });
@@ -96,21 +103,43 @@ public partial class MainWindow
         RecordView();
     }
 
+    private bool _restoringView;
+
     /// <summary>Scrolls to where the state was (the anchor medium if it is still in the result, else the saved index) and
-    /// selects what was selected and is loaded.</summary>
+    /// restores the whole selection, including media outside the loaded window.</summary>
     private async Task RestorePlaceAsync(ViewState state)
+    {
+        var restoring = _restoringView;
+        _restoringView = true;
+        try { await RestorePlaceCoreAsync(state); }
+        finally { _restoringView = restoring; }
+    }
+
+    private async Task RestorePlaceCoreAsync(ViewState state)
     {
         if (IsImageSetView || IsPublicationGroupView) return;
         if (IsRoleView) { _roleBrowser?.RestoreDirectoryState(state.Directory); return; }
-        if (_total == 0 || _window is not { } window) return;
+        if (_window is not { } window) return;
+        var request = _browse.CaptureRequest(SelectedMedia.Select(i => i.Id));
         var index = state.Position;
-        if (state.AnchorId is { } anchor && window.Playlist == null && await Task.Run(() => _repository.GetPosition(window.Query, anchor, _libraryTasks.Token)) is { } found) index = found;
-        index = Math.Clamp(index, 0, _total - 1);
+        if (state.AnchorId is { } anchor && await Task.Run(() => PositionInView(window, anchor).Position) is { } found) index = found;
+        if (!_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)) || _closing) return;
+        index = Math.Clamp(index, 0, Math.Max(0, _total - 1));
         if (index > 0) await ScrollToAsync(index);
-        if (state.Selection.Count == 0) return;
-        var wanted = state.Selection.ToHashSet();
-        MediaList.SelectedItems.Clear();
-        foreach (var card in MediaList.Items.Cast<MediaCard>().Where(c => wanted.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
+        var selected = await Task.Run(() => _repository.GetViewSelection(state.Selection), _libraryTasks.Token);
+        if (!_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)) || _closing) return;
+        var wanted = selected.Select(i => i.Id).ToHashSet();
+        _refreshing = true;
+        try
+        {
+            MediaList.SelectedItems.Clear();
+            var loaded = MediaList.Items.Cast<MediaCard>().ToArray();
+            foreach (var card in loaded.Where(c => wanted.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
+            var loadedIds = loaded.Select(c => c.Item.Id).ToHashSet();
+            _offWindowSelection = selected.Where(i => !loadedIds.Contains(i.Id)).ToArray();
+        }
+        finally { _refreshing = false; }
+        ShowDetails(); UpdatePager();
     }
 
     private void OfferContinueWatching(Guid? id)

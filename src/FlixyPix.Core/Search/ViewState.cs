@@ -150,7 +150,12 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             using var command = Command("SELECT document FROM ui_state WHERE id=$id", null, ("$id", ViewStateKey));
             if (command.ExecuteScalar() is not string json) return null;
-            try { return JsonSerializer.Deserialize<ViewState>(json, Json); }
+            try
+            {
+                var state = JsonSerializer.Deserialize<ViewState>(json, Json);
+                if (state is null || state.RequiredTags is null || state.ExcludedTags is null || state.ReviewStates is null || state.Selection is null || state.Selection.Count > 100_000 || state.Filter is null || state.Filter.Include is null || state.Filter.Exclude is null) return null;
+                return state;
+            }
             catch (JsonException) { return null; } // a damaged state only costs the restore
         }
     }

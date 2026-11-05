@@ -155,7 +155,7 @@ public partial class MainWindow : Window
         _lastRefresh = work;
         _ = _libraryTasks.Run(_ => work);
     }
-    private Task RefreshAsync(Guid? selectId = null, bool includePreviews = true)
+    private Task RefreshAsync(Guid? selectId = null, bool includePreviews = true, Func<bool>? publicationGuard = null)
     {
         if (_closing) return Task.CompletedTask;
         var requested = CaptureViewState();
@@ -173,9 +173,9 @@ public partial class MainWindow : Window
         _browse.ApplyTransition(resolved);
         if (resolved.View != requested.View) { ViewTitle.Text = ViewName(resolved.View); UpdateNavigation(); }
         var request = _browse.BeginLoad(SelectedMedia.Select(i => i.Id));
-        return _libraryTasks.Track(token => RefreshCoreAsync(selectId, includePreviews, token, request));
+        return _libraryTasks.Track(token => RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard));
     }
-    private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request)
+    private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard)
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
         var state = request.State.ToViewState();
@@ -233,6 +233,7 @@ public partial class MainWindow : Window
             var general = read.Preferences.General;
             var preparedCards = await Task.Run(() => pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList());
             if (!_browse.IsCurrent(request) || _closing) return;
+            if (publicationGuard is not null && (!publicationGuard() || !_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)))) return;
             if (!_browse.TryPublish(request.Complete((Snapshot: read, Cards: preparedCards)), result =>
             {
                 var snapshot = result.Snapshot; var cards = result.Cards;

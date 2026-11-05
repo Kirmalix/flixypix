@@ -23,6 +23,17 @@ public partial class MainWindow
     {
         await Startup;
         ConfigureSmokeTools();
+        var markResolver = MarkThumbnailConverter.Resolve;
+        var encryptedCatalog = AppLock.EncryptedCatalog;
+        try { await RunViewRestoreSmokeAsync(directory); }
+        finally
+        {
+            MarkThumbnailConverter.Resolve = markResolver;
+            AppLock.EncryptedCatalog = encryptedCatalog;
+            DesktopImaging.Configure(_settings.DataDirectory);
+            AppShell.Install(this);
+            AppShell.Configure(_settings);
+        }
         await RunStorageTransitionSmokeAsync(directory);
         static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }
         Require(Title == ProductIdentity.Name, "The application window did not use the new product name.");
@@ -306,6 +317,7 @@ public partial class MainWindow
         _viewer!.Close(); _viewer = null;
         _repository.DeleteImageSet(archiveSet.Id); foreach (var item in setItems) _repository.Delete(item.Id);
         var first = _repository.Search().First();
+        ApplyViewState(new ViewState()); await _lastRefresh;
         await RefreshAsync(first.Id);
         await _previewReady;
         Require(Selected?.Id == first.Id && Preview.Source != null, "Selection/preview did not load.");

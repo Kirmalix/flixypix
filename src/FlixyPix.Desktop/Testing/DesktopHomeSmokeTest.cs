@@ -28,7 +28,7 @@ public partial class MainWindow
    var settings = new SettingsWindow(this, _repository, _settings, _settings.DataDirectory, () => { }, () => { }); settings.Show();
    try
    {
-    settings.StartOnHome.IsChecked = false;
+    settings.RestoreChoice.Value = 1;
     Require(settings.TrySave(), "Start page options could not be saved.");
    }
    finally { settings.Close(); }
@@ -38,7 +38,7 @@ public partial class MainWindow
    settings = new SettingsWindow(this, _repository, _settings, _settings.DataDirectory, () => { }, () => { }); settings.Show();
    try
    {
-    settings.StartOnHome.IsChecked = true;
+    settings.RestoreChoice.Value = 0;
     foreach (var (kind, check) in settings.HomeRows) check.IsChecked = kind is HomeRowKind.RecentlyAdded or HomeRowKind.WatchLater or HomeRowKind.Popular or HomeRowKind.RandomOfTheDay;
     Require(settings.TrySave(), "Start page rows could not be saved.");
     settings.SelectPage("Home page"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -50,7 +50,7 @@ public partial class MainWindow
    Require(DetailsPane.Visibility == Visibility.Collapsed && DetailsColumn.Width.Value == 0, "The start page did not take the place of the details.");
    Require(NavItems.Children.OfType<RadioButton>().First() is { IsChecked: true, Tag: "home" }, "The sidebar did not mark the start page.");
    Require(Home.RowCount == 4 && Home.HeroCount >= 1, $"The start page showed {Home.RowCount} rows and {Home.HeroCount} banner entries instead of the four chosen rows.");
-   Require(History.CanGoBack, "The view before the start page is not one step back.");
+
    await Task.Delay(400); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
    Capture(RootContent, Path.Combine(directory, "desktop-home.png"));
    Theme.Apply(ColorScheme.Light); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);

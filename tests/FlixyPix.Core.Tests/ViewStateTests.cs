@@ -11,6 +11,35 @@ public sealed class ViewStateTests : IDisposable
     public void Dispose() { SqliteConnection.ClearAllPools(); try { Directory.Delete(directory, true); } catch (IOException) { } }
     private string PathFor(string name) => Path.Combine(directory, name);
 
+    [Theory]
+    [InlineData("broken json")]
+    [InlineData("{\"selection\":null}")]
+    [InlineData("{\"filter\":null}")]
+    public void DamagedPersistedStateFallsBackInsteadOfBreakingStartup(string json)
+    {
+        var path = PathFor("damaged.db");
+        using var catalog = new CatalogRepository(path);
+        catalog.SaveViewState(new ViewState());
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path }.ToString());
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE ui_state SET document=$json WHERE id='view'";
+        command.Parameters.AddWithValue("$json", json); command.ExecuteNonQuery();
+        Assert.Null(catalog.GetViewState());
+    }
+
+    [Fact]
+    public void SelectionLoadsAcrossBatchesAndDropsDeletedIdsInSavedOrder()
+    {
+        using var catalog = new CatalogRepository(PathFor("selection.db"));
+        var items = Enumerable.Range(0, 610).Select(i => new MediaItem { Path = PathFor(i + ".mp4"), Kind = MediaKind.Video }).ToArray();
+        foreach (var item in items) catalog.Upsert(item);
+        var ids = items.Reverse().Select(i => i.Id).ToList();
+        ids.Insert(30, Guid.NewGuid()); ids.Add(ids[0]);
+        Assert.Equal(items.Reverse().Select(i => i.Id), catalog.GetViewSelection(ids).Select(i => i.Id));
+        Assert.Empty(catalog.GetViewSelection([]));
+    }
+
     [Fact]
     public void RoleStateRoundTripsAndMissingProfilesAreSanitized()
     {

@@ -14643,6 +14643,22 @@
       "status": "corrected",
       "digest": "ddb87a92981ad9f7aac799bce0afc6c51b1b0a00fe747506912cc2db875ccf26",
       "previous_digest": "ea8456c59bf80ee2f7c70a735f37c1c0eef5670ba40c5629c43b797743d08381"
+    },
+    "Choose startup behavior under General.": {
+      "status": "unchanged",
+      "digest": "acb83ad322113bb5ac93cc0a7ab76789765b3200e325a5507a166d47c92940aa"
+    },
+    "Home page or all items: start fresh. View only: remember the media area, sorting and display. Everything: also restore search, filters, page position and selection. The state is remembered automatically. Window size follows Remember window position.": {
+      "status": "unchanged",
+      "digest": "e02aa2aa4f8b9e85cfde5d0b260dbae8ae2d6d8f37aa19395b13e4aeebf5cedc"
+    },
+    "Startup behavior": {
+      "status": "unchanged",
+      "digest": "eb3e4472c72d06f2ebb310cb5ca3dc98361bf4e6fabe10591439a30fb52c591a"
+    },
+    "What the home page shows.": {
+      "status": "unchanged",
+      "digest": "fa977c267a37404f7b0be65911d542c7d4589fd46686dedbfb5d678ffb1d5b6f"
     }
   }
 }

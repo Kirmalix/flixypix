@@ -33,7 +33,7 @@ internal sealed partial class SettingsWindow : Window
  [
   (TKey("Appearance"), "", T("Color scheme and language of the interface.")),
   (TKey("General"), "", T("How the library behaves on import, display and start.")),
-  (TKey("Home page"), "", T("What the home page shows and whether FlixyPix starts with it.")),
+  (TKey("Home page"), "", T("What the home page shows.")),
   (TKey("Videos"), "", T("Which video files are imported and from which rating they count as favorites.")),
   (TKey("Video player"), "", T("Playback, jump distances and shortcuts in the built-in player.")),
   (TKey("History"), "", T("O counter, playback history and from when a video counts as watched.")),
@@ -89,10 +89,9 @@ internal sealed partial class SettingsWindow : Window
   AlwaysReport = SettingsUi.Switch(), PreventSleep = SettingsUi.Switch(), MediaKeys = SettingsUi.Switch(),
   FolderCounts = SettingsUi.Switch(), CategoryCounts = SettingsUi.Switch(), TagCategoryCounts = SettingsUi.Switch();
  /// <summary>Restore on start: 0 off, 1 the view only, 2 everything.</summary>
- internal readonly SegmentedChoice RestoreChoice = new([(0, T("Off")), (1, T("View only")), (2, T("Everything"))]);
+ internal readonly SegmentedChoice RestoreChoice = new([(0, T("Home page")), (1, T("All items")), (2, T("View only")), (3, T("Everything"))]);
  /// <summary>When the sidebar lists the review inbox (catalog preference, values of <see cref="ReviewInboxMode"/>).</summary>
  internal readonly SegmentedChoice ReviewInboxChoice = new([((int)ReviewInboxMode.Automatic, T("Automatic")), ((int)ReviewInboxMode.Always, T("Always")), ((int)ReviewInboxMode.Never, T("Never"))]);
- internal readonly CheckBox StartOnHome = SettingsUi.Switch();
  /// <summary>One switch per start page row; the order of the rows stays as the library keeps it.</summary>
  internal readonly Dictionary<HomeRowKind, CheckBox> HomeRows = HomePreferences.DefaultRows.ToDictionary(kind => kind, _ => SettingsUi.Switch());
  internal readonly SegmentedChoice ImageWheel = new([((int)ImageWheelAction.Navigate, T("Next image")), ((int)ImageWheelAction.Zoom, T("Zoom")), ((int)ImageWheelAction.Scroll, T("Browse"))]);
@@ -190,7 +189,7 @@ internal sealed partial class SettingsWindow : Window
   themePicker.Changed += () => { if (loading) return; Theme.Apply(themePicker.Value); Touch(); };
   foreach (var check in new[] { AlwaysFullscreen, PlayBestVersion, hardwareDecoding, skipCustom, autoPreviews, fingerprintsOnImport, clipsOnImport, hoverEnabled, hoverDelay, hoverTimestamp, IncludeHidden,
    ConfirmRemove, ShowExtension, MarkMissing, FolderCounts, CategoryCounts, TagCategoryCounts, AlwaysReport, PreventSleep, MediaKeys, SlideFade, SlidePan, SlideInfo, NfoTitle, NfoTags,
-   NfoDescription, NfoSubfolders, NfoThumbnail, NfoFanart, HistoryEnabled, ShowOCounter }.Concat(HomeRows.Values).Append(StartOnHome)) { check.Checked += (_, _) => Touch();
+   NfoDescription, NfoSubfolders, NfoThumbnail, NfoFanart, HistoryEnabled, ShowOCounter }.Concat(HomeRows.Values)) { check.Checked += (_, _) => Touch();
    check.Unchecked += (_, _) => Touch(); }
   foreach (var choice in new[] { columns, rows, processes, hoverSpeed, hoverMode, ImageWheel, SlideOrder, slideSpeed, RestoreChoice, ReviewInboxChoice }) choice.Changed += Touch;
   foreach (var combo in new[] { MouseLeft, mouseRight, mouseMiddle, mouseBack, mouseForward, PlayerWheel }) { combo.SelectionChanged += (_, _) => Touch(); AutomationProperties.SetName(combo, T("Mouse action")); }

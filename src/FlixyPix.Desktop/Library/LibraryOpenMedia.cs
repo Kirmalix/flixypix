@@ -19,6 +19,7 @@ public partial class MainWindow
     private Task Play(MediaItem item, double? start = null, string? file = null)
      => _libraryTasks.Run(async libraryToken =>
     {
+        if (item.Kind == MediaKind.Video && IsRoleView && !LeaveRoleView()) return;
         var request = _playback.BeginStart();
         try
         {
@@ -74,6 +75,8 @@ public partial class MainWindow
             var session = new PlaybackSession(item.Id, player, window, history);
             if (!_playback.Publish(request, session)) { await player.DisposeAsync(); return; }
             await window.AttachPlayerAsync(player);
+            if (!ReferenceEquals(_playback.Current, session)) return;
+            if (item.Kind == MediaKind.Video) await RevealPlaybackAsync(session);
             if (!ReferenceEquals(_playback.Current, session)) return;
             _ = ContinueAtEndAsync(player, window, item);
             Status.Text = T("Playing · {0} · controls in the player window", item.Title);

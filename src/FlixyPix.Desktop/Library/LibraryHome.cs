@@ -83,9 +83,11 @@ public partial class MainWindow
     /// restored view.</summary>
     internal async Task StartAsync(bool mayOpenHome)
     {
-        await RestoreLastViewAsync();
+        var mode = StartupModes.From(_repository.GetPreferences());
+        if (mode == StartupMode.Home && mayOpenHome) { GoHome(); await _lastRefresh; }
+        else if (mode is StartupMode.View or StartupMode.Everything) await RestoreLastViewAsync();
+        else { ApplyViewState(new ViewState { SortOrder = _settings.SortOrder, ViewMode = _settings.ViewMode, TileWidth = _settings.TileWidth }); await _lastRefresh; }
         if (_closing) return;
-        if (mayOpenHome && _view != "home" && _repository.GetPreferences().Home.StartOnHome) { GoHome(); await _lastRefresh; }
         OfferCompaction();
     }
 

@@ -13,11 +13,14 @@ public partial class MainWindow
         var second = _repository.Upsert(new MediaItem { Path = copy, Kind = MediaKind.Video, Title = "Synthetic second playback", DurationSeconds = original.DurationSeconds });
         try
         {
+            GoHome(); await _lastRefresh;
             var a = Play(original, 0);
             var b = Play(second, 0);
             await Task.WhenAll(a, b);
             if (_playingId != second.Id || _playback.Current?.Window != _videoWindow || _videoWindow?.HasPlayer != true)
                 throw new InvalidOperationException("Overlapping player starts did not retain the last requested session.");
+            if (_view != "Video" || SelectedMedia.Count != 1 || Selected?.Id != second.Id || !MediaList.SelectedItems.Cast<MediaCard>().Any(c => c.Item.Id == second.Id))
+                throw new InvalidOperationException("Successful overlapping playback did not select and reveal only the current video.");
             var firstStop = StopPlayer();
             var stopping = !firstStop.IsCompleted;
             var repeatedStop = StopPlayer();

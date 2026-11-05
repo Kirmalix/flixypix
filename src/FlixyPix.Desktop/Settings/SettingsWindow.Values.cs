@@ -27,7 +27,6 @@ internal sealed partial class SettingsWindow
  }
  private void LoadHome(HomePreferences home)
  {
-  StartOnHome.IsChecked = home.StartOnHome;
   foreach (var (kind, check) in HomeRows) check.IsChecked = home.Rows.Contains(kind);
   Library.RecentDays.Value = home.RecentDays;
  }
@@ -39,7 +38,7 @@ internal sealed partial class SettingsWindow
  {
   IncludeHidden.IsChecked = general.IncludeHiddenFolders; ConfirmRemove.IsChecked = general.ConfirmRemove; ShowExtension.IsChecked = general.ShowExtension;
   FolderCounts.IsChecked = general.ShowFolderCounts; CategoryCounts.IsChecked = general.ShowCategoryCounts; TagCategoryCounts.IsChecked = general.ShowTagCategoryCounts;
-  MarkMissing.IsChecked = general.MarkMissingFiles; AlwaysReport.IsChecked = general.AlwaysShowImportReport; RestoreChoice.Value = !general.RestoreLastView ? 0 : general.RestoreScope == RestoreScope.View ? 1 : 2;
+  MarkMissing.IsChecked = general.MarkMissingFiles; AlwaysReport.IsChecked = general.AlwaysShowImportReport; RestoreChoice.Value = (int)StartupModes.From(repository.GetPreferences() with { General = general });
   ImageWheel.Value = (int)general.ImageWheel; ReviewInboxChoice.Value = (int)general.ReviewInbox;
   Library.Load(general, repository.GetPreferences().Home);
  }
@@ -79,7 +78,7 @@ internal sealed partial class SettingsWindow
    case "General":
     // Image wheel, cross-fade and the days of "Zuletzt gesehen" live on other pages and keep their values.
     var (fade, days) = (Library.ImageFade.IsChecked, Library.RecentDays.Value);
-    LoadGeneral(defaults.General with { ImageWheel = (ImageWheelAction)ImageWheel.Value }); DetailsTabs.IsChecked = false;
+    LoadGeneral(defaults.General with { ImageWheel = (ImageWheelAction)ImageWheel.Value }); RestoreChoice.Value = (int)StartupMode.Home; DetailsTabs.IsChecked = false;
     Library.ImageFade.IsChecked = fade; Library.RecentDays.Value = days; break;
    case "Home page": LoadHome(defaults.Home); break;
    case "Privacy": ResetPrivacy(); break;
@@ -167,7 +166,7 @@ internal sealed partial class SettingsWindow
     // Rows keep their stored order; newly switched-on rows join in the default order.
     Home = new HomePreferences
     {
-     StartOnHome = StartOnHome.IsChecked == true, RecentDays = (int)Math.Round(Library.RecentDays.Value!.Value),
+     StartOnHome = RestoreChoice.Value == 0, RecentDays = (int)Math.Round(Library.RecentDays.Value!.Value),
      Rows = [.. preferences.Home.Rows.Concat(HomePreferences.DefaultRows).Distinct().Where(kind => HomeRows[kind].IsChecked == true)],
     },
     Nfo = new NfoPreferences
@@ -180,7 +179,7 @@ internal sealed partial class SettingsWindow
     {
      IncludeHiddenFolders = IncludeHidden.IsChecked == true, ConfirmRemove = ConfirmRemove.IsChecked == true, ShowExtension = ShowExtension.IsChecked == true,
      ShowFolderCounts = FolderCounts.IsChecked == true, ShowCategoryCounts = CategoryCounts.IsChecked == true, ShowTagCategoryCounts = TagCategoryCounts.IsChecked == true,
-     MarkMissingFiles = MarkMissing.IsChecked == true, AlwaysShowImportReport = AlwaysReport.IsChecked == true, RestoreLastView = RestoreChoice.Value > 0, RestoreScope = RestoreChoice.Value == 1 ? RestoreScope.View : RestoreScope.All, ReviewInbox = (ReviewInboxMode)ReviewInboxChoice.Value,
+     MarkMissingFiles = MarkMissing.IsChecked == true, AlwaysShowImportReport = AlwaysReport.IsChecked == true, RestoreLastView = RestoreChoice.Value >= 2, RestoreScope = RestoreChoice.Value == 2 ? RestoreScope.View : RestoreScope.All, ReviewInbox = (ReviewInboxMode)ReviewInboxChoice.Value,
      ImageWheel = (ImageWheelAction)ImageWheel.Value,
     },
     VideoFavoriteMinimumRating = videoFavorite.Value, ImageFavoriteMinimumRating = imageFavorite.Value, AudioFavoriteMinimumRating = audioFavorite.Value,

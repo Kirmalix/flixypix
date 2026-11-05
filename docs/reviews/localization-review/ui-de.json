@@ -14974,7 +14974,7 @@
     },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
-      "digest": "ca7ef7fec5eb85661b4e07cb6d2fe9831acf4385a941094e9850492fee86ed17"
+      "digest": "816d9983f62dac274755c5e4670736959bcb1db0c24f2eb7647a2a0891bdb679"
     },
     "The image-set proposals changed. Refresh the preview.": {
       "status": "unchanged",
@@ -15010,7 +15010,7 @@
     },
     "This contact sheet cannot be used for seeking. Recreate the thumbnail to enable it.": {
       "status": "unchanged",
-      "digest": "f080de740fe2f726b6320c7f0881fd1623041daa0cc2915d56af5f23c18c4e2e"
+      "digest": "d3aed6043dc9051041733765053db7eb35a72c9f61226749db9cf18db686bcee"
     },
     "Thumbnail display": {
       "status": "unchanged",
@@ -15034,7 +15034,7 @@
     },
     "View contact sheet": {
       "status": "unchanged",
-      "digest": "3b84762ba9ef786a3870143a76e81c2a5dcc05122b194d8d3be1e4a2a4ddc51d"
+      "digest": "6282938fcaa26ca26614775e8ad2ea368cd1b5081ebf8a0400bdbe3664fc15d6"
     },
     "Visual similarity does not prove identical file content.": {
       "status": "unchanged",
@@ -15467,6 +15467,22 @@
       "status": "corrected",
       "digest": "2198c681bdcb4e995ef9642f78c52491adaf886711cb9f3641fa6ea4c75abe6b",
       "previous_digest": "ea8456c59bf80ee2f7c70a735f37c1c0eef5670ba40c5629c43b797743d08381"
+    },
+    "Choose startup behavior under General.": {
+      "status": "unchanged",
+      "digest": "e4a663494166118b3d5e991d985bd876bd549a848b133a4f44e2d2c414b26ae6"
+    },
+    "Home page or all items: start fresh. View only: remember the media area, sorting and display. Everything: also restore search, filters, page position and selection. The state is remembered automatically. Window size follows Remember window position.": {
+      "status": "unchanged",
+      "digest": "b947ca498d3ab36c3cef1d874af6f76c695a0780b24898a65f943d3cf935b357"
+    },
+    "Startup behavior": {
+      "status": "unchanged",
+      "digest": "4d74b6d58aa55a23485844b7f6b95537463d5e03989e1ecc68d0388d7a4f90b6"
+    },
+    "What the home page shows.": {
+      "status": "unchanged",
+      "digest": "394f12c7813ec89f45c74ca485296333d7a1ce38da5d1dad11330e0def95eafb"
     }
   }
 }

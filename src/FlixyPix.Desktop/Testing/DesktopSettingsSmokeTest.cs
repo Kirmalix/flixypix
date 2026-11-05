@@ -66,7 +66,7 @@ public partial class MainWindow
   try
   {
    window.ShowExtension.IsChecked = true; window.MarkMissing.IsChecked = true; window.ConfirmRemove.IsChecked = false; window.AlwaysReport.IsChecked = true;
-   window.RestoreChoice.Value = 1; window.ImageWheel.Value = (int)ImageWheelAction.Zoom;
+   window.RestoreChoice.Value = 2; window.ImageWheel.Value = (int)ImageWheelAction.Zoom;
    Require(window.TrySave(), "General options could not be saved.");
   }
   finally { window.Close(); }
