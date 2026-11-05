@@ -32,8 +32,8 @@ public partial class MainWindow
   if (card == null || card.Item.Kind != MediaKind.Video || card.Item.DurationSeconds is not > 0 || ViewChoice.SelectedIndex != 0) return;
   var previews = _repository.GetPreferences().Previews;
   if (!previews.HoverEnabled) return;
-  var run = new CancellationTokenSource(); _hoverRun = run;
-  HoverPreviewTask = RunHoverPreviewAsync(card, previews, run.Token);
+  var run = CancellationTokenSource.CreateLinkedTokenSource(_libraryTasks.Token); _hoverRun = run;
+  HoverPreviewTask = _libraryTasks.Run(_ => RunHoverPreviewAsync(card, previews, run.Token));
  }
 
  private void StopHoverPreview()

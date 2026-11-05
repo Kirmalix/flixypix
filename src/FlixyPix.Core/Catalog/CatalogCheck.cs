@@ -437,7 +437,7 @@ public sealed partial class CatalogRepository
             var rebuild = kinds.Contains(CatalogFindingKind.QueryTable) || kinds.Contains(CatalogFindingKind.SearchIndex);
             if(kinds.Contains(CatalogFindingKind.ImageSetMembership))repaired[CatalogFindingKind.ImageSetMembership]=RepairImageSetMembers(transaction,token);
             if(kinds.Contains(CatalogFindingKind.PublicationGroupMembership))repaired[CatalogFindingKind.PublicationGroupMembership]=RepairPublicationGroupMembers(transaction,token);
-            if (rebuild) { RebuildIndexesCore(transaction); InitializeWallSchema(transaction, rebuild: true); repaired[CatalogFindingKind.QueryTable] = report[CatalogFindingKind.QueryTable].Count; repaired[CatalogFindingKind.SearchIndex] = report[CatalogFindingKind.SearchIndex].Count; }
+            if (rebuild) { RebuildIndexesCore(transaction); wallQueries.InitializeSchema(transaction, rebuild: true); repaired[CatalogFindingKind.QueryTable] = report[CatalogFindingKind.QueryTable].Count; repaired[CatalogFindingKind.SearchIndex] = report[CatalogFindingKind.SearchIndex].Count; }
             transaction.Commit();
             cachedMedia = null;
         }

@@ -113,7 +113,7 @@ public partial class MainWindow
  private void OfferContinueWatching(Guid? id)
  {
   if (id is not { } played || _repository.GetMedia(played) is not { Kind: not MediaKind.Image, DurationSeconds: > 0 } item) return;
-  var card = new MediaCard(item, false);
+  var card = new MediaCard(item, false, context: _cardContext);
   if (card.ProgressVisibility != Visibility.Visible) return;
   ShowToast(T("Continue watching: {0} (at {1})", item.Title, MediaCard.DurationText(item.PlaybackPositionSeconds)), MessageBoxImage.Information, T("Play"),
    async () => await Play(item, item.PlaybackPositionSeconds), seconds: 12);

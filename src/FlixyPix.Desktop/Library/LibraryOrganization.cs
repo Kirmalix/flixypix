@@ -6,7 +6,7 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow
 {
- private SearchExpression? _advancedExpression;
+ private SearchExpression? _advancedExpression { get => _browse.State.Expression; set => _browse.State=_browse.State with {Expression=value}; }
  private void AdvancedSearch(){var editor=CreateAdvancedSearch();if(editor.ShowDialog()==true){_advancedExpression=editor.Result;_anchor=0;Refresh();}}
  /// <summary>The search builder with live hit counts and suggestions from the library's tags and categories.</summary>
  internal AdvancedSearchWindow CreateAdvancedSearch()

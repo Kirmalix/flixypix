@@ -75,7 +75,7 @@ public sealed partial class CatalogRepository
             var query = StateOf(search).ToQuery(DateTimeOffset.Now);
             // Older searches keep their rating on the 0–10 scale, which may be a half star.
             if (search.State is null) query = query with { MinimumRating = search.MinimumRating };
-            return QueryItems(query, null, CancellationToken.None);
+            return mediaQueries.ReadItems(query, null, CancellationToken.None);
         }
     }
 

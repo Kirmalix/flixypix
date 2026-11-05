@@ -14,9 +14,12 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow : Window
 {
+ private readonly MediaCardContext _cardContext = new();
  private CatalogRepository _repository;
  private DesktopSettings _settings;
  private MediaToolService _tools;
+ private readonly LibraryTaskScope _libraryTasks = new(error => ErrorLog.Write("Library background work", error));
+ private bool _closeInProgress, _closeCompleted;
  private CancellationTokenSource? _operation;
  private MpvPlayer? _player;
  private VideoPlayerWindow? _videoWindow;
@@ -24,9 +27,10 @@ public partial class MainWindow : Window
  private Guid? _playingId;
  private readonly DispatcherTimer _positionTimer = new() { Interval = TimeSpan.FromSeconds(5) };
  private readonly DispatcherTimer _searchTimer = new() { Interval = TimeSpan.FromMilliseconds(220) };
- private string _view = "all";
- private string? _tag;
- private Playlist? _playlist;
+ private readonly LibraryBrowseController _browse = new();
+ private string _view { get => _browse.State.View; set => _browse.State = _browse.State with { View=value }; }
+ private string? _tag { get => _browse.State.Tag; set => _browse.State = _browse.State with { Tag=value }; }
+ private Playlist? _playlist { get => _browse.Playlist; set { _browse.Playlist=value; _browse.State=_browse.State with {PlaylistId=value?.Id}; } }
  private bool _refreshing;
  private bool _closing;
  private bool _closeRequested;
@@ -56,13 +60,14 @@ public partial class MainWindow : Window
   // A library is open in one instance only; the start and the library switch ask the other instance before this.
   _instance = LibraryInstance.Claim(_settings.DataDirectory, () => Dispatcher.BeginInvoke(BringToFront))
    ?? throw new InvalidOperationException(T("This library is already open in another FlixyPix window."));
-  Privacy.Prepare(_settings.Privacy);
-  try { _repository = unlockedKey == null ? SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db"))
+  try { Privacy.Prepare(_settings.Privacy); _repository = unlockedKey == null ? SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db"))
    : new CatalogRepository(Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey); }
   catch { _instance.Dispose(); throw; }
   // A failed start must let go of the library, or the next attempt finds it "open in another window".
   try { _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable); }
   catch { _repository.Dispose(); _instance.Dispose(); throw; }
+  try
+  {
   _tools = CreateTools();
   InitializeBrowsing();
   InitializeMainView();
@@ -84,14 +89,30 @@ public partial class MainWindow : Window
   InitializeHome();
   InitializeBackupSchedule();
   _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); Refresh(); };
-  _positionTimer.Tick += async (_, _) => await SavePlaybackPosition();
+  _positionTimer.Tick += async (_, _) => await _libraryTasks.Run(_ => SavePlaybackPosition());
   _positionTimer.Start();
   Closing += OnClosing;
   if (_persistPreferences) RestoreWindowPlace();
   // Tests and probes open where they expect to; they check the start page on their own.
   RememberOpenLibrary();
-  Startup = StartAsync(mayOpenHome: _persistPreferences);
+  Startup = _libraryTasks.Run(_ => StartAsync(mayOpenHome: _persistPreferences));
   if (_persistPreferences && DesktopSettings.LastRepair is { } repair) ContentRendered += (_, _) => ShowSettingsRepair(repair);
+  }
+  catch
+  {
+   _closing = true;
+   _positionTimer.Stop(); _searchTimer.Stop(); _viewSaveTimer.Stop(); _draftTimer.Stop();
+   _backupTimer.Stop(); _folderPoll?.Stop(); _folderCheck?.Cancel(); _folderWatcher?.Dispose();
+   _searchIndexStop.Cancel(); _homeArtworkCancellation.Cancel(); _wallRun?.Cancel(); StopHoverPreview();
+   AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;
+   _ = ReleaseFailedStartAsync();
+   throw;
+  }
+ }
+ private async Task ReleaseFailedStartAsync()
+ {
+  try { await _libraryTasks.StopAsync(); }
+  finally { _repository.Dispose(); _instance.Dispose(); }
  }
  /// <summary>Says once that appsettings.json was repaired; the damaged file stays beside it to look at.</summary>
  private void ShowSettingsRepair(SettingsRepair repair)
@@ -116,7 +137,8 @@ public partial class MainWindow : Window
 
  private MediaToolService CreateTools() => new(new MediaToolPaths(_settings.Ffmpeg, _settings.Ffprobe, _settings.Mpv));
  private void Refresh(Guid? selectId = null) => _lastRefresh = RefreshAsync(selectId);
- private async Task RefreshAsync(Guid? selectId = null,bool includePreviews=true)
+ private Task RefreshAsync(Guid? selectId = null,bool includePreviews=true) => _libraryTasks.Run(token => RefreshCoreAsync(selectId, includePreviews, token));
+ private async Task RefreshCoreAsync(Guid? selectId,bool includePreviews,CancellationToken token)
  {
   if (_repository == null || _closing) return;
   if (_roleBrowser?.IsVisible == true && (!IsRoleView || _tag != null || _tagGroup != null || _folder != null || _playlist != null || _requiredTags.Count > 0 || _excludedTags.Count > 0 || !_filter.IsEmpty || _advancedExpression != null))
@@ -125,7 +147,7 @@ public partial class MainWindow : Window
    { _view = _roleBrowserView!; _tag = _tagGroup = _category = _folder = null; _playlist = null; _filter = new(); _advancedExpression = null; ClearTagFilters(); RefreshRoleView(); return; }
    if (IsRoleView) _view = "all";
   }
-  if ((IsImageSetView||IsPublicationGroupView) && (_folder != null || _playlist != null || _tag != null || _tagGroup != null || _requiredTags.Count > 0 || !_filter.IsEmpty || _advancedExpression != null)) _view = "all";
+  var state = _browse.ResolveForLoad(CaptureViewState());
   if(_filter.HasThumbnail is null&&!_filter.UnratedOnly||IsPublicationGroupView||IsImageSetView||IsRoleView)HideWorklistActions();
   if(IsPublicationGroupView){HideImageSets();++_refreshVersion;RefreshPublicationGroups();return;}
   HidePublicationGroups();
@@ -137,17 +159,14 @@ public partial class MainWindow : Window
   var version = ++_refreshVersion;
   LeaveHomeWhenFiltered();
   var selectedId = selectId ?? Selected?.Id;
-  var text = SearchBox.Text; var tag = _tag; var view = _view;
-  var minimumRating = Math.Max(RatingFilter.SelectedIndex, 0) * 2;
-  var category = _category; var tagGroup = _tagGroup; var folder = _folder; var sort = SortChoice.SelectedIndex;
+  var sort = state.SortOrder;
   var playlist = _playlist;
-  var requiredTags = _requiredTags.ToArray(); var excludedTags = _excludedTags.ToArray();
   var keepSelection = selectId == null ? MediaList.SelectedItems.Cast<MediaCard>().Select(card => card.Item.Id).ToHashSet() : null;
   try
   {
    // One state describes the view; saved searches and restoring the last view use the same query.
-   var state = CaptureViewState(); var matches = state.ToQuery(DateTimeOffset.Now);
-   await UpdateKeptMediaAsync(state, matches);
+   var matches = state.ToQuery(DateTimeOffset.Now);
+   await UpdateKeptMediaAsync(state, matches, version);
    if(version!=_refreshVersion||_closing)return;
    UpdateThumbnailCheck(state);
    var kept = _keptMedia.ToArray();
@@ -161,31 +180,35 @@ public partial class MainWindow : Window
     {
      if (selectId is { } requested && _repository.GetPosition(query,requested) is { } position && (position < visibleFirst || position > visibleLast))
      { anchor = position; query = query with { Offset = WindowStartFor(position) }; }
-     page = _repository.QueryPage(query);
+     page = _repository.QueryPage(query, token);
      if (page.TotalCount > 0 && page.Items.Count == 0)
-     { query = query with { Offset = (int)Math.Max(0, page.TotalCount - WindowSize) }; anchor = (int)page.TotalCount - 1; page = _repository.QueryPage(query); }
+     { query = query with { Offset = (int)Math.Max(0, page.TotalCount - WindowSize) }; anchor = (int)page.TotalCount - 1; page = _repository.QueryPage(query, token); }
     }
     else
     {
      var result = _repository.QueryPlaylistPage(playlist,query,sort == 5,selectId);
      query = query with { Offset = result.Offset }; page = result.Page;
     }
-    var facets = _repository.GetFacets();
-    return (Page: page, Browse: PrepareBrowsing(facets, _repository.GetPreferences(), _repository.GetTagUsage(), _repository.GetNavigationCounts()), Playlists: _repository.GetPlaylists(), Searches: _repository.GetSavedSearches(),
+    var facets = _repository.GetFacets(token);
+    var preferences = _repository.GetPreferences();
+    return (Preferences: preferences, Page: page, Browse: PrepareBrowsing(facets, preferences, _repository.GetTagUsage(), _repository.GetNavigationCounts()), Playlists: _repository.GetPlaylists(), Searches: _repository.GetSavedSearches(),
      Sets: _repository.GetCollectionSets(), Target: _repository.FindTargetCollection(), CatalogEmpty: facets.MediaCount == 0, Finished: FinishedMedia(matches, kept));
    });
    if (version != _refreshVersion || _closing) return;
-   _windowStart = query.Offset; _total = checked((int)snapshot.Page.TotalCount); _window = (query, playlist, sort == 5);
    var pageItems = snapshot.Page.Items;
-   _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
-   _imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1 };
-   _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
-   _imageCount = checked((int)(await Task.Run(() => playlist==null ? _repository.QueryPage(_imageQuery) : _repository.QueryPlaylistPage(playlist,_imageQuery,sort==5).Page)).TotalCount);
-   var general = _repository.GetPreferences().General;
-   MediaCard.QuickMembers = _repository.GetPlaylists().FirstOrDefault(p=>p.Kind==PlaylistKind.Quick)?.MediaIds.ToHashSet()??[];
-   MediaCard.FinishedMembers = snapshot.Finished; MediaCard.Display = general; MediaCard.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? []; Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
-   var cards = await Task.Run(() => pageItems.Select(i => new MediaCard(i,includePreviews,general.ShowExtension,general.MarkMissingFiles && includePreviews)).ToList());
+   var imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1 };
+   var imageCount = checked((int)(await Task.Run(() => playlist==null ? _repository.QueryPage(imageQuery, token) : _repository.QueryPlaylistPage(playlist,imageQuery,sort==5).Page)).TotalCount);
+   var general = snapshot.Preferences.General;
+   var cards = await Task.Run(() => pageItems.Select(i => new MediaCard(i,includePreviews,general.ShowExtension,general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList());
    if (version != _refreshVersion || _closing) return;
+   // Publish all view data together, only after every asynchronous read has completed.
+   _windowStart = query.Offset; _total = checked((int)snapshot.Page.TotalCount); _window = (query, playlist, sort == 5);
+   _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
+   _imageQuery = imageQuery; _imageCount = imageCount;
+   _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
+   _cardContext.QuickMembers = snapshot.Playlists.FirstOrDefault(p=>p.Kind==PlaylistKind.Quick)?.MediaIds.ToHashSet()??[];
+   _cardContext.FinishedMembers = snapshot.Finished; _cardContext.Display = general; _cardContext.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? [];
+   Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
    _refreshing = true;
    _offWindowSelection.Clear();
    ApplyBrowsing(snapshot.Browse);
@@ -244,9 +267,9 @@ public partial class MainWindow : Window
   if (previous == null || EditWatchLater.IsChecked == previous.WatchLater) EditWatchLater.IsChecked = item?.WatchLater ?? false;
   _detailsShown = single ? item : null;
   if (single && item != null && _detailsDrafts.TryGetValue(item.Id, out var draft)) ApplyDetailsDraft(draft);
-  if(includePreviews)_previewReady = LoadSelectedPreviewAsync(item);
+  if(includePreviews)_previewReady = _libraryTasks.Run(_ => LoadSelectedPreviewAsync(item));
   else { ++_previewVersion;Preview.Source=null;_previewReady=Task.CompletedTask; }
-  MetadataLabel.Text = multiple ? T("Tag changes apply to all selected items.") : item == null ? "" : new MediaCard(item,false).Subtitle + (TechnicalSummary(item.Technical) is { Length: > 0 } technical ? Environment.NewLine + technical : "") + (includePreviews ? (File.Exists(item.Path) ? "" : T("\nFile is currently unavailable")) : T("\nFile path kept · file not checked"));
+  MetadataLabel.Text = multiple ? T("Tag changes apply to all selected items.") : item == null ? "" : new MediaCard(item,false, context: _cardContext).Subtitle + (TechnicalSummary(item.Technical) is { Length: > 0 } technical ? Environment.NewLine + technical : "") + (includePreviews ? (File.Exists(item.Path) ? "" : T("\nFile is currently unavailable")) : T("\nFile path kept · file not checked"));
   PathLabel.Text = multiple ? "" : item?.Path ?? "";
   Scenes.ItemsSource = item == null || multiple ? null : _repository.GetOrderedScenes(item.Id);
   Bookmarks.ItemsSource = item == null || multiple ? null : _repository.GetOrderedBookmarks(item.Id);
@@ -416,19 +439,21 @@ public partial class MainWindow : Window
  private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
  {
   if (_storageTransferring) { e.Cancel = true; _operation?.Cancel(); return; }
-  if (_closing) return;
+  if (_closeCompleted) return;
   e.Cancel = true;
+  if (_closeInProgress) return;
   if (_operation != null) { _closeRequested = true; _operation.Cancel(); Status.Text = T("Finishing the operation …"); return; }
-  if (!LeaveRoleView()) { CancelLibrarySwitch(); return; }
-  if (!ResolveDetailsDrafts()) { CancelLibrarySwitch(); return; }
+  if (!TryBeginClose()) return;
   _draftTimer.Stop();
   _homeArtworkCancellation.Cancel(); _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
   SaveFolderViewportState();
   SaveViewNow(); if (_persistPreferences) SaveWindowPlace();
+  _closing = true;
+  _thumbnailCheck?.Cancel(); _wallRun?.Cancel(); _folderCheck?.Cancel(); StopHoverPreview();
+  var draining = _libraryTasks.StopAsync();
   var queueWindow = _queueWindow; if (queueWindow != null) { queueWindow.Close(); await queueWindow.ClosedTask; }
   await StopPlayer();
-  _closing = true;
-  await _lastRefresh;
+  await draining;
   await _keyboardNavigationGate.WaitAsync();_keyboardNavigationGate.Release();
   _repository.Dispose(); _instance.Dispose();
   // Nothing of this window may run on once it is gone; switching libraries keeps the process.
@@ -459,6 +484,7 @@ public partial class MainWindow : Window
    }
    finally { _storageTransferring=false; _operation.Dispose(); _operation=null; IsEnabled=true; transfer.Close(); }
   }
+  _closeCompleted = true;
   // This window let go of its catalog; it closes even when opening the next library fails unexpectedly.
   if (_switchTo is { } target) _ = Dispatcher.BeginInvoke(() => { try { OpenSwitchedLibrary(target); } finally { Close(); } });
   else _ = Dispatcher.BeginInvoke(Close);
@@ -466,6 +492,18 @@ public partial class MainWindow : Window
   if (_restartAfterClose && Environment.ProcessPath is { } exe) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false, ArgumentList = { _storageChange is { } completed && _restartAfterClose ? (completed.Mode == StorageMode.Portable ? "--portable" : "--profile") : AppStorage.Current.Mode == StorageMode.Portable ? "--portable" : "--profile" } });
  }
  private bool _storageTransferring;
+ private bool TryBeginClose()
+ {
+  _closeInProgress = true;
+  var accepted = false;
+  try
+  {
+   if (!LeaveRoleView() || !ResolveDetailsDrafts()) { CancelLibrarySwitch(); return false; }
+   accepted = true;
+   return true;
+  }
+  finally { if (!accepted) _closeInProgress = false; }
+ }
  private bool _restartAfterClose;
  private async void OnKeyDown(object sender, KeyEventArgs e)
  {

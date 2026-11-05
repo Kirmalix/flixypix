@@ -12,8 +12,8 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
  private const string MediaDragFormat = "FlixyPix.MediaIds";
- private readonly List<string> _requiredTags = [];
- private readonly List<string> _excludedTags = [];
+ private List<string> _requiredTags => _browse.State.RequiredTags;
+ private List<string> _excludedTags => _browse.State.ExcludedTags;
  private IReadOnlyList<TagListEntry> _tagEntries = [];
  private bool _tagsByName;
  private long _tagAssistVersion;
@@ -290,7 +290,7 @@ public partial class MainWindow
   if (ItemsControl.ContainerFromElement(MediaList, (DependencyObject)e.OriginalSource) is not ListBoxItem item) return;
   _dragStart = e.GetPosition(MediaList);
   // "Klick auf das Bild spielt ab": a plain click on the picture (not on its buttons) plays once the button is released without dragging.
-  if (MediaCard.Display.ClickPlays && Keyboard.Modifiers == ModifierKeys.None && e.ClickCount <= 1 && item.DataContext is MediaCard card && OnPicture((DependencyObject)e.OriginalSource, item)) _clickToPlay = card;
+  if (_cardContext.Display.ClickPlays && Keyboard.Modifiers == ModifierKeys.None && e.ClickCount <= 1 && item.DataContext is MediaCard card && OnPicture((DependencyObject)e.OriginalSource, item)) _clickToPlay = card;
   // Keep a multi-selection alive so it can be dragged; a plain click without drag still selects only this item.
   if (item.IsSelected && MediaList.SelectedItems.Count > 1 && Keyboard.Modifiers == ModifierKeys.None && e.ClickCount == 1) { _pendingSingleSelection = item; e.Handled = true; item.Focus(); }
  }

@@ -6,19 +6,19 @@ namespace FlixyPix.Core;
 
 public sealed record WallPage(IReadOnlyList<WallMark> Items, long TotalCount);
 
-public sealed partial class CatalogRepository
+internal sealed class SceneWallQueries(CatalogDatabase database)
 {
     private sealed record WallTextResult(string Text, System.Globalization.CompareInfo Culture, (long, long) Stamp, bool All, string? Media, string? Marks, string? Candidates);
     private WallTextResult? wallTextResult;
 
-    private void InitializeWallSchema(SqliteTransaction transaction, bool rebuild)
+    internal void InitializeSchema(SqliteTransaction transaction, bool rebuild)
     {
         // ISO DateTimeOffset seconds plus all seven fractional digits; unlike julianday this preserves tick ordering.
         const string date = "json_extract(NEW.document,'$.addedAt')";
         var fraction = $"substr({date},21)";
         var digits = $"length({fraction})-length(ltrim({fraction},'0123456789'))";
         var added = $"CAST(strftime('%s',substr({date},1,19)||CASE WHEN substr({date},-1)='Z' THEN 'Z' ELSE substr({date},-6) END) AS INTEGER)*10000000+CASE WHEN substr({date},20,1)='.' THEN CAST(substr(substr({fraction},1,{digits})||'0000000',1,7) AS INTEGER) ELSE 0 END";
-        using var create = Command($"""
+        using var create = database.Command($"""
             CREATE TABLE IF NOT EXISTS wall_media(
                 id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE,
                 title TEXT NOT NULL, description TEXT, added INTEGER NOT NULL, kind TEXT NOT NULL);
@@ -57,7 +57,7 @@ public sealed partial class CatalogRepository
                 INSERT INTO wall_tags SELECT {kind},NEW.id,value FROM json_each(NEW.document,'$.tags')
                     WHERE EXISTS(SELECT 1 FROM wall_marks WHERE kind={kind} AND id=NEW.id);
                 """;
-            using var triggers = Command($"""
+            using var triggers = database.Command($"""
                 CREATE TRIGGER IF NOT EXISTS wall_{table}_insert AFTER INSERT ON {table} BEGIN {insert} END;
                 CREATE TRIGGER IF NOT EXISTS wall_{table}_update AFTER UPDATE OF document ON {table} BEGIN
                     DELETE FROM wall_marks WHERE kind={kind} AND id=OLD.id; {insert}
@@ -70,12 +70,12 @@ public sealed partial class CatalogRepository
         }
         if (rebuild)
         {
-            using var populate = Command("DELETE FROM wall_marks; DELETE FROM wall_media; UPDATE media SET document=document; UPDATE scenes SET document=document; UPDATE bookmarks SET document=document;", transaction);
+            using var populate = database.Command("DELETE FROM wall_marks; DELETE FROM wall_media; UPDATE media SET document=document; UPDATE scenes SET document=document; UPDATE bookmarks SET document=document;", transaction);
             populate.ExecuteNonQuery();
         }
     }
 
-    public WallPage QueryWallPage(WallQuery query, int offset = 0, int limit = 120, CancellationToken cancellationToken = default)
+    internal WallPage QueryPage(WallQuery query, int offset = 0, int limit = 120, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
@@ -83,11 +83,11 @@ public sealed partial class CatalogRepository
         cancellationToken.ThrowIfCancellationRequested();
         try
         {
-        lock (gate)
+        lock (database.Gate)
         {
-            ThrowIfDisposed();
+            database.ThrowIfDisposed();
             var culture = CultureInfo.CurrentCulture;
-            connection.CreateFunction<string?, string?, bool>("efp_wall_contains", (value, text) => value?.Contains(text ?? "", StringComparison.CurrentCultureIgnoreCase) == true);
+            database.Connection.CreateFunction<string?, string?, bool>("efp_wall_contains", (value, text) => value?.Contains(text ?? "", StringComparison.CurrentCultureIgnoreCase) == true);
             var parameters = new List<(string, object)>();
             var conditions = new List<string> { "m.kind='Video'" };
             if (!query.Scenes) conditions.Add("w.kind<>0");
@@ -100,10 +100,10 @@ public sealed partial class CatalogRepository
             var tags = (query.Tags ?? []).Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).Distinct(StringComparer.CurrentCultureIgnoreCase).ToArray();
             // Resolve culture-sensitive equality once per distinct spelling, then use binary indexed membership.
             // EFP_ORDINAL alone would change Turkish and other culture-dependent comparisons.
-            using var transaction = connection.BeginTransaction();
+            using var transaction = database.Connection.BeginTransaction();
             string[] Spellings(string sql)
             {
-                using var command = Command(sql, transaction); using var cancel = cancellationToken.Register(command.Cancel);
+                using var command = database.Command(sql, transaction); using var cancel = cancellationToken.Register(command.Cancel);
                 using var reader = command.ExecuteReader(); var result = new List<string>();
                 while (reader.Read()) { cancellationToken.ThrowIfCancellationRequested(); result.Add(reader.GetString(0)); }
                 return result.ToArray();
@@ -111,21 +111,21 @@ public sealed partial class CatalogRepository
             if (tags.Length == 0 && !string.IsNullOrWhiteSpace(query.Text))
             {
                 var text = query.Text.Trim();
-                using var changes = Command("SELECT total_changes()", transaction); using var version = Command("PRAGMA data_version", transaction);
+                using var changes = database.Command("SELECT total_changes()", transaction); using var version = database.Command("PRAGMA data_version", transaction);
                 var stamp = (Convert.ToInt64(changes.ExecuteScalar()), Convert.ToInt64(version.ExecuteScalar()));
                 var result = wallTextResult;
                 if (result == null || result.Text != text || !result.Culture.Equals(culture.CompareInfo) || result.Stamp != stamp)
                 {
                     var mediaHits = new HashSet<string>(StringComparer.Ordinal); var mediaCount = 0;
                     bool Matches(string? value) => value != null && culture.CompareInfo.IndexOf(value, text, CompareOptions.IgnoreCase) >= 0;
-                    using (var command = Command("SELECT id,title,description FROM wall_media WHERE kind='Video'", transaction))
+                    using (var command = database.Command("SELECT id,title,description FROM wall_media WHERE kind='Video'", transaction))
                     {
                         using var cancel = cancellationToken.Register(command.Cancel); using var reader = command.ExecuteReader();
                         while (reader.Read()) { cancellationToken.ThrowIfCancellationRequested(); mediaCount++; if (Matches(reader.GetString(1)) || !reader.IsDBNull(2) && Matches(reader.GetString(2))) mediaHits.Add(reader.GetString(0)); }
                     }
                     var all = mediaHits.Count == mediaCount; var markHits = new List<object[]>(); var candidates = new HashSet<string>(mediaHits, StringComparer.Ordinal);
                     if (!all)
-                    using (var command = Command("SELECT kind,id,media_id,title,description FROM wall_marks", transaction))
+                    using (var command = database.Command("SELECT kind,id,media_id,title,description FROM wall_marks", transaction))
                     {
                         using var cancel = cancellationToken.Register(command.Cancel); using var reader = command.ExecuteReader();
                         while (reader.Read())
@@ -181,14 +181,14 @@ public sealed partial class CatalogRepository
             var countSql = tags.Length == 0 && string.IsNullOrWhiteSpace(query.Text)
                 ? "SELECT count(*) FROM wall_marks w WHERE " + (query.Scenes && query.Bookmarks ? "1" : query.Scenes ? "w.kind=0" : query.Bookmarks ? "w.kind=1" : "0")
                 : "SELECT count(*)" + from;
-            using (var command = Command(countSql, transaction, parameters.ToArray()))
+            using (var command = database.Command(countSql, transaction, parameters.ToArray()))
             {
                 using var cancel = cancellationToken.Register(command.Cancel);
                 count = Convert.ToInt64(command.ExecuteScalar());
             }
             cancellationToken.ThrowIfCancellationRequested();
             parameters.Add(("$offset", offset)); parameters.Add(("$limit", limit));
-            using var page = Command("SELECT w.kind,w.id,w.title,w.description,w.start,w.end,w.tags,w.preview,media.document FROM (SELECT w.*,m.added" + from
+            using var page = database.Command("SELECT w.kind,w.id,w.title,w.description,w.start,w.end,w.tags,w.preview,media.document FROM (SELECT w.*,m.added" + from
                 + " ORDER BY m.added DESC,m.id,w.start,w.id,w.kind LIMIT $limit OFFSET $offset) w JOIN media ON media.id=w.media_id ORDER BY w.added DESC,w.media_id,w.start,w.id,w.kind", transaction, parameters.ToArray());
             using var cancellation = cancellationToken.Register(page.Cancel);
             var items = new List<WallMark>();
@@ -196,9 +196,9 @@ public sealed partial class CatalogRepository
                 while (reader.Read())
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var media = JsonSerializer.Deserialize<MediaItem>(reader.GetString(8), Json) ?? throw new InvalidDataException("Invalid media record.");
+                    var media = JsonSerializer.Deserialize<MediaItem>(reader.GetString(8), CatalogRepository.Json) ?? throw new InvalidDataException("Invalid media record.");
                     items.Add(new((WallMarkKind)reader.GetInt32(0), Guid.Parse(reader.GetString(1)), media, reader.GetString(2), reader.IsDBNull(3) ? null : reader.GetString(3),
-                        reader.GetDouble(4), reader.IsDBNull(5) ? null : reader.GetDouble(5), JsonSerializer.Deserialize<List<string>>(reader.GetString(6), Json) ?? [], reader.IsDBNull(7) ? null : Guid.Parse(reader.GetString(7))));
+                        reader.GetDouble(4), reader.IsDBNull(5) ? null : reader.GetDouble(5), JsonSerializer.Deserialize<List<string>>(reader.GetString(6), CatalogRepository.Json) ?? [], reader.IsDBNull(7) ? null : Guid.Parse(reader.GetString(7))));
                 }
             transaction.Commit(); return new(items, count);
         }

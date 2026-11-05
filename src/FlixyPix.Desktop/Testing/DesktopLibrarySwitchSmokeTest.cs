@@ -63,7 +63,25 @@ public partial class MainWindow
   manager.Create("Zweite Bibliothek");
   Require(manager.Chosen is { } created && Directory.Exists(created) && !manager.IsVisible, "A new library was not created and chosen.");
   var second = manager.Chosen!;
-  var next = await SwitchLibraryAsync(second) ?? throw new InvalidOperationException("The second library did not open.");
+  // A second close during asynchronous cleanup must not release the catalog or close the window early.
+  var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+  var cancelled = false;
+  var cleanup = _libraryTasks.Run(async token =>
+  {
+   using var registration = token.Register(() => cancelled = true);
+   await release.Task;
+  });
+  var switching = SwitchLibraryAsync(second);
+  try
+  {
+   Close();
+   Require(cancelled && !switching.IsCompleted && !_closeCompleted && IsVisible,
+    "The library switch did not wait for background cleanup or allowed a repeated close.");
+   Require(_repository.QueryPage(new() {Limit=1}).TotalCount == mediaCount, "The catalog was released before background cleanup.");
+  }
+  finally { release.TrySetResult(); }
+  var next = await switching ?? throw new InvalidOperationException("The second library did not open.");
+  await cleanup;
   await Ready(next);
   Require(!IsVisible && next.IsVisible && LibraryCatalogs.SameDirectory(next._settings.DataDirectory, second), "The main window did not switch to the second library.");
   Require(next._repository.Search().Count == 0 && File.Exists(LibraryCatalogs.CatalogPath(second)), "The new library is not an empty catalog of its own.");

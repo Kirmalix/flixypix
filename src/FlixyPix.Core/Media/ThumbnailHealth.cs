@@ -1,7 +1,25 @@
 namespace FlixyPix.Core;
 
+public sealed record ThumbnailHealthResult(Guid Id, string? SourcePath, string Signature, bool Available);
+
 public sealed partial class CatalogRepository
 {
+ public void SaveCheckedThumbnailHealth(IReadOnlyCollection<ThumbnailHealthResult> results)
+ {
+  lock(gate)
+  {
+   ThrowIfDisposed();
+   // Keep the check and publication under the same gate as thumbnail changes.
+   var current = results.Where(result =>
+   {
+    var item = ReadMediaDocument(result.Id, null);
+    if(item is null)return false;
+    var path = string.IsNullOrEmpty(item.ThumbnailPath) ? (item.Kind == MediaKind.Image ? item.Path : null) : item.ThumbnailPath;
+    return path == result.SourcePath;
+   }).Select(result => (result.Id,result.Signature,result.Available)).ToArray();
+   SaveThumbnailHealth(current);
+  }
+ }
  public (string Signature, bool Available)? GetThumbnailHealth(Guid id)
  {
   lock(gate) { using var command=Command("SELECT signature,available FROM media_thumbnail_state WHERE media_id=$id",null,("$id",id.ToString())); using var reader=command.ExecuteReader(); return reader.Read() ? (reader.GetString(0),reader.GetInt32(1)!=0) : null; }

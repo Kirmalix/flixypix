@@ -32,8 +32,8 @@ public partial class MainWindow
   }
   foreach (var card in _wallPlaying.Except(wanted).ToList()) { card.ShowPreviewFrame(null, ""); _wallPlaying.Remove(card); }
   if (wanted.All(_wallPlaying.Contains)) return;
-  var run = _wallRun = new CancellationTokenSource();
-  VideoWallTask = PlayWallAsync(wanted, run.Token);
+  var run = _wallRun = CancellationTokenSource.CreateLinkedTokenSource(_libraryTasks.Token);
+  VideoWallTask = _libraryTasks.Run(_ => PlayWallAsync(wanted, run.Token));
  }
 
  private async Task PlayWallAsync(IReadOnlyList<MediaCard> cards, CancellationToken token)

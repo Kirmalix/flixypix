@@ -6,7 +6,7 @@ using FlixyPix.Core;
 namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
- private bool IsImageSetView => _view == "image-sets";
+ private bool IsImageSetView => _browse.Kind == LibraryViewKind.ImageSets;
  private Grid? _setPage;
  private ListBox? _setList, _setMembers;
  private Guid? _selectedImageSet;

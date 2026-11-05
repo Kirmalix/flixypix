@@ -17,42 +17,22 @@ public sealed record WallQuery(string? Text = null, IReadOnlyList<string>? Tags 
 
 public sealed partial class CatalogRepository
 {
-    /// <summary>All scenes and bookmarks of video files with their video, newest import first, then by place in the
-    /// video. One query per kind joins the video, so no media are loaded one by one.</summary>
-    public IReadOnlyList<WallMark> GetWallMarks(WallQuery query, CancellationToken cancellationToken = default)
+    public WallPage QueryWallPage(WallQuery query, int offset=0, int limit=120, CancellationToken cancellationToken=default) =>
+        wallQueries.QueryPage(query,offset,limit,cancellationToken);
+
+    /// <summary>Compatibility bulk API, aggregated from the canonical paged query under the catalog gate.</summary>
+    public IReadOnlyList<WallMark> GetWallMarks(WallQuery query, CancellationToken cancellationToken=default)
     {
-        ArgumentNullException.ThrowIfNull(query);
-        var text = string.IsNullOrWhiteSpace(query.Text) ? null : query.Text.Trim();
-        var tags = (query.Tags ?? []).Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).ToArray();
-        var marks = new List<WallMark>();
-        lock (gate)
+        lock(gate)
         {
             ThrowIfDisposed();
-            void Read(string table, Func<string, MediaItem, WallMark> map)
+            var items=new List<WallMark>();
+            for(var offset=0;;offset+=1000)
             {
-                using var command = Command($"SELECT x.document, m.document FROM {table} x JOIN media m ON m.id = x.media_id", null);
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var media = JsonSerializer.Deserialize<MediaItem>(reader.GetString(1), Json) ?? throw new InvalidDataException("Invalid media record.");
-                    if (media.Kind == MediaKind.Video) marks.Add(map(reader.GetString(0), media));
-                }
+                var page=QueryWallPage(query,offset,1000,cancellationToken);
+                items.AddRange(page.Items);
+                if(items.Count>=page.TotalCount || page.Items.Count==0)return items;
             }
-            if (query.Scenes) Read("scenes", (json, media) =>
-            {
-                var scene = JsonSerializer.Deserialize<Scene>(json, Json) ?? throw new InvalidDataException("Invalid scenes record.");
-                return new(WallMarkKind.Scene, scene.Id, media, scene.Title, scene.Description, scene.StartSeconds, scene.EndSeconds, scene.Tags, scene.PreviewAssetId);
-            });
-            if (query.Bookmarks) Read("bookmarks", (json, media) =>
-            {
-                var bookmark = JsonSerializer.Deserialize<Bookmark>(json, Json) ?? throw new InvalidDataException("Invalid bookmarks record.");
-                return new(WallMarkKind.Bookmark, bookmark.Id, media, bookmark.Title, bookmark.Description, bookmark.PositionSeconds, null, bookmark.Tags, bookmark.PreviewAssetId);
-            });
         }
-        bool Matches(WallMark mark) =>
-            (text == null || new[] { mark.Title, mark.Description, mark.Media.Title, mark.Media.Description }.Any(field => field?.Contains(text, StringComparison.CurrentCultureIgnoreCase) == true))
-            && tags.All(tag => mark.AllTags.Contains(tag, StringComparer.CurrentCultureIgnoreCase));
-        return marks.Where(Matches).OrderByDescending(m => m.Media.AddedAt).ThenBy(m => m.Media.Id).ThenBy(m => m.StartSeconds).ThenBy(m => m.Id).ToArray();
     }
 }

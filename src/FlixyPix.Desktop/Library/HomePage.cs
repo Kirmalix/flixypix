@@ -48,8 +48,10 @@ internal sealed class HomePage : Grid
  internal int HeroCount => heroes.Count;
  internal double CardWidth { get; private set; } = 240;
 
- internal HomePage()
+ private readonly MediaCardContext _cardContext;
+ internal HomePage(MediaCardContext context)
  {
+  _cardContext = context;
   scroller.Content = content; Children.Add(scroller);
   SizeChanged += (_, _) => Fit();
   heroTimer.Tick += (_, _) => ShowHero(heroIndex + 1);
@@ -165,7 +167,7 @@ internal sealed class HomePage : Grid
   if (heroes.Count == 0 || heroPicture is null) return;
   heroIndex = (index % heroes.Count + heroes.Count) % heroes.Count;
   var card = heroes[heroIndex];
-  var tile = new MediaCard(card.Item, loadThumbnail: false);
+  var tile = new MediaCard(card.Item, loadThumbnail: false, context: _cardContext);
   _ = ShowHeroPictureAsync(card.Item, animate);
   heroTitle!.Text = tile.Title;
   heroReason!.Text = string.Join(" · ", new[] { card.Reason, tile.DurationLabel, tile.Stars }.Where(s => !string.IsNullOrWhiteSpace(s)));
@@ -192,7 +194,7 @@ internal sealed class HomePage : Grid
   var version=artworkVersion;
   var path = item.ThumbnailPath ?? (item.Kind == MediaKind.Image ? item.Path : null);
   var picture = item.Kind==MediaKind.Video && hero?.IsVisible==true && ActualHeight>=560 && FeaturedVideoArtwork!=null
-   ? await FeaturedVideoArtwork(item,token) : await Task.Run(() => MediaCard.LoadBitmap(path, MediaCard.DecodeWidth));
+   ? await FeaturedVideoArtwork(item,token) : await Task.Run(() => MediaCard.LoadBitmap(path, _cardContext.DecodeWidth));
   if(token.IsCancellationRequested||version!=artworkVersion)return;
   if (CurrentHero?.Item.Id != item.Id || heroPicture is null) return;
   heroPicture.Source = picture;
@@ -272,7 +274,7 @@ internal sealed class HomePage : Grid
 
  private FrameworkElement MediaTile(HomeCard card, bool showProgress)
  {
-  var tile = new MediaCard(card.Item);
+  var tile = new MediaCard(card.Item, context: _cardContext);
   var picture = new Grid(); picture.SetResourceReference(BackgroundProperty, "MediaBackground");
   RoundedClip.SetRadius(picture, 8);
   picture.Children.Add(new TextBlock { Text = tile.Icon, FontFamily = SettingsUi.Icons, FontSize = 28, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = Theme.Brush("IconMuted") });
@@ -314,7 +316,7 @@ internal sealed class HomePage : Grid
    if (entity.Cover is { } cover)
    {
     var face = new Ellipse { Width = size, Height = size };
-    var tile = new MediaCard(cover);
+    var tile = new MediaCard(cover, context: _cardContext);
     void Paint() { if (tile.Thumbnail is { } source) face.Fill = new ImageBrush(source) { Stretch = Stretch.UniformToFill }; }
     tile.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(MediaCard.Thumbnail)) Paint(); };
     Paint(); _ = tile.EnsureLoaded();
@@ -328,7 +330,7 @@ internal sealed class HomePage : Grid
    picture.SetResourceReference(BackgroundProperty, "MediaBackground"); RoundedClip.SetRadius(picture, 8);
    if (entity.Cover is { } cover)
    {
-    var tile = new MediaCard(cover);
+    var tile = new MediaCard(cover, context: _cardContext);
     var image = new Image { Stretch = Stretch.UniformToFill, Opacity = .45 };
     image.SetBinding(Image.SourceProperty, new Binding(nameof(MediaCard.Thumbnail)) { Source = tile });
     Privacy.SetBlur(image, true); picture.Children.Add(image); _ = tile.EnsureLoaded();
@@ -357,7 +359,7 @@ internal sealed class HomePage : Grid
  private Button QuickButton(Func<MediaItem?> get)
  {
   var button=new Button {Content="○",FontFamily=new FontFamily("Segoe UI"),Style=(Style)Application.Current.Resources["TileAction"],Width=30,Height=30,Margin=new Thickness(5)};
-  void Update() {if(get() is {} item) {button.Content=MediaCard.QuickMembers.Contains(item.Id)?"●":"○";button.ToolTip=MediaCard.QuickMembers.Contains(item.Id)?T("Remove from quick collection"):T("Add to quick collection");AutomationProperties.SetName(button,(string)button.ToolTip);} }
+  void Update() {if(get() is {} item) {button.Content=_cardContext.QuickMembers.Contains(item.Id)?"●":"○";button.ToolTip=_cardContext.QuickMembers.Contains(item.Id)?T("Remove from quick collection"):T("Add to quick collection");AutomationProperties.SetName(button,(string)button.ToolTip);} }
   button.Loaded+=(_,_)=>Update();button.MouseEnter+=(_,_)=>Update();button.Click+=(_,e)=> {e.Handled=true;if(get() is {} item)ToggleQuick?.Invoke(item);Update();};return button;
  }
  private static Button CardButton(FrameworkElement content, string name, Action click)

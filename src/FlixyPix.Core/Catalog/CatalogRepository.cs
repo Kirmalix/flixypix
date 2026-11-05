@@ -12,6 +12,10 @@ public sealed partial class CatalogRepository : IDisposable
     private readonly object gate = new();
     private readonly SqliteConnection connection;
     private bool disposed;
+    private readonly CatalogDatabase database;
+    private readonly SceneWallQueries wallQueries;
+    private readonly CatalogFacetsCache facetsCache;
+    private readonly MediaQueries mediaQueries;
     private List<MediaItem>? cachedMedia;
     private long cachedDataVersion = -1;
     internal static readonly JsonSerializerOptions Json = new()
@@ -57,6 +61,10 @@ public sealed partial class CatalogRepository : IDisposable
         if (!encrypted && key is not null) throw new InvalidOperationException(T("The library is not encrypted."));
         this.key = key?.Clone();
         connection = new SqliteConnection(CatalogEncryption.ConnectionString(DatabasePath, this.key).ToString());
+        database = new(connection, gate, () => disposed);
+        wallQueries = new(database);
+        facetsCache = new(database);
+        mediaQueries = new(database, BuildQuery, CommitAfterIndexing);
         long schemaVersion = 0; var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
@@ -94,7 +102,7 @@ public sealed partial class CatalogRepository : IDisposable
             InitializeStashProvenance(transaction);
             InitializeStashBindings(transaction);
             InitializeQuerySchema(transaction, schemaVersion == 0);
-            InitializeWallSchema(transaction, schemaVersion < 18);
+            wallQueries.InitializeSchema(transaction, schemaVersion < 18);
             using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
                 // A checked result belongs to one thumbnail; with another thumbnail it says nothing any more.
                 "CREATE TRIGGER IF NOT EXISTS media_thumbnail_changed AFTER UPDATE OF document ON media WHEN json_extract(OLD.document,'$.thumbnailPath') IS NOT json_extract(NEW.document,'$.thumbnailPath') BEGIN DELETE FROM media_thumbnail_state WHERE media_id=NEW.id; END;", transaction)) health.ExecuteNonQuery();
@@ -132,9 +140,9 @@ public sealed partial class CatalogRepository : IDisposable
         lock (gate)
         {
             ThrowIfDisposed();
-            return QueryItems(new MediaQuery { Text = text, Tag = tag, MinimumRating = minimumRating,
+            return mediaQueries.ReadAll(new MediaQuery { Text = text, Tag = tag, MinimumRating = minimumRating,
                 IsFavorite = isFavorite, WatchLater = watchLater, Category = category, TagCategory = tagCategory },
-                null, CancellationToken.None);
+                CancellationToken.None);
         }
     }
 
@@ -146,7 +154,7 @@ public sealed partial class CatalogRepository : IDisposable
         {
             ThrowIfDisposed();
             // Edits such as rating or favourite keep the browsing caches; see CarryCachesAcross.
-            var carry = item is not null && (cachedFacets is not null || cachedTagStatistics is not null);
+            var carry = item is not null && (facetsCache.Value is not null || cachedTagStatistics is not null);
             var before = carry ? ChangeStamp() : default;
             var old = carry ? ReadMediaDocument(item!.Id, null) : null;
             using var transaction = connection.BeginTransaction();
@@ -231,7 +239,7 @@ public sealed partial class CatalogRepository : IDisposable
         lock (gate)
         {
             ThrowIfDisposed();
-            return ReadDocuments<Scene>("scenes").Where(x => mediaId is null || x.MediaId == mediaId)
+            return (mediaId is { } id ? ReadMediaDocuments<Scene>("scenes", id) : ReadDocuments<Scene>("scenes"))
                 .OrderBy(x => x.StartSeconds).ToArray();
         }
     }
@@ -626,11 +634,7 @@ public sealed partial class CatalogRepository : IDisposable
 
     private SqliteCommand Command(string sql, SqliteTransaction? transaction, params (string Name, object Value)[] parameters)
     {
-        var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.Transaction = transaction;
-        foreach (var (name, value) in parameters) command.Parameters.AddWithValue(name, value);
-        return command;
+        return database.Command(sql, transaction, parameters);
     }
 
     // Windows paths are case-insensitive; retain their original spelling in the document.

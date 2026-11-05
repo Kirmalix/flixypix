@@ -12,7 +12,7 @@ public partial class MainWindow
  /// <summary>Distance to the window's edge at which the next window is loaded.</summary>
  private const int WindowMargin = 120;
  /// <summary>Index in the whole result that should be at the top; 0 after a new search, filter or view.</summary>
- private int _anchor;
+ private int _anchor { get => _browse.Anchor; set => _browse.Anchor=value; }
  private int _visibleFirst = -1, _visibleLast = -1, _windowStart, _total;
  private (MediaQuery Query, Playlist? Playlist, bool CollectionOrder)? _window;
  private Task _windowShift = Task.CompletedTask;
@@ -43,7 +43,7 @@ public partial class MainWindow
   _visibleFirst = e.First; _visibleLast = e.Last;
   // Thumbnails are decoded for the tile as laid out, in steps, so a slightly wider window does not reload them.
   if (Tiles is { TileWidth: > 0 } panel)
-   MediaCard.DecodeWidth = Math.Clamp((int)Math.Ceiling(panel.TileWidth * VisualTreeHelper.GetDpi(this).DpiScaleX / 160) * 160, 320, 1280);
+   _cardContext.DecodeWidth = Math.Clamp((int)Math.Ceiling(panel.TileWidth * VisualTreeHelper.GetDpi(this).DpiScaleX / 160) * 160, 320, 1280);
   if (e.First >= 0) _anchor = e.First;
   UpdatePager(); UpdateVideoWall();
   var loadedEnd = _windowStart + MediaList.Items.Count;
@@ -51,7 +51,7 @@ public partial class MainWindow
   var after = loadedEnd < _total && e.Last > loadedEnd - WindowMargin;
   if (!before && !after || _window == null) return;
   _windowTarget = e.First;
-  if (_windowShift.IsCompleted) _windowShift = ShiftWindowAsync();
+  if (_windowShift.IsCompleted) _windowShift = _libraryTasks.Run(_ => ShiftWindowAsync());
  }
 
  /// <summary>Loads the window around the latest requested place; requests arriving meanwhile are merged into one more load.</summary>
@@ -68,7 +68,7 @@ public partial class MainWindow
     var result = _repository.QueryPlaylistPage(window.Playlist, window.Query with { Offset = start }, window.CollectionOrder);
     return (result.Page.Items, Offset: result.Offset);
    });
-   var cards = await Task.Run(() => loaded.Items.Select(i => new MediaCard(i, true, general.ShowExtension, general.MarkMissingFiles)).ToList());
+   var cards = await Task.Run(() => loaded.Items.Select(i => new MediaCard(i, true, general.ShowExtension, general.MarkMissingFiles, context: _cardContext)).ToList());
    if (version != _refreshVersion || _closing) return;
    var selected = SelectedMedia;
    _refreshing = true;

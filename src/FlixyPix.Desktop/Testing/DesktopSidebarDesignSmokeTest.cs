@@ -55,7 +55,7 @@ public partial class MainWindow
   var drawing=new DrawingVisual();using(var context=drawing.RenderOpen())context.DrawRectangle(new VisualBrush(Sidebar),null,new Rect(0,0,Sidebar.ActualWidth,Sidebar.ActualHeight));scaled.Render(drawing);
   var encoder=new System.Windows.Media.Imaging.PngBitmapEncoder();encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(scaled));using(var output=File.Create(Path.Combine(directory,"sidebar-cards-scaled.png")))encoder.Save(output);
   SidebarColumn.Width=width;_folderDesiredHeight=height;FolderViewport.Height=height;
-  var page=new HomePage();var host=new Window {Owner=this,Width=960,Height=760,Content=page,ShowInTaskbar=false};
+  var page=new HomePage(_cardContext);var host=new Window {Owner=this,Width=960,Height=760,Content=page,ShowInTaskbar=false};
   var featured=new MediaItem {Kind=MediaKind.Video,Title="Featured",Path="featured.mp4"};
   var row=new MediaItem {Kind=MediaKind.Video,Title="Ordinary",Path="ordinary.mp4"};
   var requests=new List<Guid>();var tokens=new List<CancellationToken>();

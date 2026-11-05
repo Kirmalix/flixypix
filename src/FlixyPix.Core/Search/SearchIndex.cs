@@ -152,7 +152,7 @@ public sealed partial class CatalogRepository
         if (indexing is not { } run || run.Transaction != transaction) return;
         indexing = null;
         using var changes = Command("SELECT total_changes()", null); var after = Convert.ToInt64(changes.ExecuteScalar());
-        if (cachedFacets is not null && cachedFacetStamp.Changes == run.ChangesBefore) cachedFacetStamp = cachedFacetStamp with { Changes = after };
+        facetsCache.PreserveAfterIndexing(run.ChangesBefore,after);
         if (cachedTagStatistics is not null && cachedTagStatisticsStamp.Changes == run.ChangesBefore) cachedTagStatisticsStamp = cachedTagStatisticsStamp with { Changes = after };
     }
 

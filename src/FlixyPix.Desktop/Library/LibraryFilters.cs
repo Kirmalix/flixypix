@@ -14,13 +14,13 @@ namespace FlixyPix.Desktop;
 /// section on the right. Every change applies at once.</summary>
 public partial class MainWindow
 {
- private List<ReviewState> _reviewStates = [];
- private MediaFilter _filter = new();
- private bool _tagsMatchAny;
+ private List<ReviewState> _reviewStates { get => _browse.State.ReviewStates; set => _browse.State=_browse.State with {ReviewStates=value}; }
+ private MediaFilter _filter { get => _browse.State.Filter; set => _browse.State=_browse.State with {Filter=value}; }
+ private bool _tagsMatchAny { get => _browse.State.TagsMatchAny; set => _browse.State=_browse.State with {TagsMatchAny=value}; }
  private Popup? _filterPopup;
 
  /// <summary>What the main window shows now, as one state (saved searches, restore on start, back and forward).</summary>
- internal ViewState CaptureViewState() => new()
+ internal ViewState CaptureViewState() => _browse.Capture(new ViewState()
  {
   ImageSetId = IsImageSetView ? _selectedImageSet : null,
   PublicationGroupId = IsPublicationGroupView ? _selectedPublicationGroup : null,
@@ -32,13 +32,14 @@ public partial class MainWindow
   ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value), Position = Math.Max(0, _visibleFirst),
   AnchorId = _visibleFirst >= _windowStart && _visibleFirst - _windowStart < MediaList.Items.Count ? ((MediaCard)MediaList.Items[_visibleFirst - _windowStart]).Item.Id : null,
   Selection = SelectedMedia.Select(m => m.Id).ToList(),
- };
+ });
 
  /// <summary>Shows a state: view, filters, sort and display; the caller decides about position and selection.</summary>
  internal void ApplyViewState(ViewState state, string? title = null)
  {
   if (!LeaveRoleView()) { UpdateNavigation(); return; }
   if (IsRoleView) RecordView();
+  state = _browse.ResolveForLoad(state);
   _pendingDirectoryState = state.Directory;
   var initializing = _initializingBrowsing; _initializingBrowsing = true;
   try

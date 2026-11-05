@@ -25,6 +25,25 @@ public sealed class SceneWallTests : IDisposable
     });
 
     [Fact]
+    public void ScopedMarksDoNotReadUnrelatedDocumentsAndBulkWallUsesCanonicalPaging()
+    {
+        var first=Add("First",MediaKind.Video,DateTimeOffset.Now);
+        var other=Add("Other",MediaKind.Video,DateTimeOffset.Now);
+        var scene=catalog.UpsertScene(new() {MediaId=first.Id,Title="Scene",StartSeconds=0,EndSeconds=1});
+        var bookmark=catalog.UpsertBookmark(new() {MediaId=first.Id,Title="Bookmark",PositionSeconds=2});
+        catalog.UpsertScene(new() {MediaId=other.Id,Title="Other",StartSeconds=0,EndSeconds=1});
+        catalog.UpsertBookmark(new() {MediaId=other.Id,Title="Other",PositionSeconds=2});
+        Assert.Equal(WallReference.Read(catalog,new()).Select(mark=>mark.Id),catalog.GetWallMarks(new()).Select(mark=>mark.Id));
+        using var connection=new SqliteConnection("Data Source="+catalog.DatabasePath);connection.Open();
+        CatalogRepository.AddOrdinalCollation(connection);
+        using var corrupt=connection.CreateCommand();
+        corrupt.CommandText="UPDATE scenes SET document=json_set(document,'$.id','invalid') WHERE media_id=$id; UPDATE bookmarks SET document=json_set(document,'$.id','invalid') WHERE media_id=$id";
+        corrupt.Parameters.AddWithValue("$id",other.Id.ToString());corrupt.ExecuteNonQuery();
+        Assert.Equal(scene.Id,Assert.Single(catalog.GetScenes(first.Id)).Id);
+        Assert.Equal(bookmark.Id,Assert.Single(catalog.GetBookmarks(first.Id)).Id);
+    }
+
+    [Fact]
     public void TextHitCacheUsesTheCurrentCulture()
     {
         var media = Add("Istanbul", MediaKind.Video, DateTimeOffset.UtcNow);
@@ -66,7 +85,7 @@ public sealed class SceneWallTests : IDisposable
         foreach (var mask in new[] { (true, true), (true, false), (false, true), (false, false) })
         {
             var query = new WallQuery(Text: text, Scenes: mask.Item1, Bookmarks: mask.Item2);
-            var expected = catalog.GetWallMarks(query);
+            var expected = WallReference.Read(catalog,query);
             var page = catalog.QueryWallPage(query, limit: 1);
             Assert.Equal(expected.Count, page.TotalCount);
             Assert.Equal(expected.Take(1).Select(m => m.Id), page.Items.Select(m => m.Id));
@@ -109,7 +128,7 @@ public sealed class SceneWallTests : IDisposable
         var media = Add("Paged", MediaKind.Video, DateTimeOffset.UtcNow, "Performer");
         for (var index = 0; index < 9; index++) catalog.UpsertBookmark(new() { MediaId = media.Id, Title = "Mark " + index, PositionSeconds = index, Tags = [index % 2 == 0 ? "Even" : "Odd"] });
         var query = new WallQuery(Tags: ["performer", "even"]);
-        var expected = catalog.GetWallMarks(query);
+        var expected = WallReference.Read(catalog,query);
         var first = catalog.QueryWallPage(query, limit: 2);
         var second = catalog.QueryWallPage(query, offset: 2, limit: 2);
         Assert.Equal(5, first.TotalCount); Assert.Equal(5, second.TotalCount);
@@ -129,13 +148,13 @@ public sealed class SceneWallTests : IDisposable
         var second = Add("Newer", MediaKind.Video, when.AddTicks(1));
         catalog.UpsertBookmark(new() { MediaId = first.Id, Title = "First", PositionSeconds = 1 });
         catalog.UpsertScene(new() { MediaId = second.Id, Title = "Second", StartSeconds = 1, EndSeconds = 2 });
-        Assert.Equal(catalog.GetWallMarks(new()).Select(m => m.Id), catalog.QueryWallPage(new()).Items.Select(m => m.Id));
+        Assert.Equal(WallReference.Read(catalog,new()).Select(m => m.Id), catalog.QueryWallPage(new()).Items.Select(m => m.Id));
         var before = System.Globalization.CultureInfo.CurrentCulture;
         try
         {
             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
             var query = new WallQuery(Text: "ıstanbul", Tags: ["ısık"]);
-            Assert.Equal(catalog.GetWallMarks(query).Select(m => m.Id), catalog.QueryWallPage(query).Items.Select(m => m.Id));
+            Assert.Equal(WallReference.Read(catalog,query).Select(m => m.Id), catalog.QueryWallPage(query).Items.Select(m => m.Id));
         }
         finally { System.Globalization.CultureInfo.CurrentCulture = before; }
     }
@@ -145,7 +164,7 @@ public sealed class SceneWallTests : IDisposable
     {
         var media = Add("Video", MediaKind.Video, DateTimeOffset.UtcNow);
         var bookmark = catalog.UpsertBookmark(new Bookmark { MediaId = media.Id, Title = "Moment", Tags = ["Unique"], PositionSeconds = 12 });
-        Assert.Equal(bookmark.Id, Assert.Single(catalog.GetWallMarks(new WallQuery(Tags: ["unique"]))).Id);
+        Assert.Equal(bookmark.Id, Assert.Single(WallReference.Read(catalog,new WallQuery(Tags: ["unique"]))).Id);
         Assert.Empty(catalog.GetMedia(media.Id)!.Tags);
     }
 
@@ -160,16 +179,16 @@ public sealed class SceneWallTests : IDisposable
         catalog.UpsertScene(new Scene { MediaId = newer.Id, Title = "Früh", Description = "mit Sonnenuntergang", StartSeconds = 20, EndSeconds = 60 });
         catalog.UpsertBookmark(new Bookmark { MediaId = audio.Id, Title = "Kapitel", PositionSeconds = 5 });
 
-        var all = catalog.GetWallMarks(new WallQuery());
+        var all = WallReference.Read(catalog,new WallQuery());
         Assert.Equal(["Früh", "Spät", "Anfang"], all.Select(m => m.Title));
         Assert.Equal([WallMarkKind.Scene, WallMarkKind.Bookmark, WallMarkKind.Scene], all.Select(m => m.Kind));
         Assert.Equal(newer.Id, all[0].Media.Id); Assert.Equal(60, all[0].EndSeconds); Assert.Null(all[1].EndSeconds);
 
-        Assert.Equal(["Früh"], catalog.GetWallMarks(new WallQuery(Text: "sonnenUNTERgang")).Select(m => m.Title));
-        Assert.Equal(["Anfang"], catalog.GetWallMarks(new WallQuery(Text: "alt")).Select(m => m.Title));
-        Assert.Equal(["Anfang"], catalog.GetWallMarks(new WallQuery(Tags: ["jane doe", "Strand"])).Select(m => m.Title));
-        Assert.Empty(catalog.GetWallMarks(new WallQuery(Tags: ["Acme", "Strand"])));
-        Assert.Equal(["Spät"], catalog.GetWallMarks(new WallQuery(Scenes: false)).Select(m => m.Title));
-        Assert.Equal(["Früh", "Anfang"], catalog.GetWallMarks(new WallQuery(Bookmarks: false)).Select(m => m.Title));
+        Assert.Equal(["Früh"], WallReference.Read(catalog,new WallQuery(Text: "sonnenUNTERgang")).Select(m => m.Title));
+        Assert.Equal(["Anfang"], WallReference.Read(catalog,new WallQuery(Text: "alt")).Select(m => m.Title));
+        Assert.Equal(["Anfang"], WallReference.Read(catalog,new WallQuery(Tags: ["jane doe", "Strand"])).Select(m => m.Title));
+        Assert.Empty(WallReference.Read(catalog,new WallQuery(Tags: ["Acme", "Strand"])));
+        Assert.Equal(["Spät"], WallReference.Read(catalog,new WallQuery(Scenes: false)).Select(m => m.Title));
+        Assert.Equal(["Früh", "Anfang"], WallReference.Read(catalog,new WallQuery(Bookmarks: false)).Select(m => m.Title));
     }
 }

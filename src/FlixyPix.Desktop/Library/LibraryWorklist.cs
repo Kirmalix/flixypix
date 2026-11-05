@@ -6,25 +6,20 @@ namespace FlixyPix.Desktop;
 /// list, marked as done, so the result can be seen; "Update list" or another view removes it.</summary>
 public partial class MainWindow
 {
- private readonly HashSet<Guid> _keptMedia=[];
- private ViewState? _keptView,_shownView;
- private bool _dropKeptMedia,_ignoreLeavingOnce;
-
- private static bool IsWorklist(ViewState state)=>state.Filter.HasThumbnail is not null||state.Filter.UnratedOnly;
- private static bool SameList(ViewState? known,ViewState state)=>known!=null&&known.SameView(state with {SortOrder=known.SortOrder});
+ private WorklistState _worklist => _browse.Worklist;
+ private HashSet<Guid> _keptMedia => _worklist.Kept;
+ private ViewState? _shownView { get => _worklist.Shown; set => _worklist.Shown=value; }
+ private bool _dropKeptMedia { get => _worklist.DropNext; set => _worklist.DropNext=value; }
+ private bool _ignoreLeavingOnce { get => _worklist.IgnoreLeavingOnce; set => _worklist.IgnoreLeavingOnce=value; }
 
  /// <summary>Called before each query: media of the list on screen that no longer match are kept in it.</summary>
- private async Task UpdateKeptMediaAsync(ViewState state,MediaQuery matches)
+ private async Task UpdateKeptMediaAsync(ViewState state,MediaQuery matches,long generation)
  {
-  var sameList=SameList(_keptView,state);var drop=_dropKeptMedia;var ignore=_ignoreLeavingOnce;
-  _keptView=state;_dropKeptMedia=_ignoreLeavingOnce=false;
-  if(!sameList||drop||!IsWorklist(state))_keptMedia.Clear();
-  if(!sameList||drop||ignore||!IsWorklist(state)||!SameList(_shownView,state))return;
-  var listed=(MediaList.ItemsSource as IEnumerable<MediaCard>??[]).Select(card=>card.Item.Id).Where(id=>!_keptMedia.Contains(id)).ToArray();
-  if(listed.Length==0)return;
+  var request=_worklist.Begin(state,(MediaList.ItemsSource as IEnumerable<MediaCard>??[]).Select(card=>card.Item.Id),generation);
   var repository=_repository;
-  var still=await Task.Run(()=>repository.MatchingMedia(matches,listed));
-  _keptMedia.UnionWith(listed.Where(id=>!still.Contains(id)));
+  var still=request.Listed.Length==0 ? new HashSet<Guid>() : await Task.Run(()=>repository.MatchingMedia(matches,request.Listed));
+  if(generation!=_refreshVersion||_closing)return;
+  _worklist.Commit(request,still);
  }
 
  /// <summary>The kept media that still exist and no longer match.</summary>

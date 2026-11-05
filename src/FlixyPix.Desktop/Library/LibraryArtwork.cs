@@ -25,7 +25,7 @@ public partial class MainWindow
     .FirstOrDefault(a => CatalogRepository.ImageExtension(a.Data) != null);
    if (preferred == null) continue;
    var path = await Task.Run(() => _repository.MaterializeMediaAsset(preferred,Path.Combine(_settings.DataDirectory,"media-assets")),token);
-   _repository.Upsert(item with { ThumbnailPath = path });
+   _repository.RestoreThumbnail(item, path);
   }
  }
 }

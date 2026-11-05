@@ -57,23 +57,21 @@ public partial class MainWindow
   {
    try
    {
-    async Task<MediaFile> Probe(MediaFile file)
+    var results = new List<TechnicalAnalysis>();
+    async Task Probe(MediaFile file)
     {
-     if (!File.Exists(file.Path)) return file;
+     var sourceFile = new FileInfo(file.Path);
+     if (!sourceFile.Exists) return;
+     var size = sourceFile.Length; var modified = sourceFile.LastWriteTimeUtc;
      var probe = await _tools.ProbeAsync(file.Path, itemToken);
-     return file with { Technical = TechnicalOf(listed.Kind, probe), Width = file.Width ?? probe.Width, Height = file.Height ?? probe.Height,
-      DurationSeconds = file.DurationSeconds ?? probe.DurationSeconds, FileSize = file.FileSize ?? new FileInfo(file.Path).Length };
+     var values = file with { Technical = TechnicalOf(listed.Kind, probe), Width = file.Width ?? probe.Width, Height = file.Height ?? probe.Height,
+      DurationSeconds = file.DurationSeconds ?? probe.DurationSeconds, FileSize = file.FileSize ?? size };
+     results.Add(new(file, values, size, modified));
     }
-    var main = await Probe(MediaVersions.Main(listed));
-    var versions = new List<MediaFile>();
-    foreach (var file in listed.Files) versions.Add(await Probe(file));
-    if (_repository.GetMedia(listed.Id) is not { } current) return;
-    _repository.Upsert(current with
-    {
-     Technical = main.Technical ?? current.Technical, Width = current.Width ?? main.Width, Height = current.Height ?? main.Height,
-     DurationSeconds = current.DurationSeconds ?? main.DurationSeconds,
-     Files = [.. current.Files.Select(file => versions.FirstOrDefault(v => string.Equals(v.Path, file.Path, StringComparison.OrdinalIgnoreCase)) ?? file)],
-    });
+    await Probe(MediaVersions.Main(listed));
+    foreach (var file in listed.Files) await Probe(file);
+    itemToken.ThrowIfCancellationRequested();
+    if (!_repository.ApplyTechnicalAnalysis(listed.Id, results)) return;
     var number = Interlocked.Increment(ref read);
     _ = Dispatcher.InvokeAsync(() => Status.Text = T("Technical data · {0} · {1}", number, listed.Title));
    }

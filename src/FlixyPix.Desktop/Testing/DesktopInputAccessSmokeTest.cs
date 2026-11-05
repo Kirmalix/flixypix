@@ -34,8 +34,8 @@ public partial class MainWindow
     Wheel(120);await Idle();Check(FolderViewport.VerticalOffset==0,"Reverse wheel did not return to top.");
    } finally {root.Children.Clear();root.Children.AddRange(children);Folders.Items.Refresh();}
    ApplyViewState(new());await _lastRefresh;await Idle();
-   Check(new MediaCard(new(){Path="fit.mp4"}).ThumbnailStretch==Stretch.Uniform,"Default thumbnails crop.");
-   ThumbnailFit.SelectedIndex=1;await _lastRefresh;Check(_repository.GetPreferences().General.CropThumbnails&&new MediaCard(new(){Path="fill.mp4"}).ThumbnailStretch==Stretch.UniformToFill,"Crop setting not applied.");ThumbnailFit.SelectedIndex=0;await _lastRefresh;
+   Check(new MediaCard(new(){Path="fit.mp4"}, context: _cardContext).ThumbnailStretch==Stretch.Uniform,"Default thumbnails crop.");
+   ThumbnailFit.SelectedIndex=1;await _lastRefresh;Check(_repository.GetPreferences().General.CropThumbnails&&new MediaCard(new(){Path="fill.mp4"}, context: _cardContext).ThumbnailStretch==Stretch.UniformToFill,"Crop setting not applied.");ThumbnailFit.SelectedIndex=0;await _lastRefresh;
    var first=MediaList.Items.Cast<MediaCard>().First();MediaList.SelectedItem=first;await Idle();
    var aspect=Visuals<AspectBox>((ListBoxItem)MediaList.ItemContainerGenerator.ContainerFromItem(first)).First();Check(Math.Abs(aspect.Ratio-9d/16)<.001,"Grid ratio is not 16:9.");
    var help=new HelpWindow(this,T("Help"),HelpWindow.Guide());help.Show();await Idle();Capture((FrameworkElement)help.Content,Path.Combine(directory,"help-offline.png"));help.Close();

@@ -226,51 +226,9 @@ public sealed partial class CatalogRepository
         }
     }
 
-    public MediaPage QueryPage(MediaQuery query, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(query);
-        if (query.Offset < 0 || query.Limit is < 1 or > 1000) throw new ArgumentOutOfRangeException(nameof(query), "Offset must be nonnegative and page size 1–1000.");
-        lock (gate)
-        {
-            ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
-            using var transaction = connection.BeginTransaction();
-            var (where, parameters) = BuildQuery(query, transaction);
-            long count;
-            using (var command = Command("SELECT count(*) FROM media_query q " + where, transaction, parameters))
-            {
-                using var cancel = cancellationToken.Register(command.Cancel);
-                count = Convert.ToInt64(command.ExecuteScalar());
-            }
-            var items = QueryItems(query, transaction, cancellationToken, where, parameters);
-            CommitAfterIndexing(transaction);
-            return new MediaPage(items, count);
-        }
-    }
+    public MediaPage QueryPage(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryPage(query,cancellationToken);
 
-    private IReadOnlyList<MediaItem> QueryItems(MediaQuery query, SqliteTransaction? transaction, CancellationToken cancellationToken,
-        string? where = null, (string Name, object Value)[]? parameters = null)
-    {
-        if (where is null) (where, parameters) = BuildQuery(query, transaction);
-        var order = FullOrderSql(query);
-        // Apply OFFSET/LIMIT to the compact projection before fetching large JSON documents.
-        // A deep page must not pull 100000 complete records through the media table.
-        var sql = transaction is null
-            ? $"SELECT m.document FROM media_query q JOIN media m ON m.id=q.id {where} ORDER BY {order}"
-            : $"SELECT m.document FROM (SELECT q.* FROM media_query q {where} ORDER BY {order} LIMIT $limit OFFSET $offset) q JOIN media m ON m.id=q.id ORDER BY {order}";
-        using var command = Command(sql, transaction, parameters!);
-        if (transaction is not null) { command.Parameters.AddWithValue("$limit", query.Limit); command.Parameters.AddWithValue("$offset", query.Offset); }
-        using var cancel = cancellationToken.Register(command.Cancel);
-        using var reader = command.ExecuteReader();
-        var items = new List<MediaItem>();
-        while (reader.Read())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            items.Add(JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json) ?? throw new InvalidDataException("Invalid media record."));
-        }
-        return items;
-    }
-
-    private (string Where, (string Name, object Value)[] Parameters) BuildQuery(MediaQuery query, SqliteTransaction? transaction)
+    private CompiledMediaQuery BuildQuery(MediaQuery query, SqliteTransaction? transaction)
     {
         var conditions = new List<string>();
         var parameters = new List<(string Name, object Value)>();
@@ -327,10 +285,10 @@ public sealed partial class CatalogRepository
             ValidateSearchExpression(query.Expression);
             conditions.Add(BuildExpressionSql(query.Expression, Parameter, transaction));
         }
-        if (conditions.Count == 0) return ("", parameters.ToArray());
+        if (conditions.Count == 0) return new("", parameters.ToArray());
         var where = string.Join(" AND ", conditions);
         if (query.KeepIds.Count > 0) where = $"({where}) OR q.id IN (SELECT value FROM json_each({Parameter(JsonSerializer.Serialize(query.KeepIds.Select(id => id.ToString())))}))";
-        return ("WHERE " + where, parameters.ToArray());
+        return new("WHERE " + where, parameters.ToArray());
     }
 
     /// <summary>Those of the given media that exist and match the query; paging and <see cref="MediaQuery.KeepIds"/> do not count.</summary>
@@ -352,72 +310,6 @@ public sealed partial class CatalogRepository
         return result;
     }
 
-    private CatalogFacets? cachedFacets;
-    private (long Changes, long DataVersion) cachedFacetStamp;
-
-    // Facets scan every media row; browsing asks for them on each refresh, so reuse them
-    // until this connection writes (total_changes) or another connection commits (data_version).
-    private (long Changes, long DataVersion) ChangeStamp()
-    {
-        using var changes = Command("SELECT total_changes()", null);
-        using var version = Command("PRAGMA data_version", null);
-        return (Convert.ToInt64(changes.ExecuteScalar()), Convert.ToInt64(version.ExecuteScalar()));
-    }
-
-    public CatalogFacets GetFacets(CancellationToken cancellationToken = default)
-    {
-        lock (gate)
-        {
-            ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
-            var stamp = ChangeStamp();
-            if (cachedFacets is not null && cachedFacetStamp == stamp) return cachedFacets;
-            using var transaction = connection.BeginTransaction();
-            IReadOnlyList<string> Values(string sql)
-            {
-                using var command = Command(sql, transaction);
-                using var cancel = cancellationToken.Register(command.Cancel);
-                using var reader = command.ExecuteReader();
-                var values = new List<string>();
-                while (reader.Read()) { cancellationToken.ThrowIfCancellationRequested(); if (!reader.IsDBNull(0)) values.Add(reader.GetString(0)); }
-                return values;
-            }
-            long count;
-            using (var countCommand = Command("SELECT count(*) FROM media_query", transaction)) count = Convert.ToInt64(countCommand.ExecuteScalar());
-            var tags = Values("SELECT DISTINCT tag COLLATE EFP_ORDINAL FROM media_tags ORDER BY tag COLLATE EFP_ORDINAL");
-            // Values and how many media carry each, in the order of the value.
-            (IReadOnlyList<string> Values, Dictionary<string, long> Counts) Counted(string sql)
-            {
-                using var command = Command(sql, transaction);
-                using var cancel = cancellationToken.Register(command.Cancel);
-                using var reader = command.ExecuteReader();
-                var values = new List<string>(); var counts = new Dictionary<string, long>(StringComparer.Ordinal);
-                while (reader.Read())
-                {
-                    cancellationToken.ThrowIfCancellationRequested(); if (reader.IsDBNull(0)) continue;
-                    var value = reader.GetString(0); values.Add(value); counts[value] = reader.GetInt64(1);
-                }
-                return (values, counts);
-            }
-            var (categories, categoryCounts) = Counted("SELECT category COLLATE EFP_ORDINAL,count(*) FROM media_query WHERE category IS NOT NULL GROUP BY 1 ORDER BY 1 COLLATE EFP_ORDINAL");
-            var groups = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
-            using (var command = Command("SELECT DISTINCT category COLLATE EFP_ORDINAL,tag COLLATE EFP_ORDINAL FROM media_tags WHERE category<>'' ORDER BY category COLLATE EFP_ORDINAL,tag COLLATE EFP_ORDINAL", transaction))
-            {
-                using var cancel = cancellationToken.Register(command.Cancel);
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var group = reader.GetString(0);
-                    if (!groups.TryGetValue(group, out var list)) groups[group] = list = new List<string>();
-                    ((List<string>)list).Add(reader.GetString(1));
-                }
-            }
-            var (folders, folderCounts) = Counted("SELECT efp_folder(path) COLLATE EFP_ORDINAL,count(*) FROM media_query GROUP BY 1 ORDER BY 1 COLLATE EFP_ORDINAL");
-            var (_, tagCategoryCounts) = Counted("SELECT category COLLATE EFP_ORDINAL,count(DISTINCT media_id) FROM media_tags WHERE category<>'' GROUP BY 1");
-            transaction.Commit();
-            cachedFacets = new(count, tags, categories, groups.Keys.ToArray(), folders, groups, folderCounts, categoryCounts, tagCategoryCounts);
-            cachedFacetStamp = stamp;
-            return cachedFacets;
-        }
-    }
+    private (long Changes,long DataVersion) ChangeStamp() => database.ChangeStamp();
+    public CatalogFacets GetFacets(CancellationToken cancellationToken=default) => facetsCache.Read(cancellationToken);
 }

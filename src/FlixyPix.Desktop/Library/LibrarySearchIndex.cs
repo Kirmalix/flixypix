@@ -15,7 +15,7 @@ public partial class MainWindow
   if (!_searchIndexWarmup.IsCompleted || _closing) return;
   var repository = _repository; var stop = _searchIndexStop.Token;
   long total = 0;
-  _searchIndexWarmup = Task.Run(() =>
+  _searchIndexWarmup = _libraryTasks.Run(_ => Task.Run(() =>
   {
    try
    {
@@ -23,7 +23,7 @@ public partial class MainWindow
     if (total > 0) repository.PrepareSearchIndex(stop);
    }
    catch (Exception error) when (error is ObjectDisposedException or OperationCanceledException or SqliteException) { }
-  }, stop);
+  }, stop));
   ShowSearchIndexProgress(repository, () => total);
  }
 

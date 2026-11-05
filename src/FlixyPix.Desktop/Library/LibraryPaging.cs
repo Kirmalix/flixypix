@@ -38,7 +38,7 @@ public partial class MainWindow
  private void UpdatePager()
  {
   var state = (CurrentPage, PageCount, PageSize);
-  PagerBar.Visibility = state.Item2 > 1 && MediaCard.Display.ShowPager ? Visibility.Visible : Visibility.Collapsed;
+  PagerBar.Visibility = state.Item2 > 1 && _cardContext.Display.ShowPager ? Visibility.Visible : Visibility.Collapsed;
   if (state == _pager || state.Item2 <= 1) { _pager = state; return; }
   _pager = state;
   var (page, pages, size) = state;

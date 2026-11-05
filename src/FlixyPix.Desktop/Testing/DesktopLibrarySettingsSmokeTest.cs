@@ -63,7 +63,7 @@ public partial class MainWindow
    var picture = Descendants<AspectBox>(item).First();
    var target = Descendants<Image>(picture).First();
    target.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent });
-   var armed = $"armed {_clickToPlay != null}, drag {_dragStart != null}, display {MediaCard.Display.ClickPlays}, on picture {OnPicture(target, item)}";
+   var armed = $"armed {_clickToPlay != null}, drag {_dragStart != null}, display {_cardContext.Display.ClickPlays}, on picture {OnPicture(target, item)}";
    target.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseUpEvent });
    for (var wait = 0; _viewer is not ImageViewerWindow && wait < 40; wait++) await Task.Delay(50);
    Require(_viewer is ImageViewerWindow, "A click on the picture did not open the medium (" + armed + ").");

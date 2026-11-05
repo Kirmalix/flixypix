@@ -7,7 +7,7 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow
 {
- private bool IsPublicationGroupView=>_view=="publication-groups";
+ private bool IsPublicationGroupView=>_browse.Kind==LibraryViewKind.PublicationGroups;
  private Grid? _publicationPage;
  private ListBox? _publicationList,_publicationMembers;
  private Guid? _selectedPublicationGroup;

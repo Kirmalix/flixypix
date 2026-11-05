@@ -600,9 +600,9 @@ public partial class MainWindow
   await Task.Delay(400);
   Require(hovered.RenderTransform is TranslateTransform { Y: 0 } && hovered.Effect == null, "The tile did not settle after the pointer left.");
   // Started videos show how far they were watched.
-  var watched = new MediaCard(new MediaItem { Path = Path.Combine(fixtureDirectory, "angefangen.mp4"), Kind = MediaKind.Video, DurationSeconds = 600, PlaybackPositionSeconds = 240 }, false);
+  var watched = new MediaCard(new MediaItem { Path = Path.Combine(fixtureDirectory, "angefangen.mp4"), Kind = MediaKind.Video, DurationSeconds = 600, PlaybackPositionSeconds = 240 }, false, context: _cardContext);
   Require(watched.ProgressVisibility == Visibility.Visible && Math.Abs(watched.Progress - .4) < 1e-9 && watched.ProgressLabel.Contains("40", StringComparison.Ordinal), "The watch progress is wrong.");
-  Require(new MediaCard(watched.Item with { PlaybackPositionSeconds = 590 }, false).ProgressVisibility == Visibility.Collapsed, "A finished video still shows progress.");
+  Require(new MediaCard(watched.Item with { PlaybackPositionSeconds = 590 }, false, context: _cardContext).ProgressVisibility == Visibility.Collapsed, "A finished video still shows progress.");
   // A narrow window folds both sidebars to their rails without changing the saved choice; widening brings both back.
   var (oldWidth, oldState) = (Width, WindowState); WindowState = WindowState.Normal; Width = 940; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
   Require(!SidebarExpanded && SidebarRail.IsVisible && !DetailsExpanded && DetailsColumn.Width.Value == RailWidth && !_settings.SidebarCollapsed && !_settings.DetailsCollapsed,

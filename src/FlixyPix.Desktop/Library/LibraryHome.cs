@@ -16,7 +16,7 @@ public partial class MainWindow
 
  private void InitializeHome()
  {
-  _home = new HomePage { Visibility = Visibility.Collapsed };
+  _home = new HomePage(_cardContext) { Visibility = Visibility.Collapsed };
   _home.SetResourceReference(BackgroundProperty, "WindowBackground");
   Grid.SetRow(_home, 1); Grid.SetRowSpan(_home, 4); Panel.SetZIndex(_home, 10);
   MediaPane.Children.Add(_home);
@@ -69,7 +69,7 @@ public partial class MainWindow
   var hour = DateTime.Now.Hour;
   CountLabel.Text = (hour < 11 ? T("Good morning") : hour < 18 ? T("Good afternoon") : T("Good evening")) + (total > 0 ? Tn(total, " · 1 item in your library", " · {0:N0} items in your library") : "");
   if (first && !catalogEmpty) _home.ShowLoading();
-  _lastHome = BuildHomeAsync(catalogEmpty);
+  _lastHome = _libraryTasks.Run(_ => BuildHomeAsync(catalogEmpty));
  }
 
  private async Task BuildHomeAsync(bool catalogEmpty)
@@ -92,6 +92,7 @@ public partial class MainWindow
  internal async Task StartAsync(bool mayOpenHome)
  {
   await RestoreLastViewAsync();
+  if (_closing) return;
   if (mayOpenHome && _view != "home" && _repository.GetPreferences().Home.StartOnHome) { GoHome(); await _lastRefresh; }
   OfferCompaction();
  }

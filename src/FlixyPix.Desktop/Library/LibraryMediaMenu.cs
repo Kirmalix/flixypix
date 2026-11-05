@@ -38,7 +38,7 @@ public partial class MainWindow
   entries.Add(new MenuCommand(T("Watch later"), () => MarkWatchLater(items)) { Icon = "", Checked = items.All(i => i.WatchLater) });
   entries.Add(MenuSpec.Command(T("Edit tags …"), Here(FocusTagInput), "", KeyLabel("Ctrl+T")));
   entries.Add(MenuSpec.Separator);
-  entries.Add(new MenuCommand(T("In the target collection"), () => ToggleTargetCollection()) { Icon = "\uE710", Shortcut = outside ? null : "B", Checked = items.All(i => MediaCard.TargetMembers.Contains(i.Id)), Enabled = !outside });
+  entries.Add(new MenuCommand(T("In the target collection"), () => ToggleTargetCollection()) { Icon = "\uE710", Shortcut = outside ? null : "B", Checked = items.All(i => _cardContext.TargetMembers.Contains(i.Id)), Enabled = !outside });
   if (items.All(item => item.Kind == MediaKind.Image)) entries.Add(MenuSpec.Submenu(T("Image sets"), _repository.GetImageSets().Select(set => MenuSpec.Command(set.Name, () => AddImagesToSet(set, items)))));
   if(items.All(item=>item.Kind==MediaKind.Video))entries.Add(MenuSpec.Submenu(T("Publication groups"),_repository.GetPublicationGroups().Select(group=>MenuSpec.Command(group.Name,()=>AddVideosToPublicationGroup(group,items)))));
   entries.Add(MenuSpec.Submenu(T("Add to collection"), CollectionChoices(items), ""));

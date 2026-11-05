@@ -9,6 +9,7 @@
     <Project Path="src/FlixyPix.MediaTools/FlixyPix.MediaTools.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/FlixyPix.Desktop.Tests/FlixyPix.Desktop.Tests.csproj" />
     <Project Path="tests/FlixyPix.LegacyExporter.Tests/FlixyPix.LegacyExporter.Tests.csproj" />
     <Project Path="tests/FlixyPix.Archives.Tests/FlixyPix.Archives.Tests.csproj" />
     <Project Path="tests/FlixyPix.Core.Tests/FlixyPix.Core.Tests.csproj" />

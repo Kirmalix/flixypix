@@ -166,7 +166,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
             var (where, parameters) = BuildQuery(query, transaction);
-            var items = QueryItems(query, transaction, cancellationToken, where, parameters);
+            var items = mediaQueries.ReadItems(query, transaction, cancellationToken, where, parameters);
             CommitAfterIndexing(transaction);
             return items;
         }

@@ -124,6 +124,22 @@ public sealed class TagInsightsTests : IDisposable
     }
 
     [Fact]
+    public void CarriedFacetsRecountTagCategoryMembership()
+    {
+        using var catalog = Open();
+        var item = catalog.Upsert(Item("categories/a.jpg"));
+        var folders = catalog.GetFacets().Folders;
+        item = catalog.Upsert(item with { TagCategories = new() { ["Places"] = ["Garden", "Beach"] } });
+        Assert.Same(folders, catalog.GetFacets().Folders);
+        Assert.Equal(1, catalog.GetFacets().TagCategoryCounts!["Places"]);
+        using (var fresh = Open()) Assert.Equal(
+            System.Text.Json.JsonSerializer.Serialize(fresh.GetFacets()),
+            System.Text.Json.JsonSerializer.Serialize(catalog.GetFacets()));
+        catalog.Upsert(item with { Tags = [], TagCategories = new() });
+        Assert.Empty(catalog.GetFacets().TagCategoryCounts!);
+    }
+
+    [Fact]
     public void CombinationsPreferLargerTypicalSetsAndExtendContext()
     {
         using var catalog = Open();

@@ -11,9 +11,9 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow
 {
- private string? _category;
- private string? _tagGroup;
- private string? _folder;
+ private string? _category { get => _browse.State.Category; set => _browse.State = _browse.State with { Category=value }; }
+ private string? _tagGroup { get => _browse.State.TagCategory; set => _browse.State = _browse.State with { TagCategory=value }; }
+ private string? _folder { get => _browse.State.Folder; set => _browse.State = _browse.State with { Folder=value }; }
  private string _folderFingerprint = "";
  private string _tagFingerprint = "";
  private DataTemplate? _tileTemplate;

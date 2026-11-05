@@ -235,19 +235,7 @@ public sealed partial class CatalogRepository
         var samePaths = changes.All(c => string.Equals(c.Old.Path, c.New.Path, StringComparison.Ordinal));
         static IEnumerable<string> Raw(MediaItem item) => item.Tags.Concat(item.TagCategories.SelectMany(p => p.Value.Select(t => p.Key + "\0" + t)));
         var sameTags = changes.All(c => Raw(c.Old).Order(StringComparer.Ordinal).SequenceEqual(Raw(c.New).Order(StringComparer.Ordinal), StringComparer.Ordinal));
-        if (cachedFacets is { } facets && cachedFacetStamp == before && samePaths && changes.All(c => string.Equals(c.Old.Category, c.New.Category, StringComparison.Ordinal)))
-        {
-            if (!sameTags)
-            {
-                IReadOnlyList<string> Values(string sql) { using var command = Command(sql, null); using var reader = command.ExecuteReader(); var values = new List<string>(); while (reader.Read()) values.Add(reader.GetString(0)); return values; }
-                var groups = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
-                using (var command = Command("SELECT DISTINCT category COLLATE EFP_ORDINAL,tag COLLATE EFP_ORDINAL FROM media_tags WHERE category<>'' ORDER BY category COLLATE EFP_ORDINAL,tag COLLATE EFP_ORDINAL", null))
-                using (var reader = command.ExecuteReader())
-                    while (reader.Read()) { if (!groups.TryGetValue(reader.GetString(0), out var list)) groups[reader.GetString(0)] = list = new List<string>(); ((List<string>)list).Add(reader.GetString(1)); }
-                facets = facets with { Tags = Values("SELECT DISTINCT tag COLLATE EFP_ORDINAL FROM media_tags ORDER BY tag COLLATE EFP_ORDINAL"), TagCategories = groups.Keys.ToArray(), CategorizedTags = groups };
-            }
-            cachedFacets = facets; cachedFacetStamp = after;
-        }
+        facetsCache.CarryAcross(before,after,changes,samePaths,sameTags);
         if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == before && samePaths)
         {
             if (!sameTags)

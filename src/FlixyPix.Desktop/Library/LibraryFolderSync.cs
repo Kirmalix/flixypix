@@ -50,7 +50,8 @@ public partial class MainWindow
  }
 
  /// <summary>Checks all library folders in the background and shows the banner when there is something to take over.</summary>
- internal async Task CheckLibraryFoldersAsync(bool background = false)
+ internal Task CheckLibraryFoldersAsync(bool background = false) => _libraryTasks.Run(_ => CheckLibraryFoldersRequestAsync(background));
+ private async Task CheckLibraryFoldersRequestAsync(bool background)
  {
   if (!background) _dismissedFolderFindings = null;
   if (_checkingFolders) { _folderCheckPending = true; _manualFolderCheckPending |= !background; if (_folderCheckCompletion != null) await _folderCheckCompletion.Task; return; }

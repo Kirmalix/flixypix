@@ -16,12 +16,12 @@ public partial class MainWindow
   if(state.Filter.HasThumbnail is null) {_thumbnailCheck?.Cancel();_thumbnailsChecked=false;return;}
   if(_thumbnailsChecked)return;
   _thumbnailsChecked=true;
-  _thumbnailCheckRun=CheckThumbnailsAsync();
+  _thumbnailCheckRun=_libraryTasks.Run(_ => CheckThumbnailsAsync());
  }
 
  private async Task CheckThumbnailsAsync()
  {
-  using var check=new CancellationTokenSource();_thumbnailCheck=check;
+  using var check=CancellationTokenSource.CreateLinkedTokenSource(_libraryTasks.Token);_thumbnailCheck=check;
   var token=check.Token;var repository=_repository;
   var sinceRefresh=Stopwatch.StartNew();var listChanged=false;var shown=T("Checking thumbnails…");
   void Show(string text) {if(_operation==null)Status.Text=shown=text;}
@@ -61,7 +61,7 @@ public partial class MainWindow
  private (int Count,long Total,bool Changed) CheckThumbnailPage(CatalogRepository repository,int offset,CancellationToken token)
  {
   var page=repository.QueryPage(new MediaQuery {Offset=offset,Limit=CheckPageSize},token);
-  var results=new List<(Guid,string,bool)>();var changed=false;
+  var results=new List<ThumbnailHealthResult>();var changed=false;
   foreach(var item in page.Items)
   {
    token.ThrowIfCancellationRequested();
@@ -81,10 +81,10 @@ public partial class MainWindow
     }
    }
    catch(Exception error) when(error is IOException or UnauthorizedAccessException or ArgumentException) { }
-   if(cached?.Signature!=signature||cached.Value.Available!=available)results.Add((item.Id,signature,available));
+   if(cached?.Signature!=signature||cached.Value.Available!=available)results.Add(new(item.Id,path,signature,available));
    if(available!=(cached?.Available??path!=null))changed=true;
   }
-  repository.SaveThumbnailHealth(results);
+  repository.SaveCheckedThumbnailHealth(results);
   return (page.Items.Count,page.TotalCount,changed);
  }
 

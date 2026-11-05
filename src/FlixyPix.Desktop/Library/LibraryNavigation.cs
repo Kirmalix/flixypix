@@ -12,7 +12,7 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
  /// <summary>Selected media whose tiles are outside the loaded window; they count as selected until the user picks anew.</summary>
- private List<MediaItem> _offWindowSelection = [];
+ private List<MediaItem> _offWindowSelection { get => _browse.OffWindowSelection; set => _browse.OffWindowSelection=value; }
  internal int OffWindowSelectionCount => _offWindowSelection.Count;
  internal QuickLookWindow? QuickLook { get; private set; }
 

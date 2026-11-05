@@ -10,7 +10,7 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
-            return ReadDocuments<Bookmark>("bookmarks").Where(x => mediaId is null || x.MediaId == mediaId)
+            return (mediaId is { } id ? ReadMediaDocuments<Bookmark>("bookmarks", id) : ReadDocuments<Bookmark>("bookmarks"))
                 .OrderBy(x => x.PositionSeconds).ToArray();
         }
     }

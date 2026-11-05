@@ -32,16 +32,16 @@ public partial class MainWindow
   await ImportPaths([larger]);
   var second = _repository.GetMediaByPath(larger) ?? throw new InvalidOperationException("The second video was not imported.");
   Require(second.Technical?.FrameRate is > 59 and < 61 && second.Height == 720, "The second video lacks its technical data.");
-  var badgesBefore = MediaCard.Display;
+  var badgesBefore = _cardContext.Display;
   try
   {
-   MediaCard.Display = badgesBefore with { TileBadges = [TileBadge.Resolution, TileBadge.FrameRate, TileBadge.Codec, TileBadge.Versions] };
-   var badges = new MediaCard(second, false).Badges;
+   _cardContext.Display = badgesBefore with { TileBadges = [TileBadge.Resolution, TileBadge.FrameRate, TileBadge.Codec, TileBadge.Versions] };
+   var badges = new MediaCard(second, false, context: _cardContext).Badges;
    Require(badges.SequenceEqual(["720p", TechnicalLabels.FrameRate(60), "H.264"]), "The tile badges are wrong: " + string.Join(", ", badges));
-   MediaCard.Display = badgesBefore with { TileBadges = [] };
-   Require(new MediaCard(second, false).Badges.Count == 0, "Switched-off badges were shown.");
+   _cardContext.Display = badgesBefore with { TileBadges = [] };
+   Require(new MediaCard(second, false, context: _cardContext).Badges.Count == 0, "Switched-off badges were shown.");
   }
-  finally { MediaCard.Display = badgesBefore; }
+  finally { _cardContext.Display = badgesBefore; }
 
   // Filter bar and sorting.
   ApplyFilter(new MediaFilter { MinFrameRate = 60 }); await Settled();
@@ -62,7 +62,7 @@ public partial class MainWindow
   await RefreshAsync(video.Id); await Settled();
   Require(merged.Files.Count == 1 && _repository.GetMedia(second.Id) == null && VersionsSection.Visibility == Visibility.Visible && VersionRows.Children.Count == 2,
    "The details do not list the two files.");
-  Require(new MediaCard(merged, false).Badges.Contains(Tn(2, "1 file", "{0} files")), "The tile does not show the two files.");
+  Require(new MediaCard(merged, false, context: _cardContext).Badges.Contains(Tn(2, "1 file", "{0} files")), "The tile does not show the two files.");
   ApplyFilter(new MediaFilter { VideoCodecs = ["h264"] }); await Settled();
   Require(_total == h264 - 1, "The combined item still counts twice.");
   ApplyFilter(new MediaFilter { MultipleFiles = true }); await Settled();

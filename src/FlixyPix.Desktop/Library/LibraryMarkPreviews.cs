@@ -74,7 +74,7 @@ public partial class MainWindow
  {
   if (item.Kind != MediaKind.Video || _closing) return Task.CompletedTask;
   var previous = _markJobs.GetValueOrDefault(item.Id) ?? Task.CompletedTask;
-  var job = AfterAsync(previous, item);
+  var job = _libraryTasks.Run(_ => AfterAsync(previous, item));
   _markJobs[item.Id] = job;
   return job;
 
@@ -88,6 +88,8 @@ public partial class MainWindow
 
  private async Task MakeMarkPreviewsAsync(MediaItem item)
  {
+  var token = _libraryTasks.Token;
+  token.ThrowIfCancellationRequested();
   if (_closing || !ToolExists(_settings.Ffmpeg, "ffmpeg") || !File.Exists(item.Path)) return;
   {
    // Marks after the end have no picture (the player leaves them out as well).
@@ -100,7 +102,7 @@ public partial class MainWindow
    foreach (var need in needs) try { File.Delete(PathOf(need)); } catch (IOException) { }
    // All pictures of the video in one FFmpeg run; only those it could not make are tried singly afterwards.
    var batched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-   try { foreach (var frame in await _tools.CreateThumbnailsAsync(item.Path, needs.Select(n => new FrameRequest(Math.Max(0, n.PositionSeconds), PathOf(n))).ToList())) batched.Add(frame.Output); }
+   try { foreach (var frame in await _tools.CreateThumbnailsAsync(item.Path, needs.Select(n => new FrameRequest(Math.Max(0, n.PositionSeconds), PathOf(n))).ToList(), token)) batched.Add(frame.Output); }
    catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException) { ErrorLog.Write($"Bilder für Sprungmarken · {item.Path}", error); }
    foreach (var need in needs)
    {
@@ -108,8 +110,8 @@ public partial class MainWindow
     var path = PathOf(need);
     try
     {
-     if (!batched.Contains(path)) await _tools.CreateThumbnailAsync(item.Path, path, Math.Max(0, need.PositionSeconds));
-     var bytes = await File.ReadAllBytesAsync(path);
+     if (!batched.Contains(path)) await _tools.CreateThumbnailAsync(item.Path, path, Math.Max(0, need.PositionSeconds), token);
+     var bytes = await File.ReadAllBytesAsync(path, token);
      if (await Task.Run(() => _repository.SetGeneratedMarkPreview(need, bytes))) made++;
     }
     catch (Exception error) when (error is IOException or InvalidOperationException or InvalidDataException or ArgumentException)

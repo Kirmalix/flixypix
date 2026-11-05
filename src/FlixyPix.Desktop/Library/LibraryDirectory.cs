@@ -8,7 +8,7 @@ public partial class MainWindow
  private string? _roleBrowserView;
  private DirectoryViewState? _pendingDirectoryState;
  private readonly Dictionary<UIElement, Visibility> _roleCovered = [];
- private bool IsRoleView => _view is "performers" or "studios";
+ private bool IsRoleView => _browse.Kind is LibraryViewKind.Performers or LibraryViewKind.Studios;
  private bool LeaveRoleView() => _roleBrowser?.IsVisible != true || _roleBrowser.ConfirmLeave();
  private void HideRoleView()
  {
