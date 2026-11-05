@@ -549,6 +549,7 @@ public partial class MainWindow : Window
         if (!_startupReady) return;
         if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && !TextEntry(e.OriginalSource))
         { e.Handled = true; UndoImmediate(); return; }
+        if (TagWorkKey(e.Key, Keyboard.Modifiers, TextEntry(e.OriginalSource)) is { } tagWork) { e.Handled = true; await tagWork; return; }
         if (await HandleLibraryKeyboardAsync(e)) { e.Handled = true; return; }
         if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down) return;
         // Back and forward like a browser; Alt arrives as a system key.

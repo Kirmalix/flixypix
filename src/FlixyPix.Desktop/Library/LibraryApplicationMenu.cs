@@ -54,7 +54,7 @@ public partial class MainWindow
   sections.Add((T("Navigation"),"F6 / Shift+F6 · Tab / Shift+Tab · ↑ ↓ ← → · Page↑ / Page↓ · Home / End · Shift+F10"));
   sections.Add((T("Selection"),"Shift+↑/↓/←/→ · Ctrl+↑/↓/←/→ · Ctrl+Space · Ctrl+A"));
   sections.Add((T("Media"),string.Join("\n", "Enter   "+T("Open"),"Space   "+T("Large view"),"F2   "+T("Rename"),"Delete   "+T("Remove from catalog"),"0–5   "+T("Rating"),"F   "+T("Favorite"),"B   "+T("Target collection for B"))));
-  sections.Add((T("Tags"),string.Join("\n",QuickTags.Select((tag,i)=>"Ctrl+"+(i+1)+"   "+tag))));
+  sections.Add((T("Tags"),string.Join("\n",QuickTags.Select((tag,i)=>"Ctrl+"+(i+1)+"   "+tag).Prepend("T   "+T("Tag mode")))));
   var playback=_repository.GetPreferences().Playback;
   sections.Add((T("Shortcuts in the player")+(playback.KeyboardShortcuts?"":" · "+T("Inactive")),string.Join("\n",playback.AllShortcuts().Select(p=>p.Key+"   "+(PlayerActions.All.FirstOrDefault(a=>a.Action==p.Owner).Label??p.Owner)))));
   sections.Add((T("Images"),"← / → · + / − · F · R · Space · S · I · T · Page↑ / Page↓ · Esc"));

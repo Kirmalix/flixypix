@@ -42,7 +42,7 @@ public partial class MainWindow
  {
   var changed = HasCurrentDetailsChanges();
   var conflict = _detailsShown is { } item && _metadataConflicts.Contains(item.Id);
-  DetailsEditActions.Visibility = SelectedMedia.Count == 1 && _detailsShown != null && (changed || conflict || _immediateUndo != null) ? Visibility.Visible : Visibility.Collapsed;
+  DetailsEditActions.Visibility = SelectedMedia.Count == 1 && _detailsShown != null && (changed || conflict) ? Visibility.Visible : Visibility.Collapsed;
   DetailsSave.IsEnabled = DetailsDiscard.IsEnabled = changed;
   DetailsSave.Visibility = DetailsDiscard.Visibility = changed ? Visibility.Visible : Visibility.Collapsed;
   ImmediateUndoButton.Visibility = _immediateUndo != null ? Visibility.Visible : Visibility.Collapsed;

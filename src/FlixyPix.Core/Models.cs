@@ -196,6 +196,7 @@ public sealed record CatalogPreferences
 {
     public SidebarPreferences Sidebar { get; init; } = new();
     public List<string?>? QuickTags { get; init; }
+    public Dictionary<string, TagSuggestionFeedback>? TagSuggestionFeedback { get; init; }
     public List<FolderFavorite> FolderFavorites { get; init; } = [];
     public List<LibraryFolder> LibraryFolders { get; init; } = [];
     public List<TagVocabularyEntry> TagVocabulary { get; init; } = [];

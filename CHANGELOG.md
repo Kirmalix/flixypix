@@ -8,6 +8,11 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 The catalog format changes; libraries opened with this version
 are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept before the upgrade).
 
+- Tag mode (T): tag with one hand using 1–9 and Q W E R, move on with the arrow keys; rows and keys stay put.
+- Suggestions say why they appear, compare against how common a tag is, send performers and studios to their
+  categories and fall behind when ignored; applied tags come first and only their × removes them.
+- The folder filter shows as a chip, and a bar states selections the grid cannot show.
+- Moving a library rewrites only media whose paths change.
 - Import from Stash: a wizard for scenes, images, galleries, groups, performers, studios and
   tag parents, with explicit version confirmation, images inside archives and guarded
   transactions, fast also for large exports.

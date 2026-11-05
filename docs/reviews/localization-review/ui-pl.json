@@ -14617,6 +14617,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "66308b765973280be9247d059498990a91d2a99299b7aef263cb7fd07cc21f32"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "bd6e773e77f3c961621e1abbef816b9b43b4deca1c5a1638ea0eccb20907168b"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "724162eb36dda6ab0c88dc24668e776a212497811501bf562a687b6233c0789e"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "5880a0e5aa4d2adaa79c3d899e3adc0bbfa24c8d97aa19266cec4a5f37a6274d"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "de895fc0f4edda95d47f4c8a5de8db828ee213033a460390520fe283cdcb0cb1"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "940e63a4ed13a46aafe55ea917073aa9970deb6a2812908a0f1cae703848d71f"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "82eb7e4362389bd9c74b364ad4b99f4dc6d0a267b18da7628a9901cc8228cd74"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "61f0cc7469b039a3aed2118bbb658c94245e340db756cdedd8208cd033628ff6"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "e09fc9f514fb5b3e5ab7e5340cc66c15e7be1e897813bdd7d5356cfd1aa5dbc8"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "f1b32c12b97558f7c14dde8a579b45a2fccc50a9d0c4b4f53b803285e0847d42"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "844d5ec2a3d7e3bded1d3f4e45124486eda4c7b26e2589b000895fb8c5cbc886"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "85ed42d6ef984aef5503a4adbcb378d07a85012e913511e88f60871091110056"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "04d91d0d68e2e28852dee1c3004b961fb996ddd84ab5d8446bf32eccb5dd9fb9"
     }
   }
 }

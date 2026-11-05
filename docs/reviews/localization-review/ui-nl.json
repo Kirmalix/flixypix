@@ -14687,6 +14687,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "a5a3b89538c10cad5a6357666b39ba2dbf722f7dddf1a93b6ebdb68a438b93fe"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "062de95410635fa8949d2e3c40c82f3de50c6b893a6dce9710e8249179562026"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "1e1d025f8e2eb5e93aa5b0aa26ae9bd88349e06025ad2672cd9714ec532e6b2c"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "12cdead0d2cc52b5a11f87d52decb35d7db3acafc1e28a14a9ca813e8e4781c3"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "3c5f25439c51ad47bd8bc299af227a9cf88f2d2be21b9d9653411dce91030e94"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "afd580a06aa0ff9dcbfd5dc3e995c0182675f3b6dc7026c751284d5a3d09bca3"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "372b663b940eebc529f1e169d49767c14590c8155a9e4dbf4dcfcc6df48f4c5e"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "6fd85aee2d29784601dfb55a09447b51678de4994e7c8975ea27cf4614218bbe"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "e09fc9f514fb5b3e5ab7e5340cc66c15e7be1e897813bdd7d5356cfd1aa5dbc8"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "04373d1f18c25abfde07f71e51f7c35253e2afca741b2cfd892b3159085cbc8b"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "dea633d55821b7fa697178a3dfd8735d8b2c0754aa0a6a30fcde69d0f98dcf5c"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "228fe10684c77b85d3b5c3e850d1ef2cb5c03780ff84789146285dfb516f5a37"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "8970d11f29ee2a5b8ce168763c3f4da5004d0a8ad50ff21c21aa7ed1b23ff3c0"
     }
   }
 }

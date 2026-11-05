@@ -14709,6 +14709,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "25593e208f3377a2f39c20baa9ded259ab7becb5ebb321fb8f99a5aae019f2a2"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "d51973e701415d529424e4ba84bf160ebf1a18a9d6fed0a3b6a69f1ca77a4a07"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "0141969dcefb7cc2c657ef057ee77b6f82e96e2560b4f9997663fa5bead179b2"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "be984566f72d5ac43f3669337f87e75acbd1fdddbb11049ee40b98424db591dd"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "8b174ca80590d5ad9d5c9f088b1deed008a4870044233a7df4b9db19b33bd455"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "eaae2eb267a9123e6e9fdfc32c82d58c26fdc8f2798310508e47baf14a732bd4"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "b8d0c7d8ada391c2699657af7e57cfe49a6da4deece408bd269845f54c0b1c52"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "156d9d113cc59719725e0052a5f0061a05b2df7df4e719481da90c35a9c6e639"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "fa40e280f77c554b7c28ff602a761156c1a3c72ff5c82c0ae0b070b455320596"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "70cdcf2bb7cd75b4544c61e6b92b229e484cfb52b4397f4b248569f4fb47a77f"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "8cec019c88a6c2604cfb67603c1b352273ac5a45f1ad313bbc68ee2ccae6839a"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "386a6af0ba2e8cb0ea8afb6b5391ed1b819e7b8bcfcfa4616e3b30b11fe4281e"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "d3fe9422f640d0e3dcbe6bf0b064a694e158635b48dfaa1f27753ad0196bf508"
     }
   }
 }

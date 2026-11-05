@@ -15499,6 +15499,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "7571799c6d0f3037aff33a469de8a66e677bb46357d683f8cb8bcee4759761da"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "dc7283c461ebca8851fa7bb577af77f04c570ef830c53297ef3bc84008336441"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "364c0295fa6405326c92b8cfef17062a3fead17f5acff38ed3014ede59391de5"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "d265bd33b50195542987293cfde3be04d04c078714842bba28461cba8c68de34"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "55f627c9fe50b5bd30a53354a62e1a29e2381b31bb53a24dfca359325c91b06a"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "cce26c5e28e1bcf02e79bfd12ff981735d0559931c1a6312816114c6d048d4fd"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "667cba3b68a642b64afcafca81a22e71dc28204c52bf30d2a6502313ec271054"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "24717e814be20ecc1e95acc15178062ea60771588c9fecfc4e22d3261da3de09"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "2c66605f1f06eba4006a64373d2075b9db14156877a9ac7f579477a9692df898"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "03e38fcf42b1bc318372b9ab2fc15e12a0878af0687c71c4638d94424b128d29"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "88f4a8e7d0f6fa82c25719d818426d9294bb42efe7a9625e9e0c793a4ebb30e7"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "228fe10684c77b85d3b5c3e850d1ef2cb5c03780ff84789146285dfb516f5a37"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "8eacf2d8facd1b13f098e733c0fcd83dd832bd138c529457a2545c674f6904b5"
     }
   }
 }

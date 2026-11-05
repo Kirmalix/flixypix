@@ -13,6 +13,44 @@ public sealed class TagInsightsTests : IDisposable
     public void Dispose() { Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); try { Directory.Delete(directory, true); } catch (IOException) { } }
 
     [Fact]
+    public void SuggestionsCompareAgainstHowCommonATagIs()
+    {
+        using var catalog = Open();
+        // "Common" is on nearly everything, "Rare" only together with "Topic".
+        for (var i = 0; i < 60; i++) catalog.Upsert(Item($"o{i}/a.mp4", "Common"));
+        for (var i = 0; i < 6; i++) catalog.Upsert(Item($"t{i}/a.mp4", "Common", "Topic", "Rare"));
+        var target = catalog.Upsert(Item("target/a.mp4", "Topic"));
+        var suggestions = catalog.SuggestTags([target.Id]);
+        Assert.Equal("Rare", suggestions[0].Tag);
+        Assert.Equal("Topic", suggestions[0].BasedOn);
+        Assert.DoesNotContain(suggestions, s => s.Tag == "Common");
+    }
+
+    [Fact]
+    public void IgnoredSuggestionsFallBehind()
+    {
+        using var catalog = Open();
+        for (var i = 0; i < 4; i++) catalog.Upsert(Item($"f{i}/a.mp4", "Base", "First", "Second"));
+        catalog.Upsert(Item("g/a.mp4", "Base", "First"));
+        var target = catalog.Upsert(Item("h/a.mp4", "Base"));
+        Assert.Equal("First", catalog.SuggestTags([target.Id])[0].Tag);
+        Assert.Equal("Second", catalog.SuggestTags([target.Id], 12, new Dictionary<string, TagSuggestionFeedback> { ["First"] = new(0, 9) })[0].Tag);
+    }
+
+    [Fact]
+    public void PerformersAreSuggestedWithTheirCategoryAndNotAgainOnceAssigned()
+    {
+        using var catalog = Open();
+        catalog.SavePreferences(catalog.GetPreferences() with { TagVocabulary = [new TagVocabularyEntry("Jane Doe", "Performers")], TagCategoryRoles = [new TagCategoryRole("Performers", TagRole.Performer)] });
+        var item = catalog.Upsert(Item("x/Jane Doe scene.mp4"));
+        var suggestion = Assert.Single(catalog.SuggestTags([item.Id]), s => s.Tag == "Jane Doe");
+        Assert.Equal(TagRole.Performer, suggestion.Role);
+        Assert.Equal("Performers", suggestion.Category);
+        catalog.UpdateCategoryTagsWithUndo([item.Id], "Performers", ["Jane Doe"], []);
+        Assert.DoesNotContain(catalog.SuggestTags([item.Id]), s => s.Tag == "Jane Doe");
+    }
+
+    [Fact]
     public void UsageCountsIgnoreCaseAndFollowWrites()
     {
         using var catalog = Open();

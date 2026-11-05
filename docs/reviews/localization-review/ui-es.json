@@ -14675,6 +14675,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "30675632d15814a6f5570e56e739079a8c041cf52ba04655c6175c58e129916e"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "d148733d1c273cb5c573d36da8046489373bdf337ecef719ca555ccc465830b5"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "69830370a7e544741d9a725417a4539a2089397cd0beeb4a174702211bd15c2e"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "31db4762f6e0794b03db67304959f7da1d46af6bc7aa0731372780f015049099"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "a994a39885d8aeee446637569e5d1acd14afa51704450ffa8bad4183de14e6a6"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "ec4d41104607d2aa5897aa7fbfdb742f7bcee48ef5af4aa51271f43bebc5cb9b"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "f66f4b5e2fb5396c7cebf4ca3b4de973d0e8793b4281115fa4dc0de7dd9b68a7"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "a584ade073aaa9f0c3bf32944317df34b28a47ce799cfcaca43531823c44a6c7"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "db994366826d669cc71623907fd9741f6f48d0cf4d7cf9932c3011f2a5d030fc"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "b6b89d04b642021120aa67318b207f675da450f4fdac4f4e5bdaa542f7094d41"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "a298087db0806214c221cb8458cd20691d0dc4f7cef991c2518815164fe4c32b"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "94f9e0c9567e0eacb012999c5c80dc2ef9b12aa887c673720d979ecfe032d6eb"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "a8a4f510dd3c4f4c509960169a1ac144573c9e9f9d5e06f8af317e13c2b89117"
     }
   }
 }
