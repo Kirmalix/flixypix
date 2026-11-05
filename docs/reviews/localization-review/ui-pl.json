@@ -3970,11 +3970,6 @@
       "status": "unchanged",
       "digest": "5d10c4a6fad977fe5716f094df0ba1405965fcae0761aabc7df0bada9d0aff69"
     },
-    "FlixyPix opens on the home page. A restored view is then one step back (Alt+←). Ctrl+Home opens the home page at any time.": {
-      "status": "corrected",
-      "digest": "ea0fc3d6fd593836e5831fe8a15f5ef5749fc7e9b7e5fb77e4c663031dbd0725",
-      "previous_digest": "ca36544dbfa4ae859d0b792e4606cd3aa887d2e5f73ea06b741f8e0ad520e3ed"
-    },
     "FlixyPix backups|*.flixypixbackup;*.ezfpbackup|All files|*.*": {
       "status": "corrected",
       "digest": "b53ee67b3f0fc6410417002b610549864e47a01f110084ce246c430634ff45fc",
@@ -5869,10 +5864,6 @@
       "digest": "e198482fc32a120b75e7f6c2768f671c03d86946ff37934b8d82d399ed0505b3",
       "previous_digest": "862470a5d0a5f9f1e142aba919d9d5268087a28e480e93e71082b64d3a2ca274"
     },
-    "Start with the home page": {
-      "status": "unchanged",
-      "digest": "29a2fd52b7e4ffc8e27afe7f6e71ba4d91be1727adadd59da6757424a1c79ae4"
-    },
     "Start with a delay": {
       "status": "corrected",
       "digest": "3437fb6f87c3eb2bc611c7f7262d4615e4f8e455054a07402fad6310f9dfa9e6",
@@ -6458,11 +6449,6 @@
     "View only": {
       "status": "unchanged",
       "digest": "5936ed8afc7f7cb60a70b6d2110fc051937d0a6c7ef6ef19f71dfbd7b92dbf19"
-    },
-    "View only: media type, collection or saved search, sorting and display. Everything: also search text, filters, position and selection plus a continue watching notice. Window size and position follow “Remember window position” under Navigation.": {
-      "status": "corrected",
-      "digest": "6d1c4699d66037400fcab01225e6b067d0b5d5f18f5f473b7fee8fe6609b46d0",
-      "previous_digest": "84817bfd06e8b78bc8b116d0d7d823f565098539fbb3f99ddffb28a608efa063"
     },
     "Preserved only": {
       "status": "corrected",
@@ -9582,10 +9568,6 @@
       "status": "corrected",
       "digest": "9e324d3a72a75da8f49d8af1aa3cdc9ddf373ac3cd7b745a1dbd5ff2b378726b",
       "previous_digest": "053eea3de4530738744124a62c9951fc1b13f67402edaa30f3fe470550757b04"
-    },
-    "What the home page shows and whether FlixyPix starts with it.": {
-      "status": "unchanged",
-      "digest": "2d078dc1b3faaf3a8d8fd000a9803cda8b2d094563fbf09d775a0e70e3ee5553"
     },
     "What should be imported?": {
       "status": "corrected",
@@ -14599,6 +14581,42 @@
     "What the home page shows.": {
       "status": "unchanged",
       "digest": "c02ffa6aff4ef8f89a81421517f43965c42c1ce14febf5fad6ba579f8acba288"
+    },
+    " · {0:N0} not in this view": {
+      "status": "unchanged",
+      "digest": "7e464ceb8012d48b30395a4b60dc8753c98dfb8d8f21908a52d4ef797f8563b6"
+    },
+    "Checking library": {
+      "status": "unchanged",
+      "digest": "2367b3eee9b5950055fac10167abba440af3132056d0dd2953031e7b6ea832ee"
+    },
+    "Clear selection": {
+      "status": "unchanged",
+      "digest": "8765af04fcf3866df26a0eb366bfb0147a55f25fff2dc9b8d6ff98a4034a87ef"
+    },
+    "Elapsed: {0}": {
+      "status": "unchanged",
+      "digest": "d4c238d5089b2b8d30230b85f253a5472ca1856f0fc5d55f51a63bb17f29a96e"
+    },
+    "Folder: {0}": {
+      "status": "unchanged",
+      "digest": "efa3cc7a214fd38b3b74f0b66dccbefb01183e4cf8e8308ae15ba875d1c0af03"
+    },
+    "Loading view": {
+      "status": "unchanged",
+      "digest": "ab46d28822c4e757bbe9cc5d39cb9acb12b5b67a1b3318e0b52cffdc40d932bb"
+    },
+    "Opening catalog": {
+      "status": "unchanged",
+      "digest": "85b45f624068a4a3316d293144e7ae74b0be296a471422b9122c315c089a901a"
+    },
+    "Preparing library": {
+      "status": "unchanged",
+      "digest": "a81ef2ea0c5d0901f4c742450b0c072ec615c7b0120e4fea3d2cf392c7049732"
+    },
+    "Remove folder filter": {
+      "status": "unchanged",
+      "digest": "66308b765973280be9247d059498990a91d2a99299b7aef263cb7fd07cc21f32"
     }
   }
 }

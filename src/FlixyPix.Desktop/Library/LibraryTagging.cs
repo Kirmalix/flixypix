@@ -77,8 +77,9 @@ public partial class MainWindow
         var quick = QuickTags.Select((tag, index) => (tag, index)).Where(p => p.tag.Length > 0).ToDictionary(p => p.tag, p => p.index + 1, StringComparer.OrdinalIgnoreCase);
         var filter = TagFilterBox.Text.Trim();
         bool Active(string tag) => _requiredTags.Contains(tag, StringComparer.OrdinalIgnoreCase) || _excludedTags.Contains(tag, StringComparer.OrdinalIgnoreCase);
+        bool OnTop(string tag) => _tagRowsOnTop?.Contains(tag) ?? Active(tag);
         var entries = _tagEntries.Where(e => (ShowUnusedTags.IsChecked == true || e.Count > 0 || Active(e.Tag)) && (filter.Length == 0 || e.Tag.Contains(filter, StringComparison.OrdinalIgnoreCase)));
-        var ordered = entries.OrderByDescending(e => Active(e.Tag)).ThenByDescending(e => e.IsFavorite);
+        var ordered = entries.OrderByDescending(e => OnTop(e.Tag)).ThenByDescending(e => e.IsFavorite);
         ordered = _tagsByName ? ordered.ThenBy(e => e.Tag, StringComparer.OrdinalIgnoreCase) : ordered.ThenByDescending(e => e.Count).ThenBy(e => e.Tag, StringComparer.OrdinalIgnoreCase);
         Tags.ItemsSource = ordered.Select(e =>
         {
@@ -95,8 +96,13 @@ public partial class MainWindow
     {
         if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
         if (IsQuickBadge(e.OriginalSource)) return;
-        e.Handled = true; ToggleTagFilter(row.Tag, (Keyboard.Modifiers & ModifierKeys.Control) != 0);
+        e.Handled = true;
+        // The row stays under the pointer, so a second click hits the same tag; the list sorts again once the pointer leaves it.
+        _tagRowsOnTop ??= new HashSet<string>(_requiredTags.Concat(_excludedTags), StringComparer.OrdinalIgnoreCase);
+        ToggleTagFilter(row.Tag, (Keyboard.Modifiers & ModifierKeys.Control) != 0);
     }
+    private HashSet<string>? _tagRowsOnTop;
+    private void TagListLeft(object sender, MouseEventArgs e) { if (_tagRowsOnTop == null) return; _tagRowsOnTop = null; RenderTagList(); }
     private void TagItemRightClicked(object sender, MouseButtonEventArgs e)
     {
         if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
@@ -130,18 +136,26 @@ public partial class MainWindow
     private void RenderTagFilterChips()
     {
         ActiveTagFilters.Children.Clear();
-        var active = (RatingFilter.SelectedIndex > 0 ? 1 : 0) + (_category != null ? 1 : 0) + _requiredTags.Count + _excludedTags.Count + FilterChips().Count();
+        var active = (RatingFilter.SelectedIndex > 0 ? 1 : 0) + (_category != null ? 1 : 0) + (_folder != null ? 1 : 0) + _requiredTags.Count + _excludedTags.Count + FilterChips().Count();
         FilterButtonText.Text = active > 0 ? T("Filter · {0:N0}", active) : T("Filter");
         FilterButton.SetResourceReference(BackgroundProperty, active > 0 ? "ChipFull" : "ButtonBackground");
         Button Chip(string text, Brush background, string tooltip, Action remove) { var chip = new Button { Content = text, Background = background, Padding = new Thickness(10, 4, 10, 4), FontSize = 12, ToolTip = tooltip }; chip.Click += (_, _) => remove(); return chip; }
         if (RatingFilter.SelectedIndex > 0) ActiveTagFilters.Children.Add(Chip(RatingLabel(RatingFilter.SelectedIndex) + "  ×", FullChipBrush, T("Remove filter"), () => RatingFilter.SelectedIndex = 0));
+        if (_folder is { } folder) ActiveTagFilters.Children.Add(Chip(T("Folder: {0}", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)) is { Length: > 0 } folderName ? folderName : folder) + "  ×", FullChipBrush, T("Remove folder filter"), ClearFolderFilter));
         if (_category != null) ActiveTagFilters.Children.Add(Chip(_category + "  ×", FullChipBrush, T("Remove filter"), () => CategoryFilter.SelectedIndex = 0));
         foreach (var tag in _requiredTags.ToArray()) ActiveTagFilters.Children.Add(Chip(tag + "  ×", FullChipBrush, T("Remove tag filter"), () => { _browse.RemoveIncludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
         foreach (var tag in _excludedTags.ToArray()) ActiveTagFilters.Children.Add(Chip(T("without {0}", tag) + "  ×", ExcludedChipBrush, T("Remove exclusion"), () => { _browse.RemoveExcludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
         foreach (var (label, excluded, remove) in FilterChips().ToList()) ActiveTagFilters.Children.Add(Chip(label + "  ×", excluded ? ExcludedChipBrush : FullChipBrush, T("Remove filter"), remove));
         if (_requiredTags.Count > 1 && _tagsMatchAny) ActiveTagFilters.Children.Insert(0, new TextBlock { Text = T("at least one:"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 6), Foreground = Theme.Brush("Muted"), FontSize = 12 });
         if (active > 1)
-            ActiveTagFilters.Children.Add(Chip(T("Remove all filters"), Brushes.Transparent, T("Remove all tag and filter-bar filters"), () => { _browse.ClearTags(); _filter = new(); _anchor = 0; UpdateFilterBar(); ApplyTagFilterChanges(); }));
+            ActiveTagFilters.Children.Add(Chip(T("Remove all filters"), Brushes.Transparent, T("Remove all tag and filter-bar filters"), () => { _browse.ClearTags(); _filter = new(); UpdateFilterBar(); ClearFolderFilter(); }));
+    }
+    /// <summary>Ends the folder filter; the view shows its whole content again under its own name.</summary>
+    private void ClearFolderFilter()
+    {
+        _folder = null; _anchor = 0;
+        if (_tag == null && _playlist == null) ViewTitle.Text = ViewName(_view);
+        ApplyTagFilterChanges();
     }
     private string TagFilterDescription() =>
      (_tag != null ? T(" · Tag: {0}", _tag) : "") + (_requiredTags.Count > 0 ? T(" · Tags: {0}", string.Join(" + ", _requiredTags)) : "") + (_excludedTags.Count > 0 ? T(" · without {0}", string.Join(", ", _excludedTags)) : "");

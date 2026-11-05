@@ -90,6 +90,7 @@
     "one": " · {0:N0} nieuwe tag",
     "other": " · {0:N0} nieuwe tags"
   },
+  " · {0:N0} not in this view": " · {0:N0} niet in deze weergave",
   " · {0:N0} unreadable": {
     "one": " · Onleesbaar: {0:N0}",
     "other": " · Onleesbaar: {0:N0}"
@@ -589,6 +590,7 @@
   "Clear quick collection": "Snelle collectie legen",
   "Clear search": "Zoekopdracht wissen",
   "Clear search (Esc)": "Zoekopdracht wissen (Esc)",
+  "Clear selection": "Selectie opheffen",
   "Clear the {0}? It is recreated when needed.": "{0} leegmaken? Wordt indien nodig opnieuw aangemaakt.",
   "Clearing frees space without losing catalog data.": "Leegmaken maakt ruimte vrij zonder catalogusgegevens te verliezen.",
   "Click a frame to play this file from the displayed time.": "Klik op een beeld om dit bestand vanaf de aangegeven tijd af te spelen.",
@@ -1050,6 +1052,7 @@
   "Folder of the new library": "Map van de nieuwe bibliotheek",
   "Folder with subfolders …": "Map met submappen …",
   "Folder “{0}”": "Map ‘{0}’",
+  "Folder: {0}": "Map: {0}",
   "Folders": "Mappen",
   "Folders also show the items of their subfolders": "Mappen tonen ook de items van hun submappen",
   "Follow Windows": "Windows volgen",
@@ -2216,6 +2219,7 @@
   "Remove filter": "Filter verwijderen",
   "Remove folder": "Map verwijderen",
   "Remove folder (items stay in the catalog)": "Map verwijderen (items blijven in de catalogus)",
+  "Remove folder filter": "Mapfilter verwijderen",
   "Remove from all items …": "Verwijder van alle items…",
   "Remove from catalog": "Uit catalogus verwijderen",
   "Remove from catalog …": "Uit catalogus verwijderen …",

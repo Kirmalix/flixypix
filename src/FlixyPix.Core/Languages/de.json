@@ -90,6 +90,7 @@
     "one": " · 1 neuer Tag",
     "other": " · {0:N0} neue Tags"
   },
+  " · {0:N0} not in this view": " · {0:N0} nicht in dieser Ansicht",
   " · {0:N0} unreadable": {
     "one": " · 1 unlesbar",
     "other": " · {0:N0} unlesbar"
@@ -589,6 +590,7 @@
   "Clear quick collection": "Schnellsammlung leeren",
   "Clear search": "Suche leeren",
   "Clear search (Esc)": "Suche leeren (Esc)",
+  "Clear selection": "Auswahl aufheben",
   "Clear the {0}? It is recreated when needed.": "{0} leeren? Er wird bei Bedarf neu erzeugt.",
   "Clearing frees space without losing catalog data.": "Leeren schafft Platz, ohne Katalogdaten zu verlieren.",
   "Click a frame to play this file from the displayed time.": "Klicke auf ein Bild, um diese Datei ab der angezeigten Zeit abzuspielen.",
@@ -1050,6 +1052,7 @@
   "Folder of the new library": "Ordner der neuen Bibliothek",
   "Folder with subfolders …": "Ordner mit Unterordnern …",
   "Folder “{0}”": "Ordner „{0}“",
+  "Folder: {0}": "Ordner: {0}",
   "Folders": "Ordner",
   "Folders also show the items of their subfolders": "Ordner zeigen auch die Medien ihrer Unterordner",
   "Follow Windows": "Wie Windows",
@@ -2216,6 +2219,7 @@
   "Remove filter": "Filter entfernen",
   "Remove folder": "Ordner entfernen",
   "Remove folder (items stay in the catalog)": "Ordner entfernen (Medien bleiben im Katalog)",
+  "Remove folder filter": "Ordnerfilter entfernen",
   "Remove from all items …": "Aus allen Medien entfernen …",
   "Remove from catalog": "Aus Katalog entfernen",
   "Remove from catalog …": "Aus Katalog entfernen …",

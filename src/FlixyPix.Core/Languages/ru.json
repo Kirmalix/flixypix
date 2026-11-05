@@ -101,6 +101,7 @@
     "few": " · Новые теги: {0:N0}",
     "many": " · Новые теги: {0:N0}"
   },
+  " · {0:N0} not in this view": " · {0:N0} вне этого представления",
   " · {0:N0} unreadable": {
     "one": " · Нечитаемые: {0:N0}",
     "few": " · Нечитаемые: {0:N0}",
@@ -613,6 +614,7 @@
   "Clear quick collection": "Очистить быструю коллекцию",
   "Clear search": "Очистить поиск",
   "Clear search (Esc)": "Очистить поиск (Esc)",
+  "Clear selection": "Снять выделение",
   "Clear the {0}? It is recreated when needed.": "Очистить {0}? При необходимости кэш будет создан заново.",
   "Clearing frees space without losing catalog data.": "Очистка освобождает место без потери данных каталога.",
   "Click a frame to play this file from the displayed time.": "Нажмите на кадр, чтобы воспроизвести этот файл с указанного момента.",
@@ -1078,6 +1080,7 @@
   "Folder of the new library": "Папка новой библиотеки",
   "Folder with subfolders …": "Папка с вложенными папками …",
   "Folder “{0}”": "Папка «{0}»",
+  "Folder: {0}": "Папка: {0}",
   "Folders": "Папки",
   "Folders also show the items of their subfolders": "Папки показывают и элементы своих подпапок",
   "Follow Windows": "Как в Windows",
@@ -2261,6 +2264,7 @@
   "Remove filter": "Удалить фильтр",
   "Remove folder": "Удалить папку",
   "Remove folder (items stay in the catalog)": "Удалить папку (элементы останутся в каталоге)",
+  "Remove folder filter": "Убрать фильтр по папке",
   "Remove from all items …": "Удалить из всех элементов…",
   "Remove from catalog": "Удалить из каталога",
   "Remove from catalog …": "Удалить из каталога…",

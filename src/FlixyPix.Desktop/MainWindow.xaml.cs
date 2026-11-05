@@ -256,10 +256,11 @@ public partial class MainWindow : Window
                 else if (selectId.HasValue && cards.FirstOrDefault(c => c.Item.Id == selectId) is { } selectedCard) { MediaList.SelectedItem = selectedCard; MediaList.ScrollIntoView(selectedCard); }
                 var loadedIds = cards.Select(c => c.Item.Id).ToHashSet();
                 _offWindowSelection = selectionNow.Where(item => !loadedIds.Contains(item.Id)).ToArray();
+                UpdateSelectionBar();
                 var playlists = snapshot.Playlists;
                 if (_playlist != null) _playlist = playlists.FirstOrDefault(p => p.Id == _playlist.Id);
                 ShowCollections(playlists, snapshot.Sets, snapshot.Searches, snapshot.Target);
-                UpdateNavigation();
+                UpdateNavigation(); RenderTagFilterChips();
                 CountLabel.Text = Tn(snapshot.Page.TotalCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
         + (_folder != null ? T(" · folder filter") : "") + (_playlist != null
         ? $" · {(_playlist.Kind switch { PlaylistKind.Slideshow => T("Slideshow"), PlaylistKind.Quick => T("Quick collection"), _ => T("Playlist") })}" : "");
@@ -283,8 +284,20 @@ public partial class MainWindow : Window
     }
 
     private MediaItem? _detailsShown;
+    /// <summary>Paging or filtering can take selected media out of sight; tag changes still reach them, so the bar says so.</summary>
+    private void UpdateSelectionBar()
+    {
+        var count = SelectedMedia.Count; var hidden = _offWindowSelection.Count;
+        SelectionBar.Visibility = count > 1 || hidden > 0 ? Visibility.Visible : Visibility.Collapsed;
+        SelectionBarText.Text = Tn(count, "1 item selected", "{0:N0} items selected") + (hidden > 0 ? T(" · {0:N0} not in this view", hidden) : "");
+    }
+    private void ClearSelectionClicked(object sender, RoutedEventArgs e)
+    {
+        _offWindowSelection = []; MediaList.SelectedItems.Clear(); ShowDetails(); MediaList.Focus();
+    }
     private void ShowDetails(bool includePreviews = true)
     {
+        UpdateSelectionBar();
         RememberDetailsDraft();
         var items = SelectedMedia;
         var item = Selected;

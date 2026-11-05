@@ -321,23 +321,26 @@ public partial class MainWindow
         panel.Children.Add(new ScrollViewer { Content = rows, MaxHeight = 320, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         var hint = SettingsUi.Hint(T("Click: include · again: exclude · again: off")); panel.Children.Add(hint);
         IReadOnlyList<DirectoryEntry> entries = [];
+        // Chosen entries lead when the list opens or the search changes, not after a click: the row must not move under the pointer.
+        var onTop = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        void Pin() { onTop.Clear(); onTop.UnionWith(entries.Where(e => State(e) != 0).Select(e => e.Tag)); }
         void Fill()
         {
             rows.Children.Clear();
             var text = search.Text.Trim();
             var shown = entries.Where(e => text.Length == 0 || e.Tag.Contains(text, StringComparison.CurrentCultureIgnoreCase) || e.AliasList.Any(a => a.Contains(text, StringComparison.CurrentCultureIgnoreCase)))
-             .OrderByDescending(e => State(e) != 0).ThenByDescending(e => e.MediaCount).ThenBy(e => e.Tag, StringComparer.CurrentCultureIgnoreCase).Take(200).ToList();
+             .OrderByDescending(e => onTop.Contains(e.Tag)).ThenByDescending(e => e.MediaCount).ThenBy(e => e.Tag, StringComparer.CurrentCultureIgnoreCase).Take(200).ToList();
             foreach (var entry in shown) rows.Children.Add(FacetRow(entry, role, Fill));
             if (shown.Count == 0) rows.Children.Add(SettingsUi.Hint(entries.Count == 0 ? T("No entries in this role yet (directory).") : T("Nothing found.")));
         }
-        search.TextChanged += (_, _) => Fill();
+        search.TextChanged += (_, _) => { Pin(); Fill(); };
         panel.Loaded += async (_, _) =>
         {
             var all = await Task.Run(() => _repository.GetDirectory());
             entries = role == TagRole.Tag
        ? all.Where(e => e.Role == TagRole.Tag).GroupBy(e => e.Tag, StringComparer.OrdinalIgnoreCase).Select(g => g.First() with { MediaCount = g.Max(e => e.MediaCount) }).ToList()
        : all.Where(e => e.Role == role).ToList();
-            Fill(); search.Focus();
+            Pin(); Fill(); search.Focus();
         };
         return panel;
     }

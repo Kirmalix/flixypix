@@ -9,7 +9,7 @@ public partial class MainWindow
     private bool _syncReviewEditor;
     private void InitializeReviewEditor()
     {
-        _reviewEditor = new ComboBox { Margin = new Thickness(0, 8, 0, 8), MinWidth = 150 };
+        _reviewEditor = new ComboBox { Margin = new Thickness(0, 0, 0, 10) };
         System.Windows.Automation.AutomationProperties.SetName(_reviewEditor, T("Review status"));
         foreach (var state in Enum.GetValues<ReviewState>()) _reviewEditor.Items.Add(new ComboBoxItem { Content = ReviewLabel(state), Tag = state });
         _reviewEditor.SelectionChanged += (_, _) =>
@@ -18,7 +18,7 @@ public partial class MainWindow
             var ids = SelectedMedia.Select(i => i.Id).ToArray(); if (ids.Length == 0) return;
             ApplyImmediate(ids, ImmediateEditFields.ReviewState, m => m with { ReviewState = state }); Refresh();
         };
-        if (SingleActions.Parent is Panel parent) parent.Children.Insert(parent.Children.IndexOf(SingleActions) + 1, _reviewEditor);
+        if (SingleActions.Parent is FrameworkElement { Parent: Panel column } actions) column.Children.Insert(column.Children.IndexOf(actions) + 1, _reviewEditor);
     }
     private void UpdateReviewEditor()
     {

@@ -53,6 +53,23 @@ public partial class MainWindow
   Require(Tags.Items.Count < _tagEntries.Count || _tagEntries.All(t => t.Count > 0), "Unused vocabulary tags were not hidden.");
   await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-tag-filters.png"));
   ClearTagFilters(); _anchor = 0; ApplyTagFilterChanges(); await _lastRefresh;
+  // A row stays in place after a click and only sorts up once the pointer has left the list.
+  var rowsBefore = Tags.Items.OfType<TagRow>().Select(r => r.Tag).ToArray(); var lastRow = rowsBefore[^1];
+  _tagRowsOnTop = new(StringComparer.OrdinalIgnoreCase); ToggleTagFilter(lastRow, false); await _lastRefresh;
+  Require(Tags.Items.OfType<TagRow>().Select(r => r.Tag).Last() == lastRow, "A clicked tag row moved under the pointer.");
+  TagListLeft(Tags, null!); Require(Tags.Items.OfType<TagRow>().First().Tag == lastRow, "The tag list did not sort again after the pointer left.");
+  ClearTagFilters(); _anchor = 0; ApplyTagFilterChanges(); await _lastRefresh;
+  // The folder filter is visible as a chip, counts as a filter and can be removed.
+  var folderPath = Path.GetDirectoryName(others[0].Item.Path)!; _folder = folderPath; await RefreshAsync();
+  var folderChip = T("Folder: {0}", Path.GetFileName(folderPath)) + "  ×";
+  Require(ActiveTagFilters.Children.OfType<Button>().Any(b => b.Content as string == folderChip) && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The folder filter has no chip.");
+  ClearFolderFilter(); await _lastRefresh;
+  Require(_folder == null && !ActiveTagFilters.Children.OfType<Button>().Any(), "The folder chip did not end the filter.");
+  // A multi-selection is stated at the grid and can be cleared there.
+  MediaList.SelectedItems.Clear(); foreach (var card in MediaList.Items.Cast<MediaCard>().Take(2)) MediaList.SelectedItems.Add(card); await Idle();
+  Require(SelectionBar.Visibility == Visibility.Visible, "The selection bar is missing for a multi-selection.");
+  ClearSelectionClicked(this, new RoutedEventArgs()); await Idle();
+  Require(SelectedMedia.Count == 0 && SelectionBar.Visibility == Visibility.Collapsed, "Clearing the selection left it active.");
   Require(ViewTitle.Text == T("All items") && ActiveTagFilters.Children.Count == 0, "Clearing tag filters did not reset the view.");
   await ChangeTagsAsync(ids, [], ["Ausflug"]); await ChangeTagsAsync([others[0].Item.Id, others[1].Item.Id], [], ["Natur", "Erinnerungen"]);
   Require(_repository.QueryPage(new() { RequiredTags = ["Natur"] }).TotalCount == 1, "Bulk tag removal failed.");

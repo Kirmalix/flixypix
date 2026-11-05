@@ -136,7 +136,7 @@ public partial class MainWindow
             var loaded = MediaList.Items.Cast<MediaCard>().ToArray();
             foreach (var card in loaded.Where(c => wanted.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
             var loadedIds = loaded.Select(c => c.Item.Id).ToHashSet();
-            _offWindowSelection = selected.Where(i => !loadedIds.Contains(i.Id)).ToArray();
+            _offWindowSelection = selected.Where(i => !loadedIds.Contains(i.Id)).ToArray(); UpdateSelectionBar();
         }
         finally { _refreshing = false; }
         ShowDetails(); UpdatePager();

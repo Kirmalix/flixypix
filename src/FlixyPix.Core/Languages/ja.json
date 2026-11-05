@@ -79,6 +79,7 @@
   " · {0:N0} new tags": {
     "other": " · 新しいタグ：{0:N0} 件"
   },
+  " · {0:N0} not in this view": " · このビューにない項目 {0:N0} 件",
   " · {0:N0} unreadable": {
     "other": " · 読み取り不可：{0:N0} 件"
   },
@@ -565,6 +566,7 @@
   "Clear quick collection": "クイックコレクションを空にする",
   "Clear search": "検索をクリア",
   "Clear search (Esc)": "検索をクリア (Esc)",
+  "Clear selection": "選択を解除",
   "Clear the {0}? It is recreated when needed.": "{0} を空にしますか？必要に応じて再生成されます。",
   "Clearing frees space without losing catalog data.": "カタログデータを失わずに、空き容量を増やします。",
   "Click a frame to play this file from the displayed time.": "画像をクリックすると、表示された時刻からこのファイルを再生します。",
@@ -1022,6 +1024,7 @@
   "Folder of the new library": "新しいライブラリのフォルダー",
   "Folder with subfolders …": "フォルダー（サブフォルダーを含む）…",
   "Folder “{0}”": "フォルダー「{0}」",
+  "Folder: {0}": "フォルダー: {0}",
   "Folders": "フォルダー",
   "Folders also show the items of their subfolders": "フォルダーにはサブフォルダーのアイテムも表示されます",
   "Follow Windows": "Windows に合わせる",
@@ -2171,6 +2174,7 @@
   "Remove filter": "フィルターを解除",
   "Remove folder": "フォルダーを一覧から削除",
   "Remove folder (items stay in the catalog)": "フォルダーを一覧から削除（メディアはカタログに保持）",
+  "Remove folder filter": "フォルダーフィルターを解除",
   "Remove from all items …": "すべてのメディアから取り除く…",
   "Remove from catalog": "カタログから削除",
   "Remove from catalog …": "カタログから削除…",

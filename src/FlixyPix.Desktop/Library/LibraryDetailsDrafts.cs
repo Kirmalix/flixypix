@@ -41,9 +41,11 @@ public partial class MainWindow
  private void UpdateDetailsDraftState()
  {
   var changed = HasCurrentDetailsChanges();
-  DetailsEditActions.Visibility = SelectedMedia.Count == 1 && _detailsShown != null ? Visibility.Visible : Visibility.Collapsed;
-  DetailsSave.IsEnabled = DetailsDiscard.IsEnabled = changed;
   var conflict = _detailsShown is { } item && _metadataConflicts.Contains(item.Id);
+  DetailsEditActions.Visibility = SelectedMedia.Count == 1 && _detailsShown != null && (changed || conflict || _immediateUndo != null) ? Visibility.Visible : Visibility.Collapsed;
+  DetailsSave.IsEnabled = DetailsDiscard.IsEnabled = changed;
+  DetailsSave.Visibility = DetailsDiscard.Visibility = changed ? Visibility.Visible : Visibility.Collapsed;
+  ImmediateUndoButton.Visibility = _immediateUndo != null ? Visibility.Visible : Visibility.Collapsed;
   DetailsReload.Visibility = conflict ? Visibility.Visible : Visibility.Collapsed;
   DetailsDraftState.Text = conflict ? T("Conflict") + " · " + T("Unsaved changes") : changed ? T("Unsaved changes") : "";
  }

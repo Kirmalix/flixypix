@@ -83,7 +83,7 @@ public partial class MainWindow
                     // The selection survives the new window: media outside it are kept aside and come back when scrolled to.
                     var loadedIds = cards.Select(c => c.Item.Id).ToHashSet(); var selectedIds = selected.Select(i => i.Id).ToHashSet();
                     foreach (var card in cards.Where(c => selectedIds.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
-                    _offWindowSelection = selected.Where(i => !loadedIds.Contains(i.Id)).ToList();
+                    _offWindowSelection = selected.Where(i => !loadedIds.Contains(i.Id)).ToList(); UpdateSelectionBar();
                 }
                 finally { _refreshing = false; }
             })) return;
