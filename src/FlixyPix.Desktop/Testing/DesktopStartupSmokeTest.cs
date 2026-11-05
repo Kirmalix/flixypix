@@ -27,6 +27,8 @@ public partial class MainWindow
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
             if (!window.IsVisible || !window._startupSurface.IsVisible || window.RootContent.IsEnabled || window.Startup.IsCompleted)
                 throw new InvalidOperationException("Loading surface was not rendered before library work.");
+            if (!Descendants<System.Windows.Controls.Image>(window._startupSurface).Any(image => image.IsVisible && image.Source is System.Windows.Media.Imaging.BitmapSource { PixelWidth: > 0 }))
+                throw new InvalidOperationException("Startup splash did not show its packaged logo.");
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
             Capture(window, Path.Combine(directory, "startup-loading.png"));
             if (cancel)

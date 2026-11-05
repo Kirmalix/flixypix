@@ -6,6 +6,21 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow
 {
+    private async Task RunViewRestoreHostSmokeAsync(string directory)
+    {
+        var markResolver = MarkThumbnailConverter.Resolve;
+        var encryptedCatalog = AppLock.EncryptedCatalog;
+        try { await RunViewRestoreSmokeAsync(directory); }
+        finally
+        {
+            MarkThumbnailConverter.Resolve = markResolver;
+            AppLock.EncryptedCatalog = encryptedCatalog;
+            DesktopImaging.Configure(_settings.DataDirectory);
+            AppShell.Install(this);
+            AppShell.Configure(_settings);
+        }
+    }
+
     private async Task RunViewRestoreSmokeAsync(string root)
     {
         foreach (var encrypted in new[] { false, true })
@@ -39,9 +54,20 @@ public partial class MainWindow
                         var saved = window.CaptureViewState();
                         var navigation = Logicals<System.Windows.Controls.RadioButton>(window.NavItems).Single(button => (string)button.Tag == "Video");
                         navigation.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-                        await window._lastRefresh;
+                        await window._lastAreaNavigation;
                         if (window.SortChoice.SelectedIndex != 2) throw new InvalidOperationException("Clicking Videos after restore reset Recently added sorting.");
-                        window.ApplyViewState(saved); await window._lastRefresh; await window.RestorePlaceAsync(saved);
+                        var savedPage = window.CurrentPage;
+                        await window.NavigateAreaAsync("Image");
+                        window.SearchBox.Text = "separate image search"; window._searchTimer.Stop();
+                        window.Refresh(); await window._lastRefresh;
+                        await window.NavigateAreaAsync("Video");
+                        if (window.CurrentPage != savedPage || window.SearchBox.Text != saved.SearchText || window.RatingFilter.SelectedIndex != saved.MinimumStars || window.SortChoice.SelectedIndex != 2 || !window.SelectedMedia.Select(i => i.Id).ToHashSet().SetEquals(saved.Selection))
+                            throw new InvalidOperationException("Returning to Videos lost its page, filters, search, sorting or selection.");
+                        await window.NavigateAreaAsync("Image");
+                        if (window.SearchBox.Text != "separate image search") throw new InvalidOperationException("Media areas did not retain independent searches.");
+                        await Task.WhenAll(window.NavigateAreaAsync("Image"), window.NavigateAreaAsync("Video"));
+                        if (window._view != "Video" || window.CurrentPage != savedPage || window.SearchBox.Text != saved.SearchText)
+                            throw new InvalidOperationException("Rapid area navigation published a stale target.");
                     }
                     if (round == 1)
                     {

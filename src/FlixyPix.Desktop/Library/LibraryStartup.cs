@@ -27,6 +27,15 @@ public partial class MainWindow
         _startupCancel = new Button { Content = T("Cancel"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 18, 0, 0) };
         _startupCancel.Click += (_, _) => RequestStartupCancellation();
         var panel = new StackPanel { MaxWidth = 480, Margin = new Thickness(32), VerticalAlignment = VerticalAlignment.Center };
+        var logo = new Image
+        {
+            Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/flixypix-mark-192.png")),
+            Width = 96, Height = 96, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 16)
+        };
+        System.Windows.Media.RenderOptions.SetBitmapScalingMode(logo, System.Windows.Media.BitmapScalingMode.HighQuality);
+        System.Windows.Automation.AutomationProperties.SetName(logo, ProductIdentity.Name);
+        panel.Children.Add(logo);
+        panel.Children.Add(new TextBlock { Text = ProductIdentity.Name, FontSize = 30, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) });
         panel.Children.Add(new TextBlock { Text = LibraryName, FontSize = 24, TextWrapping = TextWrapping.Wrap });
         panel.Children.Add(_startupPhase);
         var progress = new ProgressBar { IsIndeterminate = true, Height = 6 };

@@ -10,6 +10,7 @@ public partial class MainWindow
     internal async Task RunLibraryLifetimeProbeAsync(string directory)
     {
         ConfigureSmokeTools();
+        await RunViewRestoreHostSmokeAsync(directory);
         await RunOpeningSmokeTestAsync(directory);
         var video = Path.Combine(directory, "fixtures", "playback-lifetime.mp4");
         if (File.Exists(video))

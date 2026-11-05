@@ -6,6 +6,25 @@ namespace FlixyPix.Desktop.Tests;
 public sealed class LibraryBrowseControllerTests
 {
  [Fact]
+ public void AreaMemoriesAreIndependentDetachedAndNeverBorrowACollection()
+ {
+  var controller = new LibraryBrowseController();
+  var selection = Guid.NewGuid();
+  var video = new ViewState { View="Video", SearchText="needle", SortOrder=2, Position=620, Selection=[selection], RequiredTags=["one"] };
+  controller.RememberArea(video);
+  controller.RememberArea(new() {View="Image",SearchText="pictures",Position=30});
+  video.Selection.Clear(); video.RequiredTags.Clear();
+  var restored = controller.RecallArea("Video")!;
+  Assert.Equal(("needle",2,620),(restored.SearchText,restored.SortOrder,restored.Position));
+  Assert.Equal([selection],restored.Selection); Assert.Equal(["one"],restored.RequiredTags);
+  restored.Selection.Clear(); Assert.Single(controller.RecallArea("Video")!.Selection);
+  Assert.Equal("pictures",controller.RecallArea("Image")!.SearchText);
+  controller.RememberArea(new() {View="Video",PlaylistId=Guid.NewGuid(),SearchText="collection"});
+  Assert.Equal("needle",controller.RecallArea("Video")!.SearchText);
+  Assert.Null(new LibraryBrowseController().RecallArea("Video"));
+ }
+
+ [Fact]
  public void ProposedScopeDoesNotReplaceAcceptedRoleUntilTheUiConfirmsLeaving()
  {
   var controller = new LibraryBrowseController();

@@ -49,13 +49,15 @@ public partial class MainWindow
     });
 
     /// <summary>Shows a state: view, filters, sort and display; the caller decides about position and selection.</summary>
-    internal void ApplyViewState(ViewState state, string? title = null)
+    internal bool ApplyViewState(ViewState state, string? title = null)
     {
-        if (!LeaveRoleView()) { UpdateNavigation(); return; }
+        if (!LeaveRoleView()) { UpdateNavigation(); return false; }
         if (IsRoleView) RecordView();
+        RememberCurrentArea();
         state = _browse.ApplyTransition(state);
         PresentViewState(state, title);
         Refresh();
+        return true;
     }
 
     private void PresentViewState(ViewState state, string? title = null)

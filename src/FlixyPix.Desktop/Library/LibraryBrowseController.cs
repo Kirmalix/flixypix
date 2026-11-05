@@ -7,6 +7,16 @@ internal enum LibraryViewKind { All, Video, Image, Audio, Favorites, WatchLater,
 /// <summary>Library navigation state, independent of controls and persisted through the existing ViewState contract.</summary>
 internal sealed class LibraryBrowseController
 {
+    private readonly Dictionary<string, BrowseState> areas = new(StringComparer.Ordinal);
+
+    internal void RememberArea(ViewState state)
+    {
+        if (state.PlaylistId is null && state.SavedSearchId is null && ViewState.Views.Contains(state.View))
+            areas[state.View] = new(state);
+    }
+
+    internal ViewState? RecallArea(string view) => areas.TryGetValue(view, out var state) ? state.ToViewState() : null;
+
     internal BrowseState State { get; private set; } = new(new ViewState());
     internal long Revision { get; private set; }
     internal void Invalidate() => ++Revision;
