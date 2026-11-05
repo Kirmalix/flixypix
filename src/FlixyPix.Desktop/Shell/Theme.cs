@@ -66,6 +66,7 @@ internal static class Theme
   ("TagExcluded", "#FFB074", "#A44A00"),
   ("TagUnused", "#7F8DA6", "#7C889C"),
   ("ChipFull", "#4A2440", "#F8D0DC"),
+  ("ChipApplied", "#2E3A50", "#E2E7F0"),
   ("ChipPartial", "#1E2838", "#EDF1F7"),
   ("ChipExcluded", "#4A3220", "#FBE3CF"),
   ("ChipSuggestion", "#1F342E", "#D7EFE0"),
@@ -82,7 +83,7 @@ internal static class Theme
   ("Muted", "WindowBackground", 4.5), ("Muted", "ChromeBackground", 4.5), ("Muted", "SidebarBackground", 4.5), ("Muted", "DetailsBackground", 4.5),
   ("Subtle", "Field", 4.5), ("Subtle", "CardBackground", 4.5), ("OnAccent", "Accent", 4.5), ("OnBrand", "Brand", 3),
   ("Gold", "CardBackground", 3), ("Error", "ChromeBackground", 4.5), ("Good", "ChromeBackground", 3), ("TagIncluded", "SidebarBackground", 4.5),
-  ("TagExcluded", "SidebarBackground", 4.5), ("Text", "ChipFull", 4.5), ("Text", "ChipExcluded", 4.5), ("Text", "ChipSuggestion", 4.5), ("OnBadge", "Badge", 4.5),
+  ("TagExcluded", "SidebarBackground", 4.5), ("Text", "ChipFull", 4.5), ("Text", "ChipApplied", 4.5), ("Text", "ChipExcluded", 4.5), ("Text", "ChipSuggestion", 4.5), ("OnBadge", "Badge", 4.5),
  ];
 
  private sealed class ColorSlot : INotifyPropertyChanged

@@ -80,6 +80,9 @@ internal sealed partial class SettingsWindow : Window
  private readonly ThemePicker themePicker = new();
  /// <summary>Language of this computer (appsettings.json); applies on the next start.</summary>
  internal readonly ComboBox LanguageChoice = new() { MinWidth = 260 };
+ internal readonly ComboBox ScaleChoice = new() { MinWidth = 120 };
+ private readonly double scaleBefore = InterfaceScaling.Current;
+ internal double ChosenInterfaceScale => (ScaleChoice.SelectedItem as ComboBoxItem)?.Tag is double scale ? scale : 1;
  private readonly ColorScheme themeBefore = Theme.Mode;
  private readonly RatingPicker videoFavorite = new(), audioFavorite = new(), imageFavorite = new();
  internal readonly CheckBox AlwaysFullscreen = SettingsUi.Switch(), PlayBestVersion = SettingsUi.Switch();
@@ -182,6 +185,9 @@ internal sealed partial class SettingsWindow : Window
   foreach (var (value, label) in LanguageSetup.Choices()) LanguageChoice.Items.Add(new ComboBoxItem { Content = label, Tag = value });
   LanguageChoice.SelectedItem = LanguageChoice.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (string)item.Tag == settings.Language) ?? LanguageChoice.Items[0];
   LanguageChoice.SelectionChanged += (_, _) => Touch(); AutomationProperties.SetName(LanguageChoice, T("Language"));
+  foreach (var step in InterfaceScaling.Steps) ScaleChoice.Items.Add(new ComboBoxItem { Content = step.ToString("P0", System.Globalization.CultureInfo.CurrentCulture), Tag = step });
+  ScaleChoice.SelectedItem = ScaleChoice.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (double)item.Tag == InterfaceScaling.Valid(settings.InterfaceScale));
+  ScaleChoice.SelectionChanged += (_, _) => { if (loading) return; InterfaceScaling.Apply(ChosenInterfaceScale); Touch(); }; AutomationProperties.SetName(ScaleChoice, T("Interface size"));
   BossKey.Value = settings.BossKey; BossKey.Changed += Touch; AutomationProperties.SetName(BossKey, T("Boss key"));
   MinimizeToTray.IsChecked = settings.MinimizeToTray; MinimizeToTray.Click += (_, _) => Touch(); AutomationProperties.SetName(MinimizeToTray, T("Minimize to the notification area"));
   DetailsTabs.IsChecked = settings.DetailsTabs; DetailsTabs.Click += (_, _) => Touch(); AutomationProperties.SetName(DetailsTabs, T("Details as tabs"));

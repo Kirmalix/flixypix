@@ -50,11 +50,11 @@ public partial class App : Application
         // Implicit styles only match the exact type; derived windows would otherwise render white.
         var windowStyle = (Style)Resources[typeof(Window)];
         foreach (var type in typeof(App).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Window)))) Resources.Add(type, new Style(type, windowStyle));
-        Theme.Install(this);
+        Theme.Install(this); InterfaceScaling.Install();
         // Test modes start dark and switch themselves; a normal start follows the saved choice (default: like Windows).
         DesktopSettings? saved = null;
         if (arguments.Length == 0) { try { saved = DesktopSettings.Load(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { } }
-        if (arguments.Length == 0) { Theme.Apply(saved == null ? ColorScheme.System : Theme.ParseMode(saved.Theme)); }
+        if (arguments.Length == 0) { Theme.Apply(saved == null ? ColorScheme.System : Theme.ParseMode(saved.Theme)); InterfaceScaling.Apply(saved?.InterfaceScale ?? 1); }
         else Theme.Apply(ColorScheme.Dark);
         // Test modes run hidden: a dialog there would pump messages, repeat the failure and overflow the stack.
         string? testDirectory = arguments.Length >= 2 && arguments[0].StartsWith("--", StringComparison.Ordinal) ? Path.GetFullPath(arguments[^1]) : null;

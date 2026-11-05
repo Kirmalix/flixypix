@@ -2514,11 +2514,6 @@
       "digest": "ac2815788e54d67c6ff35d5be17ca369586d52833eacae8574c07b32118b90b4",
       "previous_digest": "d700acddd7432e16113c45b73f913b92f9f33111d88798d56648e8cb3a2f53cc"
     },
-    "YOUR MEDIA. YOUR ARCHIVE.": {
-      "status": "corrected",
-      "digest": "bb6b363812d239d1bf46d8d31320e00c02552e43e330038bdebaf4203cbd1e03",
-      "previous_digest": "8910a78d2540d86a53495c84c978fbfd59adc290ee9a3ed4e0b91788f234a032"
-    },
     "Your watch list.": {
       "status": "corrected",
       "digest": "04f62b68c785fac60a2f49ec753989c7dc46a334990fde8ef16eef34d24a204b",
@@ -5418,11 +5413,6 @@
     "List": {
       "status": "unchanged",
       "digest": "f06189cd0f274465808de0350b702cd8431b46ea1aa993e92a6e1fca613af874"
-    },
-    "Stored locally.\nKept for the future.": {
-      "status": "corrected",
-      "digest": "1890e673fbc377c72d84bc7740bbe44d0f3416e80cd19305256f2275531747b0",
-      "previous_digest": "bb5dd7f6179151d9435ea438df4466c932f0b68b439882dc8d8da05a37e29e41"
     },
     "Local images referenced by <fanart> are added to the video’s artwork.": {
       "status": "corrected",
@@ -14723,6 +14713,18 @@
     "{0:N0} more": {
       "status": "unchanged",
       "digest": "a8a4f510dd3c4f4c509960169a1ac144573c9e9f9d5e06f8af317e13c2b89117"
+    },
+    "Interface size": {
+      "status": "unchanged",
+      "digest": "e487c961bae71b5098b17664753ac5ae3344878d7e5b3ebfef131ffab569551d"
+    },
+    "Size": {
+      "status": "unchanged",
+      "digest": "07c6aa207ff7aef816c52e403d5b4ccd9f746743e1235738bb74b41097b3e7bc"
+    },
+    "Text and controls in all windows. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time.": {
+      "status": "unchanged",
+      "digest": "23a30fb5849a68b8bb545693bb73eb38342aa2f7f4bce99bcfa7957c37b78741"
     }
   }
 }

@@ -84,6 +84,11 @@ public partial class MainWindow
   Require(ActiveTagFilters.Children.OfType<Button>().Any(b => b.Content as string == folderChip) && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The folder filter has no chip.");
   ClearFolderFilter(); await _lastRefresh;
   Require(_folder == null && !ActiveTagFilters.Children.OfType<Button>().Any(), "The folder chip did not end the filter.");
+  // The interface size reaches the window and returns to normal.
+  InterfaceScaling.Apply(1.25); Require(((FrameworkElement)Content).LayoutTransform is System.Windows.Media.ScaleTransform { ScaleX: 1.25 }, "The interface size did not reach the window.");
+  await Idle(); Capture(this, Path.Combine(directory, "desktop-size-125.png"));
+  Require(InterfaceScaling.Step(1) == 1.4 && InterfaceScaling.Step(-1) == 1.1 && InterfaceScaling.Step(0) == 1, "The interface size steps are wrong.");
+  InterfaceScaling.Apply(1); Require(((FrameworkElement)Content).LayoutTransform is not System.Windows.Media.ScaleTransform, "The interface size did not return to normal.");
   // A multi-selection is stated at the grid and can be cleared there.
   MediaList.SelectedItems.Clear(); foreach (var card in MediaList.Items.Cast<MediaCard>().Take(2)) MediaList.SelectedItems.Add(card); await Idle();
   Require(SelectionBar.Visibility == Visibility.Visible, "The selection bar is missing for a multi-selection.");

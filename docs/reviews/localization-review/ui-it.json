@@ -2524,11 +2524,6 @@
       "digest": "f476686767f5501627bc8021e6b1bb2d5226a19a79d7dd66b4bffedbbd5c69d5",
       "previous_digest": "b79246d77a29254958bc9a489361fcf290fdd1ee65fea52f8b6ca0aff43e9412"
     },
-    "YOUR MEDIA. YOUR ARCHIVE.": {
-      "status": "corrected",
-      "digest": "5bb5fae3b09edd78d7e34520638986e70d7303a0ee25371448a0b760692a1e3d",
-      "previous_digest": "0002b0d1ca150af7b44d7b539c530eafad46c3e7e6c03015c99587aeffbba0df"
-    },
     "Your watch list.": {
       "status": "corrected",
       "digest": "6b0af2eadfbe7df39bb7e71bb25c9f0d2456b9eef13fb6e8b1669e2c4e66526d",
@@ -5450,11 +5445,6 @@
     "List": {
       "status": "unchanged",
       "digest": "a28ad94fadc28a925160a2dc5593a047c67175c05b30da8dbf6e42d3723789aa"
-    },
-    "Stored locally.\nKept for the future.": {
-      "status": "corrected",
-      "digest": "678575ee3f66791b397e36e350ed116d4fca2a7bedf0bb67b3207d422b832114",
-      "previous_digest": "03c0103860f2d084a7d3f87fa7e2b4176c1b394fcb6d5e5e95123ca6e236c364"
     },
     "Local images referenced by <fanart> are added to the video’s artwork.": {
       "status": "unchanged",
@@ -14775,6 +14765,18 @@
     "{0:N0} more": {
       "status": "unchanged",
       "digest": "afe8bed6e1bb47ac1b70662601bc36acaab422173a40c6380b0a71821aa13932"
+    },
+    "Interface size": {
+      "status": "unchanged",
+      "digest": "980ce3d1ecae325e584084c1a7bf31d829081c05af10fb5da040010550ebf203"
+    },
+    "Size": {
+      "status": "unchanged",
+      "digest": "e3fe784de0d11307f281d8216cc75922e9b1b148e38cf8b908f24618baa4ab8f"
+    },
+    "Text and controls in all windows. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time.": {
+      "status": "unchanged",
+      "digest": "236fac468d19e49a3b780df1590cb8d84c8b1520edd9b834bb144ca92a474f4d"
     }
   }
 }

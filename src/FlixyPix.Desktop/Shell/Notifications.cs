@@ -27,8 +27,8 @@ internal static class Message
   MessageBoxImage.Error => ("", Theme.Brush("Error")),
   MessageBoxImage.Warning => ("", Theme.Brush("Gold")),
   MessageBoxImage.Question => ("", Theme.Brush("Accent")),
-  MessageBoxImage.Information => ("", Theme.Brush("Accent")),
-  _ => ("", Theme.Brush("Accent")),
+  MessageBoxImage.Information => ("", Theme.Brush("Muted")),
+  _ => ("", Theme.Brush("Muted")),
  };
 }
 
