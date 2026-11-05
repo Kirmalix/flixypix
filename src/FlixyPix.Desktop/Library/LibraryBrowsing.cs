@@ -38,6 +38,8 @@ public partial class MainWindow
         private bool expanded;
         public Action? ExpandedChanged { get; set; }
         public bool IsExpanded { get => expanded; set { if (value == expanded) return; expanded = value; PropertyChanged?.Invoke(this, new(nameof(IsExpanded))); PropertyChanged?.Invoke(this, new(nameof(FolderGlyph))); ExpandedChanged?.Invoke(); } }
+        private bool selected;
+        public bool IsSelected { get => selected; set { if (value == selected) return; selected = value; PropertyChanged?.Invoke(this, new(nameof(IsSelected))); } }
         public string? Path { get; } = path;
         public string? Category { get; } = category;
         public string? Tag { get; } = tag;
@@ -59,7 +61,7 @@ public partial class MainWindow
         Folders.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate); CategorizedTags.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse(treeTemplate);
         Folders.ItemTemplate = (HierarchicalDataTemplate)XamlReader.Parse("""
   <HierarchicalDataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ItemsSource="{Binding Children}">
-   <Grid MinHeight="28" ToolTip="{Binding FolderTip}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Grid MinHeight="28" ToolTip="{Binding FolderTip}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding FolderGlyph}" FontFamily="{DynamicResource IconFont}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
     <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding FolderName}" ToolTip="{Binding RootTip}" Foreground="{DynamicResource TextSoft}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2"/>
     <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="10"/></Border>
@@ -194,7 +196,10 @@ public partial class MainWindow
         if (browse.TagFingerprint != _tagFingerprint) { _tagFingerprint = browse.TagFingerprint; CategorizedTags.ItemsSource = browse.CategorizedTags; RestoreTreeState(CategorizedTags, "categories"); }
         // Counts change with every import or removal; they are set on the nodes shown, which keeps expanded folders open.
         foreach (var node in (Folders.ItemsSource as IEnumerable<BrowseNode> ?? []).SelectMany(root => root.Descendants().Prepend(root)))
+                    {
             node.Count = browse.FolderCounts.TryGetValue(node.Path ?? "", out var count) ? CountText(count) : "";
+            node.IsSelected = _folder != null && string.Equals(node.Path, _folder, StringComparison.OrdinalIgnoreCase);
+        }
         foreach (var node in CategorizedTags.ItemsSource as IEnumerable<BrowseNode> ?? [])
             node.Count = node.Category is { } name && browse.TagCategoryCounts.TryGetValue(name, out var count) ? CountText(count) : "";
         _categoryRoles = browse.CategoryRoles; _roleNames = browse.RoleNames;

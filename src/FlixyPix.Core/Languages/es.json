@@ -101,6 +101,7 @@
     "many": " · Etiquetas nuevas: {0:N0}",
     "other": " · Etiquetas nuevas: {0:N0}"
   },
+  " · {0:N0} not in this view": " · {0:N0} fuera de esta vista",
   " · {0:N0} unreadable": {
     "one": " · No legibles: {0:N0}",
     "many": " · No legibles: {0:N0}",
@@ -613,6 +614,7 @@
   "Clear quick collection": "Vaciar la colección rápida",
   "Clear search": "Vaciar búsqueda",
   "Clear search (Esc)": "Vaciar búsqueda (Esc)",
+  "Clear selection": "Borrar selección",
   "Clear the {0}? It is recreated when needed.": "¿Vaciar {0}? Se vuelve a generar cuando es necesario.",
   "Clearing frees space without losing catalog data.": "La limpieza libera espacio sin perder datos de catálogo.",
   "Click a frame to play this file from the displayed time.": "Haz clic en una imagen para reproducir este archivo desde el tiempo indicado.",
@@ -1078,6 +1080,7 @@
   "Folder of the new library": "Carpeta de la nueva biblioteca",
   "Folder with subfolders …": "Carpeta con subcarpetas …",
   "Folder “{0}”": "Carpeta «{0}»",
+  "Folder: {0}": "Carpeta: {0}",
   "Folders": "Carpetas",
   "Folders also show the items of their subfolders": "Las carpetas muestran también los elementos de sus subcarpetas",
   "Follow Windows": "Como Windows",
@@ -2261,6 +2264,7 @@
   "Remove filter": "Eliminar filtro",
   "Remove folder": "Quitar carpeta",
   "Remove folder (items stay in the catalog)": "Eliminar la carpeta (los elementos permanecen en el catálogo)",
+  "Remove folder filter": "Quitar filtro de carpeta",
   "Remove from all items …": "Eliminar de todos los elementos …",
   "Remove from catalog": "Quitar del catálogo",
   "Remove from catalog …": "Quitar del catálogo …",

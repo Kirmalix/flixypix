@@ -10,7 +10,7 @@ public partial class MainWindow
  {
   if (undo.Rows.Count == 0) return;
   _immediateUndo = undo;
-  ImmediateUndoButton.IsEnabled = true;
+  ImmediateUndoButton.IsEnabled = true; UpdateDetailsDraftState();
   ShowToast(message, action: T("Undo"), onAction: () => UndoImmediateAction(undo), seconds: 8);
  }
  private void UndoImmediate(object? sender = null, RoutedEventArgs? e = null)
@@ -24,7 +24,7 @@ public partial class MainWindow
   {
    if (!_repository.UndoImmediateEdit(undo)) { Status.Text = T("Conflict"); return; }
    if (ReferenceEquals(_immediateUndo, undo)) _immediateUndo = null;
-   ImmediateUndoButton.IsEnabled = _immediateUndo != null;
+   ImmediateUndoButton.IsEnabled = _immediateUndo != null; UpdateDetailsDraftState();
    Refresh(Selected?.Id); Status.Text = T("Undone");
   }
   catch (Exception error) when (error is System.IO.IOException or Microsoft.Data.Sqlite.SqliteException)

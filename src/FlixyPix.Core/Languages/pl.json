@@ -101,6 +101,7 @@
     "few": " · Nowe tagi: {0:N0}",
     "many": " · Nowe tagi: {0:N0}"
   },
+  " · {0:N0} not in this view": " · {0:N0} poza tym widokiem",
   " · {0:N0} unreadable": {
     "one": " · Nieczytelne: {0:N0}",
     "few": " · Nieczytelne: {0:N0}",
@@ -613,6 +614,7 @@
   "Clear quick collection": "Opróżnij szybką kolekcję",
   "Clear search": "Wyczyść wyszukiwanie",
   "Clear search (Esc)": "Wyczyść wyszukiwanie (Esc)",
+  "Clear selection": "Wyczyść zaznaczenie",
   "Clear the {0}? It is recreated when needed.": "Wyczyścić {0}? Zostanie utworzone ponownie w razie potrzeby.",
   "Clearing frees space without losing catalog data.": "Wyczyszczenie zwalnia miejsce bez utraty danych katalogu.",
   "Click a frame to play this file from the displayed time.": "Kliknij klatkę, aby odtworzyć ten plik od wskazanego czasu.",
@@ -1078,6 +1080,7 @@
   "Folder of the new library": "Folder nowej biblioteki",
   "Folder with subfolders …": "Folder z podfolderami …",
   "Folder “{0}”": "Folder „{0}”",
+  "Folder: {0}": "Folder: {0}",
   "Folders": "Foldery",
   "Folders also show the items of their subfolders": "Foldery pokazują też elementy swoich podfolderów",
   "Follow Windows": "Jak w Windows",
@@ -2261,6 +2264,7 @@
   "Remove filter": "Usuń filtr",
   "Remove folder": "Usuń folder",
   "Remove folder (items stay in the catalog)": "Usuń folder (elementy pozostają w katalogu)",
+  "Remove folder filter": "Usuń filtr folderu",
   "Remove from all items …": "Usuń ze wszystkich elementów …",
   "Remove from catalog": "Usuń z katalogu",
   "Remove from catalog …": "Usuń z katalogu …",

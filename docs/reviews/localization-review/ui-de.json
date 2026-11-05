@@ -7157,11 +7157,6 @@
       "digest": "94fb036ec07c7e7a51cd2698492dd30b40f3daaf541c0c895ed0379a8753d0df",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "View only: media type, collection or saved search, sorting and display. Everything: also search text, filters, position and selection plus a continue watching notice. Window size and position follow “Remember window position” under Navigation.": {
-      "status": "unchanged",
-      "digest": "98e7568120fbbe1d3b5f05e46ae79bc7182550c1e856d85e2172d7901e8346b4",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Boss key": {
       "status": "unchanged",
       "digest": "dbc358bd94948f0a9d3f3b6cf600129b1a059a0cb0caed97e777bf5a3e2981eb",
@@ -7205,16 +7200,6 @@
     "How many days the row “Recently watched” goes back.": {
       "status": "unchanged",
       "digest": "785550113579b13b5ddf6e094d8e908dc0c70c2084ea68809de9f43959c48fec",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Start with the home page": {
-      "status": "unchanged",
-      "digest": "94c653e4e8d308cd8ca2105569a1f4572af8d34a204d4e21f259c079a19e796c",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "FlixyPix opens on the home page. A restored view is then one step back (Alt+←). Ctrl+Home opens the home page at any time.": {
-      "status": "unchanged",
-      "digest": "548ac78c085fa695a08c7037a3bf9705a958cf73419d9b98b80ec53f5006c7f0",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "home page\u0004Rows": {
@@ -8030,11 +8015,6 @@
     "Home page": {
       "status": "unchanged",
       "digest": "fa0aa0448e085201becefd745b0f5776ac948ead48215f94038ea3449b2cc9b2",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "What the home page shows and whether FlixyPix starts with it.": {
-      "status": "unchanged",
-      "digest": "94675681ffa8bca586444e81e161387a5efc531b16499fa0fd277b9bd9a07928",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Which video files are imported and from which rating they count as favorites.": {
@@ -15483,6 +15463,42 @@
     "What the home page shows.": {
       "status": "unchanged",
       "digest": "394f12c7813ec89f45c74ca485296333d7a1ce38da5d1dad11330e0def95eafb"
+    },
+    " · {0:N0} not in this view": {
+      "status": "unchanged",
+      "digest": "8f40158f96f88eb5518fe2c5c9b66c47a463073a41489e6e579be1b54ec6d043"
+    },
+    "Checking library": {
+      "status": "unchanged",
+      "digest": "3ab5259cc58aeedf1bc6bdd9c08b36a6c7e39042293f2769e954e8d20358d544"
+    },
+    "Clear selection": {
+      "status": "unchanged",
+      "digest": "9ea4ffe13f0f30200974f0cf53229b714dfe8910a9879c19018f576b0d1c9888"
+    },
+    "Elapsed: {0}": {
+      "status": "unchanged",
+      "digest": "c4c448c9543efc9311bdefc9f47455cc52649e34c9347e576ab1af5d7738a17c"
+    },
+    "Folder: {0}": {
+      "status": "unchanged",
+      "digest": "9a15727adddef4302202d4ec063c1db19008797fd41c8c1420554d26b11bf516"
+    },
+    "Loading view": {
+      "status": "unchanged",
+      "digest": "fdd9a5ffc7be58fefd4bdcc6073dfc699b8a1070996a25a1ad9c70abefc484da"
+    },
+    "Opening catalog": {
+      "status": "unchanged",
+      "digest": "1edffad85695917a2fb8b921a98615a49b63783031813c995bacd859136e2399"
+    },
+    "Preparing library": {
+      "status": "unchanged",
+      "digest": "b191588715dc3bb2731123a79d5c7dba318eea64fceab1e883e16c67600d66e5"
+    },
+    "Remove folder filter": {
+      "status": "unchanged",
+      "digest": "7571799c6d0f3037aff33a469de8a66e677bb46357d683f8cb8bcee4759761da"
     }
   }
 }

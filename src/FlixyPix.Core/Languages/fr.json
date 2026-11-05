@@ -101,6 +101,7 @@
     "many": " · Nouveaux tags : {0:N0}",
     "other": " · Nouveaux tags : {0:N0}"
   },
+  " · {0:N0} not in this view": " · {0:N0} hors de cette vue",
   " · {0:N0} unreadable": {
     "one": " · Illisibles : {0:N0}",
     "many": " · Illisibles : {0:N0}",
@@ -613,6 +614,7 @@
   "Clear quick collection": "Vider la collection rapide",
   "Clear search": "Effacer la recherche",
   "Clear search (Esc)": "Effacer la recherche (Échap)",
+  "Clear selection": "Effacer la sélection",
   "Clear the {0}? It is recreated when needed.": "Vider « {0} » ? Ce cache sera régénéré au besoin.",
   "Clearing frees space without losing catalog data.": "Le nettoyage libère l’espace sans perdre les données du catalogue.",
   "Click a frame to play this file from the displayed time.": "Cliquez sur une image pour lire ce fichier à partir du temps affiché.",
@@ -1078,6 +1080,7 @@
   "Folder of the new library": "Dossier de la nouvelle bibliothèque",
   "Folder with subfolders …": "Dossier avec sous-dossiers…",
   "Folder “{0}”": "Dossier « {0} »",
+  "Folder: {0}": "Dossier : {0}",
   "Folders": "Dossiers",
   "Folders also show the items of their subfolders": "Les dossiers affichent aussi les médias de leurs sous-dossiers",
   "Follow Windows": "Comme Windows",
@@ -2261,6 +2264,7 @@
   "Remove filter": "Supprimer le filtre",
   "Remove folder": "Retirer le dossier",
   "Remove folder (items stay in the catalog)": "Retirer le dossier (les médias restent dans le catalogue)",
+  "Remove folder filter": "Retirer le filtre de dossier",
   "Remove from all items …": "Retirer de tous les médias…",
   "Remove from catalog": "Retirer du catalogue",
   "Remove from catalog …": "Retirer du catalogue…",

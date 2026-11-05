@@ -15,6 +15,7 @@ public partial class MainWindow
   var scene = _repository.UpsertScene(new Scene { MediaId = videoId, Title = "Wand-Szene", StartSeconds = .1, EndSeconds = .6 });
   var bookmark = _repository.UpsertBookmark(new Bookmark { MediaId = videoId, Title = "Wand-Marke", PositionSeconds = .3 });
   var window = ShowSceneWall();
+  Require(ReferenceEquals(ShowSceneWall(), window), "A second call opened another scene wall window.");
   var pagedIds = new List<Guid>();
   try
   {

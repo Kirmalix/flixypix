@@ -14,11 +14,15 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow
 {
  /// <summary>Opens the scene wall; a click on a tile plays its video from the mark.</summary>
+ private SceneWallWindow? _sceneWall;
  internal SceneWallWindow ShowSceneWall()
  {
+  // A second click returns to the open wall instead of stacking windows.
+  if (_sceneWall is { } open) { if (open.WindowState == WindowState.Minimized) open.WindowState = WindowState.Normal; open.Activate(); return open; }
   var window = new SceneWallWindow(this, _repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null, ClipFolder, (item, seconds) => Play(item, seconds));
   // The media menu of the tile's video, led by playing from the mark.
   window.MenuRequested = tile => OpenMediaMenu(tile.Mark.Media, MediaMenuPlace.Wall, [MenuSpec.Command(T("Play from here"), () => _ = window.Open(tile), "\uE768")]);
+  _sceneWall = window; window.Closed += (_, _) => _sceneWall = null;
   window.Show();
   return window;
  }

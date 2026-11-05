@@ -3987,11 +3987,6 @@
       "status": "unchanged",
       "digest": "0155321e8f38e72f3c9a07b2940d6b851e25098cd233a5e98513847eea0cb5e7"
     },
-    "FlixyPix opens on the home page. A restored view is then one step back (Alt+←). Ctrl+Home opens the home page at any time.": {
-      "status": "corrected",
-      "digest": "978f8281de3cba0507244586de1eab3743759396a6b5223c9c7a9b815d0a8925",
-      "previous_digest": "e6d46fb3f238d2a0f00d22a7cd86d4562d95fa2d7c48d65bf6ea971bbeb773db"
-    },
     "FlixyPix backups|*.flixypixbackup;*.ezfpbackup|All files|*.*": {
       "status": "corrected",
       "digest": "7129de432052ef88fb18a2f0b5e5ab9044f4fc74f107d4782d8a1e55c7da134c",
@@ -5870,11 +5865,6 @@
       "digest": "f8c17c91bcf47ae1a27dc3871147957bc3168d2de4bdac4215f8bbe0740cfb03",
       "previous_digest": "d5b175e9683c0868c4869a638c594c9b0516df8d8f2f4b6dcadfd660787260d1"
     },
-    "Start with the home page": {
-      "status": "corrected",
-      "digest": "829f746d765c87d5ef425a59b76288867f03ef75a74985a1412a199f381e5616",
-      "previous_digest": "7fcb8d07bbbd68a041b037ea88170822fddf4981f0a68b9f35eec6613a12a63b"
-    },
     "Start with a delay": {
       "status": "corrected",
       "digest": "2dce3361cf595633891d1225ebd46ba9dac342b51191ff37dcb90d142adfff2f",
@@ -6458,11 +6448,6 @@
     "View only": {
       "status": "unchanged",
       "digest": "0c25a112f81d7eb53e37631023aa639cf89bcdad7b2b0e8e238f7fe67dfd99fe"
-    },
-    "View only: media type, collection or saved search, sorting and display. Everything: also search text, filters, position and selection plus a continue watching notice. Window size and position follow “Remember window position” under Navigation.": {
-      "status": "corrected",
-      "digest": "7604084fb66346a9287b68aa012527207ffa239dc0948a756a365ca98b1b56f1",
-      "previous_digest": "32ac82558f7d2a296f57bbc24f2e4e611edb7564e63cb8f75192bbc9e43a47ab"
     },
     "Preserved only": {
       "status": "corrected",
@@ -9599,11 +9584,6 @@
       "status": "corrected",
       "digest": "b6cb6b7cecf2c62b71476865993217f916cfe29d3db1485f55dedf2cebe77392",
       "previous_digest": "053eea3de4530738744124a62c9951fc1b13f67402edaa30f3fe470550757b04"
-    },
-    "What the home page shows and whether FlixyPix starts with it.": {
-      "status": "corrected",
-      "digest": "c4e8fbe73419ecd8f35706f70eb3296e26f58b3ca7b9b67af002a9284cf48ed7",
-      "previous_digest": "c0e58d27b8f0bfaba1ef521ba7431f7bf588fa5afdd12b6f630714b5648da2f0"
     },
     "What should be imported?": {
       "status": "corrected",
@@ -14617,6 +14597,42 @@
     "What the home page shows.": {
       "status": "unchanged",
       "digest": "f85177097d6b37c0c55d3ea85667c18d48df92f1296e8df06f151f248e492134"
+    },
+    " · {0:N0} not in this view": {
+      "status": "unchanged",
+      "digest": "c825d9e03a4a06953d9d134d9fa717d93d84f96d14eb48fd8c6f100b08ce2ad9"
+    },
+    "Checking library": {
+      "status": "unchanged",
+      "digest": "21bb392e1caad8c957f527af9474718427c0be3c072bd3d738a6416f2783e215"
+    },
+    "Clear selection": {
+      "status": "unchanged",
+      "digest": "4e28e26e065f203f9b419b66d49dd0186e84ed7e3825af584bbfd95f52f8fb83"
+    },
+    "Elapsed: {0}": {
+      "status": "unchanged",
+      "digest": "17a56d8ff2a6e17b888a22c3b5e9361e7cb0005e03d0184342969df8c37128fb"
+    },
+    "Folder: {0}": {
+      "status": "unchanged",
+      "digest": "06d97dbe297679a868f9d0afd84fbaeb8dadde9182e6e0ba939ea454bd6cd181"
+    },
+    "Loading view": {
+      "status": "unchanged",
+      "digest": "2ed1bf79f19f1139079ff2c952bd87a65f2dec16514149908daf0a9c800f9b9a"
+    },
+    "Opening catalog": {
+      "status": "unchanged",
+      "digest": "a12a15a12ef7f819c089ccfa1417d3bdb024f7a0545b50436f6d420f5374424b"
+    },
+    "Preparing library": {
+      "status": "unchanged",
+      "digest": "fa2f986d31418ffbf483dd12ec7837b2ba9b2e979a134fcd959b074d296c695a"
+    },
+    "Remove folder filter": {
+      "status": "unchanged",
+      "digest": "5bbd63aad5d13d1dccd939634d6472f8c3ba6f6b902e44cc54ba6954968d82f8"
     }
   }
 }
