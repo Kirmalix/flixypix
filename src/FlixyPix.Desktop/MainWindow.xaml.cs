@@ -412,7 +412,7 @@ public partial class MainWindow : Window
     private void Navigate(object sender, RoutedEventArgs e)
     {
         if ((string)((FrameworkElement)sender).Tag == "wall") { UpdateNavigation(); ShowSceneWall(); return; }
-        ApplyViewState(new ViewState { View = (string)((FrameworkElement)sender).Tag });
+        ApplyViewState(new ViewState { View = (string)((FrameworkElement)sender).Tag, SortOrder = Math.Max(0, SortChoice.SelectedIndex) });
         SaveViewPreferences();
     }
     private void SaveDetails(object sender, RoutedEventArgs e)

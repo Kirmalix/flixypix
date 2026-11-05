@@ -11,13 +11,13 @@ public partial class MainWindow
         foreach (var encrypted in new[] { false, true })
         {
             var library = Path.Combine(root, encrypted ? "view-encrypted" : "view-plain");
-            var items = Enumerable.Range(0, 650).Select(i => new MediaItem { Path = Path.Combine(library, i + ".mp4"), Title = "Restore " + i.ToString("D4"), Kind = MediaKind.Video, Rating = 8 }).ToArray();
+            var items = Enumerable.Range(0, 650).Select(i => new MediaItem { Path = Path.Combine(library, i + ".mp4"), Title = "Restore " + i.ToString("D4"), Kind = MediaKind.Video, Rating = 8, AddedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(-i) }).ToArray();
             using (var db = new CatalogRepository(Path.Combine(library, "catalog.db")))
             {
                 foreach (var item in items) db.Upsert(item);
                 var preferences = db.GetPreferences();
                 db.SavePreferences(preferences with { Home = preferences.Home with { StartOnHome = false }, General = preferences.General with { RestoreLastView = true, RestoreScope = RestoreScope.All } });
-                db.SaveViewState(new ViewState { View = "Video", SearchText = "Restore", MinimumStars = 3, SortOrder = 0, Position = 620, AnchorId = items[620].Id, Selection = [items[0].Id, items[620].Id] });
+                db.SaveViewState(new ViewState { View = "Video", SearchText = "Restore", MinimumStars = 3, SortOrder = 2, Position = 620, AnchorId = items[620].Id, Selection = [items[0].Id, items[620].Id] });
             }
             if (encrypted) CatalogEncryption.EnableEncryption(Path.Combine(library, "catalog.db"), MetadataCrashProbe.Password);
             using var key = encrypted ? CatalogEncryption.Unlock(Path.Combine(library, "catalog.db"), MetadataCrashProbe.Password) : null;
@@ -30,10 +30,19 @@ public partial class MainWindow
                 {
                     window.Show(); await window.Startup; await window._lastRefresh;
                     await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                    if (window._view != "Video" || window.SearchBox.Text != "Restore" || window.RatingFilter.SelectedIndex != 3)
-                        throw new InvalidOperationException("Reopening lost media area, search or rating filter.");
+                    if (window._view != "Video" || window.SearchBox.Text != "Restore" || window.RatingFilter.SelectedIndex != 3 || window.SortChoice.SelectedIndex != 2)
+                        throw new InvalidOperationException("Reopening lost media area, search, rating filter or Recently added sorting.");
                     if (round < 2 && (!window.SelectedMedia.Select(i => i.Id).ToHashSet().SetEquals(new[] { items[0].Id, items[620].Id }) || window.OffWindowSelectionCount != 1 || window._visibleLast < 620))
                         throw new InvalidOperationException("Reopening lost distant selection or saved position.");
+                    if (round == 0)
+                    {
+                        var saved = window.CaptureViewState();
+                        var navigation = Logicals<System.Windows.Controls.RadioButton>(window.NavItems).Single(button => (string)button.Tag == "Video");
+                        navigation.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                        await window._lastRefresh;
+                        if (window.SortChoice.SelectedIndex != 2) throw new InvalidOperationException("Clicking Videos after restore reset Recently added sorting.");
+                        window.ApplyViewState(saved); await window._lastRefresh; await window.RestorePlaceAsync(saved);
+                    }
                     if (round == 1)
                     {
                         await window.RestorePlaceAsync(window.CaptureViewState() with { Selection = [] });

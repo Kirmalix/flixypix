@@ -134,7 +134,7 @@ public partial class MainWindow
   {
    case CollectionNodeKind.Set: node.IsExpanded = !node.IsExpanded; break;
    case CollectionNodeKind.Smart: ApplySavedSearch(node.Search!); break;
-   case CollectionNodeKind.View: ApplyViewState(new ViewState { View = node.View! }); SaveViewPreferences(); break;
+   case CollectionNodeKind.View: ApplyViewState(new ViewState { View = node.View!, SortOrder = Math.Max(0, SortChoice.SelectedIndex) }); SaveViewPreferences(); break;
    default: OpenCollection(node.Collection ?? _repository.GetQuickCollection()); break;
   }
  }
