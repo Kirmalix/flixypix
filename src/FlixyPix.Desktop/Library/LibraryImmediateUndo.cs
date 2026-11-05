@@ -11,6 +11,8 @@ public partial class MainWindow
   if (undo.Rows.Count == 0) return;
   _immediateUndo = undo;
   ImmediateUndoButton.IsEnabled = true; UpdateDetailsDraftState();
+  // In tag mode every key press is an edit: the status line and the undo button say enough, a stack of notices would only cover the grid.
+  if (_tagWork) { Status.Text = message; return; }
   ShowToast(message, action: T("Undo"), onAction: () => UndoImmediateAction(undo), seconds: 8);
  }
  private void UndoImmediate(object? sender = null, RoutedEventArgs? e = null)

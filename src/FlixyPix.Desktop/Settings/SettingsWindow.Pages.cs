@@ -26,7 +26,9 @@ internal sealed partial class SettingsWindow
    SettingsUi.Card(T("Color scheme"), T("The choice is previewed immediately and kept after saving. “Follow Windows” follows the Windows app theme and changes automatically with it."),
     new SettingRow(T("Light or dark"), null, themePicker, wide: true)),
    SettingsUi.Card(T("Language"), T("Follow Windows uses the Windows display language, or English if that language is not supported. Numbers and dates always follow the Windows regional format."),
-    new SettingRow(T("Interface language"), T("Applies on this computer after FlixyPix restarts."), LanguageChoice)));
+    new SettingRow(T("Interface language"), T("Applies on this computer after FlixyPix restarts."), LanguageChoice)),
+   SettingsUi.Card(T("Size"), T("Text and controls in all windows. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time."),
+    new SettingRow(T("Interface size"), null, ScaleChoice)));
  }
 
  private void AddGeneralPage()

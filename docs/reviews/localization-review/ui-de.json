@@ -2017,11 +2017,6 @@
       "digest": "abfd65154ac63af96c17079260883ace7c4962bc11e09fdb555ac400b49b9e23",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "YOUR MEDIA. YOUR ARCHIVE.": {
-      "status": "unchanged",
-      "digest": "479fca1ab5206df8297b51f96f2e2789550c019d7c2a12173053b73a0fcef383",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Search items": {
       "status": "unchanged",
       "digest": "7d199d4050852319bb819adbbd7079b2f98404dce55cff5968241ffaa6220b36",
@@ -2165,11 +2160,6 @@
     "Click: filter · Ctrl+click: exclude · right-click: more actions · drag items here: assign tag": {
       "status": "unchanged",
       "digest": "8ca1b6e1a45ee48c98f2c4da8e39d609e1195b90e66ec5ec3084e32183b64390",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Stored locally.\nKept for the future.": {
-      "status": "unchanged",
-      "digest": "fa33aef8321b995ecf85455ede42382228e529b18c75b4b44ddff3497e6a01dd",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Back (Alt+←, mouse button 4)": {
@@ -15547,6 +15537,18 @@
     "{0:N0} more": {
       "status": "unchanged",
       "digest": "8eacf2d8facd1b13f098e733c0fcd83dd832bd138c529457a2545c674f6904b5"
+    },
+    "Interface size": {
+      "status": "unchanged",
+      "digest": "20bb3a942ac478018ff054a22ac34617e2e4a357b72fd802263b3c4c83b6bc34"
+    },
+    "Size": {
+      "status": "unchanged",
+      "digest": "694ccbfebe2be82552b3bb15b0bf7aaefde204061a34fe2efcc664bd41ec60e2"
+    },
+    "Text and controls in all windows. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time.": {
+      "status": "unchanged",
+      "digest": "7f845906c52a045e7bdabca0f60c2caac0285a63ddb7d5dc08bec56524166ad9"
     }
   }
 }

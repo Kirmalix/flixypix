@@ -482,6 +482,7 @@ public partial class MainWindow : Window
             Mpv = choice.Mpv,
             AutoGeneratePreviews = choice.AutoGeneratePreviews,
             Theme = choice.Theme,
+            InterfaceScale = window.ChosenInterfaceScale,
             ViewMode = ViewChoice.SelectedIndex,
             SortOrder = SortChoice.SelectedIndex,
             BossKey = choice.BossKey,
@@ -549,6 +550,13 @@ public partial class MainWindow : Window
         if (!_startupReady) return;
         if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && !TextEntry(e.OriginalSource))
         { e.Handled = true; UndoImmediate(); return; }
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is Key.OemPlus or Key.Add or Key.OemMinus or Key.Subtract or Key.D0 or Key.NumPad0 && !TextEntry(e.OriginalSource))
+        {
+            e.Handled = true;
+            InterfaceScaling.Apply(InterfaceScaling.Step(e.Key is Key.OemPlus or Key.Add ? 1 : e.Key is Key.OemMinus or Key.Subtract ? -1 : 0));
+            _settings = _settings with { InterfaceScale = InterfaceScaling.Current }; if (_persistPreferences) (_settings with { DataDirectory = _pendingDataDirectory ?? _settings.DataDirectory }).Save();
+            return;
+        }
         if (TagWorkKey(e.Key, Keyboard.Modifiers, TextEntry(e.OriginalSource)) is { } tagWork) { e.Handled = true; await tagWork; return; }
         if (await HandleLibraryKeyboardAsync(e)) { e.Handled = true; return; }
         if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down) return;

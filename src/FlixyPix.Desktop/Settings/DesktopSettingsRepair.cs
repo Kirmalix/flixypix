@@ -107,6 +107,7 @@ internal sealed partial record DesktopSettings
   {
    DataDirectory = Fix(nameof(DataDirectory), string.IsNullOrWhiteSpace(DataDirectory) || !Path.IsPathFullyQualified(DataDirectory), DataDirectory, defaults.DataDirectory),
    Theme = Fix(nameof(Theme), !Themes.Contains(Theme ?? "", StringComparer.OrdinalIgnoreCase), Theme, defaults.Theme)!,
+InterfaceScale = Fix(nameof(InterfaceScale), !double.IsFinite(InterfaceScale) || InterfaceScale < .5 || InterfaceScale > 2, InterfaceScale, defaults.InterfaceScale),
    Language = Fix(nameof(Language), Language != Texts.Automatic && Texts.Find(Language) == null, Language, defaults.Language)!,
    LastView = Fix(nameof(LastView), string.IsNullOrWhiteSpace(LastView), LastView, defaults.LastView)!,
    BossKey = BossKey ?? "",

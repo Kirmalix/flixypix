@@ -8,6 +8,8 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 The catalog format changes; libraries opened with this version
 are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept before the upgrade).
 
+- Interface size: all text and controls from 85 to 160 % in the settings or with Ctrl+Plus, Ctrl+Minus and Ctrl+0.
+- Calmer look: the accent marks the main action and the current choice, applied tags and filters are neutral.
 - Tag mode (T): tag with one hand using 1–9 and Q W E R, move on with the arrow keys; rows and keys stay put.
 - Suggestions say why they appear, compare against how common a tag is, send performers and studios to their
   categories and fall behind when ignored; applied tags come first and only their × removes them.

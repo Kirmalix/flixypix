@@ -24,7 +24,7 @@ public partial class MainWindow
     private static Brush ExcludedTagBrush => Theme.Brush("TagExcluded");
     private static Brush UnusedTagBrush => Theme.Brush("TagUnused");
     private static Brush TagBrush => Theme.Brush("TextSoft");
-    private static Brush FullChipBrush => Theme.Brush("ChipFull");
+    private static Brush FullChipBrush => Theme.Brush("ChipApplied");
     private static Brush PartialChipBrush => Theme.Brush("ChipPartial");
     private static Brush ExcludedChipBrush => Theme.Brush("ChipExcluded");
     private static Brush SuggestionChipBrush => Theme.Brush("ChipSuggestion");

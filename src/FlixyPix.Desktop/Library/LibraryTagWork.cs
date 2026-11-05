@@ -36,7 +36,7 @@ public partial class MainWindow
     private Border FullTagChip(string tag, Guid[] ids)
     {
         var chip = new Border { CornerRadius = new CornerRadius(6), Padding = new Thickness(9, 2, 3, 2), Margin = new Thickness(0, 0, 6, 6), Tag = tag };
-        chip.SetResourceReference(Border.BackgroundProperty, "ChipFull");
+        chip.SetResourceReference(Border.BackgroundProperty, "ChipApplied");
         var row = new StackPanel { Orientation = Orientation.Horizontal };
         var name = new TextBlock { Text = tag, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
         name.SetResourceReference(TextBlock.ForegroundProperty, "Text");
@@ -61,7 +61,7 @@ public partial class MainWindow
             if (_tagWork) content.Children.Add(KeyCap((slot.index + 1).ToString()));
             content.Children.Add(new TextBlock { Text = (on ? "✓ " : "") + slot.tag, VerticalAlignment = VerticalAlignment.Center });
             var pin = new Button { Content = content, Tag = slot.tag, Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Focusable = false, IsEnabled = items.Count > 0, ToolTip = T("Pinned tag · click: assign or remove · right-click: more · {0}", KeyLabel("Ctrl+" + (slot.index + 1))) };
-            if (on) pin.Background = FullChipBrush; else if (holders > 0) pin.Background = PartialChipBrush;
+            if (on) pin.Background = Theme.Brush("ChipFull"); else if (holders > 0) pin.Background = PartialChipBrush;
             pin.Click += async (_, _) => await ToggleQuickTagAsync(slot.index + 1);
             pin.MouseRightButtonUp += (_, args) => { args.Handled = true; OpenTagMenu(new TagRow(slot.tag, slot.tag, "", TagBrush), pin); };
             QuickTagButtons.Children.Add(pin);
@@ -142,7 +142,7 @@ public partial class MainWindow
             why.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
             content.Children.Add(why);
             var position = index;
-            var chip = new Button { Content = content, Tag = suggestion.Tag, Background = applied ? FullChipBrush : SuggestionChipBrush, Padding = new Thickness(9, 4, 9, 4), FontSize = 12, Focusable = false, ToolTip = suggestion.Reason };
+            var chip = new Button { Content = content, Tag = suggestion.Tag, Background = applied ? Theme.Brush("ChipFull") : SuggestionChipBrush, Padding = new Thickness(9, 4, 9, 4), FontSize = 12, Focusable = false, ToolTip = suggestion.Reason };
             chip.Click += async (_, _) => await ToggleSuggestionAsync(position);
             chip.MouseRightButtonUp += (_, args) => { args.Handled = true; OpenTagMenu(new TagRow(suggestion.Tag, suggestion.Tag, "", TagBrush), chip); };
             TagSuggestionChips.Children.Add(chip);

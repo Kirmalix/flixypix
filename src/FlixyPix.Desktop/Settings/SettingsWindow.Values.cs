@@ -74,7 +74,7 @@ internal sealed partial class SettingsWindow
   var defaults = new CatalogPreferences();
   switch (name)
   {
-   case "Appearance": themePicker.Value = ColorScheme.System; LanguageChoice.SelectedIndex = 0; break;
+   case "Appearance": themePicker.Value = ColorScheme.System; LanguageChoice.SelectedIndex = 0; ScaleChoice.SelectedItem = ScaleChoice.Items.OfType<ComboBoxItem>().First(item => (double)item.Tag == 1); break;
    case "General":
     // Image wheel, cross-fade and the days of "Zuletzt gesehen" live on other pages and keep their values.
     var (fade, days) = (Library.ImageFade.IsChecked, Library.RecentDays.Value);
@@ -105,6 +105,7 @@ internal sealed partial class SettingsWindow
   if (!ConfirmDiscard()) e.Cancel = true;
   base.OnClosing(e);
   if (!e.Cancel && Result == null && Theme.Mode != themeBefore) Theme.Apply(themeBefore);
+  if (!e.Cancel && Result == null && InterfaceScaling.Current != scaleBefore) InterfaceScaling.Apply(scaleBefore);
  }
 
  private bool Fail(FrameworkElement element, string message, Action? focus = null)
