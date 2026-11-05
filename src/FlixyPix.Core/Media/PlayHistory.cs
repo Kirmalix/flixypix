@@ -103,50 +103,79 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
-            if (GetMedia(id) is not { } item) return null;
+            var stamp = ChangeStamp();
+            using var transaction = connection.BeginTransaction();
+            if (ReadMediaDocument(id, transaction) is not { } item) return null;
             watchedSeconds = double.IsFinite(watchedSeconds) ? Math.Max(0, watchedSeconds) : 0;
             share = double.IsFinite(share) ? Math.Clamp(share, 0, 1) : 0;
             if (entry is { } row)
             {
-                using var update = Command("UPDATE play_history SET seconds=$seconds, share=$share WHERE id=$id AND media_id=$media", null,
+                using var update = Command("UPDATE play_history SET seconds=$seconds, share=$share WHERE id=$id AND media_id=$media", transaction,
                     ("$seconds", watchedSeconds), ("$share", share), ("$id", row), ("$media", id.ToString()));
                 update.ExecuteNonQuery();
             }
-            var reached = share > 0 && share >= GetPreferences().History.WatchedShare;
+            var reached = share > 0 && share >= ReadPreferences(transaction).History.WatchedShare;
             var before = item.WatchCount ?? Math.Max(0, (item.PlayCount ?? 1) - 1);
             var watched = before + (reached ? 1 : 0);
-            return item.WatchCount == watched ? item : Upsert(item with { WatchCount = watched });
+            return CommitPlaybackChange(item, item with { WatchCount = watched }, transaction, stamp);
         }
     }
 
-    /// <summary>Adds one to the O counter; with the history on, also notes when.</summary>
+    /// <summary>Adds to counter and history in one transaction.</summary>
     public MediaItem? AddO(Guid id, DateTimeOffset when)
     {
         lock (gate)
         {
             ThrowIfDisposed();
-            if (GetMedia(id) is not { } item) return null;
-            if (GetPreferences().History.Enabled)
+            var stamp = ChangeStamp();
+            using var transaction = connection.BeginTransaction();
+            if (ReadMediaDocument(id, transaction) is not { } item) return null;
+            if (ReadPreferences(transaction).History.Enabled)
             {
-                using var command = Command("INSERT INTO play_history(media_id,kind,at) VALUES($media,1,$at)", null, ("$media", id.ToString()), ("$at", JulianDay(when)));
+                using var command = Command("INSERT INTO play_history(media_id,kind,at) VALUES($media,1,$at)", transaction,
+                    ("$media", id.ToString()), ("$at", JulianDay(when)));
                 command.ExecuteNonQuery();
             }
-            return Upsert(item with { OCount = (item.OCount ?? 0) + 1 });
+            return CommitPlaybackChange(item, item with { OCount = (item.OCount ?? 0) + 1 }, transaction, stamp);
         }
     }
 
-    /// <summary>Takes back the last O: one less on the counter and its history entry, if there is one.</summary>
+    /// <summary>Takes back counter and its last history entry atomically.</summary>
     public MediaItem? UndoO(Guid id)
     {
         lock (gate)
         {
             ThrowIfDisposed();
-            if (GetMedia(id) is not { } item || item.OCount is not > 0) return GetMedia(id);
-            using var command = Command("DELETE FROM play_history WHERE id=(SELECT id FROM play_history WHERE media_id=$media AND kind=1 ORDER BY at DESC, id DESC LIMIT 1)", null,
+            var stamp = ChangeStamp();
+            using var transaction = connection.BeginTransaction();
+            var item = ReadMediaDocument(id, transaction);
+            if (item is null || item.OCount is not > 0) return item;
+            using var command = Command("DELETE FROM play_history WHERE id=(SELECT id FROM play_history WHERE media_id=$media AND kind=1 ORDER BY at DESC, id DESC LIMIT 1)", transaction,
                 ("$media", id.ToString()));
             command.ExecuteNonQuery();
-            return Upsert(item with { OCount = item.OCount - 1 });
+            return CommitPlaybackChange(item, item with { OCount = item.OCount - 1 }, transaction, stamp);
         }
+    }
+
+    /// <summary>Changes only the playback position of the current stored document.</summary>
+    public MediaItem? UpdatePlaybackPosition(Guid id, double seconds)
+    {
+        if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            var stamp = ChangeStamp();
+            using var transaction = connection.BeginTransaction();
+            if (ReadMediaDocument(id, transaction) is not { } item) return null;
+            return CommitPlaybackChange(item, item with { PlaybackPositionSeconds = seconds }, transaction, stamp);
+        }
+    }
+
+    private MediaItem CommitPlaybackChange(MediaItem before, MediaItem updated, SqliteTransaction transaction, (long Changes, long DataVersion) stamp)
+    {
+        var saved = before == updated ? before : UpsertCore(updated, transaction);
+        CommitMediaChanges(transaction, stamp, [(before, saved)]);
+        return saved;
     }
 
     /// <summary>Newest entries first, of one medium or of all.</summary>

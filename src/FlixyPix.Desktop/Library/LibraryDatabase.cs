@@ -12,39 +12,39 @@ namespace FlixyPix.Desktop;
 /// The tools that were spread over the catalog menu, "Altdaten / Migration" and the cache menu are gathered here.</summary>
 public partial class MainWindow
 {
- internal static readonly string OverviewSection = TKey("Overview"), RepairSection = TKey("Check and repair"), BackupSection = TKey("Backup"),
-  TransferSection = TKey("Import and export"), SecuritySection = TKey("Security"), LegacySection = TKey("Legacy data");
+    internal static readonly string OverviewSection = TKey("Overview"), RepairSection = TKey("Check and repair"), BackupSection = TKey("Backup"),
+     TransferSection = TKey("Import and export"), SecuritySection = TKey("Security"), LegacySection = TKey("Legacy data");
 
- internal DatabaseWindow CreateDatabaseWindow(string? section = null) =>
-  new(this, _settings.Libraries, _settings.AskForLibraryAtStart, _settings.DataDirectory, _repository, SaveLibraries, sections: DatabaseSections(), section: section)
-  {
-   // Test runs keep new libraries beside their catalog instead of the user's profile.
-   NewLibraryParent = _persistPreferences ? DatabaseWindow.DefaultParent : Path.Combine(Path.GetDirectoryName(_settings.DataDirectory)!, "libraries"),
-  };
+    internal DatabaseWindow CreateDatabaseWindow(string? section = null) =>
+     new(this, _settings.Libraries, _settings.AskForLibraryAtStart, _settings.DataDirectory, _repository, SaveLibraries, sections: DatabaseSections(), section: section)
+     {
+         // Test runs keep new libraries beside their catalog instead of the user's profile.
+         NewLibraryParent = _persistPreferences ? DatabaseWindow.DefaultParent : Path.Combine(Path.GetDirectoryName(_settings.DataDirectory)!, "libraries"),
+     };
 
- private void ShowDatabase(object sender, RoutedEventArgs e) => ShowDatabase();
- /// <summary>Opens the database management; a chosen library is opened, a chosen tool runs afterwards in this window.</summary>
- internal async void ShowDatabase(string? section = null)
- {
-  var window = CreateDatabaseWindow(section);
-  window.ShowDialog();
-  if (window.Chosen is { } chosen) { await SwitchLibraryAsync(chosen); return; }
-  if (window.Pending is { } tool)
-  {
-   try { tool.Run(); }
-   catch (Exception error) when (error is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
-   { Message.Show(this, error.Message, tool.Title, MessageBoxButton.OK, MessageBoxImage.Warning); }
-  }
- }
+    private void ShowDatabase(object sender, RoutedEventArgs e) => ShowDatabase();
+    /// <summary>Opens the database management; a chosen library is opened, a chosen tool runs afterwards in this window.</summary>
+    internal async void ShowDatabase(string? section = null)
+    {
+        var window = CreateDatabaseWindow(section);
+        window.ShowDialog();
+        if (window.Chosen is { } chosen) { await SwitchLibraryAsync(chosen); return; }
+        if (window.Pending is { } tool)
+        {
+            try { tool.Run(); }
+            catch (Exception error) when (error is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
+            { Message.Show(this, error.Message, tool.Title, MessageBoxButton.OK, MessageBoxImage.Warning); }
+        }
+    }
 
- private IReadOnlyList<DatabaseSection> DatabaseSections()
- {
-  static DatabaseTool Tool(string title, string description, string button, Action run) => new(title, description, button, run);
-  static IEnumerable<DatabaseTool> Group(string heading, params DatabaseTool[] tools) => tools.Select(tool => tool with { Group = heading });
-  var open = T("Open …"); var start = T("Start");
-  return
-  [
-   new(OverviewSection, "", T("The open library at a glance."),
+    private IReadOnlyList<DatabaseSection> DatabaseSections()
+    {
+        static DatabaseTool Tool(string title, string description, string button, Action run) => new(title, description, button, run);
+        static IEnumerable<DatabaseTool> Group(string heading, params DatabaseTool[] tools) => tools.Select(tool => tool with { Group = heading });
+        var open = T("Open …"); var start = T("Start");
+        return
+        [
+         new(OverviewSection, "", T("The open library at a glance."),
     [Tool(T("Open library folder"), T("Shows the folder with catalog, thumbnails and caches in Explorer."), open,
       () => Process.Start(new ProcessStartInfo("explorer.exe", _settings.DataDirectory))),
      Tool(T("Open error log"), T("Shows the folder with the error logs, for example for a bug report."), open, ErrorLog.OpenFolder)],
@@ -109,94 +109,95 @@ public partial class MainWindow
      Tool(T("Import historical functions"), T("Activates functions of the original that can be translated, after a review."), open, ShowHistoricalFunctions),
      Tool(T("Prepare offline export"), T("Instructions for exporting the original in an isolated environment."), open, ShowOfflineExportHelp)]),
   ];
- }
+    }
 
-/// <summary>Folders of a library whose size the overview shows, with their German names.</summary>
- private static readonly (string Folder, string Label)[] OverviewFolders =
- [
-  ("thumbnails", TKey("Video thumbnails")), ("media-assets", TKey("Custom artwork")), ("tag-assets", TKey("Tag images")),
+    /// <summary>Folders of a library whose size the overview shows, with their German names.</summary>
+    private static readonly (string Folder, string Label)[] OverviewFolders =
+    [
+     ("thumbnails", TKey("Video thumbnails")), ("media-assets", TKey("Custom artwork")), ("tag-assets", TKey("Tag images")),
   ("image-cache", TKey("Image cache")), ("archive-cache", TKey("Archive cache")), ("hover-cache", TKey("Hover preview")),
   ("clip-cache", TKey("Preview clips")),
  ];
 
- /// <summary>Values the overview shows once they are counted (also for tests).</summary>
- internal Dictionary<string, TextBlock> OverviewValues { get; } = [];
- internal Task OverviewReady { get; private set; } = Task.CompletedTask;
+    /// <summary>Values the overview shows once they are counted (also for tests).</summary>
+    internal Dictionary<string, TextBlock> OverviewValues { get; } = [];
+    internal Task OverviewReady { get; private set; } = Task.CompletedTask;
 
- /// <summary>The open library at a glance: place and protection, content, storage and maintenance. Counting runs in the
- /// background, so the window opens at once even for large libraries.</summary>
- private FrameworkElement OverviewContent(DatabaseWindow window)
- {
-  OverviewValues.Clear();
-  TextBlock Value(string key, string text = "…") => OverviewValues[key] = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 3) };
-  var panel = new StackPanel();
-  panel.Children.Add(Facts(T("Library"), (T("Name"), Value("name", LibraryName)), (T("Location"), Value("place", _settings.DataDirectory)),
-   (T("Encryption"), Value("encryption", _repository.IsEncrypted ? T("encrypted") : T("not encrypted")))));
-  panel.Children.Add(Facts(T("Content"), (T("Items"), Value("media")), (T("Tags"), Value("tags")), (T("Collections"), Value("collections")),
-   (T("Saved searches"), Value("searches")), (T("Scenes and bookmarks"), Value("marks"))));
-  panel.Children.Add(Facts(T("Storage"), [(T("Catalog"), Value("catalog")), (T("Graphics in the catalog"), Value("graphics")), (T("Imported legacy data"), Value("legacy")),
+    /// <summary>The open library at a glance: place and protection, content, storage and maintenance. Counting runs in the
+    /// background, so the window opens at once even for large libraries.</summary>
+    private FrameworkElement OverviewContent(DatabaseWindow window)
+    {
+        OverviewValues.Clear();
+        TextBlock Value(string key, string text = "…") => OverviewValues[key] = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 3) };
+        var panel = new StackPanel();
+        panel.Children.Add(Facts(T("Library"), (T("Name"), Value("name", LibraryName)), (T("Location"), Value("place", _settings.DataDirectory)),
+         (T("Encryption"), Value("encryption", _repository.IsEncrypted ? T("encrypted") : T("not encrypted")))));
+        panel.Children.Add(Facts(T("Content"), (T("Items"), Value("media")), (T("Tags"), Value("tags")), (T("Collections"), Value("collections")),
+         (T("Saved searches"), Value("searches")), (T("Scenes and bookmarks"), Value("marks"))));
+        panel.Children.Add(Facts(T("Storage"), [(T("Catalog"), Value("catalog")), (T("Graphics in the catalog"), Value("graphics")), (T("Imported legacy data"), Value("legacy")),
    .. OverviewFolders.Select(folder => (T(folder.Label), Value(folder.Folder)))]));
-  panel.Children.Add(Facts(T("Maintenance"), (T("Last backup"), Value("backup")), (T("Last check"), Value("check"))));
-  OverviewReady = FillOverviewAsync();
-  return panel;
- }
+        panel.Children.Add(Facts(T("Maintenance"), (T("Last backup"), Value("backup")), (T("Last check"), Value("check"))));
+        OverviewReady = FillOverviewAsync();
+        return panel;
+    }
 
- private static Border Facts(string title, params (string Label, TextBlock Value)[] rows)
- {
-  var grid = new Grid { Margin = new Thickness(16, 10, 16, 12) };
-  grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(210) }); grid.ColumnDefinitions.Add(new ColumnDefinition());
-  for (var index = 0; index < rows.Length; index++)
-  {
-   grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-   var label = new TextBlock { Text = rows[index].Label, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 12, 3) };
-   Grid.SetRow(label, index); Grid.SetRow(rows[index].Value, index); Grid.SetColumn(rows[index].Value, 1); grid.Children.Add(label); grid.Children.Add(rows[index].Value);
-  }
-  return SettingsUi.Card(title, null, grid);
- }
+    private static Border Facts(string title, params (string Label, TextBlock Value)[] rows)
+    {
+        var grid = new Grid { Margin = new Thickness(16, 10, 16, 12) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(210) }); grid.ColumnDefinitions.Add(new ColumnDefinition());
+        for (var index = 0; index < rows.Length; index++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var label = new TextBlock { Text = rows[index].Label, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 12, 3) };
+            Grid.SetRow(label, index); Grid.SetRow(rows[index].Value, index); Grid.SetColumn(rows[index].Value, 1); grid.Children.Add(label); grid.Children.Add(rows[index].Value);
+        }
+        return SettingsUi.Card(title, null, grid);
+    }
 
- private async Task FillOverviewAsync()
- {
-  var repository = _repository; var directory = _settings.DataDirectory;
-  string Count(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
-  void Set(string key, string text, Brush? color = null) { if (OverviewValues.TryGetValue(key, out var block)) { block.Text = text; if (color != null) block.Foreground = color; } }
-  try
-  {
-   var (statistics, log) = await Task.Run(() => (repository.GetStatistics(), repository.GetMaintenanceLog()));
-   Set("media", T("{0} · {1} videos, {2} images, {3} audio", Tn(statistics.Media, "1 item", "{0:N0} items"), Count(statistics.Videos), Count(statistics.Images), Count(statistics.Audio)));
-   Set("tags", Count(statistics.Tags)); Set("collections", Count(statistics.Collections)); Set("searches", Count(statistics.SavedSearches));
-   Set("marks", T("{0} scenes, {1} bookmarks", Count(statistics.Scenes), Count(statistics.Bookmarks)));
-   Set("catalog", MediaCard.SizeText(statistics.DatabaseBytes));
-   Set("graphics", T("{0} media artwork ({1}), {2} tag images ({3})", Count(statistics.MediaGraphics), MediaCard.SizeText(statistics.MediaGraphicBytes),
-    Count(statistics.TagPictures), MediaCard.SizeText(statistics.TagPictureBytes)));
-   Set("legacy", statistics.LegacyRecords == 0 ? T("none") : T("{0} original records, {1} binary data", Count(statistics.LegacyRecords), MediaCard.SizeText(statistics.LegacyBlobBytes)));
-   if (log.LastBackupAt is { } backup)
-   {
-    var old = DateTimeOffset.Now - backup > TimeSpan.FromDays(30);
-    Set("backup", T("{0} · {1}", backup.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), MediaCard.SizeText(log.LastBackupBytes ?? 0))
-     + (old ? T(" · older than 30 days") : ""), old ? SettingsUi.Gold : null);
-    OverviewValues["backup"].ToolTip = log.LastBackupPath;
-   }
-   else Set("backup", T("no backup yet · create one under “Backup”"), SettingsUi.Gold);
-   Set("check", log.LastCheckAt is { } check
-    ? T("{0} · {1}", check.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), log.LastCheckIssues is 0 or null ? T("no problems") : Tn(log.LastCheckIssues.Value, "1 problem", "{0:N0} problems"))
-    : T("not checked yet"));
-   foreach (var (folder, _) in OverviewFolders)
-   {
-    var path = Path.Combine(directory, folder);
-    var (files, bytes) = await Task.Run(() => FolderSize(path));
-    Set(folder, files == 0 ? T("empty") : T("{0} · {1}", Tn(files, "1 file", "{0:N0} files"), MediaCard.SizeText(bytes)));
-   }
-  }
-  catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException or ObjectDisposedException)
-  { ErrorLog.Write("Datenbankverwaltung", error); }
- }
+    private Task FillOverviewAsync()
+     => _libraryTasks.Run(async libraryToken =>
+    {
+        var repository = _repository; var directory = _settings.DataDirectory;
+        string Count(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
+        void Set(string key, string text, Brush? color = null) { if (OverviewValues.TryGetValue(key, out var block)) { block.Text = text; if (color != null) block.Foreground = color; } }
+        try
+        {
+            var (statistics, log) = await Task.Run(() => (repository.GetStatistics(), repository.GetMaintenanceLog()));
+            Set("media", T("{0} · {1} videos, {2} images, {3} audio", Tn(statistics.Media, "1 item", "{0:N0} items"), Count(statistics.Videos), Count(statistics.Images), Count(statistics.Audio)));
+            Set("tags", Count(statistics.Tags)); Set("collections", Count(statistics.Collections)); Set("searches", Count(statistics.SavedSearches));
+            Set("marks", T("{0} scenes, {1} bookmarks", Count(statistics.Scenes), Count(statistics.Bookmarks)));
+            Set("catalog", MediaCard.SizeText(statistics.DatabaseBytes));
+            Set("graphics", T("{0} media artwork ({1}), {2} tag images ({3})", Count(statistics.MediaGraphics), MediaCard.SizeText(statistics.MediaGraphicBytes),
+          Count(statistics.TagPictures), MediaCard.SizeText(statistics.TagPictureBytes)));
+            Set("legacy", statistics.LegacyRecords == 0 ? T("none") : T("{0} original records, {1} binary data", Count(statistics.LegacyRecords), MediaCard.SizeText(statistics.LegacyBlobBytes)));
+            if (log.LastBackupAt is { } backup)
+            {
+                var old = DateTimeOffset.Now - backup > TimeSpan.FromDays(30);
+                Set("backup", T("{0} · {1}", backup.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), MediaCard.SizeText(log.LastBackupBytes ?? 0))
+              + (old ? T(" · older than 30 days") : ""), old ? SettingsUi.Gold : null);
+                OverviewValues["backup"].ToolTip = log.LastBackupPath;
+            }
+            else Set("backup", T("no backup yet · create one under “Backup”"), SettingsUi.Gold);
+            Set("check", log.LastCheckAt is { } check
+          ? T("{0} · {1}", check.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), log.LastCheckIssues is 0 or null ? T("no problems") : Tn(log.LastCheckIssues.Value, "1 problem", "{0:N0} problems"))
+          : T("not checked yet"));
+            foreach (var (folder, _) in OverviewFolders)
+            {
+                var path = Path.Combine(directory, folder);
+                var (files, bytes) = await Task.Run(() => FolderSize(path));
+                Set(folder, files == 0 ? T("empty") : T("{0} · {1}", Tn(files, "1 file", "{0:N0} files"), MediaCard.SizeText(bytes)));
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException or ObjectDisposedException)
+        { ErrorLog.Write("Datenbankverwaltung", error); }
+    });
 
- private static (long Files, long Bytes) FolderSize(string path)
- {
-  if (!Directory.Exists(path)) return (0, 0);
-  long files = 0, bytes = 0;
-  foreach (var file in new DirectoryInfo(path).EnumerateFiles("*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true }))
-  { files++; bytes += file.Length; }
-  return (files, bytes);
- }
+    private static (long Files, long Bytes) FolderSize(string path)
+    {
+        if (!Directory.Exists(path)) return (0, 0);
+        long files = 0, bytes = 0;
+        foreach (var file in new DirectoryInfo(path).EnumerateFiles("*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true }))
+        { files++; bytes += file.Length; }
+        return (files, bytes);
+    }
 }

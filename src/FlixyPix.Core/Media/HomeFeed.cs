@@ -21,10 +21,18 @@ public sealed record HomePreferences
 
     public static string Label(HomeRowKind kind) => kind switch
     {
-        HomeRowKind.ContinueWatching => T("Continue watching"), HomeRowKind.RecentlyAdded => T("Recently added"), HomeRowKind.WatchLater => T("Watch later"),
-        HomeRowKind.FavoritePerformers => T("Favorite performers"), HomeRowKind.ForYou => T("For you"), HomeRowKind.Popular => T("Popular"),
-        HomeRowKind.Rediscover => T("Not watched for a long time"), HomeRowKind.Studios => T("Studios"), HomeRowKind.MoreWithTag => T("More with …"),
-        HomeRowKind.RecentlyWatched => T("Recently watched"), HomeRowKind.MostO => T("Most O"), _ => T("Random pick of the day"),
+        HomeRowKind.ContinueWatching => T("Continue watching"),
+        HomeRowKind.RecentlyAdded => T("Recently added"),
+        HomeRowKind.WatchLater => T("Watch later"),
+        HomeRowKind.FavoritePerformers => T("Favorite performers"),
+        HomeRowKind.ForYou => T("For you"),
+        HomeRowKind.Popular => T("Popular"),
+        HomeRowKind.Rediscover => T("Not watched for a long time"),
+        HomeRowKind.Studios => T("Studios"),
+        HomeRowKind.MoreWithTag => T("More with …"),
+        HomeRowKind.RecentlyWatched => T("Recently watched"),
+        HomeRowKind.MostO => T("Most O"),
+        _ => T("Random pick of the day"),
     };
 }
 
@@ -152,7 +160,10 @@ public sealed partial class CatalogRepository
             var title = kind == HomeRowKind.FavoritePerformers && !chosen.Any(e => e.IsFavorite) ? T("Performers") : HomePreferences.Label(kind);
             var entities = chosen.Select(e => new HomeEntity(e, Top(new MediaQuery
             {
-                Expression = HasCategorizedTag(new TagKey(e.Category, e.Tag)), Sort = MediaSort.Rating, Descending = true, Limit = 1,
+                Expression = HasCategorizedTag(new TagKey(e.Category, e.Tag)),
+                Sort = MediaSort.Rating,
+                Descending = true,
+                Limit = 1,
             }, token).FirstOrDefault())).ToList();
             rows.Add(new HomeRow(kind, title, [], entities));
         }
@@ -177,7 +188,9 @@ public sealed partial class CatalogRepository
 
     private static string Ago(DateTimeOffset when, DateTimeOffset now) => (now.Date - when.ToOffset(now.Offset).Date).Days switch
     {
-        <= 0 => "heute", 1 => "gestern", var days => Tn(days, "1 day ago", "{0} days ago"),
+        <= 0 => "heute",
+        1 => "gestern",
+        var days => Tn(days, "1 day ago", "{0} days ago"),
     };
 
     /// <summary>Started but not finished (1–95 %), newest playback first.</summary>
@@ -189,18 +202,18 @@ public sealed partial class CatalogRepository
 
     /// <summary>Media by a condition on the query table (indexed progress and last playback), without opening other documents.</summary>
     private List<MediaItem> MediaWhere(string condition, int limit, CancellationToken cancellationToken, string order)
-    {
-        lock (gate)
-        {
-            ThrowIfDisposed();
-            using var command = Command($"SELECT m.document FROM (SELECT q.id FROM media_query q WHERE {condition} ORDER BY {order} LIMIT {limit}) s JOIN media m ON m.id=s.id", null);
-            using var cancel = cancellationToken.Register(command.Cancel);
-            using var reader = command.ExecuteReader();
-            var items = new List<MediaItem>();
-            while (reader.Read()) items.Add(JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!);
-            return items;
-        }
-    }
+     => database.Run<List<MediaItem>>(cancellationToken, () =>
+ {
+
+     ThrowIfDisposed();
+     using var command = Command($"SELECT m.document FROM (SELECT q.id FROM media_query q WHERE {condition} ORDER BY {order} LIMIT {limit}) s JOIN media m ON m.id=s.id", null);
+
+     using var reader = command.ExecuteReader();
+     var items = new List<MediaItem>();
+     while (reader.Read()) items.Add(JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!);
+     return items;
+
+ });
 
     /// <summary>Media sharing tags with recently watched ones. Each recent view lends its tags a weight that halves every month;
     /// rating, favourite and "not seen yet" add a little; at most two suggestions share their strongest tag.</summary>
@@ -268,25 +281,25 @@ public sealed partial class CatalogRepository
 
     /// <summary>Random media that stay the same all day: row numbers drawn with the day as seed, in one query.</summary>
     private List<MediaItem> RandomOfTheDay(DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        lock (gate)
-        {
-            ThrowIfDisposed();
-            long low, high;
-            using (var range = Command("SELECT min(rowid), max(rowid) FROM media", null))
-            using (var reader = range.ExecuteReader()) { reader.Read(); if (reader.IsDBNull(0)) return []; low = reader.GetInt64(0); high = reader.GetInt64(1); }
-            var random = new Random(DaySeed(now));
-            // Row numbers can have gaps; drawing more than needed still fills the row.
-            var drawn = Enumerable.Range(0, HomeRowSize * 4).Select(_ => low + (long)(random.NextDouble() * (high - low + 1))).Distinct().ToList();
-            var order = drawn.Select((row, index) => (row, index)).ToDictionary(p => p.row, p => p.index);
-            using var command = Command("SELECT rowid, document FROM media WHERE rowid IN (SELECT value FROM json_each($rows))", null, ("$rows", JsonSerializer.Serialize(drawn)));
-            using var cancel = cancellationToken.Register(command.Cancel);
-            using var result = command.ExecuteReader();
-            var items = new List<(int Order, MediaItem Item)>();
-            while (result.Read()) items.Add((order[result.GetInt64(0)], JsonSerializer.Deserialize<MediaItem>(result.GetString(1), Json)!));
-            return items.OrderBy(p => p.Order).Select(p => p.Item).Take(HomeRowSize).ToList();
-        }
-    }
+     => database.Run<List<MediaItem>>(cancellationToken, () =>
+ {
+
+     ThrowIfDisposed();
+     long low, high;
+     using (var range = Command("SELECT min(rowid), max(rowid) FROM media", null))
+     using (var reader = range.ExecuteReader()) { reader.Read(); if (reader.IsDBNull(0)) return []; low = reader.GetInt64(0); high = reader.GetInt64(1); }
+     var random = new Random(DaySeed(now));
+     // Row numbers can have gaps; drawing more than needed still fills the row.
+     var drawn = Enumerable.Range(0, HomeRowSize * 4).Select(_ => low + (long)(random.NextDouble() * (high - low + 1))).Distinct().ToList();
+     var order = drawn.Select((row, index) => (row, index)).ToDictionary(p => p.row, p => p.index);
+     using var command = Command("SELECT rowid, document FROM media WHERE rowid IN (SELECT value FROM json_each($rows))", null, ("$rows", JsonSerializer.Serialize(drawn)));
+
+     using var result = command.ExecuteReader();
+     var items = new List<(int Order, MediaItem Item)>();
+     while (result.Read()) items.Add((order[result.GetInt64(0)], JsonSerializer.Deserialize<MediaItem>(result.GetString(1), Json)!));
+     return items.OrderBy(p => p.Order).Select(p => p.Item).Take(HomeRowSize).ToList();
+
+ });
 
     private static IEnumerable<MediaItem> DailyShuffle(IEnumerable<MediaItem> items, DateTimeOffset now)
     {

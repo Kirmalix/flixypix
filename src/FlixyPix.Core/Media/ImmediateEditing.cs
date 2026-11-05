@@ -6,7 +6,7 @@ namespace FlixyPix.Core;
 public enum ImmediateEditFields { Rating = 1, Favorite = 2, WatchLater = 4, Tags = 8, ReviewState = 16, All = 31 }
 public sealed record ImmediateEditRow(Guid MediaId, ImmediateEditFields Fields, string Before, string After);
 public sealed record ImmediateEditUndo(IReadOnlyList<ImmediateEditRow> Rows)
-{public long? TagNamespaceRevision {get;init;}}
+{ public long? TagNamespaceRevision { get; init; } }
 
 public sealed partial class CatalogRepository
 {
@@ -44,8 +44,9 @@ public sealed partial class CatalogRepository
         if (fields == 0 || (fields & ~ImmediateEditFields.All) != 0) throw new ArgumentOutOfRangeException(nameof(fields));
         lock (gate)
         {
-            ThrowIfDisposed(); using var transaction = connection.BeginTransaction();
+            ThrowIfDisposed(); var stamp = ChangeStamp(); using var transaction = connection.BeginTransaction();
             var rows = new List<ImmediateEditRow>();
+            var changes = new List<(MediaItem Old, MediaItem New)>();
             foreach (var id in mediaIds.Distinct())
             {
                 var before = ReadMediaDocument(id, transaction) ?? throw new InvalidOperationException("The edited medium no longer exists.");
@@ -55,10 +56,11 @@ public sealed partial class CatalogRepository
                     if (fields.HasFlag(field) && ImmediateDocument(before, field) != ImmediateDocument(proposed, field)) changedFields |= field;
                 if (changedFields == 0) continue;
                 var after = UpsertCore(proposed, transaction);
+                changes.Add((before, after));
                 rows.Add(ImmediateRow(before, after, changedFields));
             }
-            var namespaceRevision=rows.Any(r=>r.Fields.HasFlag(ImmediateEditFields.Tags))?(long?)ReadTagNamespaceRevision(transaction):null;
-            transaction.Commit(); return new(rows){TagNamespaceRevision=namespaceRevision};
+            var namespaceRevision = rows.Any(r => r.Fields.HasFlag(ImmediateEditFields.Tags)) ? (long?)ReadTagNamespaceRevision(transaction) : null;
+            CommitMediaChanges(transaction, stamp, changes); return new(rows) { TagNamespaceRevision = namespaceRevision };
         }
     }
 
@@ -70,17 +72,19 @@ public sealed partial class CatalogRepository
             undo.Rows.Any(r => r.Fields == 0 || (r.Fields & ~ImmediateEditFields.All) != 0)) throw new ArgumentException("Invalid immediate-edit undo.");
         lock (gate)
         {
-            ThrowIfDisposed(); using var transaction = connection.BeginTransaction();
-            if(undo.TagNamespaceRevision is {} revision&&ReadTagNamespaceRevision(transaction)!=revision)return false;
+            ThrowIfDisposed(); var stamp = ChangeStamp(); using var transaction = connection.BeginTransaction();
+            if (undo.TagNamespaceRevision is { } revision && ReadTagNamespaceRevision(transaction) != revision) return false;
             var restored = new List<MediaItem>();
+            var originals = new List<MediaItem>();
             foreach (var row in undo.Rows)
             {
                 var current = ReadMediaDocument(row.MediaId, transaction);
                 if (current == null || ImmediateDocument(current, row.Fields) != row.After) return false;
                 restored.Add(ApplyImmediateDocument(current, row.Before, row.Fields));
+                originals.Add(current);
             }
-            foreach (var item in restored) UpsertCore(item, transaction);
-            transaction.Commit(); return true;
+            var changes = restored.Select((item, index) => (originals[index], UpsertCore(item, transaction))).ToArray();
+            CommitMediaChanges(transaction, stamp, changes); return true;
         }
     }
 }

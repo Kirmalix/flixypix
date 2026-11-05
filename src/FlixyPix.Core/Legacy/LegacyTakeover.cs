@@ -107,8 +107,14 @@ public sealed partial class CatalogRepository
                 groups.Add(new(LegacyDataGroup.TagImages, tagImages.Files.Count, tagImages.Files.Sum(f => f.Length), tagImages.Files.Count(f => f.IsUnambiguous), 0, 0, tagImages.Files.Count(f => !f.IsUnambiguous), 0));
             return new LegacyTakeoverPlan
             {
-                Batch = batch, CacheFolder = installation.CacheFolder, ReplaceThumbnails = replaceThumbnails, Groups = groups, TagImages = tagImages,
-                Settings = PlanLegacySettingsCore(batch, transaction), Problems = problems, Entries = entries,
+                Batch = batch,
+                CacheFolder = installation.CacheFolder,
+                ReplaceThumbnails = replaceThumbnails,
+                Groups = groups,
+                TagImages = tagImages,
+                Settings = PlanLegacySettingsCore(batch, transaction),
+                Problems = problems,
+                Entries = entries,
             };
         }
     }
@@ -233,7 +239,7 @@ public sealed partial class CatalogRepository
                     token.ThrowIfCancellationRequested();
                     transaction.Commit();
                 }
-                catch { transaction.Rollback(); cachedMedia = null; throw; }
+                catch { transaction.Rollback(); throw; }
             }
             // Committed: the copies are in use. Copies that ended up unused and replaced own thumbnails go.
             foreach (var path in replaced.Concat(created.Where(p => !linked.Contains(p)))) TryDelete(path);
@@ -258,9 +264,12 @@ public sealed partial class CatalogRepository
         var mediaId = bookmark?.MediaId ?? scene!.MediaId;
         var asset = new MediaAsset
         {
-            Id = StableId("legacy-cache:" + legacyFile + ":" + entry.Target + ":" + sha), MediaId = mediaId, Kind = MediaAssetKind.ScenePreview,
+            Id = StableId("legacy-cache:" + legacyFile + ":" + entry.Target + ":" + sha),
+            MediaId = mediaId,
+            Kind = MediaAssetKind.ScenePreview,
             Label = bookmark != null ? T("Bookmark image from {0}", LegacyProductName) : T("Clip preview from {0}", LegacyProductName),
-            PositionSeconds = bookmark?.PositionSeconds ?? scene!.StartSeconds, Data = data,
+            PositionSeconds = bookmark?.PositionSeconds ?? scene!.StartSeconds,
+            Data = data,
             Extra = new() { [CacheFileKey] = legacyFile, ["legacy.sha256"] = sha, [ThumbnailOriginKey] = LegacyOrigin },
         };
         EnsureMediaExist([mediaId], transaction); ValidateAsset(asset); SaveAsset(asset, transaction);

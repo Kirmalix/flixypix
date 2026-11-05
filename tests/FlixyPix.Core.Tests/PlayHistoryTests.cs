@@ -8,6 +8,47 @@ namespace FlixyPix.Core.Tests;
 /// merging, and the upgrade of a version 11 library.</summary>
 public sealed class PlayHistoryTests : IDisposable
 {
+    [Theory]
+    [InlineData("add")]
+    [InlineData("undo")]
+    [InlineData("finish")]
+    public void HistoryAndCounterRollBackTogetherOnMediaWriteFailure(string action)
+    {
+        var media = Add("Atomic history");
+        catalog.AddO(media.Id, DateTimeOffset.UtcNow);
+        var entry = catalog.BeginPlayback(media.Id, DateTimeOffset.UtcNow);
+        var before = catalog.GetMedia(media.Id);
+        var history = catalog.GetHistory(media.Id).ToArray();
+        using var fault = new SqliteConnection(CatalogEncryption.ConnectionString(path, null).ToString());
+        fault.Open();
+        CatalogRepository.AddOrdinalCollation(fault);
+        using var command = fault.CreateCommand();
+        command.CommandText = "CREATE TRIGGER reject_history_media BEFORE UPDATE ON media BEGIN SELECT RAISE(ABORT,'synthetic write failure'); END";
+        command.ExecuteNonQuery();
+        Assert.Throws<SqliteException>(() => action switch
+        {
+            "add" => catalog.AddO(media.Id, DateTimeOffset.UtcNow),
+            "undo" => catalog.UndoO(media.Id),
+            _ => catalog.FinishPlayback(media.Id, entry, 300, .9),
+        });
+        Assert.Equal(before!.OCount, catalog.GetMedia(media.Id)!.OCount);
+        Assert.Equal(before.WatchCount, catalog.GetMedia(media.Id)!.WatchCount);
+        Assert.Equal(history, catalog.GetHistory(media.Id));
+    }
+
+    [Fact]
+    public void PositionUpdatesPreserveConcurrentMetadataAndFacets()
+    {
+        var media = Add("Before");
+        var facets = catalog.GetFacets();
+        catalog.Upsert(media with { Title = "Edited", Rating = 8 });
+        var saved = catalog.UpdatePlaybackPosition(media.Id, 42)!;
+        Assert.Equal("Edited", saved.Title); Assert.Equal(8, saved.Rating);
+        Assert.Equal(42, saved.PlaybackPositionSeconds);
+        Assert.Same(facets, catalog.GetFacets());
+        Assert.Throws<ArgumentOutOfRangeException>(() => catalog.UpdatePlaybackPosition(media.Id, double.NaN));
+        Assert.Null(catalog.UpdatePlaybackPosition(Guid.NewGuid(), 1));
+    }
     private readonly string directory = Path.Combine(Path.GetTempPath(), "flixypix-history-" + Guid.NewGuid().ToString("N"));
     private readonly string path;
     private CatalogRepository catalog;

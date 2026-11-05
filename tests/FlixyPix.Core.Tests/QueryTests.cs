@@ -183,6 +183,26 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
             samples.Add(("indexed", watch.Elapsed.TotalMilliseconds)); Assert.Equal(1, search.TotalCount);
         }
         var indexedP95 = P95(samples.Where(x => x.Kind == "indexed").Select(x => x.Milliseconds));
+        // Organizer edits at catalog scale must preserve the expensive browsing caches.
+        var editFacets = catalog.GetFacets();
+        _ = catalog.GetTagUsage();
+        var editedId = first.Items[0].Id;
+        watch.Restart();
+        for (var iteration = 0; iteration < 10; iteration++)
+        {
+            var undo = catalog.ApplyImmediateEdit([editedId], ImmediateEditFields.Rating, item => item with { Rating = item.Rating == 8 ? 6 : 8 });
+            Assert.Same(editFacets, catalog.GetFacets());
+            Assert.True(catalog.UndoImmediateEdit(undo));
+            Assert.Same(editFacets, catalog.GetFacets());
+        }
+        var ratingUndoMs = watch.Elapsed.TotalMilliseconds;
+        var rapidSearchMs = new List<double>();
+        for (var iteration = 0; iteration < 10; iteration++)
+        {
+            watch.Restart();
+            Assert.Equal(1, catalog.QueryPage(new() { Text = "münchen " + (9990 + iteration).ToString("000000"), Limit = 20 }).TotalCount);
+            rapidSearchMs.Add(watch.Elapsed.TotalMilliseconds);
+        }
         // The start page: every row from limited queries, also at this size.
         watch.Restart(); var home = catalog.BuildHomeFeed(DateTimeOffset.Now); var homeMs = watch.Elapsed.TotalMilliseconds;
         Assert.Contains(home.Rows, r => r.Kind == HomeRowKind.RecentlyAdded && r.Cards.Count == 20);
@@ -208,7 +228,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
             OperatingSystem = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
             Architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),
             Runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
-            MediaCount = 100_000, firstMs, searchMs, facetsMs, warmMs, pageP95, searchP95, indexMs, indexedP95, homeMs, statisticsMs, HomeTimings = catalog.LastHomeTimings, Samples = samples.Select(x => new { x.Kind, x.Milliseconds }).ToArray()
+            MediaCount = 100_000, firstMs, searchMs, facetsMs, warmMs, pageP95, searchP95, indexMs, indexedP95, ratingUndoMs, rapidSearchMs, homeMs, statisticsMs, HomeTimings = catalog.LastHomeTimings, Samples = samples.Select(x => new { x.Kind, x.Milliseconds }).ToArray()
         };
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root is not null && !File.Exists(Path.Combine(root.FullName, "FlixyPix.slnx"))) root = root.Parent;

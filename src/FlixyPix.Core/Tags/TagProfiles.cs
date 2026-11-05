@@ -12,7 +12,7 @@ public sealed record TagUndoRow(string Table, string Id, string? Before, string 
 public sealed record TagChangeUndo(IReadOnlyList<TagUndoRow> Rows)
 {
     public bool IsEmpty => Rows.Count == 0;
-    public string? HierarchyAfterSha256 {get;init;}
+    public string? HierarchyAfterSha256 { get; init; }
 }
 
 /// <summary>The profiles of the directory: pictures of tags (portraits, logos), the undo of merging and deleting, and
@@ -20,7 +20,7 @@ public sealed record TagChangeUndo(IReadOnlyList<TagUndoRow> Rows)
 public sealed partial class CatalogRepository
 {
     // Besides the media of the tag, these are the tables a tag change rewrites (see ChangeTagCore).
-    private static readonly string[] TagChangeTables = ["saved_searches", "scenes", "bookmarks", "filename_rules", "preferences", "tag_presets", "tag_assets",TagHierarchyTable];
+    private static readonly string[] TagChangeTables = ["saved_searches", "scenes", "bookmarks", "filename_rules", "preferences", "tag_presets", "tag_assets", TagHierarchyTable];
 
     /// <summary>The first picture that can be shown (not opaque) of every tag that has one; the key is category and name.</summary>
     public IReadOnlyDictionary<TagKey, Guid> GetTagPictureIds()
@@ -59,7 +59,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             var before = ChangeStamp();
             var changes = new List<(MediaItem Old, MediaItem New)>();
-            long? namespaceRevision=null;
+            long? namespaceRevision = null;
             using (var transaction = connection.BeginTransaction())
             {
                 foreach (var id in mediaIds.Distinct())
@@ -80,11 +80,10 @@ public sealed partial class CatalogRepository
                     changes.Add((item, UpsertCore(item with { Tags = tags, TagCategories = categories }, transaction)));
                 }
                 cancellationToken.ThrowIfCancellationRequested();
-                if(changes.Count>0)namespaceRevision=ReadTagNamespaceRevision(transaction);
-                transaction.Commit();
+                if (changes.Count > 0) namespaceRevision = ReadTagNamespaceRevision(transaction);
+                CommitMediaChanges(transaction, before, changes);
             }
-            if (changes.Count > 0) CarryCachesAcross(before, changes);
-            return new(changes.Select(change => ImmediateRow(change.Old, change.New, ImmediateEditFields.Tags)).ToArray()){TagNamespaceRevision=namespaceRevision};
+            return new(changes.Select(change => ImmediateRow(change.Old, change.New, ImmediateEditFields.Tags)).ToArray()) { TagNamespaceRevision = namespaceRevision };
         }
     }
 
@@ -97,7 +96,7 @@ public sealed partial class CatalogRepository
         {
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
-            if(undo.HierarchyAfterSha256 is {} hierarchyHash&&Hash(ReadUndoDocument(TagHierarchyTable,Guid.Empty.ToString(),transaction)??"")!=hierarchyHash){transaction.Rollback();return false;}
+            if (undo.HierarchyAfterSha256 is { } hierarchyHash && Hash(ReadUndoDocument(TagHierarchyTable, Guid.Empty.ToString(), transaction) ?? "") != hierarchyHash) { transaction.Rollback(); return false; }
             foreach (var row in undo.Rows)
                 if (Hash(ReadUndoDocument(row.Table, row.Id, transaction) ?? "") != row.AfterSha256) { transaction.Rollback(); return false; }
             foreach (var row in undo.Rows)
@@ -127,7 +126,7 @@ public sealed partial class CatalogRepository
                 }
             }
             transaction.Commit();
-            cachedMedia = null;
+
             return true;
         }
     }
@@ -162,7 +161,8 @@ public sealed partial class CatalogRepository
         new(before.Keys.Union(after.Keys)
             .Where(key => before.GetValueOrDefault(key) != after.GetValueOrDefault(key))
             .Select(key => new TagUndoRow(key.Table, key.Id, before.GetValueOrDefault(key), Hash(after.GetValueOrDefault(key) ?? "")))
-            .ToList()){HierarchyAfterSha256=Hash(after.GetValueOrDefault((TagHierarchyTable,Guid.Empty.ToString()))??"")};
+            .ToList())
+        { HierarchyAfterSha256 = Hash(after.GetValueOrDefault((TagHierarchyTable, Guid.Empty.ToString())) ?? "") };
 
     private List<string> MediaIdsWithTags(IEnumerable<string> tags, SqliteTransaction transaction)
     {

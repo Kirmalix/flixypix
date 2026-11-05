@@ -5,6 +5,27 @@ namespace FlixyPix.Desktop.Tests;
 public sealed class LibraryTaskScopeTests
 {
  [Fact]
+ public async Task TypedWorkPropagatesResultsAndFailureWhileStopWaitsForCleanup()
+ {
+  var scope = new LibraryTaskScope(_ => { });
+  Assert.Equal(42, await scope.Run<int>(_ => Task.FromResult(42)));
+  await Assert.ThrowsAsync<InvalidOperationException>(() => scope.Run<int>(_ => throw new InvalidOperationException("expected")));
+  var release = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+  var cleanup = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+  var work = scope.Run<int>(async token =>
+  {
+   try { return await release.Task; }
+   finally { await cleanup.Task; }
+  });
+  var stop = scope.StopAsync();
+  release.SetException(new InvalidOperationException("expected"));
+  Assert.False(stop.IsCompleted);
+  cleanup.SetResult();
+  await Assert.ThrowsAsync<InvalidOperationException>(() => work);
+  await stop.WaitAsync(TimeSpan.FromSeconds(5));
+  await Assert.ThrowsAnyAsync<OperationCanceledException>(() => scope.Run<int>(_ => Task.FromResult(99)));
+ }
+ [Fact]
  public async Task StopCancelsButWaitsForCleanupAndRejectsNewWork()
  {
   var errors = new List<Exception>(); var scope = new LibraryTaskScope(errors.Add);

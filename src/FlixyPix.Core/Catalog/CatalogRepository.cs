@@ -16,8 +16,6 @@ public sealed partial class CatalogRepository : IDisposable
     private readonly SceneWallQueries wallQueries;
     private readonly CatalogFacetsCache facetsCache;
     private readonly MediaQueries mediaQueries;
-    private List<MediaItem>? cachedMedia;
-    private long cachedDataVersion = -1;
     internal static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -140,8 +138,16 @@ public sealed partial class CatalogRepository : IDisposable
         lock (gate)
         {
             ThrowIfDisposed();
-            return mediaQueries.ReadAll(new MediaQuery { Text = text, Tag = tag, MinimumRating = minimumRating,
-                IsFavorite = isFavorite, WatchLater = watchLater, Category = category, TagCategory = tagCategory },
+            return mediaQueries.ReadAll(new MediaQuery
+            {
+                Text = text,
+                Tag = tag,
+                MinimumRating = minimumRating,
+                IsFavorite = isFavorite,
+                WatchLater = watchLater,
+                Category = category,
+                TagCategory = tagCategory
+            },
                 CancellationToken.None);
         }
     }
@@ -159,8 +165,7 @@ public sealed partial class CatalogRepository : IDisposable
             var old = carry ? ReadMediaDocument(item!.Id, null) : null;
             using var transaction = connection.BeginTransaction();
             var result = UpsertCore(item!, transaction);
-            transaction.Commit();
-            if (old != null && old.Id == result.Id) CarryCachesAcross(before, [(old, result)]);
+            CommitMediaChanges(transaction, before, old != null && old.Id == result.Id ? [(old, result)] : []);
             return result;
         }
     }
@@ -193,9 +198,9 @@ public sealed partial class CatalogRepository : IDisposable
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
             RemoveImageSetMedia(id, transaction);
-            RemovePublicationGroupMembers(PublicationGroupMemberKind.Video,new HashSet<Guid>{id},transaction);
+            RemovePublicationGroupMembers(PublicationGroupMemberKind.Video, new HashSet<Guid> { id }, transaction);
             using (var command = Command("DELETE FROM media WHERE id=$id", transaction, ("$id", id.ToString()))) command.ExecuteNonQuery();
-            cachedMedia = null;
+
             foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
                 if (playlist.MediaIds.Contains(id)) SavePlaylist(playlist with
                 {
@@ -302,11 +307,11 @@ public sealed partial class CatalogRepository : IDisposable
                     {
                         writer.WriteStartObject();
                         writer.WriteString("format", "flixypix-catalog"); writer.WriteNumber("version", 5);
-                        WriteDocuments("imageSets","image_sets");WriteDocuments("publicationGroups","publication_groups");WriteDocuments("tagHierarchies",TagHierarchyTable);
-                        WriteDocuments("stashSources","stash_sources");
-                        WriteDocuments("stashIdentities","stash_identities");
-                        WriteDocuments("stashProvenance","stash_provenance");WriteStashProvenanceChunks(writer,transaction);
-                        WriteStashBindings(writer,transaction);
+                        WriteDocuments("imageSets", "image_sets"); WriteDocuments("publicationGroups", "publication_groups"); WriteDocuments("tagHierarchies", TagHierarchyTable);
+                        WriteDocuments("stashSources", "stash_sources");
+                        WriteDocuments("stashIdentities", "stash_identities");
+                        WriteDocuments("stashProvenance", "stash_provenance"); WriteStashProvenanceChunks(writer, transaction);
+                        WriteStashBindings(writer, transaction);
                         WriteDocuments("items", "media"); WriteDocuments("playlists", "playlists"); WriteDocuments("scenes", "scenes");
                         WriteDocuments("savedSearches", "saved_searches"); WriteDocuments("filenameTagRules", "filename_rules");
                         WriteDocuments("bookmarks", "bookmarks"); WriteDocuments("mediaAssets", "media_assets", withData: true); WriteDocuments("collectionSets", "collection_sets");
@@ -315,7 +320,7 @@ public sealed partial class CatalogRepository : IDisposable
                         using (var command = Command("SELECT record FROM legacy_records ORDER BY id", transaction))
                         using (var reader = command.ExecuteReader())
                             while (reader.Read()) writer.WriteStringValue(reader.GetString(0));
-                        writer.WriteEndArray(); WriteMigrationPortable(writer,transaction); writer.WriteEndObject(); writer.Flush();
+                        writer.WriteEndArray(); WriteMigrationPortable(writer, transaction); writer.WriteEndObject(); writer.Flush();
 
                         void WriteDocuments(string property, string table, bool withData = false)
                         {
@@ -449,12 +454,17 @@ public sealed partial class CatalogRepository : IDisposable
                     try { ValidatePreferences(preferences); SaveDocument("preferences", Guid.Empty, preferences, transaction); }
                     catch (ArgumentException ex) { AddPortableError(errors, $"Preferences: {ex.Message}"); skipped++; }
                 }
-                ImportPortableOrganization(transaction,cancellationToken);
+                ImportPortableOrganization(transaction, cancellationToken);
                 if (errors.Count != 0)
                 {
-                    transaction.Rollback(); cachedMedia = null;
-                    return new ImportResult { Imported = 0, Skipped = mediaCount, Errors = errors,
-                        Warnings = ["Import rolled back: no catalog changes were retained."] };
+                    transaction.Rollback();
+                    return new ImportResult
+                    {
+                        Imported = 0,
+                        Skipped = mediaCount,
+                        Errors = errors,
+                        Warnings = ["Import rolled back: no catalog changes were retained."]
+                    };
                 }
                 using (var drop = Command("DROP TABLE temp.portable_stage; DROP TABLE temp.portable_id_map; DROP TABLE temp.portable_legacy_rows; DROP TABLE temp.portable_legacy_batches;", transaction)) drop.ExecuteNonQuery();
                 cancellationToken.ThrowIfCancellationRequested();
@@ -463,14 +473,19 @@ public sealed partial class CatalogRepository : IDisposable
             }
             catch (OperationCanceledException)
             {
-                transaction.Rollback(); cachedMedia = null; throw;
+                transaction.Rollback(); throw;
             }
             catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or JsonException or SqliteException or OverflowException)
             {
-                transaction.Rollback(); cachedMedia = null;
+                transaction.Rollback();
                 if (errors.Count < 100) errors.Add(error.Message);
-                return new ImportResult { Imported = 0, Skipped = mediaCount, Errors = errors,
-                    Warnings = ["Import rolled back: no catalog changes were retained."] };
+                return new ImportResult
+                {
+                    Imported = 0,
+                    Skipped = mediaCount,
+                    Errors = errors,
+                    Warnings = ["Import rolled back: no catalog changes were retained."]
+                };
             }
         }
     }
@@ -478,11 +493,11 @@ public sealed partial class CatalogRepository : IDisposable
     private MediaItem UpsertCore(MediaItem item, SqliteTransaction transaction)
     {
         ArgumentNullException.ThrowIfNull(item);
-        ValidatePlaybackSettings(item.Playback);ValidateAudioTrack(item.AudioTrack);
+        ValidatePlaybackSettings(item.Playback); ValidateAudioTrack(item.AudioTrack);
         item.ContactSheet?.Validate();
         if (item.Id == Guid.Empty || string.IsNullOrWhiteSpace(item.Path) || item.Title is null || !Enum.IsDefined(item.Kind) || !Enum.IsDefined(item.ReviewState) ||
             item.Tags is null || item.TagCategories is null || item.TagCategories.Any(x => string.IsNullOrWhiteSpace(x.Key) || x.Value is null) ||
-            item.Extra is null || item.PlayCount is <0 || item.ViewCount is <0 || item.OCount is <0 || item.WatchCount is <0 || item.Rating is < 0 or > 10 || item.FileSize is < 0 || item.Width is <= 0 || item.Height is <= 0 ||
+            item.Extra is null || item.PlayCount is < 0 || item.ViewCount is < 0 || item.OCount is < 0 || item.WatchCount is < 0 || item.Rating is < 0 or > 10 || item.FileSize is < 0 || item.Width is <= 0 || item.Height is <= 0 ||
             item.DurationSeconds is { } duration && (!double.IsFinite(duration) || duration < 0) ||
             !double.IsFinite(item.PlaybackPositionSeconds) || item.PlaybackPositionSeconds < 0)
             throw new ArgumentException("Invalid media id, path, metadata, rating (0–10), or playback position.", nameof(item));
@@ -509,36 +524,36 @@ public sealed partial class CatalogRepository : IDisposable
             Category = string.IsNullOrWhiteSpace(item.Category) ? null : item.Category.Trim(),
             Extra = new Dictionary<string, string?>(item.Extra)
         };
-        if(saved.ContactSheet is {} sheet&&(saved.Kind!=MediaKind.Video||!MediaVersions.All(saved).Any(file=>PathKey(file.Path)==PathKey(sheet.SourcePath))))saved=saved with {ContactSheet=null};
+        if (saved.ContactSheet is { } sheet && (saved.Kind != MediaKind.Video || !MediaVersions.All(saved).Any(file => PathKey(file.Path) == PathKey(sheet.SourcePath)))) saved = saved with { ContactSheet = null };
         if (saved.Kind != MediaKind.Image)
         {
             using var membership = Command("SELECT 1 FROM image_set_members WHERE media_id=$id LIMIT 1", transaction, ("$id", saved.Id.ToString()));
             if (membership.ExecuteScalar() != null) throw new ArgumentException("An image set member must remain an image.");
         }
-        if(saved.Kind!=MediaKind.Video)
+        if (saved.Kind != MediaKind.Video)
         {
-            using var membership=Command("SELECT 1 FROM publication_group_members WHERE video_id=$id LIMIT 1",transaction,("$id",saved.Id.ToString()));
-            if(membership.ExecuteScalar()!=null)throw new ArgumentException("A publication-group video must remain a video.");
+            using var membership = Command("SELECT 1 FROM publication_group_members WHERE video_id=$id LIMIT 1", transaction, ("$id", saved.Id.ToString()));
+            if (membership.ExecuteScalar() != null) throw new ArgumentException("A publication-group video must remain a video.");
         }
-        if(legacySession!=null)
+        if (legacySession != null)
         {
-            using var existingDocument=Command("SELECT document FROM media WHERE id=$id",transaction,("$id",saved.Id.ToString()));
-            if(existingDocument.ExecuteScalar() is string document)saved=saved with { AddedAt=JsonSerializer.Deserialize<MediaItem>(document,Json)!.AddedAt };
+            using var existingDocument = Command("SELECT document FROM media WHERE id=$id", transaction, ("$id", saved.Id.ToString()));
+            if (existingDocument.ExecuteScalar() is string document) saved = saved with { AddedAt = JsonSerializer.Deserialize<MediaItem>(document, Json)!.AddedAt };
         }
         var json = JsonSerializer.Serialize(saved, MediaJson);
-        if(KeepLegacyExisting("media",saved.Id.ToString(),json,transaction))
-        {using var original=Command("SELECT document FROM media WHERE id=$id",transaction,("$id",saved.Id.ToString()));return JsonSerializer.Deserialize<MediaItem>((string)original.ExecuteScalar()!,Json)!;}
+        if (KeepLegacyExisting("media", saved.Id.ToString(), json, transaction))
+        { using var original = Command("SELECT document FROM media WHERE id=$id", transaction, ("$id", saved.Id.ToString())); return JsonSerializer.Deserialize<MediaItem>((string)original.ExecuteScalar()!, Json)!; }
         using var command = Command("INSERT INTO media(id,path_key,document) VALUES($id,$path,$json) ON CONFLICT(id) DO UPDATE SET path_key=excluded.path_key,document=excluded.document",
             transaction, ("$id", saved.Id.ToString()), ("$path", pathKey), ("$json", json));
         command.ExecuteNonQuery();
         SyncVersionPaths(saved, pathKey, transaction);
-        cachedMedia = null;
+
         return saved;
     }
 
     private void SavePlaylist(Playlist playlist, SqliteTransaction transaction)
     {
-        if(KeepLegacyExisting("playlists",playlist.Id.ToString(),JsonSerializer.Serialize(playlist,Json),transaction))return;
+        if (KeepLegacyExisting("playlists", playlist.Id.ToString(), JsonSerializer.Serialize(playlist, Json), transaction)) return;
         using var command = Command("INSERT INTO playlists(id,document) VALUES($id,$json) ON CONFLICT(id) DO UPDATE SET document=excluded.document",
             transaction, ("$id", playlist.Id.ToString()), ("$json", JsonSerializer.Serialize(playlist, Json)));
         command.ExecuteNonQuery();
@@ -546,7 +561,7 @@ public sealed partial class CatalogRepository : IDisposable
 
     private void SaveScene(Scene scene, SqliteTransaction transaction)
     {
-        if(KeepLegacyExisting("scenes",scene.Id.ToString(),JsonSerializer.Serialize(scene,Json),transaction))return;
+        if (KeepLegacyExisting("scenes", scene.Id.ToString(), JsonSerializer.Serialize(scene, Json), transaction)) return;
         using var command = Command("INSERT INTO scenes(id,media_id,document) VALUES($id,$media,$json) ON CONFLICT(id) DO UPDATE SET media_id=excluded.media_id,document=excluded.document",
             transaction, ("$id", scene.Id.ToString()), ("$media", scene.MediaId.ToString()), ("$json", JsonSerializer.Serialize(scene, Json)));
         command.ExecuteNonQuery();
@@ -579,24 +594,6 @@ public sealed partial class CatalogRepository : IDisposable
         while (reader.Read()) result.Add(JsonSerializer.Deserialize<T>(reader.GetString(0), Json) ?? throw new InvalidDataException($"Invalid {table} record."));
         return result;
     }
-
-    private IReadOnlyList<MediaItem> ReadMediaCached()
-    {
-        using var version = Command("PRAGMA data_version", null);
-        var currentVersion = Convert.ToInt64(version.ExecuteScalar());
-        if (cachedMedia is null || cachedDataVersion != currentVersion)
-        {
-            cachedMedia = ReadDocuments<MediaItem>("media");
-            cachedDataVersion = currentVersion;
-        }
-        return cachedMedia;
-    }
-
-    private static MediaItem CloneItem(MediaItem item) => item with
-    {
-        Tags = item.Tags.ToList(), Extra = new Dictionary<string, string?>(item.Extra),
-        TagCategories = item.TagCategories.ToDictionary(x => x.Key, x => x.Value.ToList(), StringComparer.OrdinalIgnoreCase)
-    };
 
     private List<string> ReadLegacyRecords(SqliteTransaction? transaction = null)
     {

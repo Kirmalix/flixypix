@@ -159,13 +159,13 @@ public sealed partial class CatalogRepository
 
     /// <summary>Groups of media that look alike, from the stored fingerprints; pairs marked "kein Duplikat" are not joined.
     /// Videos are only compared with videos of nearly the same length (2 % or 5 s), images with images.</summary>
-    public IReadOnlyList<SimilarGroup> FindSimilarMedia(SimilarityLevel level, MediaKind? kind = null, CancellationToken cancellationToken = default,IReadOnlySet<Guid>? scope=null)
+    public IReadOnlyList<SimilarGroup> FindSimilarMedia(SimilarityLevel level, MediaKind? kind = null, CancellationToken cancellationToken = default, IReadOnlySet<Guid>? scope = null)
     {
         if (!Enum.IsDefined(level) || kind == MediaKind.Audio) throw new ArgumentException("Unknown similarity level or media kind.");
         List<(Guid Id, MediaKind Kind, double Duration, ulong[] Hashes)> prints; HashSet<DuplicatePair> excluded;
         lock (gate) { ThrowIfDisposed(); prints = ReadFingerprints(kind); excluded = ReadPreferences().NotDuplicates.ToHashSet(); }
         cancellationToken.ThrowIfCancellationRequested();
-        if(scope!=null)prints.RemoveAll(p=>!scope.Contains(p.Id));
+        if (scope != null) prints.RemoveAll(p => !scope.Contains(p.Id));
         var threshold = PerceptualHash.Threshold(level);
         var parent = Enumerable.Range(0, prints.Count).ToArray();
         var reach = new double[prints.Count];
@@ -266,20 +266,24 @@ public sealed partial class CatalogRepository
                     categories[category] = (categories.GetValueOrDefault(category) ?? []).Concat(tags).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 kept = kept with
                 {
-                    Tags = kept.Tags.Concat(other.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToList(), TagCategories = categories,
-                    Rating = Math.Max(kept.Rating, other.Rating), IsFavorite = kept.IsFavorite || other.IsFavorite, WatchLater = kept.WatchLater || other.WatchLater,
+                    Tags = kept.Tags.Concat(other.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                    TagCategories = categories,
+                    Rating = Math.Max(kept.Rating, other.Rating),
+                    IsFavorite = kept.IsFavorite || other.IsFavorite,
+                    WatchLater = kept.WatchLater || other.WatchLater,
                     PlayCount = kept.PlayCount is null && other.PlayCount is null ? null : (kept.PlayCount ?? 0) + (other.PlayCount ?? 0),
                     ViewCount = kept.ViewCount is null && other.ViewCount is null ? null : (kept.ViewCount ?? 0) + (other.ViewCount ?? 0),
                     OCount = kept.OCount is null && other.OCount is null ? null : (kept.OCount ?? 0) + (other.OCount ?? 0),
                     WatchCount = kept.WatchCount is null && other.WatchCount is null ? null : (kept.WatchCount ?? kept.PlayCount ?? 0) + (other.WatchCount ?? other.PlayCount ?? 0),
                     LastPlayedAt = new[] { kept.LastPlayedAt, other.LastPlayedAt }.Max(),
                     Description = string.IsNullOrWhiteSpace(kept.Description) ? other.Description : kept.Description,
-                    ReleaseDate = kept.ReleaseDate ?? other.ReleaseDate, Category = kept.Category ?? other.Category,
+                    ReleaseDate = kept.ReleaseDate ?? other.ReleaseDate,
+                    Category = kept.Category ?? other.Category,
                 };
             }
             kept = UpsertCore(kept, transaction);
             transaction.Commit();
-            cachedMedia = null;
+
             return kept;
         }
     }

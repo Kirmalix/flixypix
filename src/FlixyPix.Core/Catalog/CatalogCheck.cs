@@ -87,21 +87,20 @@ public sealed partial class CatalogRepository
     {
         var findings = new List<CatalogFinding>();
         void Add(CatalogFindingKind kind, int count, IEnumerable<string> examples) => findings.Add(new(kind, count, examples.Take(CheckExampleLimit).ToArray()));
-        long Scalar(string sql) { lock (gate) { ThrowIfDisposed(); using var command = Command(sql, null); using var cancel = token.Register(command.Cancel); return Convert.ToInt64(command.ExecuteScalar() ?? 0L); } }
+        long Scalar(string sql) => database.Run(token, () => { using var command = Command(sql, null); return Convert.ToInt64(command.ExecuteScalar() ?? 0L); });
 
         // 1. SQLite and the links between the tables.
         progress?.Report(new(CatalogFindingKind.Integrity, 0, 1));
         var integrity = new List<string>(); var orphanRows = new List<string>();
-        lock (gate)
+        database.Run(token, () =>
         {
             ThrowIfDisposed();
             using (var command = Command("PRAGMA integrity_check(1000)", null))
-            using (token.Register(command.Cancel))
             using (var reader = command.ExecuteReader()) while (reader.Read()) { var value = reader.GetString(0); if (value != "ok") integrity.Add(value); }
             using (var command = Command("PRAGMA foreign_key_check", null))
-            using (token.Register(command.Cancel))
             using (var reader = command.ExecuteReader()) while (reader.Read()) orphanRows.Add($"{reader.GetString(0)} #{reader.GetValue(1)} → {reader.GetString(2)}");
-        }
+            return true;
+        });
         Add(CatalogFindingKind.Integrity, integrity.Count, integrity);
         Add(CatalogFindingKind.OrphanRows, orphanRows.Count, orphanRows);
         token.ThrowIfCancellationRequested();
@@ -172,24 +171,24 @@ public sealed partial class CatalogRepository
         progress?.Report(new(CatalogFindingKind.ImageSetDocuments, 0, 1));
         lock (gate)
         {
-            ThrowIfDisposed();using var transaction=connection.BeginTransaction();
-            var audit=AuditImageSets(transaction,token);transaction.Commit();
-            Add(CatalogFindingKind.ImageSetDocuments,audit.InvalidDocuments.Count,audit.InvalidDocuments);
-            Add(CatalogFindingKind.ImageSetMembership,audit.MembershipProblems,audit.Rebuild.Select(s=>s.Name).Concat(audit.OrphanSets));
+            ThrowIfDisposed(); using var transaction = connection.BeginTransaction();
+            var audit = AuditImageSets(transaction, token); transaction.Commit();
+            Add(CatalogFindingKind.ImageSetDocuments, audit.InvalidDocuments.Count, audit.InvalidDocuments);
+            Add(CatalogFindingKind.ImageSetMembership, audit.MembershipProblems, audit.Rebuild.Select(s => s.Name).Concat(audit.OrphanSets));
         }
-        progress?.Report(new(CatalogFindingKind.PublicationGroupDocuments,0,1));
-        lock(gate)
+        progress?.Report(new(CatalogFindingKind.PublicationGroupDocuments, 0, 1));
+        lock (gate)
         {
-            ThrowIfDisposed();using var transaction=connection.BeginTransaction();var audit=AuditPublicationGroups(transaction,token);transaction.Commit();
-            Add(CatalogFindingKind.PublicationGroupDocuments,audit.InvalidDocuments.Count,audit.InvalidDocuments);
-            Add(CatalogFindingKind.PublicationGroupMembership,audit.MembershipProblems,audit.Rebuild.Select(g=>g.Name).Concat(audit.OrphanGroups));
+            ThrowIfDisposed(); using var transaction = connection.BeginTransaction(); var audit = AuditPublicationGroups(transaction, token); transaction.Commit();
+            Add(CatalogFindingKind.PublicationGroupDocuments, audit.InvalidDocuments.Count, audit.InvalidDocuments);
+            Add(CatalogFindingKind.PublicationGroupMembership, audit.MembershipProblems, audit.Rebuild.Select(g => g.Name).Concat(audit.OrphanGroups));
         }
 
-        progress?.Report(new(CatalogFindingKind.TagHierarchyDocuments,0,1));
-        lock(gate)
+        progress?.Report(new(CatalogFindingKind.TagHierarchyDocuments, 0, 1));
+        lock (gate)
         {
-            ThrowIfDisposed();using var transaction=connection.BeginTransaction();var invalid=AuditTagHierarchy(transaction,token);transaction.Commit();
-            Add(CatalogFindingKind.TagHierarchyDocuments,invalid.Count,invalid);
+            ThrowIfDisposed(); using var transaction = connection.BeginTransaction(); var invalid = AuditTagHierarchy(transaction, token); transaction.Commit();
+            Add(CatalogFindingKind.TagHierarchyDocuments, invalid.Count, invalid);
         }
 
         // 4. The same file under several spellings: equal after Unicode normalization.
@@ -229,8 +228,11 @@ public sealed partial class CatalogRepository
 
         var report = new CatalogCheckReport(DateTimeOffset.Now, media.Count + unreadable.Count, findings)
         {
-            MissingMedia = missing.Select(item => item.Id).ToArray(), OrphanFiles = orphans, SamePathGroups = samePath,
-            PathKeyMedia = pathKeys.Select(p => p.Id).ToArray(), MissingThumbnailMedia = noThumbnail.Select(item => item.Id).ToArray(),
+            MissingMedia = missing.Select(item => item.Id).ToArray(),
+            OrphanFiles = orphans,
+            SamePathGroups = samePath,
+            PathKeyMedia = pathKeys.Select(p => p.Id).ToArray(),
+            MissingThumbnailMedia = noThumbnail.Select(item => item.Id).ToArray(),
         };
         RecordCheck(report.Issues);
         return report;
@@ -435,11 +437,11 @@ public sealed partial class CatalogRepository
                 repaired[CatalogFindingKind.MissingFiles] = gone.Length;
             }
             var rebuild = kinds.Contains(CatalogFindingKind.QueryTable) || kinds.Contains(CatalogFindingKind.SearchIndex);
-            if(kinds.Contains(CatalogFindingKind.ImageSetMembership))repaired[CatalogFindingKind.ImageSetMembership]=RepairImageSetMembers(transaction,token);
-            if(kinds.Contains(CatalogFindingKind.PublicationGroupMembership))repaired[CatalogFindingKind.PublicationGroupMembership]=RepairPublicationGroupMembers(transaction,token);
+            if (kinds.Contains(CatalogFindingKind.ImageSetMembership)) repaired[CatalogFindingKind.ImageSetMembership] = RepairImageSetMembers(transaction, token);
+            if (kinds.Contains(CatalogFindingKind.PublicationGroupMembership)) repaired[CatalogFindingKind.PublicationGroupMembership] = RepairPublicationGroupMembers(transaction, token);
             if (rebuild) { RebuildIndexesCore(transaction); wallQueries.InitializeSchema(transaction, rebuild: true); repaired[CatalogFindingKind.QueryTable] = report[CatalogFindingKind.QueryTable].Count; repaired[CatalogFindingKind.SearchIndex] = report[CatalogFindingKind.SearchIndex].Count; }
             transaction.Commit();
-            cachedMedia = null;
+
         }
         if (kinds.Contains(CatalogFindingKind.QueryTable) || kinds.Contains(CatalogFindingKind.SearchIndex)) PrepareSearchIndex(token);
         if (kinds.Contains(CatalogFindingKind.OrphanFiles))
@@ -471,7 +473,7 @@ public sealed partial class CatalogRepository
             using var transaction = connection.BeginTransaction();
             RebuildIndexesCore(transaction);
             transaction.Commit();
-            cachedMedia = null;
+
         }
         return PrepareSearchIndex(token);
     }
@@ -495,7 +497,7 @@ public sealed partial class CatalogRepository
             using var transaction = connection.BeginTransaction();
             DeleteMediaCore(ids, transaction);
             transaction.Commit();
-            cachedMedia = null;
+
         }
     }
 
@@ -503,8 +505,8 @@ public sealed partial class CatalogRepository
     {
         if (ids.Count == 0) return;
         var gone = ids.ToHashSet();
-        RemoveImageSetMedia(gone,transaction);
-        RemovePublicationGroupMembers(PublicationGroupMemberKind.Video,gone,transaction);
+        RemoveImageSetMedia(gone, transaction);
+        RemovePublicationGroupMembers(PublicationGroupMemberKind.Video, gone, transaction);
         using (var command = Command("DELETE FROM media WHERE id=$id", transaction, ("$id", "")))
             foreach (var id in gone) { command.Parameters["$id"].Value = id.ToString(); command.ExecuteNonQuery(); }
         foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
@@ -535,8 +537,12 @@ public sealed partial class CatalogRepository
         foreach (var other in others) foreach (var (name, value) in other.Extra) extra.TryAdd(name, value);
         var merged = keep with
         {
-            Tags = tags, TagCategories = categories, Extra = extra,
-            Rating = items.Max(item => item.Rating), IsFavorite = items.Any(item => item.IsFavorite), WatchLater = items.Any(item => item.WatchLater),
+            Tags = tags,
+            TagCategories = categories,
+            Extra = extra,
+            Rating = items.Max(item => item.Rating),
+            IsFavorite = items.Any(item => item.IsFavorite),
+            WatchLater = items.Any(item => item.WatchLater),
             Title = string.IsNullOrWhiteSpace(keep.Title) ? others.Select(item => item.Title).FirstOrDefault(title => !string.IsNullOrWhiteSpace(title)) ?? keep.Title : keep.Title,
             Description = keep.Description ?? others.Select(item => item.Description).FirstOrDefault(text => !string.IsNullOrWhiteSpace(text)),
             Category = keep.Category ?? others.Select(item => item.Category).FirstOrDefault(text => !string.IsNullOrWhiteSpace(text)),
@@ -558,8 +564,8 @@ public sealed partial class CatalogRepository
             history.ExecuteNonQuery();
         }
         var removed = others.Select(item => item.Id).ToHashSet();
-        MoveImageSetMedia(removed,keep.Id,transaction);
-        RedirectPublicationGroupVideos(removed,keep.Id,transaction);
+        MoveImageSetMedia(removed, keep.Id, transaction);
+        RedirectPublicationGroupVideos(removed, keep.Id, transaction);
         foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
             if (playlist.MediaIds.Any(removed.Contains) || playlist.Entries.Any(entry => removed.Contains(entry.MediaId)))
                 SavePlaylist(playlist with

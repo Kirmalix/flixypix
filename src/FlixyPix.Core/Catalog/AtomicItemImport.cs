@@ -30,7 +30,7 @@ public sealed partial class CatalogRepository
             catch (Exception ex) when (ex is ArgumentException or SqliteException)
             {
                 transaction.Rollback();
-                cachedMedia = null;
+
                 return new ImportResult { Errors = [$"CSV import rolled back: {ex.Message}"] };
             }
         }

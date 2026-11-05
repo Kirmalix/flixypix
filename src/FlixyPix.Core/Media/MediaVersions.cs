@@ -11,10 +11,27 @@ public static class TechnicalLabels
     public static string Codec(string? codec) => codec?.ToLowerInvariant() switch
     {
         null or "" => "",
-        "h264" => "H.264", "hevc" or "h265" => "HEVC", "av1" => "AV1", "vp9" => "VP9", "vp8" => "VP8",
-        "mpeg4" or "msmpeg4v3" or "msmpeg4v2" => "MPEG-4", "mpeg2video" => "MPEG-2", "mpeg1video" => "MPEG-1",
-        "wmv1" or "wmv2" or "wmv3" => "WMV", "vc1" => "VC-1", "prores" => "ProRes", "mjpeg" => "MJPEG", "theora" => "Theora",
-        "aac" => "AAC", "mp3" => "MP3", "opus" => "Opus", "vorbis" => "Vorbis", "flac" => "FLAC", "ac3" => "AC-3", "eac3" => "E-AC-3", "dts" => "DTS",
+        "h264" => "H.264",
+        "hevc" or "h265" => "HEVC",
+        "av1" => "AV1",
+        "vp9" => "VP9",
+        "vp8" => "VP8",
+        "mpeg4" or "msmpeg4v3" or "msmpeg4v2" => "MPEG-4",
+        "mpeg2video" => "MPEG-2",
+        "mpeg1video" => "MPEG-1",
+        "wmv1" or "wmv2" or "wmv3" => "WMV",
+        "vc1" => "VC-1",
+        "prores" => "ProRes",
+        "mjpeg" => "MJPEG",
+        "theora" => "Theora",
+        "aac" => "AAC",
+        "mp3" => "MP3",
+        "opus" => "Opus",
+        "vorbis" => "Vorbis",
+        "flac" => "FLAC",
+        "ac3" => "AC-3",
+        "eac3" => "E-AC-3",
+        "dts" => "DTS",
         var other => other.ToUpperInvariant(),
     };
 
@@ -47,7 +64,14 @@ public static class MediaVersions
     /// <summary>The main file with what is stored for it.</summary>
     public static MediaFile Main(MediaItem item) => new()
     {
-        Path = item.Path, FileSize = item.FileSize, FileModifiedAtUtc = item.FileModifiedAtUtc, Width = item.Width, Height = item.Height, DurationSeconds = item.DurationSeconds, Technical = item.Technical, AudioTrack=item.AudioTrack,
+        Path = item.Path,
+        FileSize = item.FileSize,
+        FileModifiedAtUtc = item.FileModifiedAtUtc,
+        Width = item.Width,
+        Height = item.Height,
+        DurationSeconds = item.DurationSeconds,
+        Technical = item.Technical,
+        AudioTrack = item.AudioTrack,
     };
 
     /// <summary>Main file first, then the further versions in their order.</summary>
@@ -83,7 +107,7 @@ public sealed partial class CatalogRepository
         var keys = new HashSet<string>(StringComparer.Ordinal) { mainKey };
         foreach (var file in saved.Files)
         {
-            if(file!=null)ValidateAudioTrack(file.AudioTrack);
+            if (file != null) ValidateAudioTrack(file.AudioTrack);
             if (file is null || string.IsNullOrWhiteSpace(file.Path) || file.FileSize is < 0 || file.Width is <= 0 || file.Height is <= 0 ||
                 file.DurationSeconds is { } duration && (!double.IsFinite(duration) || duration < 0))
                 throw new ArgumentException("Invalid version file.");
@@ -126,15 +150,15 @@ public sealed partial class CatalogRepository
     /// <summary>Path keys of further versions under a folder (folder sync counts them as known).</summary>
     internal IReadOnlyList<string> VersionKeysUnder(string folder)
     {
-        lock(gate)
+        lock (gate)
         {
-        ThrowIfDisposed();
-        var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
-        using var command = Command("SELECT path_key FROM media_files WHERE substr(path_key,1,length($prefix))=$prefix", null, ("$prefix", prefix));
-        var keys = new List<string>();
-        using var reader = command.ExecuteReader();
-        while (reader.Read()) keys.Add(reader.GetString(0));
-        return keys;
+            ThrowIfDisposed();
+            var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
+            using var command = Command("SELECT path_key FROM media_files WHERE substr(path_key,1,length($prefix))=$prefix", null, ("$prefix", prefix));
+            var keys = new List<string>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) keys.Add(reader.GetString(0));
+            return keys;
         }
     }
 
@@ -164,10 +188,15 @@ public sealed partial class CatalogRepository
                     Files = [.. merged.Files, .. MediaVersions.All(other)],
                     Tags = [.. merged.Tags.Concat(other.Tags).Distinct(StringComparer.OrdinalIgnoreCase)],
                     TagCategories = categories,
-                    Rating = Math.Max(merged.Rating, other.Rating), IsFavorite = merged.IsFavorite || other.IsFavorite, WatchLater = merged.WatchLater || other.WatchLater,
-                    PlayCount = Sum(merged.PlayCount, other.PlayCount), ViewCount = Sum(merged.ViewCount, other.ViewCount), OCount = Sum(merged.OCount, other.OCount),
+                    Rating = Math.Max(merged.Rating, other.Rating),
+                    IsFavorite = merged.IsFavorite || other.IsFavorite,
+                    WatchLater = merged.WatchLater || other.WatchLater,
+                    PlayCount = Sum(merged.PlayCount, other.PlayCount),
+                    ViewCount = Sum(merged.ViewCount, other.ViewCount),
+                    OCount = Sum(merged.OCount, other.OCount),
                     WatchCount = Sum(merged.WatchCount, other.WatchCount),
-                    Category = merged.Category ?? other.Category, Description = string.IsNullOrWhiteSpace(merged.Description) ? other.Description : merged.Description,
+                    Category = merged.Category ?? other.Category,
+                    Description = string.IsNullOrWhiteSpace(merged.Description) ? other.Description : merged.Description,
                     ReleaseDate = merged.ReleaseDate ?? other.ReleaseDate,
                     LastPlayedAt = merged.LastPlayedAt is { } a && other.LastPlayedAt is { } b ? (a > b ? a : b) : merged.LastPlayedAt ?? other.LastPlayedAt,
                 };
@@ -184,14 +213,14 @@ public sealed partial class CatalogRepository
                         MediaIds = playlist.MediaIds.Select(id => id == otherId ? mainId : id).Distinct().ToList(),
                         Entries = playlist.Entries.Select(e => e.MediaId == otherId ? e with { MediaId = mainId } : e).Distinct().ToList(),
                     }, transaction);
-                RedirectPublicationGroupVideos(new HashSet<Guid>{otherId},mainId,transaction);
+                RedirectPublicationGroupVideos(new HashSet<Guid> { otherId }, mainId, transaction);
                 using var delete = Command("DELETE FROM media WHERE id=$other", transaction, ("$other", otherId.ToString()));
                 delete.ExecuteNonQuery();
             }
             RenumberAssets(mainId, transaction);
             var saved = UpsertCore(merged, transaction);
             transaction.Commit();
-            cachedMedia = null;
+
             return saved;
         }
     }
@@ -224,14 +253,26 @@ public sealed partial class CatalogRepository
             UpsertCore(item with { Files = item.Files.Where(f => f != file).ToList() }, transaction);
             var created = UpsertCore(new MediaItem
             {
-                Path = file.Path, Title = System.IO.Path.GetFileNameWithoutExtension(file.Path), Kind = item.Kind, FileSize = file.FileSize,
-                Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical,
-                Tags = [.. item.Tags], TagCategories = item.TagCategories.ToDictionary(pair => pair.Key, pair => pair.Value.ToList()),
-                Category = item.Category, Rating = item.Rating, ReleaseDate = item.ReleaseDate, Playback=item.Playback, AudioTrack=file.AudioTrack, FileModifiedAtUtc=file.FileModifiedAtUtc,
+                Path = file.Path,
+                Title = System.IO.Path.GetFileNameWithoutExtension(file.Path),
+                Kind = item.Kind,
+                FileSize = file.FileSize,
+                Width = file.Width,
+                Height = file.Height,
+                DurationSeconds = file.DurationSeconds,
+                Technical = file.Technical,
+                Tags = [.. item.Tags],
+                TagCategories = item.TagCategories.ToDictionary(pair => pair.Key, pair => pair.Value.ToList()),
+                Category = item.Category,
+                Rating = item.Rating,
+                ReleaseDate = item.ReleaseDate,
+                Playback = item.Playback,
+                AudioTrack = file.AudioTrack,
+                FileModifiedAtUtc = file.FileModifiedAtUtc,
                 FileCreatedAt = File.Exists(file.Path) ? MediaScanner.FileDate(new FileInfo(file.Path)) : null,
             }, transaction);
             transaction.Commit();
-            cachedMedia = null;
+
             return created;
         }
     }
@@ -248,7 +289,14 @@ public sealed partial class CatalogRepository
             var file = item.Files.FirstOrDefault(f => PathKey(f.Path) == key) ?? throw new ArgumentException(T("The file is no further version of this item."));
             var saved = UpsertCore(item with
             {
-                Path = file.Path, FileSize = file.FileSize, FileModifiedAtUtc = file.FileModifiedAtUtc, Width = file.Width, Height = file.Height, DurationSeconds = file.DurationSeconds, Technical = file.Technical, AudioTrack=file.AudioTrack,
+                Path = file.Path,
+                FileSize = file.FileSize,
+                FileModifiedAtUtc = file.FileModifiedAtUtc,
+                Width = file.Width,
+                Height = file.Height,
+                DurationSeconds = file.DurationSeconds,
+                Technical = file.Technical,
+                AudioTrack = file.AudioTrack,
                 Files = [MediaVersions.Main(item), .. item.Files.Where(f => f != file)],
             }, transaction);
             transaction.Commit();

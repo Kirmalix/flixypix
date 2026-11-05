@@ -126,7 +126,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             var before = ChangeStamp();
             var changes = new List<(MediaItem Old, MediaItem New)>();
-            long? namespaceRevision=null;
+            long? namespaceRevision = null;
             using (var transaction = connection.BeginTransaction())
             {
                 foreach (var id in mediaIds.Distinct())
@@ -143,11 +143,10 @@ public sealed partial class CatalogRepository
                     changes.Add((item, UpsertCore(item with { Tags = tags, TagCategories = categories }, transaction)));
                 }
                 cancellationToken.ThrowIfCancellationRequested();
-                if(changes.Count>0)namespaceRevision=ReadTagNamespaceRevision(transaction);
-                transaction.Commit();
+                if (changes.Count > 0) namespaceRevision = ReadTagNamespaceRevision(transaction);
+                CommitMediaChanges(transaction, before, changes);
             }
-            if (changes.Count > 0) CarryCachesAcross(before, changes);
-            return new(changes.Select(change => ImmediateRow(change.Old, change.New, ImmediateEditFields.Tags)).ToArray()){TagNamespaceRevision=namespaceRevision};
+            return new(changes.Select(change => ImmediateRow(change.Old, change.New, ImmediateEditFields.Tags)).ToArray()) { TagNamespaceRevision = namespaceRevision };
         }
     }
 
@@ -235,7 +234,7 @@ public sealed partial class CatalogRepository
         var samePaths = changes.All(c => string.Equals(c.Old.Path, c.New.Path, StringComparison.Ordinal));
         static IEnumerable<string> Raw(MediaItem item) => item.Tags.Concat(item.TagCategories.SelectMany(p => p.Value.Select(t => p.Key + "\0" + t)));
         var sameTags = changes.All(c => Raw(c.Old).Order(StringComparer.Ordinal).SequenceEqual(Raw(c.New).Order(StringComparer.Ordinal), StringComparer.Ordinal));
-        facetsCache.CarryAcross(before,after,changes,samePaths,sameTags);
+        facetsCache.CarryAcross(before, after, changes, samePaths, sameTags);
         if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == before && samePaths)
         {
             if (!sameTags)

@@ -6,6 +6,57 @@ namespace FlixyPix.Core.Tests;
 
 public sealed class ImmediateEditingTests : IDisposable
 {
+    [Fact]
+    public void RatingAndUndoKeepFacetsAndMinedTagStatisticsWarm()
+    {
+        using var db = new CatalogRepository(Database);
+        var first = db.Upsert(Add(db,"first") with {Tags=["A","B"]});
+        db.Upsert(Add(db,"second") with {Tags=["A","B"]});
+        db.Upsert(Add(db,"third") with {Tags=["A","B"]});
+        var facets = db.GetFacets();
+        var combination = Assert.Single(db.GetTagCombinations());
+        for (var index=0;index<20;index++)
+        {
+            var undo = db.ApplyImmediateEdit([first.Id],ImmediateEditFields.Rating,item=>item with {Rating=8});
+            Assert.Same(facets,db.GetFacets()); Assert.Same(combination,Assert.Single(db.GetTagCombinations()));
+            Assert.True(db.UndoImmediateEdit(undo));
+            Assert.Same(facets,db.GetFacets()); Assert.Same(combination,Assert.Single(db.GetTagCombinations()));
+        }
+    }
+
+    [Fact]
+    public void TagEditAndUndoRefreshTagFacetsWhileForeignWritesInvalidateThem()
+    {
+        using var db = new CatalogRepository(Database);
+        var first = db.Upsert(Add(db,"first") with {TagCategories=new() {["Cast"]=["Before"]}});
+        db.GetFacets(); db.GetTagUsage();
+        var undo = db.ApplyImmediateEdit([first.Id],ImmediateEditFields.Tags,item=>item with {Tags=["After"],TagCategories=new() {["Studio"]=["After"]}});
+        Assert.Equal(["After"],db.GetFacets().Tags); Assert.Equal(1,db.GetFacets().TagCategoryCounts!["Studio"]);
+        Assert.Equal("After",Assert.Single(db.GetTagUsage()).Tag);
+        Assert.True(db.UndoImmediateEdit(undo));
+        Assert.Equal(["Before"],db.GetFacets().Tags); Assert.Equal(1,db.GetFacets().TagCategoryCounts!["Cast"]);
+        using (var other = new CatalogRepository(Database)) other.Upsert(new() {Path=Path.Combine(root,"foreign.mp4"),Tags=["Foreign"]});
+        db.ApplyImmediateEdit([first.Id],ImmediateEditFields.Rating,item=>item with {Rating=6});
+        Assert.Equal(2,db.GetFacets().MediaCount); Assert.Contains("Foreign",db.GetFacets().Tags);
+    }
+
+    [Fact]
+    public void RolledBackBatchDoesNotPublishPartialTagCacheChanges()
+    {
+        using var db = new CatalogRepository(Database);
+        var first = db.Upsert(Add(db,"first") with {Tags=["Before"]});
+        var second = db.Upsert(Add(db,"reject") with {Tags=["Before"]});
+        db.GetFacets(); db.GetTagUsage();
+        using var fault = new SqliteConnection(CatalogEncryption.ConnectionString(Database,null).ToString());
+        fault.Open(); CatalogRepository.AddOrdinalCollation(fault);
+        using var command = fault.CreateCommand();
+        command.CommandText = $"CREATE TRIGGER reject_cache_write BEFORE UPDATE ON media WHEN NEW.id='{second.Id}' BEGIN SELECT RAISE(ABORT,'synthetic cache failure'); END";
+        command.ExecuteNonQuery();
+        Assert.Throws<SqliteException>(() => db.ApplyImmediateEdit([first.Id,second.Id],ImmediateEditFields.Tags,item=>item with {Tags=["After"]}));
+        Assert.Equal(["Before"],db.GetFacets().Tags);
+        Assert.Equal(2,Assert.Single(db.GetTagUsage()).MediaCount);
+        Assert.Equal(["Before"],db.GetMedia(first.Id)!.Tags);
+    }
     private readonly string root = Path.Combine(Path.GetTempPath(), "flixypix-undo-" + Guid.NewGuid().ToString("N"));
     private string Database => Path.Combine(root, "catalog.db");
     private MediaItem Add(CatalogRepository db, string name) => db.Upsert(new() { Path = Path.Combine(root, name + ".mp4"), Title = name });
