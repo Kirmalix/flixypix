@@ -14677,6 +14677,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "3de7f1ae36ac6b58e0b4e35c5b7d18f3e27e5b9a6098484388cd275455a5349a"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "4cd6c3c7ac14a6e2115941538b4204c936534958e21f90409828bc2f55b04fda"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "4187e37bfa9a82ead2cc012a2a18624e4ae73d2d671d9f25fb5b1b1224f5a4c7"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "4699edb72b5449044517e151e7f2946c9956de036470a99b7296058f8506cf5f"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "ea2a3679f6182d476d0e2afb593e48f41e0dde3221218adfb3180931c9c348e2"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "3539abea726d7f54dc339bb8045a7d3a9cbf7846bcd4ee4f0c15ad42810f2b6f"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "0b5739451f8efbe9459f8a11d60c281d6aae2aed1bed4f91f140064ef58f4153"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "a9d2666da7f0bcb80046b495d1d5593ad137ffa994bd9f3af6b77568eb375840"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "678e444a625a7bb527207f731191666447904535dc976db1aac62df334a5ff56"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "a3c19f6fdaad90d1c2e9861de2a82c3e50c71009efc9fb05b9ff33c1a9f80e41"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "5816e4caac08938037c59d07f87e2aa4b6ac121d6f3d28ccdfee829400246b68"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "228fe10684c77b85d3b5c3e850d1ef2cb5c03780ff84789146285dfb516f5a37"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "56ecc6c41662b28ce0883eccd55e1359bd23f001b6971b5abd45a334f83a6ce4"
     }
   }
 }

@@ -7,13 +7,27 @@ namespace FlixyPix.Core;
 public sealed record TagUsage(string Tag, int MediaCount);
 public enum TagSuggestionSource { CoOccurrence, Folder, Name }
 /// <summary>A tag worth adding, with a human-readable reason so suggestions stay explainable.</summary>
-public sealed record TagSuggestion(string Tag, double Score, TagSuggestionSource Source, string Reason);
+public sealed record TagSuggestion(string Tag, double Score, TagSuggestionSource Source, string Reason)
+{
+    /// <summary>The applied tag behind a co-occurrence suggestion.</summary>
+    public string? BasedOn { get; init; }
+    /// <summary>A performer or studio belongs into its category, not among the flat tags.</summary>
+    public TagRole Role { get; init; }
+    public string? Category { get; init; }
+}
+/// <summary>How often a suggestion was taken or passed over on media whose tags were being worked on.</summary>
+public sealed record TagSuggestionFeedback(int Taken, int Ignored)
+{
+    internal double Factor => Ignored < 3 ? 1 : Math.Max(.2, (Taken + 1d) / (Taken + Ignored + 1d));
+}
 public sealed record TagCombination(IReadOnlyList<string> Tags, int MediaCount);
 
 /// <summary>Tag counts, co-occurrence suggestions, typical combinations and bulk tag edits.
 /// Statistics are computed locally from the catalog and reused until the catalog changes.</summary>
 public sealed partial class CatalogRepository
 {
+    /// <summary>Below this many tagged media the share of a tag says too little to compare against.</summary>
+    private const int LiftMinimumMedia = 50;
     private const int CombinationTagsPerMedia = 12, MaximumCombinationSize = 4, CombinationCandidates = 60;
     private TagStatistics? cachedTagStatistics;
     private (long Changes, long DataVersion) cachedTagStatisticsStamp;
@@ -28,6 +42,7 @@ public sealed partial class CatalogRepository
         /// <summary>Normalized tags per tagged medium (by id), so a tag edit can update the statistics in place.</summary>
         public Dictionary<string, string[]> TagSets { get; } = new(StringComparer.Ordinal);
         public List<(string Tag, string Normalized)> NameCandidates { get; } = [];
+        public Dictionary<string, (TagRole Role, string Category)> Roles { get; } = new(StringComparer.OrdinalIgnoreCase);
         public IReadOnlyList<TagCombination>? Combinations { get; set; }
     }
 
@@ -44,7 +59,7 @@ public sealed partial class CatalogRepository
 
     /// <summary>Suggests tags for the given media from co-occurring tags, tags of folder neighbours and words in file or folder names.
     /// Tags already present on every given medium are never suggested.</summary>
-    public IReadOnlyList<TagSuggestion> SuggestTags(IReadOnlyCollection<Guid> mediaIds, int limit = 12)
+    public IReadOnlyList<TagSuggestion> SuggestTags(IReadOnlyCollection<Guid> mediaIds, int limit = 12, IReadOnlyDictionary<string, TagSuggestionFeedback>? feedback = null)
     {
         ArgumentNullException.ThrowIfNull(mediaIds);
         lock (gate)
@@ -53,15 +68,18 @@ public sealed partial class CatalogRepository
             var items = mediaIds.Distinct().Select(GetMediaCore).OfType<MediaItem>().ToArray();
             if (items.Length == 0 || limit <= 0) return [];
             var statistics = Statistics();
-            var onAll = new HashSet<string>(items[0].Tags, StringComparer.OrdinalIgnoreCase);
-            foreach (var item in items.Skip(1)) onAll.IntersectWith(item.Tags);
+            var onAll = new HashSet<string>(StatisticsTags(items[0]), StringComparer.OrdinalIgnoreCase);
+            foreach (var item in items.Skip(1)) onAll.IntersectWith(StatisticsTags(item));
             var present = new HashSet<string>(items.SelectMany(item => item.Tags), StringComparer.OrdinalIgnoreCase);
+            var tagged = statistics.TagSets.Count;
             var best = new Dictionary<string, TagSuggestion>(StringComparer.OrdinalIgnoreCase);
-            void Offer(string tag, double score, TagSuggestionSource source, string reason)
+            void Offer(string tag, double score, TagSuggestionSource source, string reason, string? basedOn = null)
             {
                 if (onAll.Contains(tag)) return;
+                if (feedback?.GetValueOrDefault(tag) is { } answered) score *= answered.Factor;
                 var display = statistics.Display.GetValueOrDefault(tag, tag);
-                if (!best.TryGetValue(tag, out var current) || current.Score < score) best[tag] = new(display, score, source, reason);
+                var role = statistics.Roles.GetValueOrDefault(tag);
+                if (!best.TryGetValue(tag, out var current) || current.Score < score) best[tag] = new(display, score, source, reason) { BasedOn = basedOn, Role = role.Role, Category = role.Category };
             }
             foreach (var tag in present)
             {
@@ -69,8 +87,11 @@ public sealed partial class CatalogRepository
                 foreach (var (other, together) in neighbours)
                 {
                     var confidence = (double)together / count;
-                    if (together >= 2 && confidence >= .2)
-                        Offer(other, confidence, TagSuggestionSource.CoOccurrence, T("{0:P0} of the items with “{1}” also have “{2}”", confidence, statistics.Display[tag], statistics.Display[other]));
+                    if (together < 2 || confidence < .2) continue;
+                    // A tag that half the library has says little by also being on half of these media: what counts is how much more typical it is here.
+                    var lift = tagged >= LiftMinimumMedia ? confidence / ((double)statistics.Counts.GetValueOrDefault(other, 1) / tagged) : 2;
+                    if (lift >= 1.15)
+                        Offer(other, confidence * Math.Min(1, lift / 2), TagSuggestionSource.CoOccurrence, T("{0:P0} of the items with “{1}” also have “{2}”", confidence, statistics.Display[tag], statistics.Display[other]), statistics.Display[tag]);
                 }
             }
             foreach (var folder in items.Select(item => Path.GetDirectoryName(item.Path) ?? "").Distinct(StringComparer.OrdinalIgnoreCase))
@@ -87,7 +108,8 @@ public sealed partial class CatalogRepository
                 var name = " " + NormalizeWords(NameContext(item.Path)) + " ";
                 foreach (var (tag, normalized) in statistics.NameCandidates)
                     if (name.Contains(" " + normalized + " ", StringComparison.OrdinalIgnoreCase))
-                        Offer(tag, statistics.Counts.ContainsKey(tag) ? .6 : .5, TagSuggestionSource.Name, T("“{0}” is in the file or folder name", tag));
+                        // A single word that happens to be a person's name is a weak hint.
+                        Offer(tag, statistics.Roles.ContainsKey(tag) && !tag.Contains(' ') ? .35 : statistics.Counts.ContainsKey(tag) ? .6 : .5, TagSuggestionSource.Name, T("“{0}” is in the file or folder name", tag));
             }
             return best.Values.OrderByDescending(s => s.Score).ThenByDescending(s => statistics.Counts.GetValueOrDefault(s.Tag)).ThenBy(s => s.Tag, StringComparer.OrdinalIgnoreCase)
                 .Take(limit).ToArray();
@@ -204,7 +226,13 @@ public sealed partial class CatalogRepository
 
     private void BuildNameCandidates(TagStatistics statistics)
     {
-        statistics.NameCandidates.Clear();
+        statistics.NameCandidates.Clear(); statistics.Roles.Clear();
+        var preferencesNow = ReadPreferences();
+        foreach (var group in preferencesNow.TagVocabulary.GroupBy(entry => entry.Category, StringComparer.OrdinalIgnoreCase))
+        {
+            var role = TagRoles.Of(preferencesNow, group.Key); if (role == TagRole.Tag) continue;
+            foreach (var entry in group) if (!string.IsNullOrWhiteSpace(entry.Tag)) statistics.Roles.TryAdd(entry.Tag.Trim(), (role, group.Key));
+        }
         var names = new HashSet<string>(statistics.Counts.Keys, StringComparer.OrdinalIgnoreCase);
         foreach (var entry in ReadPreferences().TagVocabulary) if (!string.IsNullOrWhiteSpace(entry.Tag)) { names.Add(entry.Tag.Trim()); statistics.Display.TryAdd(entry.Tag.Trim(), entry.Tag.Trim()); }
         foreach (var entry in ReadPreferences().TagVocabulary)

@@ -13,7 +13,7 @@ public partial class MainWindow
  {
   static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }
   async Task Idle() => await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-  string[] Chips(Panel panel) => panel.Children.OfType<Button>().Select(b => b.Content as string ?? "").ToArray();
+  string[] Chips(Panel panel) => panel.Children.OfType<FrameworkElement>().Select(c => c is Border { Tag: string full } ? full + "  ×" : c is Button { Tag: string tag } ? "+ " + tag : (c as Button)?.Content as string ?? "").ToArray();
   await RefreshAsync(firstId);
   var cards = MediaList.Items.Cast<MediaCard>().ToArray();
   var first = cards.Single(c => c.Item.Id == firstId); var others = cards.Where(c => c.Item.Id != firstId).Take(3).ToArray();
@@ -41,7 +41,26 @@ public partial class MainWindow
   await RefreshAsync(others[0].Item.Id); await _tagAssistReady;
   Require(Chips(TagSuggestionChips).Contains("+ Erinnerungen"), "Co-occurrence suggestion missing.");
   await RefreshAsync(others[2].Item.Id); await _tagAssistReady;
-  Require(TagCombinationButtons.Children.OfType<Button>().Any(b => (b.Content as string ?? "").Contains("Ausflug")), "Typical combination missing for an untagged medium.");
+  Require(TagCombinationPanel.Visibility != Visibility.Visible, "Typical combinations showed outside tag mode.");
+  // Tag mode: T starts it, a digit and a letter tag the selection, the list keeps its order, Esc ends it.
+  await RefreshAsync(others[0].Item.Id); MediaList.Focus(); await Idle(); await _tagAssistReady;
+  Require(TagWorkKey(System.Windows.Input.Key.T, System.Windows.Input.ModifierKeys.None, true) == null, "T in a text field started tag mode.");
+  if (TagWorkKey(System.Windows.Input.Key.T, System.Windows.Input.ModifierKeys.None, false) is { } startWork) await startWork;
+  await Idle(); await _tagAssistReady; await Idle();
+  Require(TagWorkBanner.Visibility == Visibility.Visible, "T did not start tag mode.");
+  var suggestionsBefore = _assistList.Select(s => s.Tag).ToArray();
+  Require(suggestionsBefore.Length > 0, "Tag mode has no suggestion to work with.");
+  var firstSuggestion = suggestionsBefore[0]; var work = TagWorkKey(System.Windows.Input.Key.Q, System.Windows.Input.ModifierKeys.None, false); Require(work != null, "Q did nothing in tag mode."); await work!; await _lastRefresh; await Idle(); await _tagAssistReady; await Idle();
+  Require(SelectedMedia[0].Tags.Contains(firstSuggestion, StringComparer.OrdinalIgnoreCase), "Q did not assign the first suggestion.");
+  Require(_assistList.Select(s => s.Tag).Take(suggestionsBefore.Length).SequenceEqual(suggestionsBefore), "The suggestions moved while tagging one medium.");
+  work = TagWorkKey(System.Windows.Input.Key.Q, System.Windows.Input.ModifierKeys.None, false); await work!; await _lastRefresh; await Idle(); await _tagAssistReady; await Idle();
+  Require(!SelectedMedia[0].Tags.Contains(firstSuggestion, StringComparer.OrdinalIgnoreCase), "A second Q did not take the suggestion back.");
+  // Combinations appear in tag mode, for a medium that lacks part of one.
+  await ChangeTagsAsync([others[2].Item.Id], ["Natur"], []); await RefreshAsync(others[2].Item.Id); await Idle(); await _tagAssistReady; await Idle();
+  Require(TagCombinationPanel.Visibility == Visibility.Visible && TagCombinationButtons.Children.OfType<Button>().Any(b => (b.Tag as string ?? "").Contains("Ausflug")), "Typical combinations are missing in tag mode.");
+  await ChangeTagsAsync([others[2].Item.Id], [], ["Natur"]); await _lastRefresh; await Idle();
+  if (TagWorkKey(System.Windows.Input.Key.Escape, System.Windows.Input.ModifierKeys.None, false) is { } endWork) await endWork;
+  Require(TagWorkBanner.Visibility == Visibility.Collapsed, "Esc did not end tag mode.");
   TagInput.Focus(); TagInput.Text = "ausf"; await Idle();
   Require(TagCompletions.Items.OfType<TagRow>().Any(row => row.Tag == "Ausflug"), "Tag autocompletion did not offer an existing tag.");
   TagInput.Text = ""; MediaList.Focus();

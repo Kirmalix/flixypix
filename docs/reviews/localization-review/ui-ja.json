@@ -14602,6 +14602,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "6bb2066291ae1a0f9dfe0bf066282ddced4d89fe3f127222e712d5f9d4e78dab"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "061509b82376c5eb96f45ce05bebba34a00067de2071224f36f545424d7310ff"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "bc5a701f46216d6b020342630f626495f9c42c3a922d2fc9551699141f70cc08"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "c6834859103c281f62435fd77a464d524d58c2046f0e6e14eb1d4d30d25392e4"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "b2906a94d5e6996b869dbeafa1887f725a49fa38d609bf50886ded2a253ad005"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "398ecf3e09fa78b4a329bf246f02aa81a3b838ec00f49e695bd57e906ba74913"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "5d0ef2f8dc18090d45feff3717443d746feb77866a86eb51bdbe4ce9d0cfc9a0"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "c5fc0e195230800f3fe0508e51947ab6ddeba93c1752f0b3f52f82d69902671f"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "09da092ae8f10e4d53939eee172d8a76cef6d13b071f6e1b102802b83947e6ec"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "f7d686fe49408fa76f2cf329efc37deb987284b9b96fde286c84006eba3f3c93"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "eb691dfd5d03312c40ad29f4293cb3fd0fcf0475f53a190986842fa77003ba54"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "def6e030c1cf1631f68bcdf0dd4a9274bb2fd952528ce3a6d8c0f76888a0e34e"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "e713a9af84320df22c23e049877fc4d8425fc6df098acffdd33918a2d9632b13"
     }
   }
 }

@@ -14727,6 +14727,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "3c316cf8fdcee19ef776110232998562328f1ee7d0f4e5e1c3aedea8688e5a81"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "3bc1871766747a212b4c0641281e72cd6bb655e971ecb47137d376655d07e7f5"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "2e568db49e9db947dec20612dd375bdfda82e6fd0878da867aaf4795cf730858"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "a22200cf9e41ca8562db9b92b54cf9dde1b2f886f2985faee50f7aca870d348c"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "e0fa6ea33d5ac3eed24f0e81cd0fe1bb0ef2f2eb556d9e8f70846d2fff019f2d"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "ba35087c9327503bbf4172ea79f88e7220f9d23c809930db15de2045dd5a9b7c"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "5f44f792e5e3c3eb95e99de3996b0b10732994bc14c1987668887eb5f1c2ccae"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "68fa98237d2daf4b71dc9572ee1ce972bdfff3cee58fed78a523827f447ac8e0"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "e09fc9f514fb5b3e5ab7e5340cc66c15e7be1e897813bdd7d5356cfd1aa5dbc8"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "d3ae4cccb0740c3bb7801871e80130aabc7ff8c4aacaa59af145e96be38db36b"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "12199bfe900c26f85d03498b24230b7feacc033ac51b624a16c4638b6ef52c27"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "5b29efe0385568901e3088d41a78e7ca58ede236164d03308dd6dc57e3073a96"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "afe8bed6e1bb47ac1b70662601bc36acaab422173a40c6380b0a71821aa13932"
     }
   }
 }

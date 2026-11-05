@@ -115,6 +115,7 @@
   "0.25 to 30 seconds.": "0.25〜30秒。",
   "1 to 20, spread evenly across the video.": "1～20 枚を動画全体に均等に配置します。",
   "1 to 8 preview processes are possible.": "1〜8のプレビュープロセスが可能です。",
+  "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": "1–9: ピン留めしたタグ · Q W E R A S D F: 候補 · 矢印キー: 次の項目 · Esc: 終了",
   "2 × 2": "2 × 2",
   "20–60 min": "20～60分",
   "5–20 min": "5～20分",
@@ -1257,11 +1258,13 @@
   "in order": "順番に",
   "in the file": "ファイル内",
   "In the image viewer with the slideshow button or the S key.": "画像ビューアーのスライドショーボタン、または S キーで操作できます。",
+  "in the name": "名前に含まれる",
   "In the original": "元のアプリの値",
   "In the original, a fixed program password only locked the interface. FlixyPix instead encrypts the catalog, backups and exports with your own password.": "元のアプリでは、固定のプログラムパスワードで画面だけをロックしていました。FlixyPix では、ご自身のパスワードでカタログ、バックアップ、エクスポートファイルを暗号化します。",
   "In the target collection": "ターゲットコレクションに含める",
   "In the target collection (B)": "ターゲットコレクション内 (B)",
   "In the video wall view the clips of the first videos in view play by themselves. Fewer clips put less load on the computer.": "ビデオウォール表示では、表示中の先頭の動画のクリップが自動で再生されます。クリップを減らすとコンピューターの負荷が下がります。",
+  "in this folder": "このフォルダー内",
   "Inactive": "無効",
   "Include hidden folders": "隠しフォルダーを含める",
   "Include sub-studios": "傘下のスタジオを含める",
@@ -1778,6 +1781,7 @@
   "Off": "オフ",
   "Off: new playbacks and O presses are no longer noted. Existing entries stay until you delete them.": "オフ：新しい再生と O は記録されなくなります。既存の記録は削除するまで残ります。",
   "Offer for": "対象",
+  "often with “{0}”": "「{0}」とよく併用",
   "Old key": "旧キー",
   "Old SDF catalogs are first exported in Windows Sandbox. The original programs and the SQLCE provider belong only in the offline guest.\n\nPreparation in the project folder:\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\nThe matching Offline.wsb is then in the newly created subfolder of artifacts\\offline-scenario.\n\nGuide: docs\\original\\windows-sandbox-einrichten.md\n\nThe media drive is not needed for the export and is not mounted in the guest. This notice starts no programs and changes no Windows feature.": "旧 SDF カタログは、まず Windows Sandbox でエクスポートします。元のプログラムと SQLCE プロバイダーは、オフラインのゲスト環境でのみ使用してください。\n\nプロジェクトフォルダーでの準備：\n.\\scripts\\original\\New-OfflineScenario.ps1 -Database ..\\mmvdb.sdf -PasswordFile ..\\mmvdb-password.txt\n\n対応する Offline.wsb は、artifacts\\offline-scenario 内に新しく作成されたサブフォルダーに保存されます。\n\n手順：docs\\original\\windows-sandbox-einrichten.md\n\nメディアドライブはエクスポートには不要で、ゲスト環境にも接続しません。この案内を表示しても、プログラムの起動や Windows 機能の変更は行われません。",
   "Older backups and exports still open with the password that applied when they were created, or with the recovery key.": "古いバックアップやエクスポートは、作成されたときに使用されたパスワード、または回復キーで開きます。",
@@ -1892,6 +1896,7 @@
   "People": "人物",
   "Percent jumps need the length of the video.": "% 指定のジャンプには、動画の長さが必要です。",
   "Performer": "出演者",
+  "performer": "出演者",
   "PERFORMERS": "出演者",
   "Performers": "出演者",
   "Performers with the most items, favorites first.": "メディア数の多い出演者を、お気に入り優先で表示します。",
@@ -1916,8 +1921,10 @@
   "PIN for the lock": "ロック用の PIN",
   "Pin or unpin as favorite": "お気に入りへの固定を切り替え",
   "PIN set": "PIN は設定済みです",
+  "PINNED": "ピン留め",
   "Pinned": "固定済み",
   "Pinned as favorite": "お気に入りに固定しました",
+  "Pinned tag · click: assign or remove · right-click: more · {0}": "ピン留めしたタグ · クリック: 付与または解除 · 右クリック: その他 · {0}",
   "Placeholders: {0} full path, {1} folder, {2} file name, {3} title, {4} remembered position in seconds. Add quotes yourself, such as \"{0}\".": "プレースホルダー: {0} フル パス、{1} フォルダー、{2} ファイル名、{3} タイトル、{4} 記憶した位置 (秒)。引用符は \"{0}\" のようにご自身で付けてください。",
   "Plain tags have no editable directory fields: {0}": "通常のタグには編集できるディレクトリ項目がありません: {0}",
   "Play": "再生",
@@ -2586,6 +2593,7 @@
   "Stored locally.\nKept for the future.": "ローカルに保存。\n未来へ残す。",
   "STUDIO": "スタジオ",
   "Studio": "スタジオ",
+  "studio": "スタジオ",
   "Studio with sub-studios": "傘下を含むスタジオ",
   "Studios": "スタジオ",
   "Studios with the most items.": "メディア数の多いスタジオ。",
@@ -2629,6 +2637,8 @@
   "Tag images …": "タグ画像…",
   "Tag images: {0}": "タグ画像：{0}",
   "Tag in category": "カテゴリ内のタグ",
+  "Tag mode": "タグモード",
+  "Tag mode (T): tag with one hand and move on with the arrow keys": "タグモード (T): 片手でタグ付けし、矢印キーで次へ進みます",
   "Tag package": "タグパッケージ",
   "Tag rule": "タグルール",
   "Tag rule · FlixyPix": "タグルール · FlixyPix",
@@ -2636,6 +2646,7 @@
   "Tag templates": "タグテンプレート",
   "Tag vocabulary": "タグの語彙",
   "Tag “{0}”": "タグ「{0}」",
+  "TAGS": "タグ",
   "Tags": "タグ",
   "Tags added to {0} items.": {
     "other": "タグを追加したメディア：{0} 件。"
@@ -3297,6 +3308,9 @@
   },
   "{0:N0} missing files": {
     "other": "見つからないファイル：{0:N0} 件"
+  },
+  "{0:N0} more": {
+    "other": "ほか {0:N0} 件"
   },
   "{0:N0} moved files": {
     "other": "移動したファイル：{0:N0} 件"

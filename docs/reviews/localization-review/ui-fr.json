@@ -14633,6 +14633,54 @@
     "Remove folder filter": {
       "status": "unchanged",
       "digest": "5bbd63aad5d13d1dccd939634d6472f8c3ba6f6b902e44cc54ba6954968d82f8"
+    },
+    "1–9: pinned tags · Q W E R A S D F: suggestions · arrow keys: next item · Esc: end": {
+      "status": "unchanged",
+      "digest": "48f046d4f4e75f9e388bcf0a8117350d47ac9ad40876645972f2da00b492091d"
+    },
+    "in the name": {
+      "status": "unchanged",
+      "digest": "ba8b0fe74e7e19e044717ff52665ac1a2ff1055d54394121a4978b796e89f1a4"
+    },
+    "in this folder": {
+      "status": "unchanged",
+      "digest": "40110de2b31e4400fc6b1f0febbc0070ae44b454f9cd51b6fca604d18f70e621"
+    },
+    "often with “{0}”": {
+      "status": "unchanged",
+      "digest": "d4d1f3223d0433cf948c63baf47d2575c7ece8db265383fa18a1947844ededfe"
+    },
+    "performer": {
+      "status": "unchanged",
+      "digest": "551c14f0e7d6a67a3bafa5c673985a57fef97117d2159da701708138ef1688a3"
+    },
+    "PINNED": {
+      "status": "unchanged",
+      "digest": "8b110dbe15bfcfb551588c3e3ab5aca36b9e1d0dc118cc40007cef16ba61c7a9"
+    },
+    "Pinned tag · click: assign or remove · right-click: more · {0}": {
+      "status": "unchanged",
+      "digest": "2964bde7933e491f72370e13be5b8c1c2bcdf6d54f2ff41dcc4dbfcf5b8ef763"
+    },
+    "studio": {
+      "status": "unchanged",
+      "digest": "e09fc9f514fb5b3e5ab7e5340cc66c15e7be1e897813bdd7d5356cfd1aa5dbc8"
+    },
+    "Tag mode": {
+      "status": "unchanged",
+      "digest": "e0139d879ac4170a87319e1889da38bd081303e1d368d7b25bf3c06545eb46c2"
+    },
+    "Tag mode (T): tag with one hand and move on with the arrow keys": {
+      "status": "unchanged",
+      "digest": "0761621208711f5ffda5c4cf19afb185617b12d9fa7304781d598ed40000ab03"
+    },
+    "TAGS": {
+      "status": "unchanged",
+      "digest": "228fe10684c77b85d3b5c3e850d1ef2cb5c03780ff84789146285dfb516f5a37"
+    },
+    "{0:N0} more": {
+      "status": "unchanged",
+      "digest": "c07d0350b9062e6c02840809c31994c900a196dc9602d29b89e1b6f1e4456122"
     }
   }
 }

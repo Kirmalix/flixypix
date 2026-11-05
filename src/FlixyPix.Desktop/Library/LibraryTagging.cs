@@ -173,6 +173,7 @@ public partial class MainWindow
      => _libraryTasks.Run(async token =>
     {
         if (ids.Count == 0 || add.Count + remove.Count == 0) return;
+        _assistEngaged = true;
         try
         {
             var capturedIds = ids.ToArray(); var capturedAdd = add.ToArray(); var capturedRemove = remove.ToArray();
@@ -216,73 +217,33 @@ public partial class MainWindow
 
     private void UpdateTagEditor(IReadOnlyList<MediaItem> items)
     {
-        TagChips.Children.Clear(); QuickTagButtons.Children.Clear();
-        foreach (var slot in QuickTags.Select((tag, index) => (tag, index)).Where(p => p.tag.Length > 0))
-        {
-            var quick = new Button { Content = KeyLabel("Ctrl+" + (slot.index + 1)) + " · " + slot.tag, Padding = new Thickness(6, 3, 6, 3), FontSize = 11, IsEnabled = items.Count > 0, ToolTip = T("Assign to selected items") };
-            quick.Click += async (_, _) => await ToggleQuickTagAsync(slot.index + 1); QuickTagButtons.Children.Add(quick);
-        }
+        TagChips.Children.Clear();
+        RenderPinnedTags(items);
         TagInput.IsEnabled = items.Count > 0; TagCompletionPopup.IsOpen = false;
         TagEditorHint.Text = items.Count > 1 ? Tn(items.Count, "for 1 item", "for {0:N0} items") : "";
         var ids = items.Select(i => i.Id).ToArray();
-        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); var order = new List<string>();
-        foreach (var tag in items.SelectMany(i => i.Tags.Distinct(StringComparer.OrdinalIgnoreCase))) { if (!counts.ContainsKey(tag)) order.Add(tag); counts[tag] = counts.GetValueOrDefault(tag) + 1; }
-        foreach (var tag in order.OrderByDescending(t => counts[t]).ThenBy(t => order.IndexOf(t)))
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tag in items.SelectMany(i => i.Tags.Distinct(StringComparer.OrdinalIgnoreCase))) counts[tag] = counts.GetValueOrDefault(tag) + 1;
+        // Tags on every medium first, each group alphabetical, so a tag is found at the same place on every medium.
+        foreach (var tag in counts.Keys.OrderByDescending(t => counts[t]).ThenBy(t => t, StringComparer.CurrentCultureIgnoreCase))
         {
-            var full = counts[tag] == items.Count;
+            if (counts[tag] == items.Count) { TagChips.Children.Add(FullTagChip(tag, ids)); continue; }
             var chip = new Button
             {
-                Content = full ? tag + "  ×" : $"{tag} · {counts[tag]}/{items.Count}",
-                Background = full ? FullChipBrush : PartialChipBrush,
+                Content = $"{tag} · {counts[tag]}/{items.Count}",
+                Background = PartialChipBrush,
                 Padding = new Thickness(9, 4, 9, 4),
                 FontSize = 12,
-                ToolTip = full ? T("Remove tag") : T("On {0} of {1} items · click: assign to all · right-click: remove from all", counts[tag], items.Count)
+                Focusable = false,
+                ToolTip = T("On {0} of {1} items · click: assign to all · right-click: remove from all", counts[tag], items.Count)
             };
-            chip.Click += async (_, _) => await (full ? ChangeTagsAsync(ids, [], [tag]) : ChangeTagsAsync(ids, [tag], []));
-            if (!full) chip.MouseRightButtonUp += async (_, args) => { args.Handled = true; await ChangeTagsAsync(ids, [], [tag]); };
+            chip.Click += async (_, _) => await ChangeTagsAsync(ids, [tag], []);
+            chip.MouseRightButtonUp += async (_, args) => { args.Handled = true; await ChangeTagsAsync(ids, [], [tag]); };
             TagChips.Children.Add(chip);
         }
         _tagAssistReady = LoadTagAssistAsync(items);
         UpdateRoleEditors(items);
     }
-
-    private Task LoadTagAssistAsync(IReadOnlyList<MediaItem> items)
-     => _libraryTasks.Run(async libraryToken =>
-    {
-        var version = ++_tagAssistVersion;
-        TagSuggestionChips.Children.Clear(); TagCombinationButtons.Children.Clear();
-        TagSuggestionPanel.Visibility = TagCombinationPanel.Visibility = Visibility.Collapsed;
-        if (items.Count == 0) return;
-        var ids = items.Select(i => i.Id).ToArray(); var present = items.SelectMany(i => i.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        var onAll = new HashSet<string>(items[0].Tags, StringComparer.OrdinalIgnoreCase); foreach (var item in items.Skip(1)) onAll.IntersectWith(item.Tags);
-        (IReadOnlyList<TagSuggestion> Suggestions, IReadOnlyList<TagCombination> Combinations) assist;
-        try { assist = await Task.Run(() => (_repository.SuggestTags(ids, 10), _repository.GetTagCombinations(present.Length > 0 ? present : null, 4))); }
-        catch (ObjectDisposedException) { return; }
-        if (version != _tagAssistVersion || _closing) return;
-        foreach (var suggestion in assist.Suggestions)
-        {
-            var chip = new Button { Content = "+ " + suggestion.Tag, Background = SuggestionChipBrush, Padding = new Thickness(9, 4, 9, 4), FontSize = 12, ToolTip = suggestion.Reason };
-            chip.Click += async (_, _) => await ChangeTagsAsync(ids, [suggestion.Tag], []);
-            TagSuggestionChips.Children.Add(chip);
-        }
-        foreach (var combination in assist.Combinations)
-        {
-            var missing = combination.Tags.Where(t => !onAll.Contains(t)).ToArray(); if (missing.Length == 0) continue;
-            var button = new Button
-            {
-                Content = string.Join(" · ", combination.Tags) + $"   {combination.MediaCount:N0}×",
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Padding = new Thickness(10, 5, 10, 5),
-                FontSize = 12,
-                ToolTip = Tn(combination.MediaCount, "Shared by 1 item · click adds: {1}", "Shared by {0:N0} items · click adds: {1}", string.Join(", ", missing))
-            };
-            button.Click += async (_, _) => await ChangeTagsAsync(ids, missing, []);
-            TagCombinationButtons.Children.Add(button);
-        }
-        TagSuggestionPanel.Visibility = TagSuggestionChips.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        TagCombinationPanel.Visibility = TagCombinationButtons.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-    });
 
     private void TagInputChanged(object sender, TextChangedEventArgs e)
     {

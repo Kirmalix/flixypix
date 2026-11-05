@@ -14,7 +14,7 @@ public partial class MainWindow
             _backupTimer.Stop(); StopFolderSync();
             _draftTimer.Stop();
             _homeArtworkCancellation.Cancel(); _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
-            SaveFolderViewportState();
+            SaveFolderViewportState(); SaveSuggestionFeedback();
             SaveViewNow(); if (_persistPreferences) SaveWindowPlace();
             _closing = true;
             _thumbnailCheck?.Cancel(); _wallRun?.Cancel(); _folderCheck?.Cancel(); StopHoverPreview();
