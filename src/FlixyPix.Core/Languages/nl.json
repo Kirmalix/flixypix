@@ -3679,5 +3679,10 @@
   "＋ MP4": "＋ MP4",
   "＋ New library …": "＋ Nieuwe bibliotheek…",
   "＋ Random clips …": "＋ Willekeurige clips …",
-  "＋ Set here": "＋ Hier toevoegen"
+  "＋ Set here": "＋ Hier toevoegen",
+  "Checking library": "Bibliotheek controleren",
+  "Opening catalog": "Catalogus openen",
+  "Preparing library": "Bibliotheek voorbereiden",
+  "Loading view": "Weergave laden",
+  "Elapsed: {0}": "Verstreken: {0}"
 }

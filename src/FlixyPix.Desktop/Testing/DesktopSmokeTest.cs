@@ -21,6 +21,7 @@ public partial class MainWindow
     }
     internal async Task RunSmokeTestAsync(string directory)
     {
+        await Startup;
         ConfigureSmokeTools();
         await RunStorageTransitionSmokeAsync(directory);
         static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }

@@ -50,6 +50,7 @@ public partial class MainWindow
 {
  internal async Task RunMetadataCrashPhaseAsync(string phase, string root, Func<bool> recovered)
  {
+  await Startup;
   await RefreshAsync(MetadataCrashProbe.MediaId);
   if (phase == "write")
   {

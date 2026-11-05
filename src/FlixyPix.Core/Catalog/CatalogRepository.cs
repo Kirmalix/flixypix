@@ -69,13 +69,16 @@ public sealed partial class CatalogRepository : IDisposable
             assets = new AssetStore(DatabasePath, this.key, progress, token);
             connection.Open();
             RegisterQueryFunctions();
-            using (var schemaCommand = Command("PRAGMA user_version", null)) schemaVersion = Convert.ToInt64(schemaCommand.ExecuteScalar());
-            if (schemaVersion > SchemaVersion) throw new NotSupportedException("This catalog uses a newer database schema.");
-            if (schemaVersion is > 0 and < OldestUpgradableSchema) throw new NotSupportedException(TooOldSchemaMessage);
-            if (schemaVersion is > 0 and < SchemaVersion) CreateMigrationBackup(schemaVersion, progress, token);
-            using (var pragmas = Command("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;", null)) pragmas.ExecuteNonQuery();
-            using var transaction = connection.BeginTransaction();
-            using var command = Command("""
+            database.Run(token, () =>
+            {
+                using (var schemaCommand = Command("PRAGMA user_version", null)) schemaVersion = Convert.ToInt64(schemaCommand.ExecuteScalar());
+                if (schemaVersion > SchemaVersion) throw new NotSupportedException("This catalog uses a newer database schema.");
+                if (schemaVersion is > 0 and < OldestUpgradableSchema) throw new NotSupportedException(TooOldSchemaMessage);
+                if (schemaVersion is > 0 and < SchemaVersion) CreateMigrationBackup(schemaVersion, progress, token);
+                progress?.Report(new(CatalogOpenPhase.CatalogInitialization, 0, 0));
+                using (var pragmas = Command("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;", null)) pragmas.ExecuteNonQuery();
+                using var transaction = connection.BeginTransaction();
+                using var command = Command("""
                 CREATE TABLE IF NOT EXISTS media(id TEXT PRIMARY KEY, path_key TEXT NOT NULL UNIQUE, document TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS playlists(id TEXT PRIMARY KEY, document TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS scenes(id TEXT PRIMARY KEY, media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE, document TEXT NOT NULL);
@@ -91,32 +94,34 @@ public sealed partial class CatalogRepository : IDisposable
                 CREATE INDEX IF NOT EXISTS scenes_media ON scenes(media_id);
                 CREATE TABLE IF NOT EXISTS collection_sets(id TEXT PRIMARY KEY, document TEXT NOT NULL);
                 """, transaction);
-            command.ExecuteNonQuery();
-            InitializeImageSets(transaction);
-            InitializePublicationGroups(transaction);
-            InitializeTagHierarchy(transaction);
-            InitializeStashSources(transaction);
-            InitializeStashIdentities(transaction);
-            InitializeStashProvenance(transaction);
-            InitializeStashBindings(transaction);
-            InitializeQuerySchema(transaction, schemaVersion == 0);
-            wallQueries.InitializeSchema(transaction, schemaVersion < 18);
-            using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
-                // A checked result belongs to one thumbnail; with another thumbnail it says nothing any more.
-                "CREATE TRIGGER IF NOT EXISTS media_thumbnail_changed AFTER UPDATE OF document ON media WHEN json_extract(OLD.document,'$.thumbnailPath') IS NOT json_extract(NEW.document,'$.thumbnailPath') BEGIN DELETE FROM media_thumbnail_state WHERE media_id=NEW.id; END;", transaction)) health.ExecuteNonQuery();
-            InitializeSearchIndexSchema(transaction);
-            InitializeHistorySchema(transaction);
-            InitializeMigrationSchema(transaction);
-            InitializeHistoricalSchema(transaction);
-            InitializeLegacyParserSchema(transaction);
-            InitializeTagAssetSchema(transaction);
-            InitializeHistoricalParserExecutionSchema(transaction);
-            InitializeLegacyCombineListSchema(transaction);
-            InitializeHistoricalLocalSettingsSchema(transaction);
-            InitializeAssetSchema(transaction);
-            token.ThrowIfCancellationRequested();
-            using (var version = Command($"PRAGMA user_version={SchemaVersion}", transaction)) version.ExecuteNonQuery();
-            transaction.Commit();
+                command.ExecuteNonQuery();
+                InitializeImageSets(transaction);
+                InitializePublicationGroups(transaction);
+                InitializeTagHierarchy(transaction);
+                InitializeStashSources(transaction);
+                InitializeStashIdentities(transaction);
+                InitializeStashProvenance(transaction);
+                InitializeStashBindings(transaction);
+                InitializeQuerySchema(transaction, schemaVersion == 0);
+                wallQueries.InitializeSchema(transaction, schemaVersion < 18);
+                using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
+                    // A checked result belongs to one thumbnail; with another thumbnail it says nothing any more.
+                    "CREATE TRIGGER IF NOT EXISTS media_thumbnail_changed AFTER UPDATE OF document ON media WHEN json_extract(OLD.document,'$.thumbnailPath') IS NOT json_extract(NEW.document,'$.thumbnailPath') BEGIN DELETE FROM media_thumbnail_state WHERE media_id=NEW.id; END;", transaction)) health.ExecuteNonQuery();
+                InitializeSearchIndexSchema(transaction);
+                InitializeHistorySchema(transaction);
+                InitializeMigrationSchema(transaction);
+                InitializeHistoricalSchema(transaction);
+                InitializeLegacyParserSchema(transaction);
+                InitializeTagAssetSchema(transaction);
+                InitializeHistoricalParserExecutionSchema(transaction);
+                InitializeLegacyCombineListSchema(transaction);
+                InitializeHistoricalLocalSettingsSchema(transaction);
+                InitializeAssetSchema(transaction);
+                token.ThrowIfCancellationRequested();
+                using (var version = Command($"PRAGMA user_version={SchemaVersion}", transaction)) version.ExecuteNonQuery();
+                transaction.Commit();
+                return true;
+            });
         }
         catch (Exception error)
         {

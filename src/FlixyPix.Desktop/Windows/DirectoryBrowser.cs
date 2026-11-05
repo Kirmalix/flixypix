@@ -16,6 +16,8 @@ using Microsoft.Win32;
 
 namespace FlixyPix.Desktop;
 
+internal sealed record DirectorySnapshot(IReadOnlyList<DirectoryEntry> Entries, IReadOnlyDictionary<TagKey, Guid> Pictures);
+
 internal sealed partial class DirectoryBrowser : UserControl
 {
  private readonly CatalogRepository repository;
@@ -138,7 +140,7 @@ internal sealed partial class DirectoryBrowser : UserControl
  /// <summary>The clipboard goes through this, so the smoke test leaves the user's clipboard alone.</summary>
  internal static Func<BitmapSource?> ClipboardImage { get; set; } = () => Clipboard.ContainsImage() ? Clipboard.GetImage() : null;
 
- internal DirectoryBrowser(Window owner, CatalogRepository repository, TagRole? role = null, string? select = null)
+ internal DirectoryBrowser(Window owner, CatalogRepository repository, TagRole? role = null, string? select = null, DirectorySnapshot? initial = null)
  {
   dialogOwner = owner; this.repository = repository; filter = acceptedFilter = role;
   var top = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
@@ -179,7 +181,7 @@ internal sealed partial class DirectoryBrowser : UserControl
    if (e.Key == Key.Delete && list.IsKeyboardFocusWithin) { Delete(); e.Handled = true; }
    if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && undo != null && e.OriginalSource is not TextBox) { Undo(); e.Handled = true; }
   };
-  Reload(select);
+  Reload(select, initial: initial);
   // The picture cache is set after construction; the first profile is shown again with it.
   Loaded += (_, _) => ShowSelection();
   IsVisibleChanged += (_, _) =>
@@ -322,12 +324,15 @@ internal sealed partial class DirectoryBrowser : UserControl
   return panel;
  }
 
- private void Reload(string? select = null,TagKey? exact=null)
+ internal static DirectorySnapshot ReadSnapshot(CatalogRepository repository, CancellationToken token) => new(repository.GetDirectory(token), repository.GetTagPictureIds());
+
+ private void Reload(string? select = null,TagKey? exact=null, DirectorySnapshot? initial = null)
  {
   if (!ConfirmLeave()) return;
   var keep = select ?? Current?.Tag;
   var keepKey=exact??(select==null&&Current is {} current?new(current.Category,current.Tag):null);
-  entries = repository.GetDirectory(); pictures = repository.GetTagPictureIds();
+  var data = initial ?? ReadSnapshot(repository, CancellationToken.None);
+  entries = data.Entries; pictures = data.Pictures;
   category.ItemsSource = entries.Select(e => e.Category).Where(c => c.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.CurrentCultureIgnoreCase).ToList();
   BuildTabs(); Fill(keep,keepKey);
  }

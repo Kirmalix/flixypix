@@ -3822,5 +3822,10 @@
   "＋ MP4": "＋ MP4",
   "＋ New library …": "＋ Nowa biblioteka…",
   "＋ Random clips …": "＋ Losowe klipy…",
-  "＋ Set here": "＋ Dodaj tutaj"
+  "＋ Set here": "＋ Dodaj tutaj",
+  "Checking library": "Sprawdzanie biblioteki",
+  "Opening catalog": "Otwieranie katalogu",
+  "Preparing library": "Przygotowywanie biblioteki",
+  "Loading view": "Wczytywanie widoku",
+  "Elapsed: {0}": "Upłynęło: {0}"
 }

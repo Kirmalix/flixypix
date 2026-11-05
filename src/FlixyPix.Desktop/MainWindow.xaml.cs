@@ -15,7 +15,7 @@ namespace FlixyPix.Desktop;
 public partial class MainWindow : Window
 {
     private readonly MediaCardContext _cardContext = new();
-    private CatalogRepository _repository;
+    private CatalogRepository _repository = null!;
     private DesktopSettings _settings;
     private MediaToolService _tools;
     private readonly LibraryTaskScope _libraryTasks = new(error => ErrorLog.Write("Library background work", error));
@@ -54,40 +54,43 @@ public partial class MainWindow : Window
         _persistPreferences = persistPreferences;
         InitializeComponent();
         _settings = settings;
-        SourceProtection.Configure(_settings.ProtectedSourcePaths);
-        FileAccessPolicy.Current.EnsureWritable(_settings.DataDirectory);
-        DesktopImaging.Configure(_settings.DataDirectory);
-        Directory.CreateDirectory(_settings.DataDirectory);
-        // A library is open in one instance only; the start and the library switch ask the other instance before this.
+        _tools = CreateTools();
+        Privacy.Prepare(_settings.Privacy);
+        AppShell.Install(this);
+        AppShell.Configure(_settings);
         _instance = LibraryInstance.Claim(_settings.DataDirectory, () => Dispatcher.BeginInvoke(BringToFront))
-         ?? throw new InvalidOperationException(T("This library is already open in another FlixyPix window."));
+            ?? throw new InvalidOperationException(T("This library is already open in another FlixyPix window."));
+        Closing += OnClosing;
+        InitializeStartup(unlockedKey);
+    }
+
+    private async Task InitializeLibraryAsync(CatalogKey? unlockedKey)
+    {
+        SourceProtection.Configure(_settings.ProtectedSourcePaths);
+        DesktopImaging.Configure(_settings.DataDirectory);
+        SetStartupPhase(T("Checking library"));
+        _repository = await SecretDialogs.OpenLibraryAsync(this, Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey, _startup.Token, () => SetStartupPhase(T("Opening catalog")));
+        await _startup.OpenedAsync();
+        SetStartupPhase(T("Preparing library"));
+        await Task.Run(() => _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable, _startup.Token), _startup.Token);
+        _startup.Token.ThrowIfCancellationRequested();
+        SetStartupPhase(T("Loading view"));
+        var startupData = await Task.Run(() => (Preferences: _repository.GetPreferences(), Drafts: _repository.GetMetadataDrafts()), _startup.Token);
         try
         {
-            Privacy.Prepare(_settings.Privacy); _repository = unlockedKey == null ? SecretDialogs.OpenLibrary(null, Path.Combine(_settings.DataDirectory, "catalog.db"))
-         : new CatalogRepository(Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey);
-        }
-        catch { _instance.Dispose(); throw; }
-        // A failed start must let go of the library, or the next attempt finds it "open in another window".
-        try { _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable); }
-        catch { _repository.Dispose(); _instance.Dispose(); throw; }
-        try
-        {
-            _tools = CreateTools();
-            InitializeBrowsing();
+            InitializeBrowsing(startupData.Preferences);
             InitializeMainView();
             InitializeReviewEditor();
-            InitializeDetailsDrafts();
+            InitializeDetailsDrafts(startupData.Drafts);
             InitializeKeyboardAccess();
             InitializeHoverPreview();
             InitializeScrolling();
             UpdateFilterBar();
             SizeChanged += (_, _) => AdaptToWidth();
             InitializeToasts();
-            InitializeFolderSync(checkAtStart: persistPreferences);
-            InitializeViewHistory();
-            AppShell.Install(this);
+
+            InitializeViewHistory(startupData.Preferences);
             AppLock.EncryptedCatalog = () => !_closing && _repository.IsEncrypted ? _repository.DatabasePath : null;
-            AppShell.Configure(_settings);
             AppShell.Hiding += PauseOnHide; AppShell.Muting += MuteOnHide;
             InitializeMarkPreviews();
             InitializeHome();
@@ -95,12 +98,18 @@ public partial class MainWindow : Window
             _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); Refresh(); };
             _positionTimer.Tick += async (_, _) => await _libraryTasks.Run(_ => SavePlaybackPosition());
             _positionTimer.Start();
-            Closing += OnClosing;
+
             if (_persistPreferences) RestoreWindowPlace();
             // Tests and probes open where they expect to; they check the start page on their own.
+
+            _showStartupRecovery?.Invoke();
+            await StartAsync(mayOpenHome: _persistPreferences);
+            if (_view == "home") await HomeTask;
+            if (_roleBrowser != null && IsRoleView) await _roleBrowser.ProfileReady;
+            _startup.Token.ThrowIfCancellationRequested();
             RememberOpenLibrary();
-            Startup = _libraryTasks.Run(_ => StartAsync(mayOpenHome: _persistPreferences));
-            if (_persistPreferences && DesktopSettings.LastRepair is { } repair) ContentRendered += (_, _) => ShowSettingsRepair(repair);
+            InitializeFolderSync(checkAtStart: _persistPreferences);
+            if (_persistPreferences && DesktopSettings.LastRepair is { } repair) ShowSettingsRepair(repair);
         }
         catch
         {
@@ -109,14 +118,14 @@ public partial class MainWindow : Window
             _backupTimer.Stop(); StopFolderSync();
             _searchIndexStop.Cancel(); _homeArtworkCancellation.Cancel(); _wallRun?.Cancel(); StopHoverPreview();
             AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;
-            _ = ReleaseFailedStartAsync();
+            await ReleaseFailedStartAsync();
             throw;
         }
     }
     private async Task ReleaseFailedStartAsync()
     {
         try { await _libraryTasks.StopAsync(); }
-        finally { _repository.Dispose(); _instance.Dispose(); }
+        finally { _repository?.Dispose(); _instance.Dispose(); }
     }
     /// <summary>Says once that appsettings.json was repaired; the damaged file stays beside it to look at.</summary>
     private void ShowSettingsRepair(SettingsRepair repair)
@@ -140,7 +149,12 @@ public partial class MainWindow : Window
     }
 
     private MediaToolService CreateTools() => new(new MediaToolPaths(_settings.Ffmpeg, _settings.Ffprobe, _settings.Mpv));
-    private void Refresh(Guid? selectId = null) => _lastRefresh = RefreshAsync(selectId);
+    private void Refresh(Guid? selectId = null)
+    {
+        var work = RefreshAsync(selectId);
+        _lastRefresh = work;
+        _ = _libraryTasks.Run(_ => work);
+    }
     private Task RefreshAsync(Guid? selectId = null, bool includePreviews = true)
     {
         if (_closing) return Task.CompletedTask;
@@ -159,7 +173,7 @@ public partial class MainWindow : Window
         _browse.ApplyTransition(resolved);
         if (resolved.View != requested.View) { ViewTitle.Text = ViewName(resolved.View); UpdateNavigation(); }
         var request = _browse.BeginLoad(SelectedMedia.Select(i => i.Id));
-        return _libraryTasks.Run(token => RefreshCoreAsync(selectId, includePreviews, token, request));
+        return _libraryTasks.Track(token => RefreshCoreAsync(selectId, includePreviews, token, request));
     }
     private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request)
     {
@@ -170,7 +184,12 @@ public partial class MainWindow : Window
         HidePublicationGroups();
         if (IsImageSetView) { RefreshImageSets(); return; }
         HideImageSets();
-        if (IsRoleView) { RefreshRoleView(); return; }
+        if (IsRoleView)
+        {
+            var initial = await Task.Run(() => DirectoryBrowser.ReadSnapshot(_repository, token), token);
+            if (!_closing && _browse.IsCurrent(request)) RefreshRoleView(initial);
+            return;
+        }
         HideRoleView();
         _keyboardIndex = _keyboardAnchor = null;
         var sort = state.SortOrder;
@@ -256,7 +275,7 @@ public partial class MainWindow : Window
                 UpdateHome(snapshot.CatalogEmpty, snapshot.Page.TotalCount);
             })) return;
         }
-        catch (Exception ex) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; }
+        catch (Exception ex) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; throw; }
         finally { _refreshing = false; }
         ShowDetails(includePreviews);
         WarmSearchIndex();
@@ -361,7 +380,7 @@ public partial class MainWindow : Window
             if (watch.IsChecked == true) { var folders = _repository.GetLibraryFolders().ToList(); foreach (var path in picker.FolderNames) if (!folders.Any(f => string.Equals(Path.GetFullPath(f.Path).TrimEnd(Path.DirectorySeparatorChar), Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))) folders.Add(new LibraryFolder { Path = path }); _repository.SaveLibraryFolders(folders); RestartFolderWatcher(); }
         }
     }
-    private async void OnDrop(object sender, DragEventArgs e) { if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) await ImportPaths(paths); }
+    private async void OnDrop(object sender, DragEventArgs e) { if (!_startupReady) return; if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) await ImportPaths(paths); }
     private void CancelOperation(object sender, RoutedEventArgs e) => _operation?.Cancel();
     private void SearchChanged(object sender, TextChangedEventArgs e) { if (_repository == null) return; _anchor = 0; _searchTimer.Stop(); _searchTimer.Start(); }
     private void FilterChanged(object sender, SelectionChangedEventArgs e) { if (RatingFilter.SelectedIndex > 0) _filter = _filter with { UnratedOnly = false }; _anchor = 0; if (_repository == null) return; UpdateFilterBar(); RenderTagFilterChips(); Refresh(); }
@@ -486,6 +505,7 @@ public partial class MainWindow : Window
     }
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        if (!_startupReady && !_closeCompleted) { e.Cancel = true; RequestStartupCancellation(); return; }
         if (_storageTransferring) { e.Cancel = true; _operation?.Cancel(); return; }
         if (_closeCompleted) return;
         e.Cancel = true;
@@ -513,6 +533,7 @@ public partial class MainWindow : Window
     private void OnKeyDown(object sender, KeyEventArgs e)
      => _ = _libraryTasks.Run(async libraryToken =>
     {
+        if (!_startupReady) return;
         if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && !TextEntry(e.OriginalSource))
         { e.Handled = true; UndoImmediate(); return; }
         if (await HandleLibraryKeyboardAsync(e)) { e.Handled = true; return; }

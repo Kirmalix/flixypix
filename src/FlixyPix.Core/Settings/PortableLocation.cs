@@ -53,9 +53,11 @@ public sealed partial class CatalogRepository
     internal Action<string>? RelocationCheckpoint { get; set; }
     private string RelocationJournal => Path.Combine(Path.GetDirectoryName(DatabasePath)!, ".relocation-pending");
 
-    public void PreparePortableLocation(string applicationDirectory, bool portable)
+    public void PreparePortableLocation(string applicationDirectory, bool portable) => PreparePortableLocation(applicationDirectory, portable, CancellationToken.None);
+
+    public void PreparePortableLocation(string applicationDirectory, bool portable, CancellationToken token)
     {
-        lock (gate)
+        database.Run(token, () =>
         {
             RecoverRelocation();
             var current = new PortableLocation(Path.GetDirectoryName(DatabasePath)!, Path.GetFullPath(applicationDirectory), Path.GetPathRoot(Path.GetFullPath(applicationDirectory))!);
@@ -70,9 +72,10 @@ public sealed partial class CatalogRepository
             // pointing into it (thumbnails of a takeover in the profile, opened again from a portable copy).
             if (previous?.ManagedPathsChecked != true && FormerLibraryFolder(current.Library) is { } former) mappings.Add(new(former, current.Library));
             current = current with { ManagedPathsChecked = true };
-            if (mappings.Any(m => !LibraryCatalogs.SameDirectory(m.From, m.To))) ApplyRelocation(new(mappings), current);
+            if (mappings.Any(m => !LibraryCatalogs.SameDirectory(m.From, m.To))) ApplyRelocation(new(mappings), current, token);
             else WriteLocation(current, null);
-        }
+            return true;
+        });
     }
     public void RelocateLibraryPaths(string previous, string current) => RelocateStoragePaths([new(previous, current)]);
     public void RelocateStoragePaths(IReadOnlyList<PathPrefixMapping> mappings)
@@ -128,13 +131,14 @@ public sealed partial class CatalogRepository
         else if (!journal.IsCommitting) journal.Discard();
         else throw new InvalidDataException("The relocation journal does not match the catalog commit.");
     }
-    private void ApplyRelocation(StoragePathMap map, PortableLocation? location)
+    private void ApplyRelocation(StoragePathMap map, PortableLocation? location, CancellationToken token = default)
     {
         var library = Path.GetDirectoryName(DatabasePath)!;
         var journal = StorageJournal.Begin(RelocationJournal, new Dictionary<string, string> { ["library"] = library }, "relocation");
         journal.Checkpoint = RelocationCheckpoint;
         foreach (var path in ActiveManifests(library))
         {
+            token.ThrowIfCancellationRequested();
             // Other JSON files lie in the library too (a takeover keeps its migration report of many MB beside the
             // catalog); only a queue or preview manifest of that size stops the relocation.
             if (new FileInfo(path).Length > MaxManifestBytes)
@@ -152,7 +156,7 @@ public sealed partial class CatalogRepository
         }
         CreateSafetyCopy(Path.Combine(library, "backups"), "paths-" + Guid.NewGuid().ToString("N")[..12]);
         RelocationCheckpoint?.Invoke("prepared");
-        ApplyDatabaseRelocation(map, location, journal.Id, CancellationToken.None);
+        ApplyDatabaseRelocation(map, location, journal.Id, token);
         RelocationCheckpoint?.Invoke("database-committed");
         journal.Commit();
         // Interrupted operations leave the journal. The token in the SQLite transaction

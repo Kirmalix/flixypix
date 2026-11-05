@@ -3679,5 +3679,10 @@
   "＋ MP4": "＋ MP4",
   "＋ New library …": "＋ Neue Bibliothek …",
   "＋ Random clips …": "＋ Zufallsclips …",
-  "＋ Set here": "＋ Hier setzen"
+  "＋ Set here": "＋ Hier setzen",
+  "Checking library": "Bibliothek prüfen",
+  "Opening catalog": "Katalog öffnen",
+  "Preparing library": "Bibliothek vorbereiten",
+  "Loading view": "Ansicht laden",
+  "Elapsed: {0}": "Vergangen: {0}"
 }

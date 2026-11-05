@@ -10,6 +10,7 @@ public partial class MainWindow
     internal async Task RunLibraryLifetimeProbeAsync(string directory)
     {
         ConfigureSmokeTools();
+        await RunOpeningSmokeTestAsync(directory);
         var video = Path.Combine(directory, "fixtures", "playback-lifetime.mp4");
         if (File.Exists(video))
         {
@@ -21,6 +22,7 @@ public partial class MainWindow
     }
     private async Task RunLibraryLifetimeSmokeAsync(string directory)
     {
+        await RunStartupLoadingSmokeAsync(directory);
         ApplyViewState(new ViewState());
         await _lastRefresh;
         var card = MediaList.Items.Cast<MediaCard>().First();

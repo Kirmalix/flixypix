@@ -32,6 +32,7 @@ internal sealed class LibraryOpeningWindow : Window
  private CatalogRepository? opened;
  private Exception? failure;
  private CatalogOpenPhase? lastPhase;
+ private IReadOnlyList<CatalogOpenPhase> RuntimePhases => [.. plan.Phases, CatalogOpenPhase.CatalogInitialization];
 
  internal CatalogOpenPlan Plan => plan;
 
@@ -55,6 +56,19 @@ internal sealed class LibraryOpeningWindow : Window
 
  /// <summary>Opens the library; with long work first through this window. Throws <see cref="OperationCanceledException"/>
  /// when the user declines or cancels, and the error of a failed change otherwise (both leave the library unchanged).</summary>
+ internal static async Task<CatalogRepository> OpenAsync(Window owner, string path, CatalogKey? key, CancellationToken token, Action? opening = null)
+ {
+  var plan = await Task.Run(() => CatalogRepository.Inspect(path, key), token);
+  token.ThrowIfCancellationRequested();
+  opening?.Invoke();
+  if (!plan.HasWork) return await Task.Run(() => new CatalogRepository(path, key, null, token), token);
+  var window = new LibraryOpeningWindow(owner, path, key, plan);
+  using var registration = token.Register(() => window.Dispatcher.BeginInvoke(window.Cancel));
+  window.ShowDialog();
+  if (window.failure is { } error) throw error;
+  return window.opened ?? throw new OperationCanceledException(token);
+ }
+
  internal static CatalogRepository Open(Window? owner, string databasePath, CatalogKey? key)
  {
   var plan = CatalogRepository.Inspect(databasePath, key);
@@ -74,6 +88,7 @@ internal sealed class LibraryOpeningWindow : Window
  private static string PhaseText(CatalogOpenPhase phase) => phase switch
  {
   CatalogOpenPhase.SafetyCopy => T("Safety copy of the catalog"),
+  CatalogOpenPhase.CatalogInitialization => T("Opening catalog"),
   _ => T("Finishing the encryption of the pictures"),
  };
 
@@ -123,7 +138,7 @@ internal sealed class LibraryOpeningWindow : Window
  {
   Heading();
   var list = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
-  foreach (var phase in plan.Phases)
+  foreach (var phase in RuntimePhases)
   {
    var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
    var icon = SettingsUi.Icon(((char)0xEA3A).ToString(), 13); icon.Foreground = SettingsUi.Muted; icon.Margin = new Thickness(0, 0, 10, 0); icon.Width = 18;
@@ -166,10 +181,10 @@ internal sealed class LibraryOpeningWindow : Window
  {
   if (finished) return;
   lastPhase = step.Phase;
-  var current = plan.Phases.ToList().IndexOf(step.Phase);
-  for (var index = 0; index < plan.Phases.Count; index++)
+  var current = RuntimePhases.ToList().IndexOf(step.Phase);
+  for (var index = 0; index < RuntimePhases.Count; index++)
   {
-   var (icon, label) = phaseRows[plan.Phases[index]];
+   var (icon, label) = phaseRows[RuntimePhases[index]];
    var done = index < current; var active = index == current;
    icon.Text = ((char)(done ? 0xE73E : active ? 0xE768 : 0xEA3A)).ToString();
    icon.Foreground = done ? SettingsUi.Good : active ? Theme.Brush("Accent") : SettingsUi.Muted;

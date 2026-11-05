@@ -58,7 +58,9 @@ public partial class MainWindow
         var hour = DateTime.Now.Hour;
         CountLabel.Text = (hour < 11 ? T("Good morning") : hour < 18 ? T("Good afternoon") : T("Good evening")) + (total > 0 ? Tn(total, " · 1 item in your library", " · {0:N0} items in your library") : "");
         if (first && !catalogEmpty) _home.ShowLoading();
-        _lastHome = _libraryTasks.Run(_ => BuildHomeAsync(catalogEmpty));
+        var work = _libraryTasks.Track(_ => BuildHomeAsync(catalogEmpty));
+        _lastHome = work;
+        _ = _libraryTasks.Run(_ => work);
     }
 
     private async Task BuildHomeAsync(bool catalogEmpty)
@@ -73,6 +75,7 @@ public partial class MainWindow
         catch (Exception error) when (error is ObjectDisposedException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
         {
             if (!_closing) { ErrorLog.Write("Startseite", error); Status.Text = T("The home page could not be loaded: ") + error.Message; }
+            throw;
         }
     }
 

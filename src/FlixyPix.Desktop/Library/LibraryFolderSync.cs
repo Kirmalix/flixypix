@@ -28,7 +28,6 @@ public partial class MainWindow
     {
         if (!checkAtStart) return;
         // After the first page is shown, so the start stays fast even with large folders.
-        Loaded += (_, _) =>
         {
             var start = _folderStart = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
             start.Tick += async (_, _) => { start.Stop(); if (_closing) return; RestartFolderWatcher(); await CheckLibraryFoldersAsync(background: true); };
@@ -36,7 +35,7 @@ public partial class MainWindow
             _folderPoll = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
             _folderPoll.Tick += async (_, _) => { RestartFolderWatcher(); await CheckLibraryFoldersAsync(background: true); };
             _folderPoll.Start();
-        };
+        }
     }
 
     private void StopFolderSync()

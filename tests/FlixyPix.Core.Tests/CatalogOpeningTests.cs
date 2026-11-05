@@ -63,7 +63,7 @@ public sealed class CatalogOpeningTests : IDisposable
    var log = catalog.GetMaintenanceLog();
    Assert.Equal(CatalogRepository.OldestUpgradableSchema, log.LastUpgradeFrom); Assert.Equal(CatalogRepository.SchemaVersion, log.LastUpgradeTo); Assert.NotNull(log.LastUpgradeAt); Assert.True(log.LastUpgradeSeconds >= 0);
   }
-  Assert.Equal(plan.Phases, steps.Select(s => s.Phase).Distinct());
+  Assert.Equal(plan.Phases.Append(CatalogOpenPhase.CatalogInitialization), steps.Select(s => s.Phase).Distinct());
   var copy = steps.Last(s => s.Phase == CatalogOpenPhase.SafetyCopy); Assert.True(copy.Total > 0 && copy.Done == copy.Total);
   Assert.False(CatalogRepository.Inspect(Database).HasWork);
  }
@@ -120,6 +120,23 @@ public sealed class CatalogOpeningTests : IDisposable
   using (var catalog = new CatalogRepository(Database, key, new Steps(steps.Add))) Assert.False(catalog.EncryptsPictures);
   Assert.Contains(steps, s => s.Phase == CatalogOpenPhase.PictureEncryption && s.Done == s.Total && s.Total == 1);
   Assert.False(CatalogRepository.Inspect(Database, key).HasWork);
+ }
+
+ [Theory]
+ [InlineData(false)]
+ [InlineData(true)]
+ public void CancelledCurrentOpeningAndLocationPreparationLeaveCatalogReusable(bool encrypted)
+ {
+  Guid id;
+  using (var original = new CatalogRepository(Database)) id = original.Upsert(new() { Path = Path.Combine(root, "synthetic.mp4"), Title = "unchanged" }).Id;
+  if (encrypted) CatalogEncryption.EnableEncryption(Database, Password);
+  using var key = encrypted ? CatalogEncryption.Unlock(Database, Password) : null;
+  using var stop = new CancellationTokenSource(); stop.Cancel();
+  Assert.ThrowsAny<OperationCanceledException>(() => new CatalogRepository(Database, key, null, stop.Token));
+  using var reopened = new CatalogRepository(Database, key);
+  Assert.ThrowsAny<OperationCanceledException>(() => reopened.PreparePortableLocation(root, true, stop.Token));
+  Assert.Equal("unchanged", reopened.GetMedia(id)!.Title);
+  Assert.Equal(1, reopened.QueryPage(new()).TotalCount);
  }
 
  public void Dispose()

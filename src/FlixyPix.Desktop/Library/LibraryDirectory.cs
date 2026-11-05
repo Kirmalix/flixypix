@@ -17,13 +17,13 @@ public partial class MainWindow
   foreach (var (element, visibility) in _roleCovered) element.Visibility = visibility;
   _roleCovered.Clear();
  }
- private void RefreshRoleView()
+ private void RefreshRoleView(DirectorySnapshot? initial = null)
  {
   RememberDetailsDraft();
   if (_roleBrowserView != _view || _roleBrowser == null)
   {
    if (_roleBrowser != null) MediaPane.Children.Remove(_roleBrowser);
-   _roleBrowser = new DirectoryBrowser(this, _repository, _view == "performers" ? TagRole.Performer : TagRole.Studio)
+   _roleBrowser = new DirectoryBrowser(this, _repository, _view == "performers" ? TagRole.Performer : TagRole.Studio, initial: initial)
    { PictureCache = System.IO.Path.Combine(_settings.DataDirectory, "tag-assets"), SearchProviders = SearchProviders,
      Tools = ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null };
    _roleBrowser.UseMainSearch(); _roleBrowserView = _view;

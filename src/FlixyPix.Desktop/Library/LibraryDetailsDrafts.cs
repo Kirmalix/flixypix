@@ -9,11 +9,12 @@ public partial class MainWindow
  { public MetadataValues? Original { get; init; } }
  private readonly System.Windows.Threading.DispatcherTimer _draftTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
  internal Action<MetadataRecoveryWindow>? RecoveryOpened { get; set; }
- private void InitializeDetailsDrafts()
+ private Action? _showStartupRecovery;
+ private void InitializeDetailsDrafts(IReadOnlyList<MetadataDraft>? drafts = null)
  {
-  foreach (var draft in _repository.GetMetadataDrafts())
+  foreach (var draft in drafts ?? _repository.GetMetadataDrafts())
    _detailsDrafts[draft.MediaId] = new(draft.Title, draft.Category, draft.Description, draft.ReleaseDate) { Original = draft.Original };
-  ContentRendered += (_, _) =>
+  _showStartupRecovery = () =>
   {
    if (_detailsDrafts.Count == 0) return;
    var recovery = new MetadataRecoveryWindow(this, _detailsDrafts.Select(pair =>

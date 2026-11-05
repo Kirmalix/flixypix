@@ -48,7 +48,7 @@ public partial class MainWindow
         public event PropertyChangedEventHandler? PropertyChanged;
         public IEnumerable<BrowseNode> Descendants() => Children.SelectMany(child => child.Descendants().Prepend(child));
     }
-    private void InitializeBrowsing()
+    private void InitializeBrowsing(CatalogPreferences? preferences = null)
     {
         _tileTemplate = MediaList.ItemTemplate; _tilePanel = MediaList.ItemsPanel;
         _initializingBrowsing = true;
@@ -70,7 +70,7 @@ public partial class MainWindow
         ViewChoice.SelectedIndex = Math.Clamp(_settings.ViewMode, 0, 2); SortChoice.SelectedIndex = Math.Clamp(_settings.SortOrder, 0, SortChoice.Items.Count - 1);
         SetSidebar(!_settings.SidebarCollapsed); SetDetails(!_settings.DetailsCollapsed); ApplyDetailsLayout();
         ViewButtonText.Text = Tc("library", "View");
-        ThumbnailFit.SelectedIndex = _repository.GetPreferences().General.CropThumbnails ? 1 : 0;
+        ThumbnailFit.SelectedIndex = (preferences ?? _repository.GetPreferences()).General.CropThumbnails ? 1 : 0;
         _initializingBrowsing = false;
         InitializeSidebarState();
         InitializeFolderPresentation();

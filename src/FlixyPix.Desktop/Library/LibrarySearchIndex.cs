@@ -12,6 +12,7 @@ public partial class MainWindow
  /// trigram index. The catalog is released between portions; browsing never waits for a whole build.</summary>
  private void WarmSearchIndex()
  {
+  if (!_startupReady) return;
   if (!_searchIndexWarmup.IsCompleted || _closing) return;
   var repository = _repository; var stop = _searchIndexStop.Token;
   long total = 0;

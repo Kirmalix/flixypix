@@ -9,6 +9,8 @@ public enum CatalogOpenPhase
     SafetyCopy,
     /// <summary>Picture files are encrypted or decrypted, finishing an interrupted switch.</summary>
     PictureEncryption,
+    /// <summary>Opening and preparing the catalog; SQL work has no known row total.</summary>
+    CatalogInitialization,
 }
 
 /// <summary>Progress of one phase; <paramref name="Total"/> 0 means the amount is unknown.</summary>

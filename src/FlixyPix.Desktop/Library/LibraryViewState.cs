@@ -17,9 +17,9 @@ public partial class MainWindow
     private string? _savedViewJson;
     internal ViewHistory History => _history;
 
-    private void InitializeViewHistory()
+    private void InitializeViewHistory(CatalogPreferences? preferences = null)
     {
-        _history.Capacity = _repository.GetPreferences().General.HistoryLength;
+        _history.Capacity = (preferences ?? _repository.GetPreferences()).General.HistoryLength;
         _viewSaveTimer.Tick += (_, _) => SaveViewNow();
         _viewSaveTimer.Start();
         MouseUp += (_, e) =>
@@ -75,13 +75,15 @@ public partial class MainWindow
     {
         var general = _repository.GetPreferences().General;
         var stored = general.RestoreLastView ? _repository.GetViewState() : null;
-        if (!general.RestoreLastView) { Refresh(); RecordView(); return; }
+        if (!general.RestoreLastView) { Refresh(); await _lastRefresh; RecordView(); return; }
         if (stored is null)
         {
             ApplyViewState(new ViewState { View = ViewState.Views.Contains(_settings.LastView) ? _settings.LastView : "all", SortOrder = _settings.SortOrder, ViewMode = _settings.ViewMode, TileWidth = _settings.TileWidth });
             await _lastRefresh; RecordView(); return;
         }
-        var state = _repository.Sanitize(stored, out var dropped).Restricted(general.RestoreScope);
+        var restored = await Task.Run(() => { var sanitized = _repository.Sanitize(stored, out var removed); return (State: sanitized.Restricted(general.RestoreScope), Dropped: removed); });
+        if (_closing) return;
+        var state = restored.State; var dropped = restored.Dropped;
         ApplyViewState(state, state.SavedSearchId is { } search ? _repository.GetSavedSearches().FirstOrDefault(s => s.Id == search)?.Name : null);
         await _lastRefresh;
         if (general.RestoreScope == RestoreScope.All)

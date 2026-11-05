@@ -85,7 +85,7 @@ public partial class App : Application
                 var window = new MainWindow(saved! with { DataDirectory = Path.Combine(testDirectory!, "catalog"), AutoGeneratePreviews = false }, persistPreferences: false);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunLocalizationSmokeTestAsync(testDirectory!); File.WriteAllText(Path.Combine(testDirectory!, "result.txt"), "PASS: saved language, WPF texts, settings round trip, fonts and layout captures."); window.Close(); }
+                    try { await window.Startup; await window.RunLocalizationSmokeTestAsync(testDirectory!); File.WriteAllText(Path.Combine(testDirectory!, "result.txt"), "PASS: saved language, WPF texts, settings round trip, fonts and layout captures."); window.Close(); }
                     catch (Exception ex) { File.WriteAllText(Path.Combine(testDirectory!, "result.txt"), ex.ToString()); Shutdown(1); }
                 };
                 window.Show();
@@ -104,7 +104,7 @@ public partial class App : Application
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog"), AutoGeneratePreviews = false }, persistPreferences: false);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunStorageTransitionSmokeAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: storage modes, encrypted copies, cancellation, destination preservation, shared files and persistent selection."); window.Close(); }
+                    try { await window.Startup; await window.RunStorageTransitionSmokeAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: storage modes, encrypted copies, cancellation, destination preservation, shared files and persistent selection."); window.Close(); }
                     catch (Exception error) { File.WriteAllText(Path.Combine(directory, "result.txt"), error.ToString()); Shutdown(1); }
                 };
                 window.Show();
@@ -113,7 +113,7 @@ public partial class App : Application
             {
                 var directory = Path.GetFullPath(arguments[1]); Directory.CreateDirectory(directory);
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog"), AutoGeneratePreviews = false }, persistPreferences: false);
-                window.Loaded += async (_, _) => { try { await window.RunFolderSyncVisualTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: watched folders, manual scope, selection, import, themes and folder layout"); window.Close(); } catch (Exception error) { File.WriteAllText(Path.Combine(directory, "result.txt"), error.ToString()); Shutdown(1); } };
+                window.Loaded += async (_, _) => { try { await window.Startup; await window.RunFolderSyncVisualTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: watched folders, manual scope, selection, import, themes and folder layout"); window.Close(); } catch (Exception error) { File.WriteAllText(Path.Combine(directory, "result.txt"), error.ToString()); Shutdown(1); } };
                 window.Show();
             }
             else if (arguments.Length == 3 && arguments[0] == "--player-input-test" && arguments[1] is "plain" or "encrypted" or "self-plain" or "self-encrypted")
@@ -127,7 +127,7 @@ public partial class App : Application
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.GetDirectoryName(database)!, AutoGeneratePreviews = false }, persistPreferences: false, unlockedKey: key);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunPhysicalInputAcceptanceAsync(directory, selfTest); window.Close(); }
+                    try { await window.Startup; await window.RunPhysicalInputAcceptanceAsync(directory, selfTest); window.Close(); }
                     catch (Exception error) { File.WriteAllText(Path.Combine(directory, "result.txt"), error.ToString()); Shutdown(1); }
                 };
                 window.Show();
@@ -152,7 +152,7 @@ public partial class App : Application
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog") }, persistPreferences: false);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunSmokeTestAsync(directory); await window.RunOpenWithSmokeTestAsync(directory); var last = await window.RunLibrarySwitchSmokeTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: import, edit, half-star rating, search, tags, collections, scenes, backup, open with, libraries and WPF rendering."); last.Close(); }
+                    try { await window.Startup; await window.RunSmokeTestAsync(directory); await window.RunOpenWithSmokeTestAsync(directory); var last = await window.RunLibrarySwitchSmokeTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: import, edit, half-star rating, search, tags, collections, scenes, backup, open with, libraries and WPF rendering."); last.Close(); }
                     catch (Exception ex) { File.WriteAllText(Path.Combine(directory, "result.txt"), ex.ToString()); Shutdown(1); }
                 };
                 window.Show();
@@ -184,7 +184,7 @@ public partial class App : Application
                 var construction = watch.Elapsed;
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunPerfProbeAsync(directory, construction); window.Close(); }
+                    try { await window.Startup; await window.RunPerfProbeAsync(directory, construction); window.Close(); }
                     catch (Exception ex) { File.WriteAllText(Path.Combine(directory, "error.txt"), ex.GetType().Name + ": " + ex.Message); Shutdown(1); }
                 };
                 window.Show();
@@ -197,7 +197,7 @@ public partial class App : Application
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.GetFullPath(arguments[1]) }, persistPreferences: false);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.RunLibraryProbeAsync(directory); window.Close(); }
+                    try { await window.Startup; await window.RunLibraryProbeAsync(directory); window.Close(); }
                     catch (Exception ex) { File.WriteAllText(Path.Combine(directory, "error.txt"), ex.GetType().Name + ": " + ex.Message); Shutdown(1); }
                 };
                 window.Show();
@@ -215,6 +215,19 @@ public partial class App : Application
     /// <summary>Normal start: with several libraries and "ask at start" (original: database prompt unless bypassed) the
     /// user picks one; otherwise the last one opens, or the one given with "--library". A library that is already open in
     /// another instance comes to the front there instead.</summary>
+    internal void ReturnToLibrarySelection(MainWindow previous)
+    {
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        previous.Close();
+        var settings = DesktopSettings.Load();
+        var chooser = new DatabaseWindow(null, settings.Libraries, true, null, null, (_, _) => { }, chooser: true);
+        chooser.Select(settings.DataDirectory);
+        chooser.ShowDialog();
+        if (chooser.Chosen is not { } chosen) { Shutdown(0); return; }
+        OpenLibraryAtStart(chosen);
+        ShutdownMode = ShutdownMode.OnLastWindowClose;
+    }
+
     private void OpenLibraryAtStart(string? requested)
     {
         var firstPortableStart = AppStorage.Current.Mode == StorageMode.Portable && !File.Exists(DesktopSettings.SettingsPath);
@@ -233,11 +246,10 @@ public partial class App : Application
             ShutdownMode = ShutdownMode.OnLastWindowClose;
             if (chooser.Chosen is not { } chosen) { Shutdown(0); return; }
             settings = settings with { DataDirectory = chosen };
-            settings.Save();
         }
         if (LibraryInstance.IsOpen(settings.DataDirectory)) { LibraryInstance.Activate(settings.DataDirectory); Shutdown(0); return; }
         var main = new MainWindow(settings);
-        if (firstPortableStart) main.ContentRendered += (_, _) => main.OfferProfileImport(initial: true);
+        if (firstPortableStart) main.ContentRendered += async (_, _) => { try { await main.Startup; } catch (Exception) { return; } main.OfferProfileImport(initial: true); };
         main.Show();
     }
 }

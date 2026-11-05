@@ -62,6 +62,23 @@ internal static class SecretDialogs
  }
 
  /// <summary>Opens a library, asking for its password or recovery key until it unlocks or the user cancels.</summary>
+ internal static async Task<CatalogRepository> OpenLibraryAsync(Window owner, string path, CatalogKey? supplied, CancellationToken token, Action? opening = null)
+ {
+  if (supplied != null) return await LibraryOpeningWindow.OpenAsync(owner, path, supplied, token, opening);
+  if (!CatalogEncryption.IsEncrypted(path)) return await LibraryOpeningWindow.OpenAsync(owner, path, null, token, opening);
+  var hint = "";
+  while (true)
+  {
+   token.ThrowIfCancellationRequested();
+   var values = Passwords(owner, T("Unlock library"), hint + T("This library is encrypted.\n") + path, T("Password or recovery key"));
+   if (values is null) throw new OperationCanceledException(token);
+   CatalogKey key;
+   try { key = await Task.Run(() => CatalogEncryption.Unlock(path, values[0]), token); }
+   catch (CryptographicException) { hint = T("The password or recovery key is wrong.\n\n"); continue; }
+   using (key) return await LibraryOpeningWindow.OpenAsync(owner, path, key, token, opening);
+  }
+ }
+
  internal static CatalogRepository OpenLibrary(Window? owner, string databasePath)
  {
   if (!CatalogEncryption.IsEncrypted(databasePath)) return LibraryOpeningWindow.Open(owner, databasePath, null);

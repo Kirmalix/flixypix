@@ -69,29 +69,34 @@ public partial class MainWindow
  }
 
  /// <summary>Runs after this window let go of its catalog.</summary>
- private void OpenSwitchedLibrary(string target)
+ private async void OpenSwitchedLibrary(string target)
  {
+  var shutdown = Application.Current.ShutdownMode;
+  Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
   MainWindow? next = null;
   foreach (var directory in new[] { target, _settings.DataDirectory }.Distinct(StringComparer.OrdinalIgnoreCase))
   {
    try
    {
     var settings = (_persistPreferences ? DesktopSettings.Load() : _settings) with { DataDirectory = directory };
-    if (_persistPreferences) settings.Save();
-    next = new MainWindow(settings, _persistPreferences);
+    next = new MainWindow(settings, _persistPreferences) { _returnToSelectionOnCancel = false };
     Application.Current.MainWindow = next;
     next.Show();
+    await next.Startup;
     if (!LibraryCatalogs.SameDirectory(directory, target)) next.Status.Text = T("The other library was not opened; this one is open again.");
     break;
    }
    catch (OperationCanceledException) { next = null; }
    catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException or NotSupportedException or Microsoft.Data.Sqlite.SqliteException)
    {
+    if (next != null) { next._closeCompleted = true; next.Close(); }
     next = null;
     ErrorLog.Write("Bibliothek wechseln", ex);
     Message.Show(T("The library could not be opened.\n{0}", ex.Message), "FlixyPix", MessageBoxButton.OK, MessageBoxImage.Error);
    }
   }
   _switched?.TrySetResult(next);
+  Application.Current.ShutdownMode = shutdown;
+  if (next == null && !Application.Current.Windows.OfType<MainWindow>().Any(w => w.IsVisible)) Application.Current.Shutdown(0);
  }
 }
