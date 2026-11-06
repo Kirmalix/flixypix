@@ -5,51 +5,68 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 ## Unreleased
 
-The catalog format changes; libraries opened with this version
-are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept before the upgrade).
+**Upgrading from 0.5.0:** the catalog format changes. FlixyPix asks before converting a library and
+keeps a copy of the catalog beside it; 0.5.0 cannot open a converted library. Back up your media files
+separately. Ctrl+1–9 no longer sets tags: pinned tags now work with 1–9 in the tag mode (T).
 
-- New layout: the left bar is for navigation and collections; tags and common filters open in a panel beside the media, and active filters stand as chips in the search field.
-- Folders are an area of their own: walk through them with the tree, the path above the media or the subfolders; “Show in folder” in the details goes straight there.
-- Performers and studios are galleries, most frequent first, with a page per entry; the table for maintaining entries is one click away.
-- The selection bar offers tag mode, collections and more; the details appear only while something is selected.
-- The scene wall and the media jobs are pages of the main window, and a double click opens a page per medium with its picture, timeline, marks, history and similar media. Enter and the play button on a tile still play.
-- “Organize” is a work area: queues such as without tags and unrated are worked through one item at a time with visible progress, beside the maintenance tools.
-- The start page leads with continue watching, recently added, recently tagged and what is left to do, instead of a banner; the notice at start is gone.
-- The queues of “Organize” can be narrowed to videos, images or audio, on the page and above a running queue; the choice stays.
-- The thumbnail check skips images, which need no thumbnail, and no longer decodes pictures in common formats, so it stays quick in large libraries.
-- One type scale and three sizes for text buttons across the application.
-- Ctrl+1–9 no longer sets tags. Pinned tags work with 1–9 in the tag mode (T).
-- Interface size: all text and controls from 85 to 160 % in the settings or with Ctrl+Plus, Ctrl+Minus and Ctrl+0.
-- Calmer look: the accent marks the main action and the current choice, applied tags and filters are neutral.
-- Tag mode (T): tag with one hand using 1–9 and Q W E R, move on with the arrow keys; rows and keys stay put.
-- Suggestions say why they appear, compare against how common a tag is, send performers and studios to their
-  categories and fall behind when ignored; applied tags come first and only their × removes them.
-- The folder filter shows as a chip, and a bar states selections the grid cannot show.
-- Moving a library rewrites only media whose paths change.
-- Import from Stash: a wizard for scenes, images, galleries, groups, performers, studios and
-  tag parents, with explicit version confirmation, images inside archives and guarded
-  transactions, fast also for large exports.
-- Organize: review inbox, selective parser apply, image sets, publication groups, tag
-  hierarchy, a duplicate hub, performer and studio views and a paged scene wall.
-- Player: A–B loops, playback preferences per video, seek previews from memory and times on
-  contact sheets. A compact bar with symbol groups for loop, bookmark and scene marking, one
-  symbol for audio and subtitle tracks, grouped jump marks and a star rating.
-- Sidebar: library entries in foldable groups with icons, scrolling together with the cards.
-  The review inbox appears once reviewing is in use (setting: automatic, always, never), audio
-  only with audio media. Favorites and Watch later are fixed rows of the collection card; tags
-  and tag categories share one card with a list/categories switch and visible sorting.
-- Boss key: system-wide by default, also with Esc; the program in front still receives the
-  key. Hidden windows return with a separate shortcut.
-- Portable storage with safe switching between portable and profile mode. Libraries taken over
-  before their location was recorded find their thumbnails again after a move.
-- Folder synchronization, media folder tabs and undo of immediate edits per field.
-- Thumbnail filter: the list appears at once and missing or damaged thumbnail files join it from
-  a check in the background; audio without a picture no longer counts as missing a thumbnail.
-- Lists to work through: what an edit moves out of the "without thumbnail" or "unrated" filter
-  stays visible as done until "Update list" or another view. "Create thumbnails for this list"
-  handles all its videos.
-- Folder tree: levels shared by all folders without media of their own are left out; the tooltip
-  of "All folders" names them.
+**A new layout**
+
+- The left bar holds the areas and your collections, and folds to symbols. Tags and common filters open
+  in a panel beside the media; every other filter is still one click away. Active filters stand as
+  chips in the search field.
+- Folders are an area of their own: walk through them with the tree, the path above the media or the
+  subfolders. "Show in folder" in the details goes straight there.
+- Normal work stays in the main window. The scene wall and media jobs are pages, and a double click
+  opens a page per medium with its picture, timeline, marks, history and similar media. Enter and the
+  play button on a tile still play.
+- Performers and studios are galleries, most frequent first, with a page per entry; the table for
+  maintaining entries is one click away.
+- "Organize" is a work area: queues such as without tags and unrated are worked through one item at a
+  time with visible progress, can be narrowed to videos, images or audio, and stand beside the
+  maintenance tools.
+- The start page leads with what is left to do, continue watching, recently added and recently tagged,
+  instead of a banner and a notice at start.
+- The details appear only while something is selected. A bar offers tag mode, collections and more for
+  several items, and says when some are out of view.
+- Interface size from 85 to 160 % (settings, Ctrl+Plus, Ctrl+Minus, Ctrl+0), a calmer look with the
+  accent only on the main action and the current choice, and one type scale throughout.
+
+**Tagging**
+
+- Tag mode (T): tag with one hand using 1–9 and Q W E R, move on with the arrow keys.
+- Suggestions say why they appear, compare against how common a tag is, send performers and studios to
+  their categories and fall behind when ignored. Applied tags come first, and only their × removes them.
+
+**New**
+
+- Import from Stash: a wizard for scenes, images, galleries, groups, performers, studios and tag parents,
+  with images inside archives, fast also for large exports.
+- Organize: review inbox, selective parser apply, image sets, publication groups, tag hierarchy and a
+  duplicate hub.
+- Player: A–B loops, playback preferences per video, seek previews from memory and times on contact
+  sheets; a compact bar with loop, bookmark and scene marking, grouped jump marks and a star rating.
+- Portable storage with safe switching between portable and profile mode.
+- Folder synchronization and undo of immediate edits per field.
+
+**Better**
+
+- Lists to work through: what an edit moves out of a queue stays visible as done until "Update list" or
+  another view. "Create thumbnails for this list" handles all its videos.
+- The thumbnail filter answers at once. The check behind it skips images, which need no thumbnail, and
+  no longer decodes common formats, so it stays quick in large libraries; a file cut off further on
+  counts as readable.
+- Boss key: system-wide by default, also with Esc; the program in front still receives the key. Hidden
+  windows return with a separate shortcut.
+- Moving a library rewrites only media whose paths change, and libraries taken over before their location
+  was recorded find their thumbnails again.
+
+Compatibility and distribution:
+
+- Catalog schema 26. Libraries from 0.5.0 (schema 17) convert on opening; older ones must first be opened
+  with 0.5.0.
+- The ZIP includes the .NET runtime, mpv, FFmpeg, ffprobe and third-party notices. There is no installer
+  or code signature yet; Windows SmartScreen may ask for confirmation.
+- Translations are AI-assisted and have not received native-speaker review.
 
 ## 0.5.0
 
