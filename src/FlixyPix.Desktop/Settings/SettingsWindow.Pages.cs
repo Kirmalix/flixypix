@@ -251,6 +251,7 @@ internal sealed partial class SettingsWindow
  private static string HomeRowHint(HomeRowKind kind) => kind switch
  {
   HomeRowKind.ContinueWatching => T("Videos you started, most recently watched first."),
+  HomeRowKind.RecentlyTagged => T("The items you tagged last."),
   HomeRowKind.ForYou => T("Unwatched items with tags from videos you watched recently; if there is no viewing history, highly rated items."),
   HomeRowKind.RecentlyAdded => T("The latest imports."),
   HomeRowKind.WatchLater => T("Your watch list."),

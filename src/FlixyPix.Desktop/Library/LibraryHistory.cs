@@ -34,6 +34,13 @@ public partial class MainWindow
         undo.Click += (_, _) => ChangeO(add: false);
         EditOCounter.ContextMenu = new ContextMenu { Items = { undo } };
         if (item == null) { HistoryLabel.Text = ""; return; }
+        HistoryLabel.Text = string.Join("\n", HistoryLines(item, settings));
+        ClearHistoryButton.IsEnabled = _repository.GetHistory(item.Id, 1).Count > 0;
+    }
+
+    /// <summary>Counters and the latest entries of a medium, line by line.</summary>
+    private List<string> HistoryLines(MediaItem item, HistoryPreferences settings)
+    {
         var entries = _repository.GetHistory(item.Id, 6);
         var lines = new List<string>();
         var watched = item.WatchCount ?? item.PlayCount ?? 0;
@@ -47,8 +54,7 @@ public partial class MainWindow
         }
         if (entries.Count > 5) lines.Add("…");
         if (!settings.Enabled) lines.Add(T("The history is switched off (Settings › History)."));
-        HistoryLabel.Text = string.Join("\n", lines);
-        ClearHistoryButton.IsEnabled = entries.Count > 0;
+        return lines;
     }
 
     private void OCounterClicked(object sender, RoutedEventArgs e) => ChangeO(add: true);

@@ -14,8 +14,9 @@ public partial class MainWindow
   static void Require(bool check, string message) { if (!check) throw new InvalidOperationException(message); }
   var scene = _repository.UpsertScene(new Scene { MediaId = videoId, Title = "Wand-Szene", StartSeconds = .1, EndSeconds = .6 });
   var bookmark = _repository.UpsertBookmark(new Bookmark { MediaId = videoId, Title = "Wand-Marke", PositionSeconds = .3 });
-  var window = ShowSceneWall();
-  Require(ReferenceEquals(ShowSceneWall(), window), "A second call opened another scene wall window.");
+  var window = ShowSceneWall(); await _lastRefresh;
+  Require(ReferenceEquals(ShowSceneWall(), window) && window.IsVisible && _view == "wall" && !MediaList.IsVisible, "The scene wall is not a page of the main window.");
+  Require(Logicals<System.Windows.Controls.RadioButton>(NavItems).Single(n => (string)n.Tag == "wall").IsChecked == true, "The bar did not mark the scene wall.");
   var pagedIds = new List<Guid>();
   try
   {
@@ -60,7 +61,7 @@ public partial class MainWindow
   }
   finally
   {
-   window.Close();
+   ApplyViewState(new ViewState()); await _lastRefresh;
    foreach (var id in pagedIds) _repository.DeleteBookmark(id);
    _repository.DeleteScene(scene.Id); _repository.DeleteBookmark(bookmark.Id);
   }

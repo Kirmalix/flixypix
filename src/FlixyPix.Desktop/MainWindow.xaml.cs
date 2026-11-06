@@ -116,7 +116,7 @@ public partial class MainWindow : Window
             _closing = true;
             _positionTimer.Stop(); _searchTimer.Stop(); _viewSaveTimer.Stop(); _draftTimer.Stop();
             _backupTimer.Stop(); StopFolderSync();
-            _searchIndexStop.Cancel(); _homeArtworkCancellation.Cancel(); _wallRun?.Cancel(); StopHoverPreview();
+            _searchIndexStop.Cancel(); _wallRun?.Cancel(); StopHoverPreview();
             AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;
             await ReleaseFailedStartAsync();
             throw;
@@ -179,7 +179,9 @@ public partial class MainWindow : Window
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
         var state = request.State.ToViewState();
-        if (_filter.HasThumbnail is null && !_filter.UnratedOnly || IsPublicationGroupView || IsImageSetView || IsRoleView) HideWorklistActions();
+        if (_filter.HasThumbnail is null && !_filter.UnratedOnly && !_filter.UntaggedOnly || IsPublicationGroupView || IsImageSetView || IsRoleView || IsPageView) HideWorklistActions();
+        if (IsPageView) { HidePublicationGroups(); HideImageSets(); await RefreshPageAsync(request, token); return; }
+        HidePages();
         if (IsPublicationGroupView) { HideImageSets(); RefreshPublicationGroups(); return; }
         HidePublicationGroups();
         if (IsImageSetView) { RefreshImageSets(); return; }
@@ -284,20 +286,26 @@ public partial class MainWindow : Window
     }
 
     private MediaItem? _detailsShown;
-    /// <summary>Paging or filtering can take selected media out of sight; tag changes still reach them, so the bar says so.</summary>
+    /// <summary>Several media, or some that paging or filtering took out of sight: tag changes reach all of them, so the bar says so and offers what works on all.</summary>
     private void UpdateSelectionBar()
     {
         var count = SelectedMedia.Count; var hidden = _offWindowSelection.Count;
-        SelectionBar.Visibility = count > 1 || hidden > 0 ? Visibility.Visible : Visibility.Collapsed;
+        SelectionBar.Visibility = !IsPageView && (count > 1 || hidden > 0) ? Visibility.Visible : Visibility.Collapsed;
+        // Notices keep clear of the bar and its actions.
+        _toasts.Margin = new Thickness(0, 0, 360, SelectionBar.Visibility == Visibility.Visible ? 92 : 40);
         SelectionBarText.Text = Tn(count, "1 item selected", "{0:N0} items selected") + (hidden > 0 ? T(" · {0:N0} not in this view", hidden) : "");
     }
     private void ClearSelectionClicked(object sender, RoutedEventArgs e)
     {
         _offWindowSelection = []; MediaList.SelectedItems.Clear(); ShowDetails(); MediaList.Focus();
     }
+    private void SelectionTagModeClicked(object sender, RoutedEventArgs e) => SetTagWork(true);
+    private void SelectionCollectionClicked(object sender, RoutedEventArgs e) => MenuBelow(sender, CollectionChoices(SelectedMedia));
+    private void SelectionMoreClicked(object sender, RoutedEventArgs e) => MenuBelow(sender, MediaMenu(SelectedMedia));
     private void ShowDetails(bool includePreviews = true)
     {
         UpdateSelectionBar();
+        UpdateDetailsNeed();
         RememberDetailsDraft();
         var items = SelectedMedia;
         var item = Selected;
@@ -402,7 +410,7 @@ public partial class MainWindow : Window
     private void SearchKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter || _repository == null) return;
-        if (IsRoleView || IsImageSetView || IsPublicationGroupView) return;
+        if (IsRoleView || IsPageView || IsImageSetView || IsPublicationGroupView) return;
         var parsed = SearchShorthand.Parse(SearchBox.Text);
         if (!parsed.Recognized) return;
         e.Handled = true;
@@ -424,7 +432,6 @@ public partial class MainWindow : Window
     }
     private async void Navigate(object sender, RoutedEventArgs e)
     {
-        if ((string)((FrameworkElement)sender).Tag == "wall") { UpdateNavigation(); ShowSceneWall(); return; }
         await NavigateAreaAsync((string)((FrameworkElement)sender).Tag);
     }
     private void SaveDetails(object sender, RoutedEventArgs e)
@@ -464,7 +471,7 @@ public partial class MainWindow : Window
     }
 
     private async void PlaySelected(object sender, RoutedEventArgs e) { if (Selected is { } item) { StopSlideshow(); await Play(item); } }
-    private async void MediaDoubleClick(object sender, MouseButtonEventArgs e) { if (Selected is { } item) { StopSlideshow(); await Play(item); } }
+    private void MediaDoubleClick(object sender, MouseButtonEventArgs e) { if (Selected is { } item) OpenDetail(item); }
     private void Settings(object sender, RoutedEventArgs e) => OpenSettings();
     /// <summary>Opens the settings, on <paramref name="page"/> (German rubric name) if given.</summary>
     private void OpenSettings(string? page = null)
@@ -580,7 +587,7 @@ public partial class MainWindow : Window
         else if (Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox)
         {
             var digit = e.Key is >= Key.D0 and <= Key.D5 ? e.Key - Key.D0 : e.Key is >= Key.NumPad0 and <= Key.NumPad5 ? e.Key - Key.NumPad0 : -1;
-            if (digit >= 0 && Keyboard.Modifiers == ModifierKeys.None && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RateSelection(digit); return; }
+            if (digit >= 0 && Keyboard.Modifiers == ModifierKeys.None && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RateSelection(digit); if (digit > 0 && _filter.UnratedOnly && MediaList.SelectedIndex >= 0) await SelectIndexAsync(_windowStart + MediaList.SelectedIndex + 1); return; }
             if (e.Key == Key.F2 && MediaList.IsKeyboardFocusWithin && Selected != null && SelectedMedia.Count == 1) { e.Handled = true; EditTitle.Focus(); EditTitle.SelectAll(); return; }
             if (Keyboard.Modifiers == ModifierKeys.None && MediaList.IsKeyboardFocusWithin)
             {

@@ -13,20 +13,6 @@ namespace FlixyPix.Desktop;
 
 public partial class MainWindow
 {
- /// <summary>Opens the scene wall; a click on a tile plays its video from the mark.</summary>
- private SceneWallWindow? _sceneWall;
- internal SceneWallWindow ShowSceneWall()
- {
-  // A second click returns to the open wall instead of stacking windows.
-  if (_sceneWall is { } open) { if (open.WindowState == WindowState.Minimized) open.WindowState = WindowState.Normal; open.Activate(); return open; }
-  var window = new SceneWallWindow(this, _repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null, ClipFolder, (item, seconds) => Play(item, seconds));
-  // The media menu of the tile's video, led by playing from the mark.
-  window.MenuRequested = tile => OpenMediaMenu(tile.Mark.Media, MediaMenuPlace.Wall, [MenuSpec.Command(T("Play from here"), () => _ = window.Open(tile), "\uE768")]);
-  _sceneWall = window; window.Closed += (_, _) => _sceneWall = null;
-  window.Show();
-  return window;
- }
-
  /// <summary>Place of a mark clip in the clip cache: media id first, so it goes with its video.</summary>
  internal static string MarkClipPath(string folder, WallMark mark, double seconds, int width) =>
   Path.Combine(folder, mark.Media.Id.ToString("N") + "-at" + Math.Round(mark.StartSeconds * 1000).ToString(System.Globalization.CultureInfo.InvariantCulture)
@@ -62,7 +48,7 @@ internal sealed class WallTile(WallMark mark) : INotifyPropertyChanged
 /// <summary>Scene wall (feature plan P3): every scene and bookmark of the library's videos as a tile, filtered by text,
 /// tags (performers and studios included) and kind. Hovering a tile plays a short silent clip from its place, made once
 /// into the clip cache; a click plays the video from there.</summary>
-internal sealed class SceneWallWindow : Window
+internal sealed class SceneWallPage : UserControl
 {
  /// <summary>Length of the clip of a mark; a shorter scene plays whole.</summary>
  internal const double ClipSeconds = 5;
@@ -94,15 +80,14 @@ internal sealed class SceneWallWindow : Window
  internal Task Loading { get; private set; } = Task.CompletedTask;
  internal Task Hovering { get; private set; } = Task.CompletedTask;
 
- internal SceneWallWindow(Window owner, CatalogRepository repository, MediaToolService? tools, string clipFolder, Func<MediaItem, double, Task> play)
+ internal SceneWallPage(CatalogRepository repository, MediaToolService? tools, string clipFolder, Func<MediaItem, double, Task> play)
  {
-  Owner = owner; this.repository = repository; this.tools = tools; this.clipFolder = clipFolder; this.play = play;
-  Title = T("Scene wall · FlixyPix"); Width = 1180; Height = 780; MinWidth = 700; MinHeight = 480; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+  this.repository = repository; this.tools = tools; this.clipFolder = clipFolder; this.play = play;
   AutomationProperties.SetName(text, T("Search scenes and bookmarks")); AutomationProperties.SetName(tags, T("Tags, performers or studios"));
   text.ToolTip = T("Searches the titles and descriptions of scenes, bookmarks and videos.");
   tags.ToolTip = T("Every tag must be on the scene or its video. Separate several with commas.");
   var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) };
-  bar.Children.Add(Labeled(T("Search"), text)); bar.Children.Add(Labeled(T("Tags"), tags));
+  bar.Children.Add(Labeled(T("Tags"), tags));
   var segments = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Bottom };
   var group = "k" + Guid.NewGuid().ToString("N");
   for (var i = 0; i < kinds.Length; i++)
@@ -147,10 +132,10 @@ internal sealed class SceneWallWindow : Window
   nextPage.Click += (_, _) => { if ((long)pageOffset + PageSize < totalCount) { pageOffset += PageSize; Reload(resetPage: false); } };
   var body = new DockPanel(); DockPanel.SetDock(bar, Dock.Top); body.Children.Add(bar);
   DockPanel.SetDock(pager, Dock.Bottom); body.Children.Add(pager); body.Children.Add(wall);
-  frame = new WindowFrame(T("Scene wall"), T("All scenes and bookmarks of the library. Point at a tile to see a short clip from its place; a click plays the video from there."), body, "", scroll: false);
-  frame.Add(T("Close"), Close, primary: true, cancel: true);
+  frame = new WindowFrame(T("Scene wall"), T("All scenes and bookmarks of the library. Point at a tile to see a short clip from its place; a click plays the video from there."), body, "", scroll: false, embedded: true);
   Content = frame;
-  Closing += (_, _) => { loading?.Cancel(); autoRun?.Cancel(); HoverOver(null); foreach (var tile in playing) tile.ShowClip(null); playing.Clear(); };
+  // Away from the page nothing keeps playing or loading.
+  IsVisibleChanged += (_, _) => { if (IsVisible) Reload(resetPage: false); else { loading?.Cancel(); autoRun?.Cancel(); HoverOver(null); foreach (var tile in playing) tile.ShowClip(null); playing.Clear(); } };
   Loaded += (_, _) => Reload();
  }
 
@@ -195,6 +180,8 @@ internal sealed class SceneWallWindow : Window
  }
 
  /// <summary>For tests: the filter as a user would type it.</summary>
+ /// <summary>The search field of the main window searches the wall while it shows.</summary>
+ internal void UseSearch(string search) { if (text.Text != search) text.Text = search; }
  internal void Filter(string search, string tagList, WallMarkKind? kind)
  {
   text.Text = search; tags.Text = tagList; kinds[kind switch { WallMarkKind.Scene => 1, WallMarkKind.Bookmark => 2, _ => 0 }].IsChecked = true;

@@ -954,20 +954,10 @@
       "digest": "e3fcdafe472285332b18cb2206a82fadf22e62d4efe067ec57588c8e2da59b1d",
       "previous_digest": "22392c93f7bf01b88518af59b3bc83cb536dcbd71fbd0b6eb4d306935f5a2809"
     },
-    "On the watch list": {
-      "status": "corrected",
-      "digest": "40ad7ba9329af387c8a0e4276445d4d7a228527818dfe7fc330d77b6d3d4cc64",
-      "previous_digest": "d365fa7b7ff98f9e78d309a5fc875ff1f38c9d41302bc6e7c181cae3b28bc8dd"
-    },
     "The file cannot be accessed. Is EazyFlixPix still open?": {
       "status": "corrected",
       "digest": "1f837659f2f4ed08b730941d131625752ed77b0368dc5f6869b24f652fc60df2",
       "previous_digest": "19cd11cf6fa2c889bd1910e349cf29dfee112acc3c0b914afa581fec41c010b9"
-    },
-    "Added to the watch list": {
-      "status": "corrected",
-      "digest": "b259d122bf97163076ba9bbcbc25900386ae769eb0c298bbc0b04761c77d4aa4",
-      "previous_digest": "1c109f80950e3b196e8232e1bedb39690c5cb599a6b5dc430386e368131ceecf"
     },
     "Keep": {
       "status": "unchanged",
@@ -5608,11 +5598,6 @@
       "digest": "b4f368d05b5d603e69c8dc8662b29d36e7513bdf216e75ad1f41162ce171804b",
       "previous_digest": "c03f9c38e91a9b39e02f5bab1d80b73cf501ce7ad261e3f569f3a955159ab85a"
     },
-    "Media jobs · FlixyPix": {
-      "status": "corrected",
-      "digest": "dbb73e647cd326b3e89c750be0772d571a1ec580ce344932d3749e027b9c2cce",
-      "previous_digest": "daa6d376e0942ad989ad9fd1511f2270b7e16e053cd92890f37fd03fbf80cb5a"
-    },
     "Move media file to a new location": {
       "status": "corrected",
       "digest": "0ffbfce14c4841d0d1ff62b6e63554b26d1aa54e5dc3e4bcec4b32385963d10a",
@@ -6603,11 +6588,6 @@
     "Organize": {
       "status": "unchanged",
       "digest": "92536f665edf09bfb2131f2154ed2d841443ff558e1198912e4c2c1d6a27d540"
-    },
-    "Organize: searches, rules, vocabulary, duplicates": {
-      "status": "corrected",
-      "digest": "1b055aece1cf702d5d7e6c50808e36b3194281e291e32069efd9585e482f936c",
-      "previous_digest": "c1f4344a3780748cd3e2b91be44dc9d199e062c530b223580a9806475a1c791b"
     },
     "Folder": {
       "status": "unchanged",
@@ -9219,11 +9199,6 @@
       "status": "unchanged",
       "digest": "fc372ed04ab85d75be3e45b716d5a5bb2ea40d9aee370ab45d32a4f168379cb0"
     },
-    "Removed from the watch list": {
-      "status": "corrected",
-      "digest": "f3fb9477f4d1e544d6766e335bc50463cc48167c9413427b43504063a14a5291",
-      "previous_digest": "a6eeb747c1ce44d4abca355cf3875a663b95781efb2b1cb33f3e6aaacd18411e"
-    },
     "Forward": {
       "status": "unchanged",
       "digest": "05a3c0e5e7e01cc9cae778d3f21ef6f42c70c4d9189eb5c71a74dfec46f19ec2"
@@ -9700,11 +9675,6 @@
     "Continue watching": {
       "status": "unchanged",
       "digest": "e0f67d13fa26996dbf0d9088f8a2c89c2ae953eeb945fef40605949f38aa019f"
-    },
-    "Continue watching: {0} (at {1})": {
-      "status": "corrected",
-      "digest": "3be80aa9a102d3711b2b1279b74d3d0e116b874b7c70b0a420561a5dbe85324d",
-      "previous_digest": "b162ceab2f1b04ee2d86ff30b5f4ccf1963c0f8738d8aa53e0730f440c167259"
     },
     "Which source imported earlier should be updated? Local edits are kept; differences are listed in the report afterwards. Media files are not opened.": {
       "status": "corrected",
@@ -11828,10 +11798,6 @@
     "Scene wall": {
       "status": "unchanged",
       "digest": "792358fb8c8383abdc3a544e24555dc32798afceafb7c5b46de8b2900259d7eb"
-    },
-    "Scene wall · FlixyPix": {
-      "status": "unchanged",
-      "digest": "aa8511176467635fcca23c895f080f75545c978943896108310b036fc90079cd"
     },
     "Scene wall: all scenes and bookmarks": {
       "status": "unchanged",
@@ -14750,6 +14716,81 @@
       "status": "corrected",
       "digest": "5a691186f3504a2e4a2121a73859af6e9b5b656240014a19b504f8b90bbc1689",
       "previous_digest": "b72201510f4ae1488140cc760d5a0aada7ca2a84c92d711591466736a0f67b62"
+    },
+    "All tools": {
+      "status": "corrected",
+      "digest": "798cd4c33085157f4c6d923dce3170bc435fe5ff55bf1d0553b3e8e9b9a46a06",
+      "previous_digest": "998acef280d5dcff4e1e3a295bfc4d776c9c0a611a4957305819d57f5ae0f24d"
+    },
+    "Compare pairs and decide what stays.": {
+      "status": "corrected",
+      "digest": "0e0a99772a96cad7ad08dc412c73105e9208a999d9e5fb83b772a653a3d0e402",
+      "previous_digest": "88f44ef244226535cbc803cea6a23a5235900dc493fe103007be91e57f6c1bf6"
+    },
+    "Confirm images that belong together as a set.": {
+      "status": "corrected",
+      "digest": "cd25d5dc1028df9a5a81dfcd7d9bc4b96afc204aca324385cb0e7d7354bc7e49",
+      "previous_digest": "524157351a6e1a9836f19f7ef13ba67e443fb0ebf9a494e92c20c263f1a4611b"
+    },
+    "Create the missing thumbnails.": {
+      "status": "corrected",
+      "digest": "f08cbaa48e8ec933597660a3954b6403aa0b1e2c6c571fb1f479b3a6461b27b0",
+      "previous_digest": "a2fafbd3350da711dad8098d03eff80ac91e65b6c66129864b70bc88e03d3046"
+    },
+    "New items to look through and approve.": {
+      "status": "corrected",
+      "digest": "dea8715a53991365ed3a95d59a6808528d7b23dc6bfdd55cd34418c8bf12dfbc",
+      "previous_digest": "efa36ea9e93c96c0d7baae4ef41bcf18a61d69a9d9921e95c63a65459083b81f"
+    },
+    "Queues": {
+      "status": "corrected",
+      "digest": "6d5f69627bbc336d4279e6fe468155b834ba4c3219bed3111ac92ab19dfd4844",
+      "previous_digest": "690109f45eb19cc4f4d391d824d3a0f68c4c4474dbf7b1ad1078ef9d8f9dc3b7"
+    },
+    "Rate with 1–5; the next item follows by itself.": {
+      "status": "corrected",
+      "digest": "b6e9ba495ea6ad030283b68224ebf8714ad2569b0e9c7466ec8faee35a376eff",
+      "previous_digest": "72276d071d44b873e07abb5bc8769adffb0c6b6af1acc749a3fcaec0e32add65"
+    },
+    "Recently tagged": {
+      "status": "corrected",
+      "digest": "2c96d0a85a7b6a49f893a1ed821947a56309f326a1296580f60bdabfd1e408c2",
+      "previous_digest": "673ac997625f17c27a5b5f44829720d8ae785c0f00214c02e7eda75e6a2b3d5b"
+    },
+    "SIMILAR ITEMS": {
+      "status": "corrected",
+      "digest": "78721799b4a7969ed5afb0c6936157781cc59ba1ec1397c4134d6803eefe9fcf",
+      "previous_digest": "b286f0e710f659de9e2e237d4c67da3ad50175db450302cb61e091660005c0ab"
+    },
+    "Tag them one by one in tag mode.": {
+      "status": "corrected",
+      "digest": "0b2a5a7612186cf60749beaef7c3734334c9ce3c7b2cfe3bbe6766339c81fd03",
+      "previous_digest": "8793fecd92c204967a084979c46493b0996cb127bf146864649e6a4a2c0d8150"
+    },
+    "The items you tagged last.": {
+      "status": "corrected",
+      "digest": "65f48e2e3f1220858386a2a013d6d32f2531724083f489b9cf5c0d923a6faf84",
+      "previous_digest": "a87d143375244263fea75c3f46c50933d27eb00cac53835be491cb66ccc1caae"
+    },
+    "To do:": {
+      "status": "corrected",
+      "digest": "24073f89a84814ca2f27431fcbe98f989170a0db5e757619d542d000f57110ef",
+      "previous_digest": "cc19ecf9837d44905be91feca78eb1b9e032ece1aba829fb7daa15991e0979a1"
+    },
+    "Without tags": {
+      "status": "corrected",
+      "digest": "46535e3dd3fe25091cb6efb2d6b1eea12a5af256dc7a345057f5e5f1e425ff42",
+      "previous_digest": "28e34d725005c07a5a2364e40b5d0e9d7a6776b227ef3d4065f91db3f6b5074a"
+    },
+    "WORK": {
+      "status": "corrected",
+      "digest": "8f69ed733ec710b4f5224eaffc98c1453238e6fc27dc5bbdfe559aa0e000d10f",
+      "previous_digest": "2f07c2869913d2bb824a0de64628e6f1897772f74cefddfd4bc2414c92919d9c"
+    },
+    "{0:N0} items to work through": {
+      "status": "corrected",
+      "digest": "210ea7def722369a277a4b959259884906084666cb901802996b69835328482e",
+      "previous_digest": "d9b25197339f56ddaec6a913d471eafd1f5ee0ddfba3e60c53ed0f0c9c9ad268"
     }
   }
 }

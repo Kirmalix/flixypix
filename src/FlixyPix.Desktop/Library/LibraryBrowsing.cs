@@ -20,7 +20,7 @@ public partial class MainWindow
     private ItemsPanelTemplate? _tilePanel;
     private IReadOnlyList<MediaItem> _currentImages = [];
     private readonly bool _persistPreferences;
-    private MediaQueueWindow? _queueWindow;
+    private MediaQueuePage? _queueWindow;
     private bool _initializingBrowsing;
     private sealed record CategoryOption(string? Value, long? Count = null) { public string Label => (Value ?? T("All categories")) + CountText(Count); }
     /// <summary>A media count after a name in the sidebar; empty when counts are off.</summary>
@@ -108,7 +108,7 @@ public partial class MainWindow
             SidebarWidth = PaneWidths().Sidebar,
             BrowsePanelWidth = BrowsePanelColumn.ActualWidth > 0 ? (int)Math.Round(BrowsePanelColumn.Width.Value) : _settings.BrowsePanelWidth,
             DetailsWidth = PaneWidths().Details,
-            DetailsCollapsed = _detailsAutoFolded || _view == "home" ? _settings.DetailsCollapsed : !DetailsExpanded
+            DetailsCollapsed = _detailsAutoFolded || DetailsNotNeeded ? _settings.DetailsCollapsed : !DetailsExpanded
         };
         if (_persistPreferences) (_settings with { DataDirectory = _pendingDataDirectory ?? _settings.DataDirectory }).Save();
     }
@@ -275,15 +275,4 @@ public partial class MainWindow
         return favorite;
     }
     private void QueueClicked(object sender, RoutedEventArgs e) => OpenQueue();
-    private void OpenQueue()
-    {
-        if (_queueWindow != null) { _queueWindow.Activate(); return; }
-        try
-        {
-            var inputs = _playlist?.MediaIds.Select(_repository.GetMedia).OfType<MediaItem>().Select(i => i.Path).ToList() ?? [];
-            _queueWindow = new MediaQueueWindow(this, _settings.DataDirectory, _tools, Selected?.Path, inputs, ApplyScenePreviewResults);
-            _queueWindow.Closed += (_, _) => _queueWindow = null; _queueWindow.Show();
-        }
-        catch (Exception ex) { Message.Show(this, ex.Message, T("Media jobs"), MessageBoxButton.OK, MessageBoxImage.Warning); }
-    }
 }

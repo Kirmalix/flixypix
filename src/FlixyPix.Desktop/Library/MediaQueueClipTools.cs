@@ -14,7 +14,7 @@ internal enum CombineRange { Whole, Fixed, Random }
 /// the random start uses a seed so the queued job keeps the ranges that were planned.</summary>
 internal sealed record CombinePlan(CombineRange Range = CombineRange.Whole, double StartSeconds = 0, double LengthSeconds = 10, bool MuteAudio = false, double CrossfadeSeconds = 0, int Seed = 0);
 
-internal sealed partial class MediaQueueWindow
+internal sealed partial class MediaQueuePage
 {
  /// <summary>Builds the combine job: whole, matching files are joined losslessly; ranges, crossfade or differing files
  /// use the normalized path with re-encoding.</summary>
@@ -69,7 +69,7 @@ internal sealed partial class MediaQueueWindow
   _status.Text = job.Kind == MediaJobKind.Combine ? T("The files match and are joined without converting.") : T("The sections are re-encoded uniformly (MP4, H.264).");
   var picker = new SaveFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("New output file"), Filter = T("MP4|*.mp4"), FileName = Path.GetFileNameWithoutExtension(job.Input) + "-combine" };
   if (job.Kind == MediaJobKind.Combine) { var extension = Path.GetExtension(job.Input); picker.Filter = extension.TrimStart('.').ToUpperInvariant() + "|*" + extension; }
-  if (picker.ShowDialog(this) != true) return;
+  if (picker.ShowDialog(_owner) != true) return;
   _queue.Enqueue(job with { Output = picker.FileName }); _status.Text = T("Job saved. Click Start to run queued jobs one at a time.");
  }
 
@@ -80,7 +80,7 @@ internal sealed partial class MediaQueueWindow
   var inputs = InputsDialog(_collectionInputs, 1, T("Random clips · videos"), T("Each video becomes a clip with a random start. Shorter videos are used in full."), options,
    () => MainWindow.TrySeconds(length.Text, out var seconds) && seconds > 0 ? null : T("The length must be greater than 0."));
   if (inputs == null) return;
-  var folder = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Destination folder for the clips") }; if (folder.ShowDialog(this) != true) return;
+  var folder = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Destination folder for the clips") }; if (folder.ShowDialog(_owner) != true) return;
   _ = MainWindow.TrySeconds(length.Text, out var clipLength);
   _status.Text = T("Checking videos …");
   var jobs = await PlanRandomClipsAsync(inputs, clipLength, mute.IsChecked == true, folder.FolderName, Random.Shared.Next());
@@ -133,7 +133,7 @@ internal sealed partial class MediaQueueWindow
   var panel = new DockPanel { Margin = new Thickness(20) };
   var text = new TextBlock { Text = explanation, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) }; DockPanel.SetDock(text, Dock.Top); panel.Children.Add(text);
   var actions = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
-  var dialog = new Window { Owner = this, ShowInTaskbar = false, Title = title, Width = 780, Height = options == null ? 460 : 560, Content = panel, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+  var dialog = new Window { Owner = _owner, ShowInTaskbar = false, Title = title, Width = 780, Height = options == null ? 460 : 560, Content = panel, WindowStartupLocation = WindowStartupLocation.CenterOwner };
   AddButton(actions, T("Add files …"), () => { var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Multiselect = true, Title = T("Add media files") }; if (picker.ShowDialog(dialog) == true) foreach (var path in picker.FileNames) paths.Add(path); });
   AddButton(actions, "↑", () => { var index = list.SelectedIndex; if (index > 0) { paths.Move(index, index - 1); list.SelectedIndex = index - 1; } });
   AddButton(actions, "↓", () => { var index = list.SelectedIndex; if (index >= 0 && index < paths.Count - 1) { paths.Move(index, index + 1); list.SelectedIndex = index + 1; } });

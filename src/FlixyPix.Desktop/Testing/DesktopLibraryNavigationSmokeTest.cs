@@ -15,7 +15,7 @@ public partial class MainWindow
         var before = _repository.GetPreferences(); var state = CaptureViewState();
         try
         {
-            Check(_sidebarSections.Count == 3, "Sidebar sections were not discovered.");
+            Check(_sidebarSections.Count == 4, "Sidebar sections were not discovered.");
             _sidebarSections["collections"].IsExpanded = false; Check(_repository.GetPreferences().Sidebar.CollapsedSections.Contains("collections"), "Collapsed section was not saved.");
             _sidebarSections["collections"].IsExpanded = true;
             var empty = Path.Combine(directory, "empty-root");

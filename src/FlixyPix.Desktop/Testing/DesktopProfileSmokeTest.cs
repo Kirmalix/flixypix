@@ -260,6 +260,23 @@ public partial class MainWindow
             _repository.UpdateCategoryTags([medium.Id], "Darsteller", [], ["Jane Doe"]);
             _repository.UpdateCategoryTags([medium.Id], "Studios", [], ["Neues Studio"]);
         }
+        // The gallery shows entries with media, most frequent first, and each has a page of its own.
+        _repository.UpdateCategoryTags([medium.Id], "Darsteller", ["Jane Doe"], []);
+        ApplyViewState(new ViewState { View = "gallery-performers" }); await _lastRefresh; await Idle();
+        var galleryTiles = CurrentGallery?.Tiles ?? [];
+        Require(CurrentGallery?.IsVisible == true && !MediaList.IsVisible && !DetailsPane.IsVisible && galleryTiles.Any(t => t.Name == "Jane Doe") && galleryTiles.All(t => t.Entry.MediaCount > 0 && t.Entry.Role == TagRole.Performer)
+         && galleryTiles.Zip(galleryTiles.Skip(1)).All(p => p.First.Entry.MediaCount >= p.Second.Entry.MediaCount), "The performer gallery is wrong.");
+        Require(Logicals<System.Windows.Controls.RadioButton>(NavItems).Single(n => (string)n.Tag == "gallery-performers").IsChecked == true && GalleryDirectoryButton.IsVisible && !ViewButton.IsVisible, "The gallery page is not marked or shows the wrong tools.");
+        await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-gallery.png"));
+        OpenEntity(galleryTiles.First(t => t.Name == "Jane Doe").Entry); await _lastRefresh; await Idle();
+        Require(!CurrentGalleryVisible && MediaList.IsVisible && EntityRole == TagRole.Performer && EntityPortrait.IsVisible && EntityEditButton.IsVisible && ViewTitle.Text == "Jane Doe" && MediaList.Items.Cast<MediaCard>().Any(c => c.Item.Id == medium.Id), "The page of a performer is wrong.");
+        await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-entity.png"));
+        await WalkHistoryAsync(-1); await _lastRefresh; await Idle();
+        Require(_view == "gallery-performers" && CurrentGallery?.IsVisible == true, "Back did not return to the gallery.");
+        ApplyViewState(new ViewState { View = "gallery-studios" }); await _lastRefresh; await Idle();
+        Require(CurrentGallery?.IsVisible == true && (CurrentGallery?.Tiles ?? []).All(t => t.Entry.Role == TagRole.Studio), "The studio gallery is wrong.");
+        await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-gallery-studios.png"));
+        _repository.UpdateCategoryTags([medium.Id], "Darsteller", [], ["Jane Doe"]);
         ApplyViewState(new ViewState { View = "performers", SearchText = "Jane", Directory = new(new("Darsteller", "Jane Doe"), 0, 120) });
         await _lastRefresh; await Idle(); await _roleBrowser!.ProfileReady;
         Require(_roleBrowser.IsVisible && !MediaList.IsVisible && !DetailsPane.IsVisible && _roleBrowser.Current?.Tag == "Jane Doe", "Main-window performer view not shown.");

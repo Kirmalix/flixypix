@@ -4,17 +4,19 @@ using System.Text.Json;
 namespace FlixyPix.Core;
 
 /// <summary>Rows of the start page; the original offered the first four (original "homevideosections").</summary>
-public enum HomeRowKind { ContinueWatching, RecentlyAdded, WatchLater, FavoritePerformers, ForYou, Popular, Rediscover, Studios, MoreWithTag, RandomOfTheDay, RecentlyWatched, MostO }
+public enum HomeRowKind { ContinueWatching, RecentlyAdded, WatchLater, FavoritePerformers, ForYou, Popular, Rediscover, Studios, MoreWithTag, RandomOfTheDay, RecentlyWatched, MostO, RecentlyTagged }
 
 /// <summary>Which rows the start page shows, in this order.</summary>
 public sealed record HomePreferences
 {
     public static readonly HomeRowKind[] DefaultRows =
-        [HomeRowKind.ContinueWatching, HomeRowKind.RecentlyWatched, HomeRowKind.ForYou, HomeRowKind.RecentlyAdded, HomeRowKind.WatchLater, HomeRowKind.FavoritePerformers,
+        [HomeRowKind.ContinueWatching, HomeRowKind.RecentlyAdded, HomeRowKind.RecentlyTagged, HomeRowKind.RecentlyWatched, HomeRowKind.ForYou, HomeRowKind.WatchLater, HomeRowKind.FavoritePerformers,
          HomeRowKind.Popular, HomeRowKind.MostO, HomeRowKind.MoreWithTag, HomeRowKind.Studios, HomeRowKind.Rediscover, HomeRowKind.RandomOfTheDay];
     public List<HomeRowKind> Rows { get; init; } = [.. DefaultRows];
     /// <summary>The app opens on the start page; the restored view stays one step back.</summary>
     public bool StartOnHome { get; init; } = true;
+    /// <summary>The rows were chosen with "recently tagged" on offer; before that it joins by itself.</summary>
+    public bool TaggedRowChosen { get; init; }
     /// <summary>Days that count for "Zuletzt gesehen" (original "recentlywatcheddays").</summary>
     public int RecentDays { get; init; } = 7;
     public const int MaximumRecentDays = 365;
@@ -23,6 +25,7 @@ public sealed record HomePreferences
     {
         HomeRowKind.ContinueWatching => T("Continue watching"),
         HomeRowKind.RecentlyAdded => T("Recently added"),
+        HomeRowKind.RecentlyTagged => T("Recently tagged"),
         HomeRowKind.WatchLater => T("Watch later"),
         HomeRowKind.FavoritePerformers => T("Favorite performers"),
         HomeRowKind.ForYou => T("For you"),
@@ -68,6 +71,36 @@ public sealed partial class CatalogRepository
         }
     }
 
+    private const string RecentlyTaggedKey = "recently-tagged";
+
+    /// <summary>Remembers what was tagged last, newest first, without invalidating the browsing caches.</summary>
+    public void NoteTagged(IEnumerable<Guid> ids)
+    {
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            var before = ChangeStamp();
+            var list = ids.Concat(ReadRecentlyTagged()).Distinct().Take(HomeRowSize).ToList();
+            using (var command = Command("INSERT INTO ui_state(id,document) VALUES($id,$json) ON CONFLICT(id) DO UPDATE SET document=excluded.document", null,
+                ("$id", RecentlyTaggedKey), ("$json", JsonSerializer.Serialize(list, Json))))
+                command.ExecuteNonQuery();
+            CarryCachesAcross(before, []);
+        }
+    }
+
+    private List<Guid> ReadRecentlyTagged()
+    {
+        using var command = Command("SELECT document FROM ui_state WHERE id=$id", null, ("$id", RecentlyTaggedKey));
+        if (command.ExecuteScalar() is not string json) return [];
+        try { return JsonSerializer.Deserialize<List<Guid>>(json, Json) ?? []; }
+        catch (JsonException) { return []; }
+    }
+
+    private List<MediaItem> RecentlyTagged()
+    {
+        lock (gate) { ThrowIfDisposed(); return ReadRecentlyTagged().Select(GetMedia).OfType<MediaItem>().Where(m => m.Tags.Count > 0).ToList(); }
+    }
+
     public HomeFeed BuildHomeFeed(DateTimeOffset now, CancellationToken cancellationToken = default)
     {
         var preferences = GetPreferences();
@@ -77,7 +110,7 @@ public sealed partial class CatalogRepository
         timings["recent"] = clock.Elapsed.TotalMilliseconds;
         var watchedLately = recent.Where(m => m.LastPlayedAt > now.AddDays(-14)).Select(m => m.Id).ToHashSet();
         List<HomeCard> forYou = [];
-        foreach (var kind in preferences.Home.Rows.Distinct())
+        foreach (var kind in (preferences.Home.TaggedRowChosen ? preferences.Home.Rows : [.. preferences.Home.Rows, HomeRowKind.RecentlyTagged]).Distinct())
         {
             cancellationToken.ThrowIfCancellationRequested();
             clock.Restart();
@@ -88,6 +121,9 @@ public sealed partial class CatalogRepository
                     break;
                 case HomeRowKind.RecentlyAdded:
                     Add(kind, Top(new MediaQuery { Sort = MediaSort.AddedAt, Descending = true, Limit = HomeRowSize }, cancellationToken).Select(m => new HomeCard(m)));
+                    break;
+                case HomeRowKind.RecentlyTagged:
+                    Add(kind, RecentlyTagged().Select(m => new HomeCard(m)));
                     break;
                 case HomeRowKind.WatchLater:
                     Add(kind, Top(new MediaQuery { WatchLater = true, Sort = MediaSort.AddedAt, Descending = true, Limit = HomeRowSize }, cancellationToken).Select(m => new HomeCard(m)));

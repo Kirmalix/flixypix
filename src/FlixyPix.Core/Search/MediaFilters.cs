@@ -56,6 +56,7 @@ public enum ResolutionClass { Any, HD, FullHD, UHD, EightK }
 public sealed record MediaFilter
 {
     public bool UnratedOnly { get; init; }
+    public bool UntaggedOnly { get; init; }
     public bool? HasThumbnail { get; init; }
     public List<TagFacet> Include { get; init; } = [];
     public List<TagFacet> Exclude { get; init; } = [];
@@ -86,7 +87,7 @@ public sealed record MediaFilter
     /// <summary>true: media with further versions; false: media with one file.</summary>
     public bool? MultipleFiles { get; init; }
 
-    public bool IsEmpty => !UnratedOnly && HasThumbnail is null && Include.Count == 0 && Exclude.Count == 0 && MinMinutes is null && MaxMinutes is null && MinMegabytes is null && MaxMegabytes is null &&
+    public bool IsEmpty => !UnratedOnly && !UntaggedOnly && HasThumbnail is null && Include.Count == 0 && Exclude.Count == 0 && MinMinutes is null && MaxMinutes is null && MinMegabytes is null && MaxMegabytes is null &&
         Resolution == ResolutionClass.Any && !FileDate.IsActive && !Imported.IsActive && Watched is null && Profiles.Count == 0 && !Released.IsActive && MarkTags.Count == 0 &&
         VideoCodecs.Count == 0 && Hdr is null && MinFrameRate is null && MultipleFiles is null;
 
@@ -99,6 +100,7 @@ public sealed record MediaFilter
     {
         var parts = new List<SearchExpression>();
         if (UnratedOnly) parts.Add(SearchExpression.Where(new() { Field = SearchField.Rating, Comparison = SearchComparison.Equals, Number = 0 }));
+        if (UntaggedOnly) parts.Add(SearchExpression.Where(new() { Field = SearchField.Untagged, Comparison = SearchComparison.Equals, Flag = true }));
         if (HasThumbnail is { } has) parts.Add(SearchExpression.Where(new() { Field = SearchField.HasThumbnail, Comparison = SearchComparison.Equals, Flag = has }));
         foreach (var group in Include.GroupBy(f => f.Role))
         {
@@ -141,6 +143,7 @@ public sealed record MediaFilter
     {
         static string Number(double value) => value.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture);
         if (UnratedOnly) yield return T("Unrated");
+        if (UntaggedOnly) yield return T("Without tags");
         if (HasThumbnail is { } has) yield return has ? T("With thumbnail") : T("Without thumbnail");
         foreach (var facet in Include) yield return facet.Tag;
         foreach (var facet in Exclude) yield return T("without {0}", facet.Tag);

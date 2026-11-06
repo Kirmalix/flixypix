@@ -13,7 +13,7 @@ internal sealed class WorklistState
  internal bool IgnoreLeavingOnce { get; set; }
  private ViewState? view;
  private long generation;
- private static bool IsWorklist(ViewState state) => state.Filter.HasThumbnail is not null || state.Filter.UnratedOnly;
+ private static bool IsWorklist(ViewState state) => state.Filter.HasThumbnail is not null || state.Filter.UnratedOnly || state.Filter.UntaggedOnly;
  private static bool SameList(ViewState? known, ViewState state) => known is not null && known.SameView(state with { SortOrder=known.SortOrder });
 
  internal WorklistRequest Begin(ViewState state, IEnumerable<Guid> listed, long requestGeneration)

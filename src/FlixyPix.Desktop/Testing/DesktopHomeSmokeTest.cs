@@ -49,7 +49,7 @@ public partial class MainWindow
    Require(_view == "home" && Home.IsVisible && MediaList.Visibility == Visibility.Collapsed && ViewTitle.Text == T("Home"), "The start page did not open at start.");
    Require(DetailsPane.Visibility == Visibility.Collapsed && DetailsColumn.Width.Value == 0, "The start page did not take the place of the details.");
    Require(NavItems.Children.OfType<RadioButton>().First() is { IsChecked: true, Tag: "home" }, "The sidebar did not mark the start page.");
-   Require(Home.RowCount == 4 && Home.HeroCount >= 1, $"The start page showed {Home.RowCount} rows and {Home.HeroCount} banner entries instead of the four chosen rows.");
+   Require(Home.RowCount == 4 && Home.Order[0] == HomeRowKind.RecentlyAdded, $"The start page showed {Home.RowCount} rows instead of the four chosen rows, or the wrong one first.");
 
    await Task.Delay(400); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
    Capture(RootContent, Path.Combine(directory, "desktop-home.png"));

@@ -10,6 +10,11 @@ are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept befo
 
 - New layout: the left bar is for navigation and collections; tags and common filters open in a panel beside the media, and active filters stand as chips in the search field.
 - Folders are an area of their own: walk through them with the tree, the path above the media or the subfolders; “Show in folder” in the details goes straight there.
+- Performers and studios are galleries, most frequent first, with a page per entry; the table for maintaining entries is one click away.
+- The selection bar offers tag mode, collections and more; the details appear only while something is selected.
+- The scene wall and the media jobs are pages of the main window, and a double click opens a page per medium with its picture, timeline, marks, history and similar media. Enter and the play button on a tile still play.
+- “Organize” is a work area: queues such as without tags and unrated are worked through one item at a time with visible progress, beside the maintenance tools.
+- The start page leads with continue watching, recently added, recently tagged and what is left to do, instead of a banner; the notice at start is gone.
 - Ctrl+1–9 no longer sets tags. Pinned tags work with 1–9 in the tag mode (T).
 - Interface size: all text and controls from 85 to 160 % in the settings or with Ctrl+Plus, Ctrl+Minus and Ctrl+0.
 - Calmer look: the accent marks the main action and the current choice, applied tags and filters are neutral.

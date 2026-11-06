@@ -12,6 +12,32 @@ public sealed class ViewStateTests : IDisposable
     private string PathFor(string name) => Path.Combine(directory, name);
 
     [Fact]
+    public void UntaggedFilterFindsOnlyMediaWithoutTags()
+    {
+        using var catalog = new CatalogRepository(PathFor("untagged.db"));
+        var plain = catalog.Upsert(new MediaItem { Title = "plain", Path = PathFor("a.mp4"), Kind = MediaKind.Video });
+        var tagged = catalog.Upsert(new MediaItem { Title = "tagged", Path = PathFor("b.mp4"), Kind = MediaKind.Video, Tags = ["x"] });
+        var found = catalog.QueryPage(new ViewState { Filter = new() { UntaggedOnly = true } }.ToQuery(DateTimeOffset.Now));
+        Assert.Equal(plain.Id, Assert.Single(found.Items).Id);
+        catalog.UpdateTags([plain.Id], ["y"], []);
+        Assert.Empty(catalog.QueryPage(new ViewState { Filter = new() { UntaggedOnly = true } }.ToQuery(DateTimeOffset.Now)).Items);
+        Assert.NotEqual(plain.Id, tagged.Id);
+    }
+
+    [Fact]
+    public void RecentlyTaggedRowLeadsWithTheLastTaggedMedia()
+    {
+        using var catalog = new CatalogRepository(PathFor("tagged-row.db"));
+        var first = catalog.Upsert(new MediaItem { Title = "first", Path = PathFor("c.mp4"), Kind = MediaKind.Video, Tags = ["x"] });
+        var second = catalog.Upsert(new MediaItem { Title = "second", Path = PathFor("d.mp4"), Kind = MediaKind.Video, Tags = ["x"] });
+        catalog.NoteTagged([first.Id]); catalog.NoteTagged([second.Id]); catalog.NoteTagged([first.Id]);
+        var row = catalog.BuildHomeFeed(DateTimeOffset.Now).Rows.Single(r => r.Kind == HomeRowKind.RecentlyTagged);
+        Assert.Equal([first.Id, second.Id], row.Cards.Select(c => c.Item.Id));
+        catalog.SavePreferences(catalog.GetPreferences() with { Home = new() { Rows = [HomeRowKind.RecentlyAdded], TaggedRowChosen = true } });
+        Assert.DoesNotContain(catalog.BuildHomeFeed(DateTimeOffset.Now).Rows, r => r.Kind == HomeRowKind.RecentlyTagged);
+    }
+
+    [Fact]
     public void FolderViewIsAPlaceWithAnOptionalKind()
     {
         using var catalog = new CatalogRepository(PathFor("folders.db"));

@@ -58,7 +58,6 @@
      <Button Click="SyncFoldersClicked" Content="{local:T 'Sync folders'}" ToolTip="{local:T 'Media folders'}" Margin="0,0,8,0"/>
      <Button Click="AddMenu" Style="{StaticResource Primary}" Margin="0,0,10,0" ToolTip="{local:T 'Import files, folders or archives (Ctrl+O: files)'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/><TextBlock Text="{local:T 'Add'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
      <Button Content="&#xE9D5;" Click="QueueClicked" Style="{StaticResource IconButton}" ToolTip="{local:T 'Media jobs'}" AutomationProperties.Name="{local:T 'Media jobs'}"/>
-     <Button Content="&#xE8CB;" Click="OrganizeMenu" Style="{StaticResource IconButton}" ToolTip="{local:T 'Organize: searches, rules, vocabulary, duplicates'}" AutomationProperties.Name="{local:T 'Organize'}"/>
      <Button Content="&#xE8F1;" Click="CatalogMenu" Style="{StaticResource IconButton}" ToolTip="{local:T 'Catalog: backup, export, import, encryption'}" AutomationProperties.Name="{local:T 'Catalog'}"/>
      <Button Content="&#xE713;" Click="Settings" Style="{StaticResource IconButton}" ToolTip="{local:T 'Settings'}" AutomationProperties.Name="{local:T 'Settings'}"/><Button x:Name="ApplicationMenuButton" Click="ApplicationMenuClicked" Margin="8,0,0,0" ToolTip="F10"><StackPanel Orientation="Horizontal"><TextBlock Text="{local:T 'Menu'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="7,0,0,0"/></StackPanel></Button>
     </StackPanel>
@@ -84,11 +83,14 @@
        <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="folders" Click="Navigate" local:SidebarCard.Glyph="&#xE8B7;" Content="{local:T 'Folders'}"/>
       </StackPanel></Expander>
       <Expander Style="{StaticResource NavGroup}" Tag="discover" Header="{local:T 'DISCOVER'}" IsExpanded="True"><StackPanel>
-       <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="performers" Click="Navigate" local:SidebarCard.Glyph="&#xE716;" Content="{local:T 'Performers'}"/>
-       <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="studios" Click="Navigate" local:SidebarCard.Glyph="&#xE731;" Content="{local:T 'Studios'}"/>
+       <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="gallery-performers" Click="Navigate" local:SidebarCard.Glyph="&#xE716;" Content="{local:T 'Performers'}"/>
+       <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="gallery-studios" Click="Navigate" local:SidebarCard.Glyph="&#xE731;" Content="{local:T 'Studios'}"/>
        <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="wall" Click="Navigate" local:SidebarCard.Glyph="&#xE80A;" Content="{local:T 'Scene wall'}"/>
        <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="image-sets" Click="Navigate" local:SidebarCard.Glyph="&#xE8B9;" Content="{local:T 'Image sets'}"/>
        <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="publication-groups" Click="Navigate" local:SidebarCard.Glyph="&#xE81E;" Content="{local:T 'Publication groups'}" ToolTip="{local:T 'Publication groups'}"/>
+      </StackPanel></Expander>
+      <Expander Style="{StaticResource NavGroup}" Tag="work" Header="{local:T 'WORK'}" IsExpanded="True"><StackPanel>
+       <RadioButton Style="{StaticResource Nav}" GroupName="nav" Tag="order" Click="Navigate" local:SidebarCard.Glyph="&#xE8CB;" Content="{local:T 'Organize'}"/>
       </StackPanel></Expander>
      </StackPanel>
      <Expander Style="{StaticResource NavGroup}" local:SidebarCard.Glyph="&#xE8FD;" Tag="collections" Header="{local:T 'Collections'}" IsExpanded="True"><local:SidebarCard.Actions><Button  Content="&#xE710;" Style="{StaticResource IconButton}" Padding="6" FontSize="11" Click="NewPlaylist" ToolTip="{local:T 'New collection, smart collection, slideshow or collection set'}" AutomationProperties.Name="{local:T 'Create collection'}"/></local:SidebarCard.Actions><StackPanel>     <TextBlock x:Name="CollectionsHeader" Height="0"/>
@@ -108,8 +110,9 @@
      <Button Content="&#xE714;" Tag="Video" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Videos'}" AutomationProperties.Name="{local:T 'Videos'}"/>
      <Button Content="&#xE91B;" Tag="Image" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Images'}" AutomationProperties.Name="{local:T 'Images'}"/>
      <Button Content="&#xE8B7;" Tag="folders" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Folders'}" AutomationProperties.Name="{local:T 'Folders'}"/>
-     <Button Content="&#xE716;" Tag="performers" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Performers'}" AutomationProperties.Name="{local:T 'Performers'}"/>
-     <Button Content="&#xE731;" Tag="studios" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Studios'}" AutomationProperties.Name="{local:T 'Studios'}"/>
+     <Button Content="&#xE716;" Tag="gallery-performers" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Performers'}" AutomationProperties.Name="{local:T 'Performers'}"/>
+     <Button Content="&#xE731;" Tag="gallery-studios" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Studios'}" AutomationProperties.Name="{local:T 'Studios'}"/>
+     <Button Content="&#xE8CB;" Tag="order" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Organize'}" AutomationProperties.Name="{local:T 'Organize'}"/>
      <Button Content="&#xE8FD;" Tag="collections" Click="SidebarRailClicked" Style="{StaticResource IconButton}" Margin="0,2" ToolTip="{local:T 'Collections'}" AutomationProperties.Name="{local:T 'Collections'}"/>
     </StackPanel></Border>
     <Thumb x:Name="SidebarResizer" Grid.RowSpan="2" HorizontalAlignment="Right" Width="6" Margin="0,0,-3,0" Cursor="SizeWE" Panel.ZIndex="5" DragDelta="SidebarResizing" DragCompleted="PaneResized" ToolTip="{local:T 'Drag to change the width'}"><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="Transparent"/></ControlTemplate></Thumb.Template></Thumb>
@@ -144,12 +147,16 @@
     <DockPanel Margin="0,0,0,14">
      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
       <CheckBox x:Name="IncludeFolderChildren" Visibility="Collapsed" Content="{local:T 'Include subfolders'}" IsChecked="True" Click="FolderChildrenChanged" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{local:T 'Folders also show the items of their subfolders'}"/>
+      <Button x:Name="EntityEditButton" Visibility="Collapsed" Click="EntityEditClicked" Margin="0,0,10,0" Content="{local:T 'Edit …'}"/>
+      <Button x:Name="GalleryDirectoryButton" Visibility="Collapsed" Click="GalleryDirectoryClicked" Margin="0,0,0,0" Content="{local:T 'Open directory'}"/>
       <Button x:Name="FolderTreeButton" Visibility="Collapsed" Click="FolderTreeToggleClicked" Margin="0,0,10,0" Content="{local:T 'Folder tree'}"/>
+      <ProgressBar x:Name="QueueProgress" Visibility="Collapsed" Width="140" Height="6" Minimum="0" Maximum="1" IsIndeterminate="False" Margin="0,0,12,0" VerticalAlignment="Center"/>
       <Button x:Name="UpdateListButton" Click="UpdateListClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Update list'}" ToolTip="{local:T 'Removes the finished items from this list.'}"/>
       <Button x:Name="CreateListThumbnailsButton" Click="CreateListThumbnailsClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Create thumbnails for this list'}"/>
       <Button x:Name="CollectionActions" Click="CollectionMenu" Visibility="Collapsed" Margin="0,0,10,0"><StackPanel Orientation="Horizontal"><TextBlock Text="{local:T 'Collection'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
       <Button x:Name="ViewButton" Click="ViewMenuClicked" VerticalAlignment="Center" Margin="0" Padding="11,6" FontSize="12" ToolTip="{local:T 'Appearance, tile size and sorting'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xF0E2;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,7,0"/><TextBlock x:Name="ViewButtonText"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
      </StackPanel>
+     <Ellipse x:Name="EntityPortrait" DockPanel.Dock="Left" Visibility="Collapsed" Width="64" Height="64" Margin="0,0,14,0" local:Privacy.Blur="True"/>
      <StackPanel><WrapPanel x:Name="FolderCrumbs" Visibility="Collapsed" Margin="-5,0,0,2"/><TextBlock x:Name="ViewTitle" Text="{local:T 'All items'}" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="CountLabel" Text="{local:T 'Your library is waiting for its first import'}" Foreground="{DynamicResource Muted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
     </DockPanel>
      <StackPanel x:Name="FilterBackingControls" Grid.Row="1" Visibility="Collapsed">
@@ -237,7 +244,7 @@
 Images, videos and music stay where they are.'}" TextAlignment="Center" Foreground="{DynamicResource Muted}" LineHeight="23"/><Button x:Name="EmptyReset" Content="{local:T 'Remove all filters'}" Click="ResetFiltersClicked" Style="{StaticResource Primary}" HorizontalAlignment="Center" Margin="0,18,0,0" Visibility="Collapsed"/><StackPanel x:Name="FirstRunActions" Margin="0,22,0,0" HorizontalAlignment="Center"><TextBlock Text="{local:T 'Did you use EazyFlixPix 4?'}" HorizontalAlignment="Center" Foreground="{DynamicResource Muted}" Margin="0,0,0,8"/><Button Content="{local:T 'Import EazyFlixPix library …'}" Click="ImportOriginalDatabaseClicked" Style="{StaticResource Primary}" HorizontalAlignment="Center" ToolTip="{local:T 'Imports items, tags, ratings, scenes, bookmarks and collections into a new library. The original database stays unchanged.'}"/></StackPanel></StackPanel>
     </Grid>
     <StackPanel Grid.Row="4">
-    <Border x:Name="SelectionBar" Background="{DynamicResource ChipApplied}" CornerRadius="6" Padding="12,4" Margin="0,8,0,0" Visibility="Collapsed"><DockPanel><Button DockPanel.Dock="Right" Content="{local:T 'Clear selection'}" Click="ClearSelectionClicked" Style="{StaticResource Quiet}"/><TextBlock x:Name="SelectionBarText" VerticalAlignment="Center"/></DockPanel></Border>
+    <Border x:Name="SelectionBar" Background="{DynamicResource ChipApplied}" CornerRadius="8" Padding="12,6" Margin="0,8,0,0" Visibility="Collapsed"><DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="{local:T 'Tag mode'}" Click="SelectionTagModeClicked" Style="{StaticResource Primary}" Padding="10,4" Margin="0,0,6,0" ToolTip="{local:T 'Tag mode (T): tag with one hand and move on with the arrow keys'}"/><Button Content="{local:T 'Add to collection'}" Click="SelectionCollectionClicked" Padding="10,4" Margin="0,0,6,0"/><Button Content="{local:T 'More'}" Click="SelectionMoreClicked" Padding="10,4" Margin="0,0,6,0"/><Button Content="{local:T 'Clear selection'}" Click="ClearSelectionClicked" Style="{StaticResource Quiet}" VerticalAlignment="Center"/></StackPanel><TextBlock x:Name="SelectionBarText" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
     <DockPanel x:Name="PagerBar" Margin="0,8,0,0" Visibility="Collapsed">
      <StackPanel x:Name="PagerButtons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"/>
      <TextBlock x:Name="PageLabel" VerticalAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="12" Typography.NumeralAlignment="Tabular"/>
