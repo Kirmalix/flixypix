@@ -233,8 +233,10 @@ public sealed partial class CatalogRepository
                 using (var select = Command("SELECT id,document FROM " + table, tx)) using (var reader = select.ExecuteReader()) while (reader.Read()) rows.Add((reader.GetString(0), reader.GetString(1)));
                 foreach (var row in rows)
                 {
-                    var node = JsonNode.Parse(row.Document); map.Rewrite(node);
-                    using var update = Command("UPDATE " + table + " SET document=$document WHERE id=$id", tx, ("$document", node!.ToJsonString()), ("$id", row.Id)); update.ExecuteNonQuery();
+                    // A cleared value is stored as the document "null" and holds no path.
+                    var node = JsonNode.Parse(row.Document); if (node == null) continue;
+                    map.Rewrite(node);
+                    using var update = Command("UPDATE " + table + " SET document=$document WHERE id=$id", tx, ("$document", node.ToJsonString()), ("$id", row.Id)); update.ExecuteNonQuery();
                 }
             }
             if (location != null) WriteLocation(location, tx);

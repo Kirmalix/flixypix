@@ -47,6 +47,18 @@ public sealed class AppStorageTests : IDisposable
   Assert.Equal(@"F:\Media\film.mp4",catalog.GetMedia(id)!.Path);
  }
 
+ [Fact] public void MoveKeepsAStoredEmptyValue()
+ {
+  using var catalog = new CatalogRepository(Path.Combine(root,"catalog.db"));
+  var moved=catalog.Upsert(new MediaItem {Path=@"E:\Media\moved.mp4"});
+  // Going back to the quick collection stores the document "null".
+  catalog.SetTargetCollection(null);
+  catalog.PreparePortableLocation(@"E:\App",true);
+  catalog.PreparePortableLocation(@"F:\App",true);
+  Assert.Equal(@"F:\Media\moved.mp4",catalog.GetMedia(moved.Id)!.Path);
+  Assert.Equal(catalog.GetQuickCollection().Id,catalog.GetTargetCollection().Id);
+ }
+
  [Fact] public void MoveWritesOnlyMediaWhosePathsChange()
  {
   var database=Path.Combine(root,"catalog.db");
