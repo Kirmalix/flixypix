@@ -156,10 +156,11 @@ public sealed partial class CatalogRepository
         if (condition.Field == SearchField.Untagged) return (condition.Flag == false ? "" : "NOT ") + "EXISTS (SELECT 1 FROM media_tags t WHERE t.media_id=q.id AND t.tag<>'')";
         var column = condition.Field switch
         {
-            // Known without touching a file: a checked result counts, otherwise an entered thumbnail is taken as present and
-            // an image shows itself. Audio without a picture has nothing to be missing, so it matches neither way.
-            SearchField.HasThumbnail => "(SELECT CASE WHEN q.kind='Audio' AND nullif(json_extract(document,'$.thumbnailPath'),'') IS NULL THEN NULL " +
-                "ELSE coalesce((SELECT available FROM media_thumbnail_state WHERE media_id=q.id),q.kind='Image' OR nullif(json_extract(document,'$.thumbnailPath'),'') IS NOT NULL) END FROM media WHERE id=q.id)",
+            // Known without touching a file: an image shows itself and needs no thumbnail, whatever an earlier check noted; else a
+            // checked result counts, otherwise an entered thumbnail is taken as present. Audio without a picture has nothing to be
+            // missing, so it matches neither way.
+            SearchField.HasThumbnail => "(SELECT CASE WHEN q.kind='Image' THEN 1 WHEN q.kind='Audio' AND nullif(json_extract(document,'$.thumbnailPath'),'') IS NULL THEN NULL " +
+                "ELSE coalesce((SELECT available FROM media_thumbnail_state WHERE media_id=q.id),nullif(json_extract(document,'$.thumbnailPath'),'') IS NOT NULL) END FROM media WHERE id=q.id)",
             SearchField.Text => "q.search_text", SearchField.Title => "q.title", SearchField.Path => "q.path",
             SearchField.Filename => "efp_filename(q.path)", SearchField.Extension => "efp_extension(q.path)",
             SearchField.Directory => "efp_directory(q.path)",

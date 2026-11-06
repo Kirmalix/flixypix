@@ -25,6 +25,7 @@ public partial class MainWindow
     {
         SearchFrame.SizeChanged += (_, e) => ActiveTagFilters.MaxWidth = Math.Max(120, e.NewSize.Width * .7);
         ShowFilterTab(_settings.FilterPanelTab);
+        FillQueueKinds(QueueKindBar, "queueKindList");
         UpdateBrowsePanel();
     }
 

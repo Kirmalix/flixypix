@@ -150,6 +150,7 @@
       <Button x:Name="EntityEditButton" Visibility="Collapsed" Click="EntityEditClicked" Margin="0,0,10,0" Content="{local:T 'Edit …'}"/>
       <Button x:Name="GalleryDirectoryButton" Visibility="Collapsed" Click="GalleryDirectoryClicked" Margin="0,0,0,0" Content="{local:T 'Open directory'}"/>
       <Button x:Name="FolderTreeButton" Visibility="Collapsed" Click="FolderTreeToggleClicked" Margin="0,0,10,0" Content="{local:T 'Folder tree'}"/>
+      <StackPanel x:Name="QueueKindBar" Orientation="Horizontal" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,12,0"/>
       <ProgressBar x:Name="QueueProgress" Visibility="Collapsed" Width="140" Height="6" Minimum="0" Maximum="1" IsIndeterminate="False" Margin="0,0,12,0" VerticalAlignment="Center"/>
       <Button x:Name="UpdateListButton" Click="UpdateListClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Update list'}" ToolTip="{local:T 'Removes the finished items from this list.'}"/>
       <Button x:Name="CreateListThumbnailsButton" Click="CreateListThumbnailsClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Create thumbnails for this list'}"/>

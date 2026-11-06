@@ -46,6 +46,8 @@ public partial class MainWindow
             }
             ApplyViewState(new() { View = "Video", SearchText = "nav-health", Filter = new() { HasThumbnail = false, UnratedOnly = true } }); await _thumbnailCheckRun; await _lastRefresh;
             Check(MediaList.Items.Count == 2, "Missing and corrupt thumbnails were not found.");
+            var readable = Path.Combine(directory, "readable-head.jpg"); File.WriteAllBytes(readable, [0xFF, 0xD8, 0xFF, 0xE0]); var noBytes = Path.Combine(directory, "empty-thumbnail.jpg"); File.WriteAllBytes(noBytes, []);
+            Check(LooksReadable(readable) && !LooksReadable(noBytes) && !LooksReadable(broken), "The quick thumbnail check judged a file wrongly.");
             Check(MediaList.Items.Cast<MediaCard>().All(c => c.Item.Rating == 0 && _repository.GetThumbnailHealth(c.Item.Id) is { Available: false }), "Missing thumbnail results are unchecked or rated.");
             Check(CreateListThumbnailsButton.Visibility == Visibility.Visible, "The action for the whole list is missing.");
             var repaired = MediaList.Items.Cast<MediaCard>().First().Item; MediaList.SelectedItem = MediaList.Items[0];

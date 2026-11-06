@@ -39,8 +39,12 @@ public partial class MainWindow
   var isList=state.Filter.HasThumbnail is not null||state.Filter.UnratedOnly||state.Filter.UntaggedOnly;
   QueueProgress.Visibility=isList&&total>0?Visibility.Visible:Visibility.Collapsed;
   QueueProgress.Value=total>0?(double)finished/total:0;
+  // Which media it holds can change right here; filtering by type should not need a detour.
+  var kindAtHand=isList||state.ReviewStates.Count>0;
+  QueueKindBar.Visibility=kindAtHand?Visibility.Visible:Visibility.Collapsed;
+  if(kindAtHand)SyncQueueKinds();
  }
- private void HideWorklistActions()=>UpdateListButton.Visibility=CreateListThumbnailsButton.Visibility=QueueProgress.Visibility=Visibility.Collapsed;
+ private void HideWorklistActions()=>UpdateListButton.Visibility=CreateListThumbnailsButton.Visibility=QueueProgress.Visibility=QueueKindBar.Visibility=Visibility.Collapsed;
 
  private void UpdateListClicked(object sender,RoutedEventArgs e) {_dropKeptMedia=true;Refresh();}
 
