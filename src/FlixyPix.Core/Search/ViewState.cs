@@ -19,6 +19,8 @@ public sealed record ViewState
 {
     /// <summary>all, Video, Image, Audio, favorites, watchlater.</summary>
     public string View { get; init; } = "all";
+    /// <summary>Media kind inside the folder view, which is a place and therefore not a kind of its own.</summary>
+    public MediaKind? KindFilter { get; init; }
     public List<ReviewState> ReviewStates { get; init; } = [];
     public DirectoryViewState? Directory { get; init; }
     public Guid? ImageSetId { get; init; }
@@ -53,7 +55,7 @@ public sealed record ViewState
     public DateTimeOffset SavedAt { get; init; }
 
     /// <summary>"home" is the start page; as a query it stands for all media.</summary>
-    public static readonly string[] Views = ["publication-groups", "image-sets", "inbox", "home", "performers", "studios", "all", "Video", "Image", "Audio", "favorites", "watchlater"];
+    public static readonly string[] Views = ["publication-groups", "image-sets", "inbox", "home", "performers", "studios", "all", "folders", "Video", "Image", "Audio", "favorites", "watchlater"];
 
     /// <summary>The part of the state a scope restores; the rest falls back to an empty view.</summary>
     public ViewState Restricted(RestoreScope scope) => scope == RestoreScope.All ? this : new ViewState
@@ -63,7 +65,7 @@ public sealed record ViewState
 
     /// <summary>Same view, filters and order; position and selection do not count (used by the history).</summary>
     public bool SameView(ViewState other) =>
-        View == other.View && ImageSetId == other.ImageSetId && PublicationGroupId==other.PublicationGroupId && Directory?.Selected == other.Directory?.Selected && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
+        View == other.View && KindFilter == other.KindFilter && ImageSetId == other.ImageSetId && PublicationGroupId==other.PublicationGroupId && Directory?.Selected == other.Directory?.Selected && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
         Tag == other.Tag && TagCategory == other.TagCategory && Category == other.Category && Folder == other.Folder && IncludeSubfolders == other.IncludeSubfolders &&
         ReviewStates.SequenceEqual(other.ReviewStates) && RequiredTags.SequenceEqual(other.RequiredTags) && ExcludedTags.SequenceEqual(other.ExcludedTags) && MinimumStars == other.MinimumStars &&
         SortOrder == other.SortOrder && TagsMatchAny == other.TagsMatchAny &&
@@ -93,7 +95,7 @@ public sealed record ViewState
             ReviewStates = ReviewStates.Count > 0 ? ReviewStates : View == "inbox" ? [ReviewState.Unreviewed, ReviewState.NeedsAttention] : [],
             Text = SearchText, Tag = Tag, MinimumRating = Math.Clamp(MinimumStars, 0, 5) * 2,
             IsFavorite = View == "favorites" ? true : null, WatchLater = View == "watchlater" ? true : null,
-            Kind = Enum.TryParse<MediaKind>(View, out var kind) ? kind : null,
+            Kind = Enum.TryParse<MediaKind>(View, out var kind) ? kind : View == "folders" ? KindFilter : null,
             Category = Category, TagCategory = TagCategory, Folder = Folder, IncludeSubfolders = IncludeSubfolders,
             RequiredTags = anyTags ? [] : RequiredTags, ExcludedTags = ExcludedTags,
             Expression = parts.Count switch { 0 => null, 1 => parts[0], _ => SearchExpression.All(parts.ToArray()) },

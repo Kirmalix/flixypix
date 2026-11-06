@@ -15,6 +15,7 @@ internal sealed class BrowseState
         Selection = value.Selection.AsReadOnly();
     }
     internal string View => value.View;
+    internal MediaKind? KindFilter => value.KindFilter;
     internal IReadOnlyList<ReviewState> ReviewStates { get; }
     internal DirectoryViewState? Directory => value.Directory;
     internal Guid? ImageSetId => value.ImageSetId;

@@ -18,6 +18,7 @@ public partial class MainWindow
     private MediaFilter _filter { get => _browse.State.Filter; set => _browse.Change(state => state with { Filter = value }); }
     private bool _tagsMatchAny { get => _browse.State.TagsMatchAny; set => _browse.Change(state => state with { TagsMatchAny = value }); }
     private Popup? _filterPopup;
+    private MediaKind? _kindFilter { get => _browse.State.KindFilter; set => _browse.Change(state => state with { KindFilter = value }); }
 
     /// <summary>What the main window shows now, as one state (saved searches, restore on start, back and forward).</summary>
     internal ViewState CaptureViewState() => _browse.Capture(new ViewState()
@@ -27,6 +28,7 @@ public partial class MainWindow
         Directory = IsRoleView ? _roleBrowser?.CaptureDirectoryState() : null,
         ReviewStates = _reviewStates.ToList(),
         View = _view,
+        KindFilter = _kindFilter,
         PlaylistId = _playlist?.Id,
         SearchText = SearchBox.Text.Length == 0 ? null : SearchBox.Text,
         Tag = _tag,
@@ -82,7 +84,7 @@ public partial class MainWindow
             if (state.TileWidth > 0) TileSize.Value = Math.Clamp(state.TileWidth, TileSize.Minimum, TileSize.Maximum);
         }
         finally { _initializingBrowsing = initializing; _refreshing = refreshing; }
-        ViewTitle.Text = title ?? (_playlist != null ? CollectionName(_playlist) : null) ?? (_requiredTags.Count > 0 ? string.Join(" + ", _requiredTags) : ViewName(_view));
+        ViewTitle.Text = title ?? (_playlist != null ? CollectionName(_playlist) : null) ?? (_requiredTags.Count > 0 ? string.Join(" + ", _requiredTags) : _view == FolderView ? FolderTitle() : ViewName(_view));
         UpdateNavigation(); _anchor = 0;
         UpdateFilterBar(); RenderTagFilterChips(); RenderTagList();
     }
@@ -99,7 +101,7 @@ public partial class MainWindow
     }
 
     private void ResetFiltersClicked(object sender, RoutedEventArgs e) =>
-     ApplyViewState(CaptureViewState() with { SearchText = null, ReviewStates = [], Tag = null, TagCategory = null, Category = null, Folder = null, RequiredTags = [], ExcludedTags = [], Expression = null, Filter = new(), MinimumStars = 0 });
+     ApplyViewState(CaptureViewState() with { SearchText = null, ReviewStates = [], Tag = null, TagCategory = null, Category = null, Folder = _view == FolderView ? _folder : null, KindFilter = null, RequiredTags = [], ExcludedTags = [], Expression = null, Filter = new(), MinimumStars = 0 });
 
     private void ApplyFilter(MediaFilter filter)
     {
@@ -187,14 +189,6 @@ public partial class MainWindow
     }
     private string? _filterSection;
 
-    private void FilterButtonClicked(object sender, RoutedEventArgs e)
-    {
-        if (FilterFlyout.IsOpen) { FilterFlyout.IsOpen = false; return; }
-        // Opens at the section shown last; the first time at rating and type.
-        var label = _filterSection != null && _pills.ContainsKey(_filterSection) ? _filterSection : _pills.Keys.First();
-        var (button, _) = _pills[label];
-        button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
-    }
     private void OpenFilterFlyout()
     {
         if (!_filterFlyoutReady)
@@ -240,17 +234,18 @@ public partial class MainWindow
         var kinds = new WrapPanel();
         foreach (var view in new[] { "all", "Video", "Image", "Audio" })
         {
-            var option = new RadioButton { Content = ViewName(view), IsChecked = _view == view, GroupName = "kind", Style = (Style)FindResource("Segment"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 4, 4) };
+            var option = new RadioButton { Content = ViewName(view), IsChecked = _view == FolderView ? (_kindFilter?.ToString() ?? "all") == view : _view == view, GroupName = "kind", Style = (Style)FindResource("Segment"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 4, 4) };
             option.Checked += (_, _) => ShowKind(view);
             kinds.Children.Add(option);
         }
         panel.Children.Add(kinds);
-        panel.Children.Add(SettingsUi.Hint(T("The type is the same choice as videos, images and audio in the sidebar; the other filters stay.")));
+        if (_view != FolderView) panel.Children.Add(SettingsUi.Hint(T("The type is the same choice as videos, images and audio in the sidebar; the other filters stay.")));
         return panel;
     }
     /// <summary>Switches the media type and keeps search and filters, unlike a click in the sidebar.</summary>
     private void ShowKind(string view)
     {
+        if (_view == FolderView) { _kindFilter = Enum.TryParse<MediaKind>(view, out var kind) ? kind : null; _anchor = 0; RenderTagFilterChips(); Refresh(); return; }
         if (_view == view) return;
         var wasTitle = ViewTitle.Text == ViewName(_view);
         _view = view; _anchor = 0;
@@ -398,7 +393,7 @@ public partial class MainWindow
 
     private FrameworkElement DurationPanel(Button owner)
     {
-        var panel = new StackPanel { Width = 280 };
+        var panel = new StackPanel();
         panel.Children.Add(Heading(T("Duration")));
         var presets = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
         foreach (var (label, min, max) in new (string, double?, double?)[] { (T("any"), null, null), (T("up to 5 min"), null, 5), (T("5–20 min"), 5, 20), (T("20–60 min"), 20, 60), (T("over 1 h"), 60, null) })
@@ -415,8 +410,8 @@ public partial class MainWindow
     /// <summary>Two number fields "von" and "bis"; Enter or leaving a field applies, an empty field means no limit.</summary>
     private static FrameworkElement RangeFields(string unit, double? min, double? max, Action<double?, double?> apply)
     {
-        var from = new TextBox { Text = min?.ToString("0.##", CultureInfo.CurrentCulture) ?? "", Width = 72, Padding = new Thickness(6, 4, 6, 4) };
-        var to = new TextBox { Text = max?.ToString("0.##", CultureInfo.CurrentCulture) ?? "", Width = 72, Padding = new Thickness(6, 4, 6, 4) };
+        var from = new TextBox { Text = min?.ToString("0.##", CultureInfo.CurrentCulture) ?? "", Width = 54, Padding = new Thickness(6, 4, 6, 4) };
+        var to = new TextBox { Text = max?.ToString("0.##", CultureInfo.CurrentCulture) ?? "", Width = 54, Padding = new Thickness(6, 4, 6, 4) };
         System.Windows.Automation.AutomationProperties.SetName(from, unit + " von"); System.Windows.Automation.AutomationProperties.SetName(to, unit + " bis");
         static double? Parse(string text) => double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.CurrentCulture, out var value) && value >= 0 ? value : null;
         var last = (min, max);

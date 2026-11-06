@@ -7374,11 +7374,6 @@
       "status": "unchanged",
       "digest": "f0b7c31174928253aa219970343cf3791ed2cdc79e930704bcbad945992fc9af"
     },
-    "Show or hide the sidebar (Ctrl+B)": {
-      "status": "corrected",
-      "digest": "5dbd6c6704373fb28b8b1e2be787d0928476e4d50cdbf209f2d5f78e6e45a30b",
-      "previous_digest": "8fe99ff1de4df4d9b020c46899fa7e5384672741e290b9f377dac3aa990a5b31"
-    },
     "Page bar below the grid": {
       "status": "corrected",
       "digest": "7dff32aa8c3fbfdc288a22e17eef069e2f6485d71c704f7db9a809cffc15ab19",
@@ -7862,11 +7857,6 @@
     "Ctrl+Shift+C": {
       "status": "unchanged",
       "digest": "16572e0cd12c4dd721fb4d0f3e30bca2dc01b55e85fb5e5f016fbcdeb60c5366"
-    },
-    "Ctrl+{0} is not assigned to a tag yet · favorite tags (★) come first": {
-      "status": "corrected",
-      "digest": "e8e12193b53ad0de1fe6dca6e84eebaf65c430482470d5fa3d91ec5177fc8ac8",
-      "previous_digest": "bef89312e4d460332b920cc1da6987b2d82d0a9040ccf01ac0abae35e2e4eac9"
     },
     "STUDIO": {
       "status": "unchanged",
@@ -12539,10 +12529,6 @@
       "status": "unchanged",
       "digest": "62f4c378482e8ab55990c1528ca5f8ac495d70aa39ba62c3d001bf2b5eee1632"
     },
-    "Fold the sidebar (Ctrl+B)": {
-      "status": "unchanged",
-      "digest": "84380439c5a9c1e4ce508bd1742d593432da09af3942d446330a4029c7da470c"
-    },
     "Folders": {
       "status": "unchanged",
       "digest": "fda597316d2458db92e797eb940c2b8173cfeca9f5111bb8a407d04766d71c2b"
@@ -12606,10 +12592,6 @@
     "Any search can become a smart collection. It keeps the search text and all filters and stays current: new matching items appear in it by themselves. You find it on the left under “Collections”.": {
       "status": "unchanged",
       "digest": "c8c7db5475755f5d2b0214af389cc8ab54e5a4a6b139e1c709ab3de14306d4d9"
-    },
-    "Any search can become a smart collection: set up search and filters, then ＋ → Smart collection. It stays current, new matching items appear in it by themselves.": {
-      "status": "unchanged",
-      "digest": "35979f6d5a05e826b8f4504e8c90c04e2da50a431b47d1401ab287d0ce8ab628"
     },
     "Change icon": {
       "status": "unchanged",
@@ -13661,14 +13643,6 @@
       "status": "unchanged",
       "digest": "6afee5c8aa4e50d5cc951ee590493d3cbbcdcd5ab158fae4d172a18b6a3e54b9"
     },
-    "Assign shortcut": {
-      "status": "unchanged",
-      "digest": "d4e419b6c01c64c2ad7e9f08f71d2e5415211cfd314d8098a85832dc95855edb"
-    },
-    "Assign to selected items": {
-      "status": "unchanged",
-      "digest": "8d3b3508f6573c3e2b0d62f48a67b6fe46845761d0e2f056212b6e4afeaca9a6"
-    },
     "Audio earlier (−0.1 s)": {
       "status": "unchanged",
       "digest": "22200189ad71380927464340a0c4648f5f5e0cbd49311834c8ef6175ab98a186"
@@ -13760,10 +13734,6 @@
     "Discard changes": {
       "status": "unchanged",
       "digest": "635dfc822aeed0f020fae0710f0fb0c9b5760ad81549f883375c77b37c4f6cb5"
-    },
-    "Drag to change the height": {
-      "status": "unchanged",
-      "digest": "33962cf47e69f178ce8e28e0cee4c4c43c24bb27711941db8858b500f2854874"
     },
     "Edit": {
       "status": "unchanged",
@@ -13989,10 +13959,6 @@
       "status": "unchanged",
       "digest": "b75d66e5078477587290255ae65cb41f500bfa8a02905123af15551f8dc17080"
     },
-    "Remove shortcut": {
-      "status": "unchanged",
-      "digest": "8ba00298880e61ffd1c364e61e93a01bfad671deebeef5073cf8686af9da4538"
-    },
     "Report": {
       "status": "unchanged",
       "digest": "32faab95045bed27b1da710d059fe6c0c16f1ddde67390ea478bf625c8d9c4e2"
@@ -14032,10 +13998,6 @@
     "Scene start": {
       "status": "unchanged",
       "digest": "6632eff2e117c924f0b1e2225fb8f5d42c7a5a3150aa8c91f6cbd8044f622cba"
-    },
-    "Select media before assigning tags. Ctrl+1–9 uses your fixed quick tags. Enter filters by the focused tag; Ctrl+Enter excludes it.": {
-      "status": "unchanged",
-      "digest": "9e1987d81027a409fcb812da9c3fa2b6b075a035470c114e3284d9199aba23d8"
     },
     "Selection": {
       "status": "unchanged",
@@ -14148,10 +14110,6 @@
     "Use the existing destination data": {
       "status": "unchanged",
       "digest": "45d84762a175d0191ff4e329ceb514adb263177e2d191e3f01ebff73c3a26931"
-    },
-    "Use the folder tree to narrow the view. The subfolder switch affects browsing only. Wheel scrolls vertically; Shift+wheel scrolls horizontally.": {
-      "status": "unchanged",
-      "digest": "972f31bc9433f588f20940b1ce85341eded77a22497d714293ff628ac708909e"
     },
     "View contact sheet": {
       "status": "unchanged",
@@ -14725,6 +14683,61 @@
     "Text and controls in all windows. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time.": {
       "status": "unchanged",
       "digest": "23a30fb5849a68b8bb545693bb73eb38342aa2f7f4bce99bcfa7957c37b78741"
+    },
+    "All filters …": {
+      "status": "corrected",
+      "digest": "c241a4d660c4942b4b5a8ee4a32b8f1d01e07a52eb498eb39b7c51e189473298",
+      "previous_digest": "f457dc5d9802e447380691ae2150f4b820f95b57e91385772e3c75c5fcc3c9e5"
+    },
+    "Folder tree": {
+      "status": "corrected",
+      "digest": "de318851d68c186d3866c1e9fed81f84df1c0d8efa3467430c8241ca74b75d01",
+      "previous_digest": "ea8ace6b79dc924fe037017b0585fb0f6d93d43c5670022ac9a75ac26d127926"
+    },
+    "Hide the filter panel": {
+      "status": "corrected",
+      "digest": "61bc0518dcb1278dc78e9aacb87f57c024090e48b727f1a9a9afca3185e385c4",
+      "previous_digest": "d2a6723485bcb83c53dfa6106b9f0b32c1fa30b73e191d2ba701fd07d961b2d4"
+    },
+    "Hide the folder tree": {
+      "status": "corrected",
+      "digest": "2c04e4cc4d496f862035c4260b5af14816d03cae9045e5962df3c69a41c0765e",
+      "previous_digest": "e458c8f8e43265aa409fd2b0f343cd74c7f73385f3ae4389ebc74292740d22d0"
+    },
+    "Open “Folders” in the bar on the left and walk through them with the tree, the path above the media or the subfolders. The subfolder switch affects browsing only.": {
+      "status": "corrected",
+      "digest": "f021f2448f71cb297a714f4c6f33e53fa60730656ad2a0448b627c2e1a8f7645",
+      "previous_digest": "efa84af1172eeffc00d8d3627a351ccac7875652c6283a8287b1a85348357bbd"
+    },
+    "Pin at": {
+      "status": "corrected",
+      "digest": "69f7bafebcfe8b58839f57a9ae0e809c622668ec3a44c5a4eeb313202e0d000a",
+      "previous_digest": "27b7f1485d9e10e143a0f6420b33d33fe2302d6bda5655696d1d7373fdfd849f"
+    },
+    "Pin {0} is free · right-click a tag to pin it": {
+      "status": "corrected",
+      "digest": "5ed64449a75c5cdc7d48ddcefd2c8e856ff5dcb65119836759f857b9b67adb0c",
+      "previous_digest": "3cdf3f2935f4d3b55454a48fcd47eb330bd52f0b096b2d66517c9f02f0936f87"
+    },
+    "Select media before assigning tags. T starts the tag mode: 1–9 set your pinned tags. In the filter panel, Enter filters by the focused tag; Ctrl+Enter excludes it.": {
+      "status": "corrected",
+      "digest": "5bb4f54791574cc08b8a8661d352127158b54eb468c53a4dfad8321f0e1f7a02",
+      "previous_digest": "8455c947c8e29fff58b0a6f745c66e5b7645b6011f9196784f8fb8ce34a8cff8"
+    },
+    "Show in folder": {
+      "status": "corrected",
+      "digest": "f75e0e3f02c0a2e0e92e83debb1672647cfa0a31bde61938921191e6d0d481c1",
+      "previous_digest": "aacb8baa681f9a6c23374a2e0e137b984f6057c4f4307351dd46938bc97b0644"
+    },
+    "Show or hide the filter panel": {
+      "status": "corrected",
+      "digest": "51d2458e933252eee8cf17da9b0a0637a3707e30621249ac5b8df59d09eeda07",
+      "previous_digest": "dedcbcc04cdb434aa5045e418e78cbf69ef388a8765a0fba9db2dc3c15a30127"
+    },
+    "Unpin": {
+      "status": "corrected",
+      "digest": "baacce9ee39470ed2655de7a7001a93b3c74de32d47dc97d96658fd5fbcf197b",
+      "previous_digest": "b72201510f4ae1488140cc760d5a0aada7ca2a84c92d711591466736a0f67b62"
     }
   }
 }

@@ -83,15 +83,19 @@ public partial class MainWindow
 
  // ----- Rails -----
 
- /// <summary>A symbol of the folded sidebar opens it at that section.</summary>
- private void SidebarRailClicked(object sender, RoutedEventArgs e) => OpenSidebarAt((string)((FrameworkElement)sender).Tag);
+ /// <summary>A symbol of the folded bar goes to that area; collections live in the bar, so their symbol unfolds it.</summary>
+ private void SidebarRailClicked(object sender, RoutedEventArgs e)
+ {
+  var target = (string)((FrameworkElement)sender).Tag;
+  if (target == "collections") OpenSidebarAt(target); else _ = NavigateAreaAsync(target);
+ }
  internal void OpenSidebarAt(string section)
  {
   _sidebarAutoFolded = false; SetSidebar(true); SaveViewPreferences();
   if(_sidebarSections.TryGetValue(section,out var expander))expander.IsExpanded=true;
   FrameworkElement target = section switch
   {
-   "collections" or "searches" => CollectionsHeader, "tags" => TagsHeader, "folders" => FoldersHeader, _ => LibraryHeader,
+   "collections" or "searches" => CollectionsHeader, _ => LibraryHeader,
   };
   Dispatcher.BeginInvoke(() => target.BringIntoView(new Rect(0, 0, target.ActualWidth, 160)), DispatcherPriority.Loaded);
  }

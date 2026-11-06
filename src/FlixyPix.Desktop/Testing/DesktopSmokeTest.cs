@@ -655,7 +655,7 @@ public partial class MainWindow
         Require(!SidebarExpanded && SidebarRail.IsVisible && SidebarColumn.ActualWidth == RailWidth && !DetailsExpanded && DetailsRail.IsVisible && _settings.SidebarCollapsed && _settings.DetailsCollapsed,
          "The sidebars did not fold to their rails.");
         Capture(RootContent, Path.Combine(directory, "desktop-sidebar-folded.png"));
-        OpenSidebarAt("tags"); OpenDetailsAt("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        OpenSidebarAt("collections"); OpenDetailsAt("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(SidebarExpanded && DetailsExpanded && !_settings.SidebarCollapsed && !_settings.DetailsCollapsed, "A symbol of a rail did not open its bar.");
         // The details as tabs show one part at a time; switching back shows everything again.
         SetDetailsTabs(true); ShowDetailsTab("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -667,7 +667,7 @@ public partial class MainWindow
         Require(!DetailsTabBar.IsVisible && DetailsTagsPart.Visibility == Visibility.Visible && DetailsFieldsPart.Visibility == Visibility.Visible && DetailsScenesPart.Visibility == Visibility.Visible,
          "Switching back did not show everything one below the other.");
         // The filter flyout opens at a section; short forms in the search become filters and chips; the view menu opens.
-        FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        AllFiltersClicked(AllFiltersButton, new RoutedEventArgs()); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(FilterFlyout.IsOpen && FilterSectionHost.Child != null, "The filter flyout did not open at a section.");
         Capture(FilterFlyoutFrame, Path.Combine(directory, "filter-flyout.png"));
         FilterFlyout.IsOpen = false;

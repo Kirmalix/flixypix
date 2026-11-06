@@ -24,6 +24,8 @@ public partial class MainWindow
   }
   var before=_repository.GetPreferences();var view=CaptureViewState();var ids=new List<Guid>();
   try {
+   ApplyViewState(new(){View="folders"});await _lastRefresh;await Idle();
+   Check(FolderTreeShown,"The folder view did not show its tree.");
    var tree=(IEnumerable<BrowseNode>)Folders.ItemsSource;var root=tree.First();var children=root.Children.ToList();
    try {
     for(int i=0;i<40;i++)root.Children.Add(new BrowseNode("wheel-"+i,Path.Combine(directory,"wheel",i.ToString())));

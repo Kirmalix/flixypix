@@ -8,6 +8,9 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 The catalog format changes; libraries opened with this version
 are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept before the upgrade).
 
+- New layout: the left bar is for navigation and collections; tags and common filters open in a panel beside the media, and active filters stand as chips in the search field.
+- Folders are an area of their own: walk through them with the tree, the path above the media or the subfolders; “Show in folder” in the details goes straight there.
+- Ctrl+1–9 no longer sets tags. Pinned tags work with 1–9 in the tag mode (T).
 - Interface size: all text and controls from 85 to 160 % in the settings or with Ctrl+Plus, Ctrl+Minus and Ctrl+0.
 - Calmer look: the accent marks the main action and the current choice, applied tags and filters are neutral.
 - Tag mode (T): tag with one hand using 1–9 and Q W E R, move on with the arrow keys; rows and keys stay put.

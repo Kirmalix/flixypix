@@ -76,6 +76,7 @@ public partial class MainWindow
         _initializingBrowsing = false;
         InitializeSidebarState();
         InitializeFolderPresentation();
+        InitializeBrowsePanel();
         ApplyViewMode();
     }
     private void ViewChanged(object sender, SelectionChangedEventArgs e) { if (_tileTemplate == null) return; ApplyViewMode(); SaveViewPreferences(); }
@@ -105,13 +106,14 @@ public partial class MainWindow
             LastView = _view,
             SidebarCollapsed = _sidebarAutoFolded ? _settings.SidebarCollapsed : !SidebarExpanded,
             SidebarWidth = PaneWidths().Sidebar,
+            BrowsePanelWidth = BrowsePanelColumn.ActualWidth > 0 ? (int)Math.Round(BrowsePanelColumn.Width.Value) : _settings.BrowsePanelWidth,
             DetailsWidth = PaneWidths().Details,
             DetailsCollapsed = _detailsAutoFolded || _view == "home" ? _settings.DetailsCollapsed : !DetailsExpanded
         };
         if (_persistPreferences) (_settings with { DataDirectory = _pendingDataDirectory ?? _settings.DataDirectory }).Save();
     }
     private void CategoryChanged(object sender, SelectionChangedEventArgs e) { if (_refreshing || _repository == null) return; _category = (CategoryFilter.SelectedItem as CategoryOption)?.Value; _anchor = 0; UpdateFilterBar(); RenderTagFilterChips(); Refresh(); }
-    private void FolderSelected(object sender, RoutedPropertyChangedEventArgs<object> e) { if (_refreshing || e.NewValue is not BrowseNode node) return; _folder = node.Path; _playlist = null; _anchor = 0; ViewTitle.Text = _folder == null ? T("All items") : node.Label; Refresh(); }
+    private void FolderSelected(object sender, RoutedPropertyChangedEventArgs<object> e) { if (_refreshing || e.NewValue is not BrowseNode node) return; OpenFolder(node.Path); }
     private void CategorizedTagSelected(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
         if (_refreshing || e.NewValue is not BrowseNode node) return; _tagGroup = node.Category; _tag = node.Tag; _playlist = null; _anchor = 0;
@@ -198,7 +200,7 @@ public partial class MainWindow
         foreach (var node in (Folders.ItemsSource as IEnumerable<BrowseNode> ?? []).SelectMany(root => root.Descendants().Prepend(root)))
                     {
             node.Count = browse.FolderCounts.TryGetValue(node.Path ?? "", out var count) ? CountText(count) : "";
-            node.IsSelected = _folder != null && string.Equals(node.Path, _folder, StringComparison.OrdinalIgnoreCase);
+            node.IsSelected = _folder != null ? string.Equals(node.Path, _folder, StringComparison.OrdinalIgnoreCase) : _view == FolderView && node.Path == null && node.Label == T("All folders");
         }
         foreach (var node in CategorizedTags.ItemsSource as IEnumerable<BrowseNode> ?? [])
             node.Count = node.Category is { } name && browse.TagCategoryCounts.TryGetValue(name, out var count) ? CountText(count) : "";
