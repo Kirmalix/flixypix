@@ -42,7 +42,8 @@ public sealed class VideoCompatibilityTests : IDisposable
             Assert.Equal(new AbLoopState{Start=1,End=2},await player.GetAbLoopAsync());
             await player.SeekAsync(1.2);await player.SetSpeedAsync(2);await player.PauseAsync(false);
             var watch=Stopwatch.StartNew();var wraps=0;double? previous=null;
-            while(wraps<2&&watch.Elapsed<TimeSpan.FromSeconds(5))
+            // A real player in real time: a loaded build machine may take long, so the limit only catches a loop that never repeats.
+            while(wraps<2&&watch.Elapsed<TimeSpan.FromSeconds(30))
             {
                 await Task.Delay(40);var position=await player.GetPositionAsync();Assert.NotNull(position);Assert.InRange(position.Value,.8,2.3);
                 if(previous.HasValue&&previous.Value-position.Value>.35)wraps++;previous=position;

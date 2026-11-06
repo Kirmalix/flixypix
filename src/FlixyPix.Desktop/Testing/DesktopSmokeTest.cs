@@ -762,7 +762,7 @@ public partial class MainWindow
         await RunCollectionSmokeTestAsync(directory);
         await RunLibrarySettingsSmokeTestAsync(directory, fixtureDirectory);
         await RefreshAsync(first.Id);
-        Status.Text = "Bereit · 6 Bilder importiert · Deine Bibliothek ist lokal gespeichert";
+        Status.Text = T("Ready · drop files here or import a folder");
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         await Task.WhenAll(MediaList.Items.Cast<MediaCard>().Select(card => card.ReadyTask));
         await _previewReady;
@@ -818,7 +818,6 @@ public partial class MainWindow
         Theme.Apply(ColorScheme.Light); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(Theme.ReplacedKeys.Count == 0, "Theme brushes were frozen by a style or template and had to be replaced: " + string.Join(", ", Theme.ReplacedKeys));
         Require(!Theme.IsDark && ReferenceEquals(text, Theme.Brush("Text")) && text.Color == Theme.Color("Text", false), "Light scheme did not recolour the shared brushes in place.");
-        Capture(RootContent, Path.Combine(directory, "desktop-light.png"));
         var settings = new SettingsWindow(this, _repository, _settings, _settings.DataDirectory, () => { }, () => { }); settings.Show();
         try
         {
@@ -846,6 +845,8 @@ public partial class MainWindow
             foreach (var nested in Descendants<T>(child)) yield return nested;
         }
     }
+    /// <summary>A RenderTargetBitmap keeps the colours it used first: captures after Theme.Apply still show the first scheme,
+    /// also on pages built later. For pictures of the light scheme start the whole run with FLIXYPIX_TEST_THEME=light.</summary>
     internal static void Capture(FrameworkElement element, string path, double scale = 1)
     {
         // The brush draws the element at its layout offset, so its margin belongs to the picture; without it the right and
