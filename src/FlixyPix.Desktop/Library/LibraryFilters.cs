@@ -29,6 +29,7 @@ public partial class MainWindow
         ReviewStates = _reviewStates.ToList(),
         View = _view,
         KindFilter = _kindFilter,
+        DetailId = _browse.State.DetailId,
         PlaylistId = _playlist?.Id,
         SearchText = SearchBox.Text.Length == 0 ? null : SearchBox.Text,
         Tag = _tag,
@@ -84,7 +85,7 @@ public partial class MainWindow
             if (state.TileWidth > 0) TileSize.Value = Math.Clamp(state.TileWidth, TileSize.Minimum, TileSize.Maximum);
         }
         finally { _initializingBrowsing = initializing; _refreshing = refreshing; }
-        ViewTitle.Text = title ?? (_playlist != null ? CollectionName(_playlist) : null) ?? (_requiredTags.Count > 0 ? string.Join(" + ", _requiredTags) : _view == FolderView ? FolderTitle() : ViewName(_view));
+        ViewTitle.Text = title ?? (_playlist != null ? CollectionName(_playlist) : null) ?? (_requiredTags.Count > 0 ? string.Join(" + ", _requiredTags) : EntityRole != null ? _tag : _view == FolderView ? FolderTitle() : ViewName(_view));
         UpdateNavigation(); _anchor = 0;
         UpdateFilterBar(); RenderTagFilterChips(); RenderTagList();
     }
@@ -565,16 +566,18 @@ public partial class MainWindow
     private IEnumerable<(string Label, bool Excluded, Action Remove)> FilterChips()
     {
         if (_filter.UnratedOnly) yield return (T("Unrated"), false, () => ApplyFilter(_filter with { UnratedOnly = false }));
+        if (_filter.UntaggedOnly) yield return (T("Without tags"), false, () => ApplyFilter(_filter with { UntaggedOnly = false }));
         if (_filter.HasThumbnail is { } has) yield return (has ? T("With thumbnail") : T("Without thumbnail"), false, () => ApplyFilter(_filter with { HasThumbnail = null }));
         foreach (var facet in _filter.Include.ToList()) yield return (facet.Tag, false, () => ApplyFilter(_filter with { Include = _filter.Include.Where(f => f != facet).ToList() }));
         foreach (var facet in _filter.Exclude.ToList()) yield return (T("without {0}", facet.Tag), true, () => ApplyFilter(_filter with { Exclude = _filter.Exclude.Where(f => f != facet).ToList() }));
         foreach (var profile in _filter.Profiles.ToList()) yield return (MediaFilter.DescribeProfile(profile), false, () => ApplyFilter(_filter with { Profiles = _filter.Profiles.Where(p => p != profile).ToList() }));
         foreach (var tag in _filter.MarkTags.ToList()) yield return (T("Jump mark: {0}", tag), false, () => ApplyFilter(_filter with { MarkTags = _filter.MarkTags.Where(t => t != tag).ToList() }));
-        var rest = _filter with { UnratedOnly = false, HasThumbnail = null, Include = [], Exclude = [], Profiles = [], MarkTags = [] };
+        var rest = _filter with { UnratedOnly = false, UntaggedOnly = false, HasThumbnail = null, Include = [], Exclude = [], Profiles = [], MarkTags = [] };
         if (rest.MinMinutes is not null || rest.MaxMinutes is not null) yield return (rest.Describe().First(), false, () => ApplyFilter(_filter with { MinMinutes = null, MaxMinutes = null }));
         var size = _filter with
         {
             UnratedOnly = false,
+            UntaggedOnly = false,
             HasThumbnail = null,
             Include = [],
             Exclude = [],

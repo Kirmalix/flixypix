@@ -109,6 +109,32 @@ public partial class MainWindow
   ApplyViewState(new ViewState { View = "Video" }); await _lastRefresh; MediaList.SelectedItems.Clear();
   Require(!FolderTreeShown && !FolderCrumbs.IsVisible && !IncludeFolderChildren.IsVisible, "The folder tools stayed outside the folder view.");
   ApplyViewState(new ViewState()); await _lastRefresh;
+  // Organize: queues with their counts; a queue for tagging opens at its first medium in tag mode, and its progress shows.
+  await NavigateAreaAsync("order"); await _lastRefresh; await Idle(); await Task.Delay(300); await Idle();
+  Require(_view == "order" && QueueCounts.ContainsKey("untagged") && QueueCounts.ContainsKey("unrated") && _queueCards!.Children.Count == WorkQueues().Count && !MediaList.IsVisible && !DetailsPane.IsVisible, "The organize page is wrong.");
+  Require(Logicals<RadioButton>(NavItems).Single(n => (string)n.Tag == "order").IsChecked == true, "The bar did not mark the organize page.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-order.png"));
+  var untagged = _repository.Upsert(new MediaItem { Title = "Queue fixture", Path = Path.Combine(directory, "queue-fixture.mp4"), Kind = MediaKind.Video });
+  await StartQueueAsync(WorkQueues().Single(q => q.Key == "untagged")); await Idle();
+  var queued = Selected;
+  Require(_filter.UntaggedOnly && _tagWork && queued is { Tags.Count: 0 } && QueueProgress.Visibility == Visibility.Visible && ActiveTagFilters.Children.OfType<Button>().Any(b => (b.Content as string)?.Contains(T("Without tags")) == true), "The tag queue did not start at its medium.");
+  await ChangeTagsAsync([queued!.Id], ["queue-done"], []); await _lastRefresh; await Idle();
+  Require(MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == queued.Id).IsFinished && QueueProgress.Value > 0, "A tagged medium did not stay in the queue as done.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-queue.png"));
+  SetTagWork(false); await ChangeTagsAsync([queued.Id], [], ["queue-done"]); _repository.Delete(untagged.Id); MediaList.SelectedItems.Clear(); _offWindowSelection = []; ApplyViewState(new ViewState()); await _lastRefresh; await Idle();
+  // The media jobs and the page of a medium stay in the main window, with the inspector beside the medium.
+  OpenQueue(); await _lastRefresh; await Idle();
+  Require(_view == "jobs" && JobsPage().IsVisible && !MediaList.IsVisible && !DetailsPane.IsVisible, "The media jobs are not a page.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-jobs.png"));
+  ApplyViewState(new ViewState()); await _lastRefresh; await Idle();
+  var detailed = _repository.GetMedia(first.Item.Id)!;
+  MediaList.SelectedItem = MediaList.Items.Cast<MediaCard>().First(c => c.Item.Id == detailed.Id); await Idle();
+  OpenDetail(detailed); await _lastRefresh; await Idle();
+  Require(_view == "detail" && DetailPage is { IsVisible: true } && DetailPage.Shown == detailed.Id && !MediaList.IsVisible && DetailsPane.IsVisible && Selected?.Id == detailed.Id && SelectionBar.Visibility != Visibility.Visible, "The detail page or its inspector is wrong.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-detail.png"));
+  await WalkHistoryAsync(-1); await _lastRefresh; await Idle();
+  Require(_view == "all" && MediaList.IsVisible && DetailPage!.Shown == null && SelectedMedia.Any(m => m.Id == detailed.Id) && _offWindowSelection.Count == 0, "Back from the detail page did not restore the selection.");
+  MediaList.SelectedItems.Clear(); ShowDetails(); await Idle();
   // The interface size reaches the window and returns to normal.
   InterfaceScaling.Apply(1.25); Require(((FrameworkElement)Content).LayoutTransform is System.Windows.Media.ScaleTransform { ScaleX: 1.25 }, "The interface size did not reach the window.");
   await Idle(); Capture(this, Path.Combine(directory, "desktop-size-125.png"));
@@ -116,9 +142,11 @@ public partial class MainWindow
   InterfaceScaling.Apply(1); Require(((FrameworkElement)Content).LayoutTransform is not System.Windows.Media.ScaleTransform, "The interface size did not return to normal.");
   // A multi-selection is stated at the grid and can be cleared there.
   MediaList.SelectedItems.Clear(); foreach (var card in MediaList.Items.Cast<MediaCard>().Take(2)) MediaList.SelectedItems.Add(card); await Idle();
-  Require(SelectionBar.Visibility == Visibility.Visible, "The selection bar is missing for a multi-selection.");
+  Require(SelectionBar.Visibility == Visibility.Visible && DetailsPane.Visibility == Visibility.Visible, "The selection bar or inspector is missing for a multi-selection.");
+  Require(CollectionChoices(SelectedMedia).Any() && MediaMenu(SelectedMedia).Count > 0, "The selection bar has nothing to offer.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-selection-bar.png"));
   ClearSelectionClicked(this, new RoutedEventArgs()); await Idle();
-  Require(SelectedMedia.Count == 0 && SelectionBar.Visibility == Visibility.Collapsed, "Clearing the selection left it active.");
+  Require(SelectedMedia.Count == 0 && SelectionBar.Visibility == Visibility.Collapsed && DetailsPane.Visibility == Visibility.Collapsed && !DetailsRail.IsVisible && DetailsColumn.Width.Value == 0, "Clearing the selection left it or the inspector active.");
   Require(ViewTitle.Text == T("All items") && ActiveTagFilters.Children.Count == 0, "Clearing tag filters did not reset the view.");
   await ChangeTagsAsync(ids, [], ["Ausflug"]); await ChangeTagsAsync([others[0].Item.Id, others[1].Item.Id], [], ["Natur", "Erinnerungen"]);
   Require(_repository.QueryPage(new() { RequiredTags = ["Natur"] }).TotalCount == 1, "Bulk tag removal failed.");

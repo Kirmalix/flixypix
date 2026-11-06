@@ -12,15 +12,15 @@ using FlixyPix.Core;
 
 namespace FlixyPix.Desktop;
 
-/// <summary>The start page: a large banner with up to five media that take turns, and rows that scroll sideways (continue
-/// watching, suggestions, recently added, performers, studios …). Cards share the width of the window: as many as fit,
+/// <summary>The start page to carry on from: what is left to do, then rows that scroll sideways, led by continue watching,
+/// recently added and recently tagged. Cards share the width of the window: as many as fit,
 /// at least two. Everything comes from <see cref="HomeFeed"/>; the page only shows it.</summary>
 internal sealed class HomePage : Grid
 {
  internal Action<MediaItem>? Open { get; set; }
  internal Action<MediaItem>? ToggleQuick { get; set; }
- internal Func<MediaItem,CancellationToken,Task<ImageSource?>>? FeaturedVideoArtwork { get; set; }
- internal Action<MediaItem>? ToggleWatchLater { get; set; }
+ /// <summary>A card outside "continue watching" leads to the page of its medium.</summary>
+ internal Action<MediaItem>? OpenDetails { get; set; }
  internal Action<HomeRow>? ShowAll { get; set; }
  internal Action<DirectoryEntry>? ShowEntity { get; set; }
  internal Action? Import { get; set; }
@@ -33,19 +33,10 @@ internal sealed class HomePage : Grid
  private readonly ScrollViewer scroller = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
  private readonly StackPanel content = new() { Margin = new Thickness(0, 0, 0, 24) };
  private readonly List<FrameworkElement> cards = [];
- private readonly DispatcherTimer heroTimer = new() { Interval = TimeSpan.FromSeconds(9) };
- private IReadOnlyList<HomeCard> heroes = [];
- private long artworkVersion;
- private CancellationTokenSource? featuredRequest;
- private int heroIndex;
- private Grid? hero;
- private Border sideFade = new(), bottomFade = new();
- private Image? heroPicture;
- private TextBlock? heroTitle, heroReason;
- private Button? heroPlay, heroLater;
- private StackPanel? heroDots;
+ private readonly WrapPanel tasks = new() { Margin = new Thickness(2, 0, 0, 4), Visibility = Visibility.Collapsed };
  internal int RowCount { get; private set; }
- internal int HeroCount => heroes.Count;
+ internal int TaskCount => tasks.Children.OfType<Button>().Count();
+ internal IReadOnlyList<HomeRowKind> Order { get; private set; } = [];
  internal double CardWidth { get; private set; } = 240;
 
  private readonly MediaCardContext _cardContext;
@@ -54,20 +45,12 @@ internal sealed class HomePage : Grid
   _cardContext = context;
   scroller.Content = content; Children.Add(scroller);
   SizeChanged += (_, _) => Fit();
-  heroTimer.Tick += (_, _) => ShowHero(heroIndex + 1);
-  // The theme outlives a page; subscribe only while it is in a window, so a closed library window is not kept alive.
-  Loaded += (_, _) => { Theme.Changed -= PaintFades; Theme.Changed += PaintFades; PaintFades(); };
-  Unloaded += (_, _) => Theme.Changed -= PaintFades;
-  IsVisibleChanged += (_, _) => { if (IsVisible && heroes.Count > 1) heroTimer.Start(); else {heroTimer.Stop();featuredRequest?.Cancel();} };
  }
 
  /// <summary>Grey placeholders while the feed is being built.</summary>
  internal void ShowLoading()
  {
-  featuredRequest?.Cancel();content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
-  var banner = new Border { Height = 300, CornerRadius = new CornerRadius(14), Margin = new Thickness(0, 0, 0, 24) };
-  banner.SetResourceReference(Border.BackgroundProperty, "CardBackground");
-  content.Children.Add(banner);
+  content.Children.Clear(); cards.Clear();
   for (var row = 0; row < 2; row++)
   {
    var strip = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 34, 0, 18) };
@@ -80,25 +63,36 @@ internal sealed class HomePage : Grid
   }
  }
 
+ /// <summary>The three rows to carry on from lead, whatever order the others were chosen in.</summary>
+ private static int Rank(HomeRowKind kind) => kind switch { HomeRowKind.ContinueWatching => 0, HomeRowKind.RecentlyAdded => 1, HomeRowKind.RecentlyTagged => 2, _ => 3 };
+
  internal void Show(HomeFeed feed, bool libraryEmpty)
  {
-  // A rebuilt page keeps the place it was scrolled to and the banner entry on show.
-  var offset = scroller.VerticalOffset; var shownId = CurrentHero?.Item.Id;
-  featuredRequest?.Cancel();content.Children.Clear(); cards.Clear(); hero = null; heroTimer.Stop();
-  if (libraryEmpty) { content.Children.Add(Welcome()); RowCount = 0; heroes = []; return; }
-  artworkVersion++;
-  heroes = feed.Hero;
-
-  if (heroes.Count > 0)
-  {
-   content.Children.Add(Hero());
-   ShowHero(Math.Max(0, heroes.ToList().FindIndex(h => h.Item.Id == shownId)), animate: false);
-   if (heroes.Count > 1 && IsVisible) heroTimer.Start();
-  }
-  foreach (var row in feed.Rows) content.Children.Add(Row(row));
-  RowCount = feed.Rows.Count;
+  // A rebuilt page keeps the place it was scrolled to.
+  var offset = scroller.VerticalOffset;
+  content.Children.Clear(); cards.Clear();
+  if (libraryEmpty) { content.Children.Add(Welcome()); RowCount = 0; return; }
+  content.Children.Add(tasks);
+  var rows = feed.Rows.OrderBy(row => Rank(row.Kind)).ToList();
+  foreach (var row in rows) content.Children.Add(Row(row));
+  RowCount = rows.Count; Order = rows.Select(row => row.Kind).ToList();
   Fit();
   scroller.ScrollToVerticalOffset(offset);
+ }
+
+ /// <summary>A small strip of what is left to do; hidden when nothing is.</summary>
+ internal void ShowTasks(IReadOnlyList<(string Label, long Count, Action Open)> open)
+ {
+  tasks.Children.Clear();
+  tasks.Visibility = open.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+  if (open.Count == 0) return;
+  tasks.Children.Add(new TextBlock { Text = T("To do:"), Foreground = SettingsUi.Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 6) });
+  foreach (var (label, count, go) in open)
+  {
+   var button = new Button { Content = count.ToString("N0", CultureInfo.CurrentCulture) + " · " + label, Padding = new Thickness(10, 4, 10, 4), FontSize = 12 };
+   button.Click += (_, _) => go();
+   tasks.Children.Add(button);
+  }
  }
 
  private FrameworkElement Welcome()
@@ -118,106 +112,13 @@ internal sealed class HomePage : Grid
   return panel;
  }
 
- // ----- Banner -----
-
- private FrameworkElement Hero()
- {
-  hero = new Grid { Height = 360, Margin = new Thickness(0, 0, 0, 10) };
-  RoundedClip.SetRadius(hero, 14);
-  hero.Loaded+=(_,_)=> {if(CurrentHero is {} current)_=ShowHeroPictureAsync(current.Item,false);};
-  hero.IsVisibleChanged+=(_,_)=> {if(hero?.IsVisible==true&&CurrentHero is {} current)_=ShowHeroPictureAsync(current.Item,false);else featuredRequest?.Cancel();};
-  hero.SetResourceReference(BackgroundProperty, "MediaBackground");
-  heroPicture = new Image { Stretch = Stretch.UniformToFill, HorizontalAlignment = HorizontalAlignment.Right };
-  Privacy.SetBlur(heroPicture, true); hero.Children.Add(heroPicture);
-  // The picture fades into the page towards the text on the left and the rows below.
-  sideFade = new Border(); bottomFade = new Border(); PaintFades();
-  hero.Children.Add(sideFade); hero.Children.Add(bottomFade);
-  var text = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(36, 0, 36, 34), MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Left };
-  heroTitle = new TextBlock { FontSize = 34, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = 92 };
-  heroTitle.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
-  heroReason = new TextBlock { FontSize = 14, Margin = new Thickness(0, 6, 0, 16), Foreground = SettingsUi.Muted, TextTrimming = TextTrimming.CharacterEllipsis };
-  heroPlay = new Button { Style = (Style)Application.Current.Resources["Primary"], Padding = new Thickness(20, 10, 22, 10), Margin = new Thickness(0, 0, 10, 0) };
-  heroPlay.Click += (_, _) => { if (CurrentHero is { } card) Open?.Invoke(card.Item); };
-  heroLater = new Button { Padding = new Thickness(16, 10, 16, 10) };
-  heroLater.Click += (_, _) => { if (CurrentHero is { } card) { ToggleWatchLater?.Invoke(card.Item); heroes = heroes.Select(h => h.Item.Id == card.Item.Id ? h with { Item = h.Item with { WatchLater = !h.Item.WatchLater } } : h).ToList(); ShowHero(heroIndex, animate: false); } };
-  var buttons = new StackPanel { Orientation = Orientation.Horizontal }; buttons.Children.Add(heroPlay); buttons.Children.Add(heroLater);
-  heroDots = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 18, 0, 0) };
-  text.Children.Add(heroTitle); text.Children.Add(heroReason); text.Children.Add(buttons); text.Children.Add(heroDots);
-  var collect=QuickButton(()=>CurrentHero?.Item);collect.HorizontalAlignment=HorizontalAlignment.Right;collect.VerticalAlignment=VerticalAlignment.Top;collect.Margin=new Thickness(12);hero.Children.Add(collect);
-  hero.Children.Add(text);
-  OffersMenu(hero, () => CurrentHero?.Item);
-  hero.MouseEnter += (_, _) => heroTimer.Stop();
-  hero.MouseLeave += (_, _) => { if (heroes.Count > 1) heroTimer.Start(); };
-  return hero;
- }
-
- /// <summary>The fades end in the page colour, so they follow a change of the colour scheme.</summary>
- private void PaintFades()
- {
-  var page = Theme.Color("WindowBackground", Theme.IsDark);
-  Color Alpha(byte alpha) => Color.FromArgb(alpha, page.R, page.G, page.B);
-  sideFade.Background = new LinearGradientBrush(new GradientStopCollection { new(page, 0), new(Alpha(200), .38), new(Alpha(0), .75) }, 0);
-  bottomFade.Background = new LinearGradientBrush(new GradientStopCollection { new(Alpha(0), .55), new(page, 1) }, 90);
- }
-
- private HomeCard? CurrentHero => heroes.Count == 0 ? null : heroes[heroIndex % heroes.Count];
-
- internal void ShowHero(int index, bool animate = true)
- {
-  if (heroes.Count == 0 || heroPicture is null) return;
-  heroIndex = (index % heroes.Count + heroes.Count) % heroes.Count;
-  var card = heroes[heroIndex];
-  var tile = new MediaCard(card.Item, loadThumbnail: false, context: _cardContext);
-  _ = ShowHeroPictureAsync(card.Item, animate);
-  heroTitle!.Text = tile.Title;
-  heroReason!.Text = string.Join(" · ", new[] { card.Reason, tile.DurationLabel, tile.Stars }.Where(s => !string.IsNullOrWhiteSpace(s)));
-  var started = tile.ProgressVisibility == Visibility.Visible;
-  heroPlay!.Content = Label(card.Item.Kind == MediaKind.Image ? "" : "", card.Item.Kind == MediaKind.Image ? T("View") : started ? T("Continue watching") : T("Play"));
-  heroLater!.Content = Label(card.Item.WatchLater ? "" : "", card.Item.WatchLater ? T("On the watch list") : T("Watch later"));
-  heroDots!.Children.Clear();
-  for (var i = 0; i < heroes.Count; i++)
-  {
-   var target = i;
-   var dot = new Button { Width = i == heroIndex ? 22 : 8, Height = 8, Margin = new Thickness(0, 0, 6, 0), Cursor = Cursors.Hand, ToolTip = heroes[i].Item.Title, Focusable = false,
-    Template = (ControlTemplate)System.Windows.Markup.XamlReader.Parse("<ControlTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" TargetType=\"Button\"><Border Background=\"{TemplateBinding Background}\" CornerRadius=\"4\"/></ControlTemplate>") };
-   dot.SetResourceReference(BackgroundProperty, i == heroIndex ? "Accent" : "ScrollThumb");
-   dot.Click += (_, _) => ShowHero(target);
-   heroDots.Children.Add(dot);
-  }
- }
-
- /// <summary>The banner is wide, so it decodes its picture larger than a tile does; pictures stay cached while the page lives.</summary>
- private async Task ShowHeroPictureAsync(MediaItem item, bool animate)
- {
-  featuredRequest?.Cancel();featuredRequest?.Dispose();featuredRequest=new();
-  var token=featuredRequest.Token;
-  var version=artworkVersion;
-  var path = item.ThumbnailPath ?? (item.Kind == MediaKind.Image ? item.Path : null);
-  var picture = item.Kind==MediaKind.Video && hero?.IsVisible==true && ActualHeight>=560 && FeaturedVideoArtwork!=null
-   ? await FeaturedVideoArtwork(item,token) : await Task.Run(() => MediaCard.LoadBitmap(path, _cardContext.DecodeWidth));
-  if(token.IsCancellationRequested||version!=artworkVersion)return;
-  if (CurrentHero?.Item.Id != item.Id || heroPicture is null) return;
-  heroPicture.Source = picture;
-  heroPicture.Stretch=picture is System.Windows.Media.Imaging.BitmapSource bitmap && bitmap.PixelWidth<960?Stretch.None:Stretch.UniformToFill;
-  if(picture is null)hero!.Height=260;
-  if (animate && Motion.Enabled) heroPicture.BeginAnimation(OpacityProperty, new DoubleAnimation(.2, 1, TimeSpan.FromMilliseconds(600)));
- }
-
- private static StackPanel Label(string glyph, string text)
- {
-  var panel = new StackPanel { Orientation = Orientation.Horizontal };
-  panel.Children.Add(new TextBlock { Text = glyph, FontFamily = SettingsUi.Icons, FontSize = 13, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 9, 0) });
-  panel.Children.Add(new TextBlock { Text = text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
-  return panel;
- }
-
  // ----- Rows -----
 
  private FrameworkElement Row(HomeRow row)
  {
   var panel = new StackPanel { Margin = new Thickness(0, 22, 0, 0) };
   var header = new DockPanel { Margin = new Thickness(2, 0, 4, 10) };
-  if (ShowAll != null && row.Kind is not (HomeRowKind.FavoritePerformers or HomeRowKind.Studios or HomeRowKind.ContinueWatching or HomeRowKind.RandomOfTheDay or HomeRowKind.RecentlyWatched))
+  if (ShowAll != null && row.Kind is not (HomeRowKind.FavoritePerformers or HomeRowKind.Studios or HomeRowKind.ContinueWatching or HomeRowKind.RandomOfTheDay or HomeRowKind.RecentlyWatched or HomeRowKind.RecentlyTagged))
   {
    var all = new Button { Content = T("Show all ›"), Style = (Style)Application.Current.Resources["Quiet"], FontSize = 13 };
    all.Click += (_, _) => ShowAll?.Invoke(row);
@@ -294,7 +195,7 @@ internal sealed class HomePage : Grid
   var title = new TextBlock { Text = tile.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(2, 8, 2, 1) };
   var reason = new TextBlock { Text = card.Reason ?? tile.Subtitle, FontSize = 12, Foreground = SettingsUi.Muted, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(2, 0, 2, 0) };
   var stack = new StackPanel(); stack.Children.Add(frame); stack.Children.Add(title); stack.Children.Add(reason);
-  var button = CardButton(stack, card.Item.Title, () => Open?.Invoke(card.Item));
+  var button = CardButton(stack, card.Item.Title, () => { if (showProgress || OpenDetails == null) Open?.Invoke(card.Item); else OpenDetails(card.Item); });
   button.ToolTip = card.Item.Path;
   OffersMenu(button, () => card.Item);
   _ = tile.EnsureLoaded();
@@ -372,18 +273,13 @@ internal sealed class HomePage : Grid
   return button;
  }
 
- /// <summary>Cards share the visible width: as many as fit at about 240 px, at least two; the banner follows the height.</summary>
+ /// <summary>Cards share the visible width: as many as fit at about 240 px, at least two.</summary>
  private void Fit()
  {
   var width = Math.Max(300, ActualWidth - 20);
   var visible = Math.Max(2, (int)((width + 14) / (240 + 14)));
   CardWidth = Math.Floor((width + 14) / visible - 14);
   foreach (var card in cards) card.Width = CardWidth;
-  if (hero != null)
-  {
-   hero.Height = Math.Clamp(ActualHeight * .5, 260, 460);
-   hero.Visibility = ActualHeight < 560 ? Visibility.Collapsed : Visibility.Visible;
-  }
  }
 
  private static T? FindParent<T>(DependencyObject child) where T : DependencyObject

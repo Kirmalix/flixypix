@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace FlixyPix.Desktop;
@@ -20,6 +21,8 @@ public partial class MainWindow
  private bool _sidebarAutoFolded, _detailsAutoFolded;
  private string _detailsTab = "details";
 
+ /// <summary>Pages of their own bring what they need, and the inspector has nothing to say without a selection.</summary>
+ private bool DetailsNotNeeded => _view == "home" || IsRoleView || IsPageView && !IsDetailView || IsImageSetView || IsPublicationGroupView || SelectedMedia.Count == 0;
  internal bool SidebarExpanded => Sidebar.Visibility == Visibility.Visible;
  internal bool DetailsExpanded => DetailsPane.Visibility == Visibility.Visible;
  internal string DetailsTab => _detailsTab;
@@ -29,7 +32,7 @@ public partial class MainWindow
  private void ToggleDetailsClicked(object sender, RoutedEventArgs e) => ToggleDetails();
  internal void ToggleDetails()
  {
-  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) return;
+  if (DetailsNotNeeded) return;
   _detailsAutoFolded = false; SetDetails(!DetailsExpanded); SaveViewPreferences();
  }
 
@@ -44,9 +47,9 @@ public partial class MainWindow
 
  private void SetDetails(bool expanded)
  {
-  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView))
+  if (DetailsNotNeeded)
   {
-   // The start page needs no details and takes their place.
+   // The media take their place.
    DetailsPane.Visibility = DetailsRail.Visibility = DetailsResizer.Visibility = Visibility.Collapsed;
    DetailsColumn.Width = new GridLength(0); return;
   }
@@ -56,17 +59,47 @@ public partial class MainWindow
   DetailsColumn.Width = new GridLength(expanded ? Math.Clamp(_settings.DetailsWidth, DetailsMinimum, DetailsMaximum) : RailWidth);
  }
 
- /// <summary>After each refresh and resize: the start page hides the details; narrow windows fold the bars by themselves.</summary>
+ /// <summary>After each refresh and resize: the details show only when needed; narrow windows fold the bars by themselves.</summary>
  private void AdaptToWidth()
  {
   var sidebarNarrow = ActualWidth < SidebarFoldWidth;
   if (sidebarNarrow && !_sidebarAutoFolded && SidebarExpanded) { _sidebarAutoFolded = true; SetSidebar(false); }
   else if (!sidebarNarrow && _sidebarAutoFolded) { _sidebarAutoFolded = false; SetSidebar(!_settings.SidebarCollapsed); }
   var detailsNarrow = ActualWidth < DetailsFoldWidth;
-  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) SetDetails(false);
+  if (DetailsNotNeeded) SetDetails(false);
   else if (detailsNarrow && !_detailsAutoFolded && !_settings.DetailsCollapsed) { _detailsAutoFolded = true; SetDetails(false); }
   else if (!detailsNarrow && _detailsAutoFolded) { _detailsAutoFolded = false; SetDetails(!_settings.DetailsCollapsed); }
   else SetDetails(_detailsAutoFolded ? false : !_settings.DetailsCollapsed);
+ }
+
+ private bool _detailsWanted;
+ private DispatcherTimer? _detailsAppear;
+
+ /// <summary>The inspector comes with the first selection and goes with the last. Its width moves the tiles, so after a
+ /// click it waits until a second click of a double click has landed on the tile that was meant.</summary>
+ private void UpdateDetailsNeed()
+ {
+  var wanted = SelectedMedia.Count > 0;
+  if (wanted == _detailsWanted) return;
+  _detailsWanted = wanted;
+  _detailsAppear?.Stop();
+  if (!wanted || InputManager.Current.MostRecentInputDevice is not MouseDevice) { ShowDetailsNeed(clicked: false); return; }
+  if (_detailsAppear == null)
+  {
+   _detailsAppear = new() { Interval = TimeSpan.FromMilliseconds(GetDoubleClickTime()) };
+   _detailsAppear.Tick += (_, _) => { _detailsAppear.Stop(); if (!_closing) ShowDetailsNeed(clicked: true); };
+  }
+  _detailsAppear.Start();
+ }
+ private void ShowDetailsNeed(bool clicked)
+ {
+  var first = _visibleFirst;
+  AdaptToWidth();
+  // The columns changed: a clicked tile stays in sight, otherwise the view keeps its place.
+  if (clicked) { if (MediaList.SelectedItem is { } card) Dispatcher.BeginInvoke(() => { if (!_closing && MediaList.SelectedItem == card) MediaList.ScrollIntoView(card); }, DispatcherPriority.Loaded); return; }
+  if (first <= 0 || _view == "home" || !MediaList.IsVisible) return;
+  MediaList.UpdateLayout();
+  Tiles?.ScrollToIndex(first);
  }
 
  // ----- Widths -----
@@ -104,7 +137,7 @@ public partial class MainWindow
  /// <summary>Opens the details at a part: with tabs the tab, otherwise the place in the long column.</summary>
  internal void OpenDetailsAt(string part)
  {
-  if ((_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView)) return;
+  if (DetailsNotNeeded) return;
   if (!DetailsExpanded) { _detailsAutoFolded = false; SetDetails(true); SaveViewPreferences(); }
   if (_settings.DetailsTabs) { ShowDetailsTab(part); return; }
   FrameworkElement target = part switch { "tags" => DetailsTagsPart, "scenes" => DetailsScenesPart, _ => DetailsFieldsPart };

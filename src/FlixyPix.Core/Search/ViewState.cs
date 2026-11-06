@@ -21,6 +21,8 @@ public sealed record ViewState
     public string View { get; init; } = "all";
     /// <summary>Media kind inside the folder view, which is a place and therefore not a kind of its own.</summary>
     public MediaKind? KindFilter { get; init; }
+    /// <summary>The medium of the detail page.</summary>
+    public Guid? DetailId { get; init; }
     public List<ReviewState> ReviewStates { get; init; } = [];
     public DirectoryViewState? Directory { get; init; }
     public Guid? ImageSetId { get; init; }
@@ -55,17 +57,17 @@ public sealed record ViewState
     public DateTimeOffset SavedAt { get; init; }
 
     /// <summary>"home" is the start page; as a query it stands for all media.</summary>
-    public static readonly string[] Views = ["publication-groups", "image-sets", "inbox", "home", "performers", "studios", "all", "folders", "Video", "Image", "Audio", "favorites", "watchlater"];
+    public static readonly string[] Views = ["publication-groups", "image-sets", "inbox", "home", "performers", "studios", "gallery-performers", "gallery-studios", "wall", "jobs", "detail", "order", "all", "folders", "Video", "Image", "Audio", "favorites", "watchlater"];
 
     /// <summary>The part of the state a scope restores; the rest falls back to an empty view.</summary>
     public ViewState Restricted(RestoreScope scope) => scope == RestoreScope.All ? this : new ViewState
     {
-        View = View, ImageSetId = ImageSetId, PublicationGroupId=PublicationGroupId, PlaylistId = PlaylistId, SavedSearchId = SavedSearchId, SortOrder = SortOrder, ViewMode = ViewMode, TileWidth = TileWidth, SavedAt = SavedAt
+        View = View, DetailId = DetailId, ImageSetId = ImageSetId, PublicationGroupId=PublicationGroupId, PlaylistId = PlaylistId, SavedSearchId = SavedSearchId, SortOrder = SortOrder, ViewMode = ViewMode, TileWidth = TileWidth, SavedAt = SavedAt
     };
 
     /// <summary>Same view, filters and order; position and selection do not count (used by the history).</summary>
     public bool SameView(ViewState other) =>
-        View == other.View && KindFilter == other.KindFilter && ImageSetId == other.ImageSetId && PublicationGroupId==other.PublicationGroupId && Directory?.Selected == other.Directory?.Selected && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
+        View == other.View && KindFilter == other.KindFilter && DetailId == other.DetailId && ImageSetId == other.ImageSetId && PublicationGroupId==other.PublicationGroupId && Directory?.Selected == other.Directory?.Selected && PlaylistId == other.PlaylistId && SavedSearchId == other.SavedSearchId && SearchText == other.SearchText &&
         Tag == other.Tag && TagCategory == other.TagCategory && Category == other.Category && Folder == other.Folder && IncludeSubfolders == other.IncludeSubfolders &&
         ReviewStates.SequenceEqual(other.ReviewStates) && RequiredTags.SequenceEqual(other.RequiredTags) && ExcludedTags.SequenceEqual(other.ExcludedTags) && MinimumStars == other.MinimumStars &&
         SortOrder == other.SortOrder && TagsMatchAny == other.TagsMatchAny &&
@@ -194,6 +196,7 @@ public sealed partial class CatalogRepository
             var preferences = ReadPreferences();
             var tags = new HashSet<string>(facets.Tags.Concat(preferences.TagVocabulary.Select(t => t.Tag)), StringComparer.OrdinalIgnoreCase);
             if (!ViewState.Views.Contains(state.View)) { removed.Add(T("View {0}", state.View)); result = result with { View = "all" }; }
+            if (state.View == "detail" && (state.DetailId is not { } detail || GetMedia(detail) is null)) result = result with { View = "all", DetailId = null };
             if (state.ImageSetId is { } setId && GetImageSet(setId) is null)
             { removed.Add(T("Image sets")); result = result with { ImageSetId = null }; }
             if(state.PublicationGroupId is {} groupId&&GetPublicationGroup(groupId)==null)

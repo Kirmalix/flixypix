@@ -16,7 +16,7 @@ public partial class MainWindow
     private static readonly string FolderGlyph = ((char)0xE8B7).ToString();
     private string? _folderNavigationKey;
 
-    private bool ShowsMediaGrid => !(_view == "home" || IsRoleView || IsImageSetView || IsPublicationGroupView);
+    private bool ShowsMediaGrid => !(_view == "home" || IsRoleView || IsPageView || IsImageSetView || IsPublicationGroupView);
     private bool InFolderView => _view == FolderView && _playlist == null;
     internal bool FilterPanelShown => FilterPane.Visibility == Visibility.Visible;
     internal bool FolderTreeShown => FolderPane.Visibility == Visibility.Visible;
@@ -39,6 +39,7 @@ public partial class MainWindow
         BrowsePanelColumn.Width = new GridLength(filters || tree ? Math.Clamp(_settings.BrowsePanelWidth, PanelMinimum, PanelMaximum) : 0);
         FolderTreeButton.Visibility = InFolderView && !tree ? Visibility.Visible : Visibility.Collapsed;
         IncludeFolderChildren.Visibility = InFolderView ? Visibility.Visible : Visibility.Collapsed;
+        ViewButton.Visibility = ShowsMediaGrid ? Visibility.Visible : Visibility.Collapsed;
         if (filters && !wasOpen && FilterMoreTab.Visibility == Visibility.Visible) RenderFilterMore();
     }
 

@@ -27,7 +27,7 @@ internal sealed partial class SettingsWindow
  }
  private void LoadHome(HomePreferences home)
  {
-  foreach (var (kind, check) in HomeRows) check.IsChecked = home.Rows.Contains(kind);
+  foreach (var (kind, check) in HomeRows) check.IsChecked = home.Rows.Contains(kind) || kind == HomeRowKind.RecentlyTagged && !home.TaggedRowChosen;
   Library.RecentDays.Value = home.RecentDays;
  }
  private void LoadHistory(HistoryPreferences history)
@@ -168,7 +168,7 @@ internal sealed partial class SettingsWindow
     Home = new HomePreferences
     {
      StartOnHome = RestoreChoice.Value == 0, RecentDays = (int)Math.Round(Library.RecentDays.Value!.Value),
-     Rows = [.. preferences.Home.Rows.Concat(HomePreferences.DefaultRows).Distinct().Where(kind => HomeRows[kind].IsChecked == true)],
+     Rows = [.. preferences.Home.Rows.Concat(HomePreferences.DefaultRows).Distinct().Where(kind => HomeRows[kind].IsChecked == true)], TaggedRowChosen = true,
     },
     Nfo = new NfoPreferences
     {

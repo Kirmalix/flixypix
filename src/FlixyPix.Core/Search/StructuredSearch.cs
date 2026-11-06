@@ -31,7 +31,9 @@ public enum SearchField
     /// <summary>Number of files of the medium: 1 plus its further versions.</summary>
     Versions,
     /// <summary>Lines of the picture: the shorter side, as the resolution classes count.</summary>
-    Lines, HasThumbnail, ReviewState
+    Lines, HasThumbnail, ReviewState,
+    /// <summary>The medium carries no tag at all.</summary>
+    Untagged
 }
 public enum SearchComparison
 {
@@ -89,7 +91,7 @@ public sealed partial class CatalogRepository
     }
 
     private static bool NumericField(SearchField field) => field is SearchField.Rating or SearchField.Duration or SearchField.FileSize or SearchField.Width or SearchField.Height or SearchField.PlaybackPosition or SearchField.PlayCount or SearchField.ViewCount or SearchField.Bitrate or SearchField.OCount or SearchField.WatchCount or SearchField.FrameRate or SearchField.Versions or SearchField.Lines;
-    private static bool BooleanField(SearchField field) => field is SearchField.HasThumbnail or SearchField.WatchLater or SearchField.Favorite or SearchField.Portrait or SearchField.Hdr;
+    private static bool BooleanField(SearchField field) => field is SearchField.Untagged or SearchField.HasThumbnail or SearchField.WatchLater or SearchField.Favorite or SearchField.Portrait or SearchField.Hdr;
     private static bool DateField(SearchField field) => field is SearchField.AddedAt or SearchField.FileDate or SearchField.ReleaseDate;
     private static bool SetField(SearchField field) => field is SearchField.Tag or SearchField.TagCategory;
     private static bool PresenceComparison(SearchComparison comparison) => comparison is SearchComparison.IsKnown or SearchComparison.IsUnknown;
@@ -151,6 +153,7 @@ public sealed partial class CatalogRepository
         if(condition.Field==SearchField.CategorizedTag)return BuildCategorizedTagSql(condition,parameter);
         if (condition.Field == SearchField.Profile) return BuildProfileSql(condition, parameter, transaction);
         if (condition.Field == SearchField.MarkTag) return BuildMarkTagSql(condition, parameter);
+        if (condition.Field == SearchField.Untagged) return (condition.Flag == false ? "" : "NOT ") + "EXISTS (SELECT 1 FROM media_tags t WHERE t.media_id=q.id AND t.tag<>'')";
         var column = condition.Field switch
         {
             // Known without touching a file: a checked result counts, otherwise an entered thumbnail is taken as present and

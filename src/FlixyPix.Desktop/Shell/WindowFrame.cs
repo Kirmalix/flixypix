@@ -11,22 +11,23 @@ internal sealed class WindowFrame : DockPanel
  internal Panel Buttons { get; }
 
  /// <param name="status">A status line the window already updates; otherwise the frame makes one.</param>
- internal WindowFrame(string title, string? hint, UIElement body, string? glyph = null, bool scroll = true, TextBlock? status = null, bool wrapActions = false)
+ internal WindowFrame(string title, string? hint, UIElement body, string? glyph = null, bool scroll = true, TextBlock? status = null, bool wrapActions = false, bool embedded = false)
  {
   Buttons = wrapActions ? new WrapPanel() : new StackPanel { Orientation = Orientation.Horizontal };
   Status = status ?? new TextBlock { Foreground = SettingsUi.Muted };
   Status.VerticalAlignment = VerticalAlignment.Center; Status.TextTrimming = TextTrimming.CharacterEllipsis; Status.TextWrapping = TextWrapping.NoWrap; Status.Margin = new Thickness(0, 0, 12, 0);
-  var header = new StackPanel { Margin = new Thickness(24, 20, 24, 12) };
+  var header = new StackPanel { Margin = embedded ? new Thickness(0, 0, 0, 10) : new Thickness(24, 20, 24, 12) };
   var heading = new StackPanel { Orientation = Orientation.Horizontal };
   if (glyph != null) { var symbol = SettingsUi.Icon(glyph, 22); symbol.Foreground = SettingsUi.Accent; symbol.Margin = new Thickness(0, 0, 12, 0); heading.Children.Add(symbol); }
   heading.Children.Add(new TextBlock { Text = title, FontSize = 21, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
-  header.Children.Add(heading);
+  // A page in the main window already has its title above.
+  if (!embedded) header.Children.Add(heading);
   if (hint != null) header.Children.Add(SettingsUi.Hint(hint));
-  var footer = new DockPanel { Margin = new Thickness(24, 12, 24, 18) };
+  var footer = new DockPanel { Margin = embedded ? new Thickness(0, 10, 0, 0) : new Thickness(24, 12, 24, 18) };
   DockPanel.SetDock(Buttons, wrapActions ? Dock.Bottom : Dock.Right); footer.Children.Add(Buttons); footer.Children.Add(Status);
   var divider = new Border { Height = 1, Background = SettingsUi.CardBorder };
   foreach (var (element, dock) in new (UIElement, Dock)[] { (header, Dock.Top), (footer, Dock.Bottom), (divider, Dock.Bottom) }) { SetDock(element, dock); Children.Add(element); }
-  var content = new Border { Padding = new Thickness(24, 0, 24, 12), Child = body };
+  var content = new Border { Padding = embedded ? new Thickness(0) : new Thickness(24, 0, 24, 12), Child = body };
   Children.Add(scroll ? new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled } : content);
  }
 

@@ -13,7 +13,7 @@ public partial class MainWindow
         {
             _backupTimer.Stop(); StopFolderSync();
             _draftTimer.Stop();
-            _homeArtworkCancellation.Cancel(); _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
+            _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();
             SaveFolderViewportState(); SaveSuggestionFeedback();
             SaveViewNow(); if (_persistPreferences) SaveWindowPlace();
             _closing = true;

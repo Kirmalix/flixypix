@@ -9,7 +9,7 @@ public partial class MainWindow
         if (!ReferenceEquals(_playback.Current, session) || _closing) return;
         var revision = _browse.Revision;
         int? position = null;
-        if (!IsRoleView && !IsImageSetView && !IsPublicationGroupView && _view != "home" && _window is { } window)
+        if (!IsRoleView && !IsPageView && !IsImageSetView && !IsPublicationGroupView && _view != "home" && _window is { } window)
             position = await Task.Run(() => PositionInView(window, session.MediaId).Position);
         if (_closing || revision != _browse.Revision || !ReferenceEquals(_playback.Current, session)) return;
         if (position is null)

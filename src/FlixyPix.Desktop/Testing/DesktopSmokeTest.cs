@@ -543,7 +543,6 @@ public partial class MainWindow
         await RestoreLastViewAsync(); await Settled();
         Require(_filter.Imported.Window == DateWindow.LastYear && Selected?.Id == placeId && Math.Abs(_visibleFirst - placeIndex) <= Tiles!.Columns,
          $"Restoring everything lost filter, place or selection (first {_visibleFirst}, was {placeIndex}).");
-        Require(VisibleToasts.Any(t => t.StartsWith(T("Continue watching: {0} (at {1})", "\u0001", "").Split('\u0001')[0], StringComparison.Ordinal)), "Continuing the last video was not offered after restoring.");
         Capture(RootContent, Path.Combine(directory, "desktop-restored.png"));
         _repository.SavePreferences(_repository.GetPreferences() with { General = generalBefore });
         ApplyViewState(new ViewState()); await Settled();
@@ -732,8 +731,8 @@ public partial class MainWindow
         var indexBefore = viewer.CurrentIndex; viewer.Navigate(1); await viewer.ReadyTask; Require(viewer.HasImage, "Image viewer next image decoding failed."); Require(viewer.CurrentIndex != indexBefore, "Viewer next image failed."); viewer.Fit(); StopSlideshow();
         Require(hashBefore.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(first.Path))), "Viewer modified source image.");
         var queueDirectory = Path.Combine(directory, "queue");
-        var queue = new MediaQueueWindow(this, queueDirectory, _tools, first.Path, []); queue.AddPreparedJob(new MediaJob { Kind = MediaJobKind.Convert, Input = first.Path, Output = Path.Combine(queueDirectory, "output.mp4") }); queue.Show();
-        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture((FrameworkElement)queue.Content, Path.Combine(directory, "media-queue.png"));
+        var queue = new MediaQueuePage(this, queueDirectory, _tools, first.Path, []); queue.AddPreparedJob(new MediaJob { Kind = MediaJobKind.Convert, Input = first.Path, Output = Path.Combine(queueDirectory, "output.mp4") });
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); 
         var syntheticVideo = Path.Combine(fixtureDirectory, "synthetic-video.mp4");
         if (File.Exists(syntheticVideo))
         {
@@ -746,7 +745,7 @@ public partial class MainWindow
             Require(clips.Count == 2 && clips.All(c => c.Kind == MediaJobKind.Clip && c.MuteAudio && c.DurationSeconds is > 0 and <= 1) && clips[0].Output != clips[1].Output, "Random clips were not planned per video.");
         }
         queue.Close(); await queue.ClosedTask;
-        var reopened = new MediaQueueWindow(this, queueDirectory, _tools, first.Path, []); Require(reopened.JobCount == 1, "Queue window did not persist prepared job."); reopened.Close(); await reopened.ClosedTask;
+        var reopened = new MediaQueuePage(this, queueDirectory, _tools, first.Path, []); Require(reopened.JobCount == 1, "Queue window did not persist prepared job."); reopened.Close(); await reopened.ClosedTask;
         await RunSettingsSmokeTestAsync(directory);
         await RunSettingsEffectSmokeTestAsync(fixtureDirectory);
         await RunOpeningSmokeTestAsync(directory);

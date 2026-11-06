@@ -97,7 +97,6 @@ public partial class MainWindow
         {
             await RestorePlaceAsync(state);
             if (dropped.Count > 0) ShowToast(T("No longer present: ") + string.Join(", ", dropped), MessageBoxImage.Warning);
-            OfferContinueWatching(stored.LastPlayedId);
         }
         _lastPlayedId = stored.LastPlayedId;
         RecordView();
@@ -117,7 +116,7 @@ public partial class MainWindow
 
     private async Task RestorePlaceCoreAsync(ViewState state)
     {
-        if (IsImageSetView || IsPublicationGroupView) return;
+        if (IsImageSetView || IsPublicationGroupView || IsPageView) return;
         if (IsRoleView) { _roleBrowser?.RestoreDirectoryState(state.Directory); return; }
         if (_window is not { } window) return;
         var request = _browse.CaptureRequest(SelectedMedia.Select(i => i.Id));
@@ -140,15 +139,6 @@ public partial class MainWindow
         }
         finally { _refreshing = false; }
         ShowDetails(); UpdatePager();
-    }
-
-    private void OfferContinueWatching(Guid? id)
-    {
-        if (id is not { } played || _repository.GetMedia(played) is not { Kind: not MediaKind.Image, DurationSeconds: > 0 } item) return;
-        var card = new MediaCard(item, false, context: _cardContext);
-        if (card.ProgressVisibility != Visibility.Visible) return;
-        ShowToast(T("Continue watching: {0} (at {1})", item.Title, MediaCard.DurationText(item.PlaybackPositionSeconds)), MessageBoxImage.Information, T("Play"),
-         async () => await Play(item, item.PlaybackPositionSeconds), seconds: 12);
     }
 
     /// <summary>The window comes back where it was; a place on a screen that is gone falls back to the default.</summary>

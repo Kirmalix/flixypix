@@ -2,7 +2,7 @@ using FlixyPix.Core;
 
 namespace FlixyPix.Desktop;
 
-internal enum LibraryViewKind { All, Video, Image, Audio, Favorites, WatchLater, Inbox, Home, Performers, Studios, ImageSets, PublicationGroups }
+internal enum LibraryViewKind { All, Video, Image, Audio, Favorites, WatchLater, Inbox, Home, Performers, Studios, ImageSets, PublicationGroups, Gallery, Wall, Jobs, Detail, Order }
 
 /// <summary>Library navigation state, independent of controls and persisted through the existing ViewState contract.</summary>
 internal sealed class LibraryBrowseController
@@ -78,6 +78,11 @@ internal sealed class LibraryBrowseController
         "home" => LibraryViewKind.Home,
         "performers" => LibraryViewKind.Performers,
         "studios" => LibraryViewKind.Studios,
+        "gallery-performers" or "gallery-studios" => LibraryViewKind.Gallery,
+        "wall" => LibraryViewKind.Wall,
+        "jobs" => LibraryViewKind.Jobs,
+        "detail" => LibraryViewKind.Detail,
+        "order" => LibraryViewKind.Order,
         "image-sets" => LibraryViewKind.ImageSets,
         "publication-groups" => LibraryViewKind.PublicationGroups,
         _ => LibraryViewKind.All,
@@ -103,7 +108,8 @@ internal sealed class LibraryBrowseController
         if (collectionView && (state.Folder is not null || state.PlaylistId is not null || state.Tag is not null ||
             state.TagCategory is not null || state.RequiredTags.Count > 0 || !state.Filter.IsEmpty || state.Expression is not null))
             state = state with { View = "all" };
-        var roleView = state.View is "performers" or "studios";
+        if (state.View == "detail" && state.DetailId is null) state = state with { View = "all" };
+        var roleView = state.View is "performers" or "studios" or "gallery-performers" or "gallery-studios" or "wall" or "jobs" or "detail" or "order";
         if (roleView && (state.Folder is not null || state.PlaylistId is not null || state.Tag is not null || state.TagCategory is not null ||
             state.RequiredTags.Count > 0 || state.ExcludedTags.Count > 0 || !state.Filter.IsEmpty || state.Expression is not null)) state = state with { View = "all" };
         if (state.View == "home" && (state.SearchText is { Length: > 0 } || state.Tag is not null || state.TagCategory is not null || state.Category is not null ||

@@ -44,18 +44,5 @@ public partial class MainWindow
   var drawing=new DrawingVisual();using(var context=drawing.RenderOpen())context.DrawRectangle(new VisualBrush(Sidebar),null,new Rect(0,0,Sidebar.ActualWidth,Sidebar.ActualHeight));scaled.Render(drawing);
   var encoder=new System.Windows.Media.Imaging.PngBitmapEncoder();encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(scaled));using(var output=File.Create(Path.Combine(directory,"sidebar-cards-scaled.png")))encoder.Save(output);
   SidebarColumn.Width=width;
-  var page=new HomePage(_cardContext);var host=new Window {Owner=this,Width=960,Height=760,Content=page,ShowInTaskbar=false};
-  var featured=new MediaItem {Kind=MediaKind.Video,Title="Featured",Path="featured.mp4"};
-  var row=new MediaItem {Kind=MediaKind.Video,Title="Ordinary",Path="ordinary.mp4"};
-  var requests=new List<Guid>();var tokens=new List<CancellationToken>();
-  page.FeaturedVideoArtwork=(item,token)=>{requests.Add(item.Id);tokens.Add(token);return Task.FromResult<ImageSource?>(null);};
-  var feed=new HomeFeed([new(featured)], [new(HomeRowKind.RecentlyAdded,"Recent",[new(row)],[])]);
-  try {
-   host.Show();await Idle();page.Show(feed,false);await Idle();
-   Check(requests.Count>0&&requests.All(id=>id==featured.Id),"Ordinary cards requested high-resolution artwork.");
-   var count=requests.Count;host.Height=430;await Idle();page.Show(feed,false);await Idle();
-   Check(requests.Count==count,"Hidden banner requested high-resolution artwork.");
-   Check(tokens.All(t=>t.IsCancellationRequested),"Hidden banner requests were not cancelled.");
-  } finally {host.Close();}
  }
 }

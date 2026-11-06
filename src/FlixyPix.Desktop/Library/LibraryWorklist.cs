@@ -35,8 +35,12 @@ public partial class MainWindow
  {
   UpdateListButton.Visibility=finished>0?Visibility.Visible:Visibility.Collapsed;
   CreateListThumbnailsButton.Visibility=state.Filter.HasThumbnail==false&&total>finished?Visibility.Visible:Visibility.Collapsed;
+  // A list to work through shows how far it is.
+  var isList=state.Filter.HasThumbnail is not null||state.Filter.UnratedOnly||state.Filter.UntaggedOnly;
+  QueueProgress.Visibility=isList&&total>0?Visibility.Visible:Visibility.Collapsed;
+  QueueProgress.Value=total>0?(double)finished/total:0;
  }
- private void HideWorklistActions()=>UpdateListButton.Visibility=CreateListThumbnailsButton.Visibility=Visibility.Collapsed;
+ private void HideWorklistActions()=>UpdateListButton.Visibility=CreateListThumbnailsButton.Visibility=QueueProgress.Visibility=Visibility.Collapsed;
 
  private void UpdateListClicked(object sender,RoutedEventArgs e) {_dropKeptMedia=true;Refresh();}
 

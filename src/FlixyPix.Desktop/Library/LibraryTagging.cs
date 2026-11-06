@@ -160,7 +160,7 @@ public partial class MainWindow
         ApplyTagFilterChanges();
     }
     private string TagFilterDescription() =>
-     (_tag != null ? T(" · Tag: {0}", _tag) : "") + (_requiredTags.Count > 0 ? T(" · Tags: {0}", string.Join(" + ", _requiredTags)) : "") + (_excludedTags.Count > 0 ? T(" · without {0}", string.Join(", ", _excludedTags)) : "");
+     (_tag != null && EntityRole == null ? T(" · Tag: {0}", _tag) : "") + (_requiredTags.Count > 0 ? T(" · Tags: {0}", string.Join(" + ", _requiredTags)) : "") + (_excludedTags.Count > 0 ? T(" · without {0}", string.Join(", ", _excludedTags)) : "");
 
     /// <summary>Saved searches keep the sidebar tag filters as an explicit expression.</summary>
     private SearchExpression? WithTagFilters(SearchExpression? expression)
@@ -175,6 +175,7 @@ public partial class MainWindow
      => _libraryTasks.Run(async token =>
     {
         if (ids.Count == 0 || add.Count + remove.Count == 0) return;
+        if (add.Count > 0) { var tagged = ids.ToArray(); await Task.Run(() => _repository.NoteTagged(tagged), token); }
         _assistEngaged = true;
         try
         {
@@ -192,7 +193,7 @@ public partial class MainWindow
 
     /// <summary>Whether a tag edit can change which media the view shows (tag filters, text search over tags, saved expressions).</summary>
     private bool ViewDependsOnTags => _tag != null || _tagGroup != null || _requiredTags.Count + _excludedTags.Count > 0 || _advancedExpression != null || SearchBox.Text.Trim().Length > 0
-     || _filter.Include.Count + _filter.Exclude.Count + _filter.Profiles.Count > 0;
+     || _filter.UntaggedOnly || _filter.Include.Count + _filter.Exclude.Count + _filter.Profiles.Count > 0;
 
     /// <summary>After a tag edit in a view that does not filter by tags: tiles show no tags, so only the edited media, the tag
     /// list and the tag editor change. The loaded window, its thumbnails and the scroll position stay.</summary>
