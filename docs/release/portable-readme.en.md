@@ -17,7 +17,7 @@ The translations were produced and reviewed with AI assistance, not by native sp
 Import files or folders, or drag them onto the window. Source media stays in its original location. The SQLite catalog stores metadata, tags, ratings, descriptions, categories, collections and saved searches.
 
 - **Media folders:** Add a media folder from the Add menu. FlixyPix compares the folder with the catalog, offers new files, reassigns moved or renamed files and reports missing files. Watched folders show a notification; F5 checks immediately.
-- **Organize:** Use advanced search, the tag vocabulary, folder and tag favorites, filename parsers, tagging rules and duplicate detection.
+- **Organize:** Work through queues such as items without tags or unrated ones, press T for the one-handed tag mode, and use advanced search, the tag vocabulary, filename parsers, tagging rules and duplicate detection.
 - **Catalog:** Migrate to a new library, compare snapshots, import/export JSON or CSV, read ZIP/RAR image archives and create complete backups.
 - **Jobs:** Queue conversions, clips, GIFs, crops, joined videos and scene images. File management offers batch actions for items selected with Ctrl or Shift.
 

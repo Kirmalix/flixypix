@@ -13,7 +13,7 @@ Die portable Ausgabe startet mit einem eigenen Datenordner neben der EXE. Eine v
 Dateien und Ordner importieren oder auf das Fenster ziehen. Beim Import bleiben Quelldateien an ihrem Ort. Bilder, Tags, Bewertungen, Beschreibungen, Kategorien, Sammlungen und Suchvorgaben werden im eigenen SQLite-Katalog gespeichert. Automatische Vorschauen und Bildseiten verwenden einen gemeinsamen Decoder.
 
 - **Medienordner:** Hinzufügen ▾ → Medienordner … gleicht Ordner mit dem Katalog ab. Neue Dateien werden angeboten, verschobene und umbenannte neu zugeordnet, fehlende gemeldet; Quelldateien bleiben unverändert. Beobachtete Ordner meldet ein Hinweisbalken, F5 prüft sofort.
-- **Ordnen:** Erweiterte Suche, Vokabular, Ordner-/Tagfavoriten, Dateinamenparser, Tagregeln und Dubletten.
+- **Ordnen:** Warteschlangen wie „Ohne Tags“ oder „Unbewertet“ abarbeiten, mit T in den Tag-Modus wechseln, dazu erweiterte Suche, Vokabular, Dateinamenparser, Tagregeln und Dubletten.
 - **Katalog:** Migration in eine neue Bibliothek, Snapshot-Abgleich mit Berichten, JSON/CSV, ZIP-/RAR-Bildarchive und vollständige Sicherungen.
 - **Aufträge:** Konvertierung, Clips, GIFs, Zuschnitt, Videoverbindung und eingereihte Szenenbilder.
 - **Werkzeuge:** Mediengrafiken, Szenenvorschaugenerator, NFO, Dateiaktionen und Sammlungen. Unter Dateiverwaltung sind Stapelaktionen für die mit Strg/Umschalt markierten Medien verfügbar.

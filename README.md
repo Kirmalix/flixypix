@@ -7,9 +7,9 @@ computer: no account, no server, no online services.
 FlixyPix started as an independent successor for users of EazyFlixPix 4.8.4, a program that is
 no longer maintained, and can take over its catalogs.
 
-![FlixyPix with a library of sample images, filters and the details of the selected item](docs/images/flixypix.png)
+![FlixyPix with a library of sample images, the left bar and the details of the selected item](docs/images/flixypix.png)
 
-> **Release: 0.5.0.** FlixyPix is distributed as a portable Windows application.
+> **Release: 0.6.0.** FlixyPix is distributed as a portable Windows application.
 > Versions before 1.0 may change catalog formats and behavior; release notes describe those changes.
 > Catalog upgrades create a migration backup. Back up your catalog and media files before updating;
 > older application versions may not be able to open an upgraded catalog.
@@ -18,10 +18,11 @@ no longer maintained, and can take over its catalogs.
 
 - **Catalog:** import files and folders or watch media folders; files are never moved. Moved or
   renamed files are found again, missing ones are reported.
-- **Organize:** tags with categories and tag images, ratings, descriptions, collections, saved
-  searches, a directory of performers, studios and other entities, filename parsers and tagging
-  rules, duplicate detection.
-- **Search:** quick search, filters in the sidebar and an advanced search with a query language.
+- **Organize:** tags with categories and tag images, a one-handed tag mode, ratings, descriptions,
+  collections, saved searches, galleries of performers and studios, queues to work through, filename
+  parsers and tagging rules, duplicate detection.
+- **Browse and search:** walk through folders, quick search, filters as chips in the search field and
+  an advanced search with a query language.
 - **Play and view:** video and audio through mpv with scenes and bookmarks; an image viewer with
   zoom, rotation, slideshow and ZIP/RAR image archives.
 - **Tools:** thumbnails, clips, GIFs, joined videos and conversions through FFmpeg in a job queue.
