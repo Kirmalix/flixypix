@@ -1,6 +1,6 @@
-# FlixyPix 0.5.0 — Windows x64
+# FlixyPix 0.6.0 — Windows x64
 
-This portable release supports Windows 10/11 (64-bit) and has no installer or code signature. Windows SmartScreen may ask for confirmation on first start. Back up the catalog and media files before updating. Version 0.5.0 uses catalog schema 17; an upgrade creates a migration backup. Older application versions may not be able to open an upgraded catalog.
+This portable release supports Windows 10/11 (64-bit) and has no installer or code signature. Windows SmartScreen may ask for confirmation on first start. Back up the catalog and media files before updating. Version 0.6.0 uses catalog schema 26; an upgrade creates a migration backup. Older application versions may not be able to open an upgraded catalog.
 
 Run `FlixyPix.exe` to open your local media library. The .NET runtime is included. Keep the `tools` folder, containing FFmpeg, ffprobe and mpv, beside the application.
 
