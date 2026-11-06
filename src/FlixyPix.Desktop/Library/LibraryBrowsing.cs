@@ -64,7 +64,7 @@ public partial class MainWindow
    <Grid MinHeight="28" ToolTip="{Binding FolderTip}" Margin="0,1,5,1"><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding FolderGlyph}" FontFamily="{DynamicResource IconFont}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
     <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding FolderName}" ToolTip="{Binding RootTip}" Foreground="{DynamicResource TextSoft}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2"/>
-    <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="10"/></Border>
+    <Border Grid.Column="2" CornerRadius="4" Padding="3,1" Margin="6,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Count}" Foreground="{DynamicResource Muted}" FontSize="11"/></Border>
    </Grid>
   </HierarchicalDataTemplate>
   """);

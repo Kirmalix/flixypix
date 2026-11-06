@@ -160,7 +160,7 @@ internal sealed class MediaDetailPage : ScrollViewer
 
     private UIElement CollectionButton(Playlist playlist)
     {
-        var button = new Button { Content = MainWindow.CollectionName(playlist), Padding = new Thickness(9, 3, 9, 3), Margin = new Thickness(0, 0, 0, 5), FontSize = 12, HorizontalAlignment = HorizontalAlignment.Left };
+        var button = new Button { Content = MainWindow.CollectionName(playlist), Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 0, 0, 5), FontSize = 12, HorizontalAlignment = HorizontalAlignment.Left };
         button.Click += (_, _) => OpenCollection?.Invoke(playlist);
         return button;
     }

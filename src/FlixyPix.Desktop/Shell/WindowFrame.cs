@@ -19,7 +19,7 @@ internal sealed class WindowFrame : DockPanel
   var header = new StackPanel { Margin = embedded ? new Thickness(0, 0, 0, 10) : new Thickness(24, 20, 24, 12) };
   var heading = new StackPanel { Orientation = Orientation.Horizontal };
   if (glyph != null) { var symbol = SettingsUi.Icon(glyph, 22); symbol.Foreground = SettingsUi.Accent; symbol.Margin = new Thickness(0, 0, 12, 0); heading.Children.Add(symbol); }
-  heading.Children.Add(new TextBlock { Text = title, FontSize = 21, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+  heading.Children.Add(new TextBlock { Text = title, FontSize = 20, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
   // A page in the main window already has its title above.
   if (!embedded) header.Children.Add(heading);
   if (hint != null) header.Children.Add(SettingsUi.Hint(hint));

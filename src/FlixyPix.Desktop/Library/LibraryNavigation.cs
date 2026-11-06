@@ -52,7 +52,7 @@ internal sealed class QuickLookWindow : Window
         HasPicture = picture != null;
         var card = new MediaCard(item, false);
         var caption = new StackPanel { Margin = new Thickness(20, 12, 20, 16) };
-        caption.Children.Add(new TextBlock { Text = card.Title, FontSize = 18, FontWeight = FontWeights.SemiBold, Foreground = Theme.Brush("Text"), TextTrimming = TextTrimming.CharacterEllipsis });
+        caption.Children.Add(new TextBlock { Text = card.Title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = Theme.Brush("Text"), TextTrimming = TextTrimming.CharacterEllipsis });
         caption.Children.Add(new TextBlock { Text = string.Join(" · ", new[] { card.Subtitle, File.Exists(item.Path) ? null : T("File currently unavailable") }.Where(s => !string.IsNullOrEmpty(s))), Foreground = SettingsUi.Muted, Margin = new Thickness(0, 3, 0, 0) });
         caption.Children.Add(new TextBlock { Text = T("Enter plays · Space or Esc closes"), Foreground = SettingsUi.Muted, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) });
         UIElement view = picture != null ? new Image { Source = picture, Stretch = Stretch.Uniform, Margin = new Thickness(16, 16, 16, 0) }

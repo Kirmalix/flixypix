@@ -70,7 +70,7 @@ public partial class MainWindow
    Content = panel, WindowStartupLocation = WindowStartupLocation.CenterOwner };
   var header = new TextBlock {
    Text = T("{0} files {1} · {2} skipped · {3} blocked\nAll entries are listed below. No existing target files are overwritten.",
-   ready, verb, skipped, blocked), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0,0,0,14), FontSize = 15 };
+   ready, verb, skipped, blocked), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0,0,0,14), FontSize = 14 };
   DockPanel.SetDock(header,Dock.Top); panel.Children.Add(header);
   var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0,14,0,0) };
   var cancel = new Button { Content = T("Cancel"), IsCancel = true };
