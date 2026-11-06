@@ -38,8 +38,10 @@ public sealed class LibraryNavigationTests
    Assert.Equal(new[]{bare.Id,empty.Id}.ToHashSet(),With(false));
    Assert.Equal(new[]{done.Id,image.Id,cover.Id}.ToHashSet(),With(true));
    // Audio checked as "no thumbnail" by an earlier version stays out of the list.
-   catalog.SaveThumbnailHealth([(done.Id,"old",false),(song.Id,"",false)]);
+   // Images need no thumbnail, also when an earlier version checked them as without one.
+   catalog.SaveThumbnailHealth([(done.Id,"old",false),(song.Id,"",false),(image.Id,"old",false)]);
    Assert.Equal(new[]{bare.Id,empty.Id,done.Id}.ToHashSet(),With(false));
+   Assert.Contains(image.Id,With(true));
    catalog.Upsert(done with {Title="renamed"});Assert.Contains(done.Id,With(false));
    catalog.Upsert(catalog.GetMedia(done.Id)! with {ThumbnailPath=Path.Combine(directory,"new.jpg")});
    Assert.Null(catalog.GetThumbnailHealth(done.Id));Assert.Contains(done.Id,With(true));

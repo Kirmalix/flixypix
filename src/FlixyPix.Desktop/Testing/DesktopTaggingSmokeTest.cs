@@ -115,6 +115,17 @@ public partial class MainWindow
   Require(Logicals<RadioButton>(NavItems).Single(n => (string)n.Tag == "order").IsChecked == true, "The bar did not mark the organize page.");
   await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-order.png"));
   var untagged = _repository.Upsert(new MediaItem { Title = "Queue fixture", Path = Path.Combine(directory, "queue-fixture.mp4"), Kind = MediaKind.Video });
+  // The media kind narrows the queues on the page and stays when a queue runs.
+  ChooseQueueKind("Image"); await _lastRefresh; await Idle(); await Task.Delay(300); await Idle();
+  Require(QueueCounts["untagged"] <= _repository.QueryPage(new MediaQuery { Kind = MediaKind.Image, Limit = 1 }).TotalCount && !QueueCounts.ContainsKey("thumbnails"), "The media kind did not reach the queues.");
+  await StartQueueAsync(WorkQueues().Single(q => q.Key == "untagged")); await Idle();
+  Require(_view == "Image" && _filter.UntaggedOnly && QueueKindBar.Visibility == Visibility.Visible, "The queue did not start in the chosen media kind.");
+  ChooseQueueKind("Video"); await _lastRefresh; await Idle();
+  Require(_view == "Video" && _filter.UntaggedOnly && MediaList.Items.Cast<MediaCard>().Any(c => c.Item.Id == untagged.Id), "Changing the media kind above a queue lost the queue.");
+  await NavigateAreaAsync("order"); await _lastRefresh; await Idle(); await Task.Delay(300); await Idle();
+  Require(QueueCounts["untagged"] >= 1, "The queues did not count the chosen media kind.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-order-videos.png"));
+  ChooseQueueKind("all"); await _lastRefresh; await Idle(); await Task.Delay(300); await Idle();
   await StartQueueAsync(WorkQueues().Single(q => q.Key == "untagged")); await Idle();
   var queued = Selected;
   Require(_filter.UntaggedOnly && _tagWork && queued is { Tags.Count: 0 } && QueueProgress.Visibility == Visibility.Visible && ActiveTagFilters.Children.OfType<Button>().Any(b => (b.Content as string)?.Contains(T("Without tags")) == true), "The tag queue did not start at its medium.");

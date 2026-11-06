@@ -15,6 +15,8 @@ are upgraded and should not be opened with 0.5.0 afterwards (a copy is kept befo
 - The scene wall and the media jobs are pages of the main window, and a double click opens a page per medium with its picture, timeline, marks, history and similar media. Enter and the play button on a tile still play.
 - “Organize” is a work area: queues such as without tags and unrated are worked through one item at a time with visible progress, beside the maintenance tools.
 - The start page leads with continue watching, recently added, recently tagged and what is left to do, instead of a banner; the notice at start is gone.
+- The queues of “Organize” can be narrowed to videos, images or audio, on the page and above a running queue; the choice stays.
+- The thumbnail check skips images, which need no thumbnail, and no longer decodes pictures in common formats, so it stays quick in large libraries.
 - Ctrl+1–9 no longer sets tags. Pinned tags work with 1–9 in the tag mode (T).
 - Interface size: all text and controls from 85 to 160 % in the settings or with Ctrl+Plus, Ctrl+Minus and Ctrl+0.
 - Calmer look: the accent marks the main action and the current choice, applied tags and filters are neutral.

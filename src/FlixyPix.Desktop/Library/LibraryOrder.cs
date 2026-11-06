@@ -15,16 +15,17 @@ public partial class MainWindow
 
     private sealed record WorkQueue(string Key, string Label, string Hint, int Glyph, Func<ViewState>? List, bool TagMode, Action? Open = null);
 
-    private ViewState QueueView(string view, MediaFilter filter) => new() { View = view, Filter = filter, SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) };
+    /// <summary>A queue is a list in the chosen media kind; the kind stays what the queues show until it is changed.</summary>
+    private ViewState QueueView(MediaFilter filter, IReadOnlyList<ReviewState>? review = null) => new() { View = QueueKindView, Filter = filter, ReviewStates = [.. review ?? []], SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) };
 
     private IReadOnlyList<WorkQueue> WorkQueues() =>
     [
-        new("inbox", T("Review inbox"), T("New items to look through and approve."), 0xE9D5, () => QueueView("inbox", new()), true),
-        new("untagged", T("Without tags"), T("Tag them one by one in tag mode."), 0xE8EC, () => QueueView("all", new() { UntaggedOnly = true }), true),
-        new("unrated", T("Unrated"), T("Rate with 1–5; the next item follows by itself."), 0xE734, () => QueueView("all", new() { UnratedOnly = true }), false),
-        new("thumbnails", T("Without thumbnail"), T("Create the missing thumbnails."), 0xE91B, () => QueueView("all", new() { HasThumbnail = false }), false),
+        new("inbox", T("Review inbox"), T("New items to look through and approve."), 0xE9D5, () => QueueView(new(), [ReviewState.Unreviewed, ReviewState.NeedsAttention]), true),
+        new("untagged", T("Without tags"), T("Tag them one by one in tag mode."), 0xE8EC, () => QueueView(new() { UntaggedOnly = true }), true),
+        new("unrated", T("Unrated"), T("Rate with 1–5; the next item follows by itself."), 0xE734, () => QueueView(new() { UnratedOnly = true }), false),
+        .. QueueKindView == "Image" ? Array.Empty<WorkQueue>() : [new WorkQueue("thumbnails", T("Without thumbnail"), T("Create the missing thumbnails."), 0xE91B, () => QueueView(new() { HasThumbnail = false }), false)],
         new("duplicates", T("Find duplicates"), T("Compare pairs and decide what stays."), 0xE8C8, null, false, () => ShowDuplicates()),
-        new("sets", T("Suggest image sets"), T("Confirm images that belong together as a set."), 0xE8B9, null, false, () => _ = SuggestImageSetsAsync()),
+        .. QueueKindView is "Video" or "Audio" ? Array.Empty<WorkQueue>() : [new WorkQueue("sets", T("Suggest image sets"), T("Confirm images that belong together as a set."), 0xE8B9, null, false, () => _ = SuggestImageSetsAsync())],
     ];
 
     /// <summary>How much each queue holds, counted off the UI thread; the queues that need no counting have no entry.</summary>
@@ -34,10 +35,48 @@ public partial class MainWindow
         return Task.Run(() => lists.ToDictionary(list => list.Key, list => _repository.QueryPage(list.Query, token).TotalCount), token);
     }
 
+    private string QueueKindView => _settings.QueueKind is "Video" or "Image" or "Audio" ? _settings.QueueKind : "all";
+    private readonly List<RadioButton> _queueKindChoices = [];
+
+    /// <summary>The media kind as a row of choices, on the page and above a running queue.</summary>
+    private void FillQueueKinds(Panel panel, string group)
+    {
+        foreach (var kind in new[] { "all", "Video", "Image", "Audio" })
+        {
+            var choice = new RadioButton { Content = ViewName(kind), Tag = kind, GroupName = group, Style = (Style)FindResource("Segment"), Padding = new Thickness(10, 4, 10, 4), IsChecked = QueueKindView == kind };
+            choice.Click += (_, _) => ChooseQueueKind(kind);
+            panel.Children.Add(choice); _queueKindChoices.Add(choice);
+        }
+    }
+
+    private void ChooseQueueKind(string kind)
+    {
+        _settings = _settings with { QueueKind = kind };
+        SaveViewPreferences();
+        SyncQueueKinds();
+        // In a running queue the list follows; the page counts again.
+        if (_view == "order") Refresh(); else ShowKind(kind);
+    }
+
+    /// <summary>The choices say what is shown: above a list its view, on the page the kind the queues use.</summary>
+    private void SyncQueueKinds()
+    {
+        var shown = _view is "Video" or "Image" or "Audio" or "all" ? _view : QueueKindView;
+        var audio = _repository.GetNavigationCounts().Audio > 0;
+        foreach (var choice in _queueKindChoices)
+        {
+            choice.IsChecked = (string)choice.Tag == (choice.GroupName == "queueKindPage" ? QueueKindView : shown);
+            if ((string)choice.Tag == "Audio") choice.Visibility = audio ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
     private ScrollViewer OrderPage()
     {
         if (_orderPage != null) return _orderPage;
         var body = new StackPanel { Margin = new Thickness(0, 0, 8, 16) };
+        var kinds = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 14) };
+        FillQueueKinds(kinds, "queueKindPage");
+        body.Children.Add(kinds);
         TextBlock Heading(string text) { var heading = new TextBlock { Text = text, FontSize = 16, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) }; return heading; }
         body.Children.Add(Heading(T("Queues")));
         _queueCards = new WrapPanel { Margin = new Thickness(0, 0, 0, 22) };
@@ -68,6 +107,7 @@ public partial class MainWindow
         var counts = await ReadQueueCountsAsync(token);
         if (_closing || !_browse.IsCurrent(request)) return;
         QueueCounts = counts;
+        SyncQueueKinds();
         _queueCards!.Children.Clear();
         foreach (var queue in WorkQueues()) _queueCards.Children.Add(QueueCard(queue));
         var open = counts.Values.Sum();

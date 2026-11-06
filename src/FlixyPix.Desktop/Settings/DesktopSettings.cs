@@ -60,6 +60,8 @@ internal sealed partial record DesktopSettings
  /// <summary>"system" (follow Windows), "light" or "dark".</summary>
  public string Theme { get; init; } = "system";
     public double InterfaceScale { get; init; } = 1;
+ /// <summary>Media kind the queues of "Ordnen" work on: all, Video, Image or Audio.</summary>
+ public string QueueKind { get; init; } = "all";
  /// <summary>"system" (display language of Windows) or a language code such as "en"; applies on the next start.</summary>
  public string Language { get; init; } = Texts.Automatic;
  public List<string> ProtectedSourcePaths { get; init; } = [];
