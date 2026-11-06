@@ -54,7 +54,6 @@ public partial class MainWindow
    await Task.Delay(400); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
    Capture(RootContent, Path.Combine(directory, "desktop-home.png"));
    Theme.Apply(ColorScheme.Light); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-   Capture(RootContent, Path.Combine(directory, "desktop-home-light.png"));
    Theme.Apply(ColorScheme.Dark); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
    // Cards share the width: at least two, about 240 px each.
    Require(Home.CardWidth is >= 180 and <= 520, $"Start page cards are {Home.CardWidth} px wide.");

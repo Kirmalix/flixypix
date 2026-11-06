@@ -19,10 +19,17 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     if ($BuildOnly) { return }
     if (!$SkipTests) {
-        $filter = if ($FullTests) { @() } else { @('--filter', 'Category!=Slow') }
         foreach ($project in (Get-ChildItem -Path tests -Filter '*.csproj' -Recurse)) {
-            & $dotnet test $project.FullName --configuration Release --no-build --nologo @filter
+            & $dotnet test $project.FullName --configuration Release --no-build --nologo --filter 'Category!=Slow'
             if ($LASTEXITCODE -ne 0) { throw "Tests failed: $($project.BaseName)" }
+        }
+        # Slow tests have time budgets, so they run after the others and one after another: beside the parallel tests they
+        # would measure the load of those.
+        if ($FullTests) {
+            foreach ($project in (Get-ChildItem -Path tests -Filter '*.csproj' -Recurse)) {
+                & $dotnet test $project.FullName --configuration Release --no-build --nologo --filter 'Category=Slow' -- xUnit.ParallelizeTestCollections=false
+                if ($LASTEXITCODE -ne 0) { throw "Slow tests failed: $($project.BaseName)" }
+            }
         }
         python -m unittest discover -s scripts\tests -p 'test_*.py'
         if ($LASTEXITCODE -ne 0) { throw 'Static extraction tests failed.' }
