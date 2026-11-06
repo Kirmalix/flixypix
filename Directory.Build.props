@@ -6,8 +6,8 @@
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <Version>0.6.0</Version>
-    <InformationalVersion>0.6.0</InformationalVersion>
+    <Version>0.7.0</Version>
+    <InformationalVersion>0.7.0-dev</InformationalVersion>
     <Product>FlixyPix</Product>
     <Description>A local media library for Windows.</Description>
     <Copyright>Copyright (C) 2026 The FlixyPix contributors</Copyright>
