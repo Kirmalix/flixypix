@@ -1,6 +1,6 @@
-# FlixyPix 0.5.0 — Windows x64
+# FlixyPix 0.6.0 — Windows x64
 
-Dies ist eine portable Ausgabe für Windows 10/11 (64 Bit), ohne Installer und ohne Codesignatur. Windows SmartScreen kann beim ersten Start eine Bestätigung verlangen. Sichere Katalog und Mediendateien vor einem Update. Die Version 0.5.0 verwendet Katalogschema 17; vor einer Umstellung wird eine Migrationssicherung angelegt. Ältere Programmversionen können einen aktualisierten Katalog möglicherweise nicht mehr öffnen.
+Dies ist eine portable Ausgabe für Windows 10/11 (64 Bit), ohne Installer und ohne Codesignatur. Windows SmartScreen kann beim ersten Start eine Bestätigung verlangen. Sichere Katalog und Mediendateien vor einem Update. Die Version 0.6.0 verwendet Katalogschema 26; vor einer Umstellung wird eine Migrationssicherung angelegt. Ältere Programmversionen können einen aktualisierten Katalog möglicherweise nicht mehr öffnen.
 
 Die Oberfläche folgt der Windows-Anzeigesprache. Einstellungen → Darstellung → Sprache erlaubt eine feste Wahl nach Neustart. Zahlen und Datum behalten das Windows-Regionalformat. Die Übersetzungen sind KI-gestützt entstanden und geprüft, aber nicht von Muttersprachlern; Korrekturen sind willkommen.
 

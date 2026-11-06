@@ -3,7 +3,7 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
-## Unreleased
+## 0.6.0
 
 **Upgrading from 0.5.0:** the catalog format changes. FlixyPix asks before converting a library and
 keeps a copy of the catalog beside it; 0.5.0 cannot open a converted library. Back up your media files
