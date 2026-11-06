@@ -51,7 +51,7 @@ internal sealed partial class VideoPlayerWindow
   markPanel.SetResourceReference(Border.BackgroundProperty, "ChromeBackground"); markPanel.SetResourceReference(Border.BorderBrushProperty, "Divider");
   var heading = new TextBlock { Text = T("JUMP MARKS"), FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
   heading.SetResourceReference(TextBlock.ForegroundProperty, "Muted"); markCount.SetResourceReference(TextBlock.ForegroundProperty, "Subtle");
-  var add = new Button { Content = T("＋ Set here"), Padding = new Thickness(9, 4, 9, 4), Margin = new Thickness(0), FontSize = 12, ToolTip = T("Set a bookmark at the current position") + KeyHint(PlayerActions.CreateBookmark) };
+  var add = new Button { Content = T("＋ Set here"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0), FontSize = 12, ToolTip = T("Set a bookmark at the current position") + KeyHint(PlayerActions.CreateBookmark) };
   add.Click += async (_, _) => await Command(() => RunActionAsync(PlayerActions.CreateBookmark));
   var close = new Button { Content = "", Style = (Style)Application.Current.Resources["IconButton"], FontSize = 13, Margin = new Thickness(4, 0, -4, 0), ToolTip = T("Hide the list") + KeyHint(PlayerActions.ToggleMarks) };
   AutomationProperties.SetName(close, T("Hide the list")); close.Click += (_, _) => ToggleMarkPanel();

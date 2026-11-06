@@ -428,7 +428,7 @@ public partial class MainWindow
   MembershipSection.Visibility = holding.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
   foreach (var playlist in holding)
   {
-   var chip = new Button { Content = CollectionName(playlist), Padding = new Thickness(9, 3, 9, 3), Margin = new Thickness(0, 0, 5, 5), FontSize = 12, ToolTip = T("Open the collection") };
+   var chip = new Button { Content = CollectionName(playlist), Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 0, 5, 5), FontSize = 12, ToolTip = T("Open the collection") };
    chip.Click += (_, _) => OpenCollection(playlist);
    MembershipChips.Children.Add(chip);
   }

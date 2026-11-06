@@ -196,6 +196,20 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
             Assert.Same(editFacets, catalog.GetFacets());
         }
         var ratingUndoMs = watch.Elapsed.TotalMilliseconds;
+        // The queues of "Organize" and the start page count these lists whenever they show.
+        var queueMs = new List<double>();
+        foreach (var filter in new MediaFilter[] { new() { UntaggedOnly = true }, new() { UnratedOnly = true }, new() { HasThumbnail = false } })
+            foreach (var view in new[] { "all", "Video" })
+            {
+                watch.Restart();
+                _ = catalog.QueryPage(new ViewState { View = view, Filter = filter }.ToQuery(DateTimeOffset.Now) with { Limit = 1 }).TotalCount;
+                queueMs.Add(watch.Elapsed.TotalMilliseconds);
+            }
+        watch.Restart();
+        _ = catalog.QueryPage(new ViewState { ReviewStates = [ReviewState.Unreviewed, ReviewState.NeedsAttention] }.ToQuery(DateTimeOffset.Now) with { Limit = 1 }).TotalCount;
+        queueMs.Add(watch.Elapsed.TotalMilliseconds);
+        output.WriteLine($"queue counts: each={string.Join(", ", queueMs.Select(m => m.ToString("F0")))}ms; all={queueMs.Sum():F0}ms");
+        Assert.True(queueMs.Sum() < 2000, $"Counting the queues took {queueMs.Sum():F0} ms.");
         var rapidSearchMs = new List<double>();
         for (var iteration = 0; iteration < 10; iteration++)
         {

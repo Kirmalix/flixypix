@@ -123,7 +123,7 @@ public partial class MainWindow
         DockPanel.SetDock(glyph, Dock.Left); head.Children.Add(glyph);
         if (QueueCounts.TryGetValue(queue.Key, out var count))
         {
-            var number = new TextBlock { Text = count.ToString("N0", CultureInfo.CurrentCulture), FontSize = 18, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), Typography = { NumeralAlignment = FontNumeralAlignment.Tabular } };
+            var number = new TextBlock { Text = count.ToString("N0", CultureInfo.CurrentCulture), FontSize = 16, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), Typography = { NumeralAlignment = FontNumeralAlignment.Tabular } };
             DockPanel.SetDock(number, Dock.Right); head.Children.Add(number);
         }
         head.Children.Add(new TextBlock { Text = queue.Label, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });

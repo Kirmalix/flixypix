@@ -145,7 +145,7 @@ internal sealed class DatabaseWindow : Window
  private FrameworkElement BuildPage(DatabaseSection section)
  {
   var heading = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
-  heading.Children.Add(new TextBlock { Text = T(section.Name), FontSize = 22, FontWeight = FontWeights.SemiBold });
+  heading.Children.Add(new TextBlock { Text = T(section.Name), FontSize = 20, FontWeight = FontWeights.SemiBold });
   heading.Children.Add(new TextBlock { Text = section.Name == LibrariesSection ? _librariesHint : section.Description, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
   if (section.Name == LibrariesSection && _librariesPage is { } libraries)
   {
@@ -161,7 +161,7 @@ internal sealed class DatabaseWindow : Window
   foreach (var tool in section.Tools)
   {
    if (tool.Group is { } title && title != group)
-    content.Children.Add(new TextBlock { Text = title, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = SettingsUi.Muted, Margin = new Thickness(2, group == null ? 0 : 10, 0, 8) });
+    content.Children.Add(new TextBlock { Text = title, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = SettingsUi.Muted, Margin = new Thickness(2, group == null ? 0 : 10, 0, 8) });
    group = tool.Group;
    content.Children.Add(ToolCard(tool));
   }
@@ -171,7 +171,7 @@ internal sealed class DatabaseWindow : Window
  private Border ToolCard(DatabaseTool tool)
  {
   var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-  text.Children.Add(new TextBlock { Text = tool.Title, FontSize = 15, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+  text.Children.Add(new TextBlock { Text = tool.Title, FontSize = 14, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
   text.Children.Add(SettingsUi.Hint(tool.Description));
   var button = SettingsUi.SmallButton(tool.Button); button.Margin = new Thickness(16, 0, 0, 0); button.MinWidth = 120;
   button.Click += async (_, _) => { if (tool.Here is { } here) await RunHereAsync(() => here(this)); else Run(tool); };
@@ -217,7 +217,7 @@ internal sealed class DatabaseWindow : Window
   _list.Items.Clear(); _details.Clear();
   foreach (var library in LibraryCatalogs.Ordered(_libraries, _openDirectory))
   {
-   var name = new TextBlock { Text = LibraryCatalogs.DisplayName(library), FontSize = 15, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+   var name = new TextBlock { Text = LibraryCatalogs.DisplayName(library), FontSize = 14, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
    var heading = new DockPanel();
    if (IsOpen(library) || OpenElsewhere(library))
    {

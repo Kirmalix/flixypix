@@ -73,7 +73,7 @@ internal sealed class TakeoverAssistantWindow : Window
  }
 
  private static string Short(string value) => value.Length > 12 ? value[..12] + "…" : value;
- private static TextBlock Heading(string text) => new() { Text = text, FontSize = 25, FontWeight = FontWeights.SemiBold };
+ private static TextBlock Heading(string text) => new() { Text = text, FontSize = 24, FontWeight = FontWeights.SemiBold };
  private static TextBlock Line(string text, bool muted = false) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Foreground = muted ? SettingsUi.Muted : Theme.Brush("Text"), Margin = new Thickness(0, 2, 0, 0) };
  private static Border Row(UIElement content) => new() { Padding = new Thickness(16, 10, 16, 10), Child = content };
  private static string GroupName(LegacyDataGroup group) => group switch
@@ -297,7 +297,7 @@ internal sealed class TakeoverAssistantWindow : Window
   foreach (var width in new[] { 2.2, 1.6, 1.4, 1.4 }) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(width, GridUnitType.Star) });
   void Cell(int row, int column, string text, Brush? brush = null, bool bold = false)
   {
-   var cell = new TextBlock { Text = text, Margin = new Thickness(0, 2, 10, 2), TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = text, FontSize = 12.5, FontWeight = bold ? FontWeights.SemiBold : FontWeights.Normal, Foreground = brush ?? Theme.Brush("Text") };
+   var cell = new TextBlock { Text = text, Margin = new Thickness(0, 2, 10, 2), TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = text, FontSize = 12, FontWeight = bold ? FontWeights.SemiBold : FontWeights.Normal, Foreground = brush ?? Theme.Brush("Text") };
    Grid.SetRow(cell, row); Grid.SetColumn(cell, column); grid.Children.Add(cell);
   }
   grid.RowDefinitions.Add(new RowDefinition());

@@ -68,7 +68,7 @@ internal sealed partial class SettingsWindow
   sheetCells.Columns = c; sheetCells.Rows = r; sheetCells.Children.Clear();
   for (var scene = 1; scene <= c * r; scene++)
    sheetCells.Children.Add(new Border { Background = SettingsUi.Chip, Margin = new Thickness(1), Child = new TextBlock {
-    Text = scene.ToString(CultureInfo.CurrentCulture), FontSize = 10, Foreground = SettingsUi.Muted, HorizontalAlignment = HorizontalAlignment.Center,
+    Text = scene.ToString(CultureInfo.CurrentCulture), FontSize = 11, Foreground = SettingsUi.Muted, HorizontalAlignment = HorizontalAlignment.Center,
     VerticalAlignment = VerticalAlignment.Center } });
   var aspect = c * 16d / (r * 9d); double width = 256, height = width / aspect;
   if (height > 150) { height = 150; width = height * aspect; }

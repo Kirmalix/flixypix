@@ -98,7 +98,7 @@ internal sealed class LibraryOpeningWindow : Window
   body.Children.Add(new TextBlock
   {
    Text = plan.Upgrades ? T("The library is converted to the new format") : T("The encryption of the pictures is finished"),
-   FontSize = 18, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = Theme.Brush("Text"),
+   FontSize = 16, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = Theme.Brush("Text"),
   });
   var folder = Path.GetDirectoryName(databasePath)!;
   body.Children.Add(new TextBlock { Text = Path.GetFileName(folder), FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 10, 0, 0), Foreground = Theme.Brush("Text") });

@@ -21,7 +21,7 @@ internal sealed partial class VideoPlayerWindow
  private readonly Button nextButton = Symbol("", T("Next video in the view"));
  private readonly CheckBox repeat = Toggle("", T("Loop: continue with the next video at the end, start over after the last one"));
  private readonly CheckBox shuffle = Toggle("", T("Shuffle: pick the next video at random from the view"));
- private readonly TextBlock clock = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 0), FontSize = 13 };
+ private readonly TextBlock clock = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 0), FontSize = 12 };
  private readonly Button fullscreenButton = Symbol("", T("Full screen (F11)"));
  private readonly Popup overlay = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, StaysOpen = true };
  private readonly Border overlayFrame = new() { CornerRadius = new CornerRadius(10), Padding = new Thickness(4, 6, 4, 2), Margin = new Thickness(24, 0, 24, 24) };
@@ -29,7 +29,7 @@ internal sealed partial class VideoPlayerWindow
  private readonly TextBlock flashGlyph = new() { FontFamily = SettingsUi.Icons, FontSize = 46, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
  private readonly Popup seekPreview = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, IsHitTestVisible = false };
  private readonly Image seekImage = new() { Width = 240, Stretch = Stretch.Uniform };
- private readonly TextBlock seekTime = new() { Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 2), FontSize = 13 };
+ private readonly TextBlock seekTime = new() { Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 2), FontSize = 12 };
  private readonly Slider volumeSlider = new() { Minimum = 0, Maximum = 100, Value = 100, IsMoveToPointEnabled = true, Width = 96, VerticalAlignment = VerticalAlignment.Center, ToolTip = T("Volume") };
  private PlayerWheelAction? wheelOverride;
  internal double Volume => volumeSlider.Value;
@@ -209,7 +209,7 @@ internal sealed partial class VideoPlayerWindow
   left.Children.Add(previousButton); left.Children.Add(pause); left.Children.Add(nextButton);
   foreach (var (label, seconds) in new[] { ($"−{playback.SmallJumpBackwardSeconds:0.#} s", -playback.SmallJumpBackwardSeconds), ($"+{playback.SmallJumpForwardSeconds:0.#} s", playback.SmallJumpForwardSeconds) })
   {
-   var jump = new Button { Content = label, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(8, 6, 8, 6), Margin = new Thickness(2, 0, 2, 0), ToolTip = seconds < 0 ? T("Jump back") : T("Skip ahead") };
+   var jump = new Button { Content = label, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(2, 0, 2, 0), ToolTip = seconds < 0 ? T("Jump back") : T("Skip ahead") };
    jump.Click += async (_, _) => await Command(() => JumpAsync(seconds)); left.Children.Add(jump);
   }
   left.Children.Add(clock);

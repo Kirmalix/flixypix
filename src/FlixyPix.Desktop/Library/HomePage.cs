@@ -99,7 +99,7 @@ internal sealed class HomePage : Grid
  {
   var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 120, 0, 0) };
   panel.Children.Add(new Image { Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/flixypix-mark-192.png")), Width = 120, Height = 120 });
-  panel.Children.Add(new TextBlock { Text = T("Welcome to FlixyPix"), FontSize = 26, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 18, 0, 8) });
+  panel.Children.Add(new TextBlock { Text = T("Welcome to FlixyPix"), FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 18, 0, 8) });
   panel.Children.Add(new TextBlock { Text = T("Import a folder and the home page fills with continue watching, suggestions and more."), Foreground = SettingsUi.Muted, HorizontalAlignment = HorizontalAlignment.Center });
   var import = new Button { Content = T("Import folder …"), Style = (Style)Application.Current.Resources["Primary"], HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 22, 0, 0) };
   import.Click += (_, _) => Import?.Invoke();

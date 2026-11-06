@@ -180,7 +180,7 @@ public partial class MainWindow
         for (var index = 0; index < chain.Count; index++)
         {
             var node = chain[index];
-            var crumb = new Button { Content = node.FolderName, Style = (Style)FindResource("Quiet"), Padding = new Thickness(5, 2, 5, 2), FontSize = 12, ToolTip = node.FolderTip };
+            var crumb = new Button { Content = node.FolderName, Style = (Style)FindResource("Quiet"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, ToolTip = node.FolderTip };
             crumb.Click += (_, _) => OpenFolder(node.Path);
             FolderCrumbs.Children.Add(crumb);
             if (index < chain.Count - 1) FolderCrumbs.Children.Add(new TextBlock { Text = "›", Foreground = SettingsUi.Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(1, 0, 1, 0) });

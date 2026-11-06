@@ -32,7 +32,7 @@ internal static class SettingsUi
  {
   var panel = new StackPanel();
   var header = new StackPanel { Margin = new Thickness(16, 14, 16, rows.Length == 0 ? 14 : 10) };
-  header.Children.Add(new TextBlock { Text = title, FontSize = 15, FontWeight = FontWeights.SemiBold });
+  header.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.SemiBold });
   if (hint != null) header.Children.Add(Hint(hint));
   panel.Children.Add(header);
   foreach (var row in rows) { panel.Children.Add(new Border { Height = 1, Background = CardBorder }); panel.Children.Add(row); }
