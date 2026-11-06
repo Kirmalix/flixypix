@@ -42,6 +42,13 @@ internal sealed partial record DesktopSettings
  public bool SidebarCollapsed { get; init; }
  /// <summary>Width of the unfolded sidebar as the user dragged it.</summary>
  public int SidebarWidth { get; init; } = 232;
+ /// <summary>The filter panel beside the media is open, and which of its tabs shows (tags or more).</summary>
+ public bool FilterPanelOpen { get; init; }
+ public string FilterPanelTab { get; init; } = "tags";
+ /// <summary>The folder view shows its tree; the path and subfolders above the media stay either way.</summary>
+ public bool FolderTreeHidden { get; init; }
+ /// <summary>Width of the panel beside the media as the user dragged it.</summary>
+ public int BrowsePanelWidth { get; init; } = 272;
  /// <summary>The details on the right are folded to their rail of symbols (Strg+D).</summary>
  public bool DetailsCollapsed { get; init; }
  public int DetailsWidth { get; init; } = 336;

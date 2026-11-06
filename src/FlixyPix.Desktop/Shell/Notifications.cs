@@ -102,7 +102,7 @@ public partial class MainWindow
 
  private void InitializeToasts()
  {
-  Grid.SetRowSpan(_toasts, Math.Max(1, RootContent.RowDefinitions.Count)); Panel.SetZIndex(_toasts, 100);
+  Grid.SetRowSpan(_toasts, Math.Max(1, RootContent.RowDefinitions.Count)); Grid.SetColumnSpan(_toasts, Math.Max(1, RootContent.ColumnDefinitions.Count)); Panel.SetZIndex(_toasts, 100);
   RootContent.Children.Add(_toasts);
  }
 

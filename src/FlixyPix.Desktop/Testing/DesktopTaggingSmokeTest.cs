@@ -29,8 +29,8 @@ public partial class MainWindow
   Require(MediaList.Items.Cast<MediaCard>().Contains(first) && _tagEntries.Any(t => t.Tag == "Ausflug" && t.Count == 3), "A tag edit rebuilt the tiles or left the tag list stale.");
   await Idle(); await _tagAssistReady; await Idle();
   Capture(RootContent, Path.Combine(directory, "desktop-multiselect.png"));
-  // Keyboard tagging: Ctrl+n toggles the n-th quick tag on the selection.
-  var quick = QuickTags; Require(quick.Count > 0 && Tags.Items.OfType<TagRow>().Any(r => r.Shortcut == KeyLabel("Ctrl+1")), "Quick tags are not numbered in the tag list.");
+  // Pinned tags: the n-th pin toggles its tag on the selection.
+  var quick = QuickTags; Require(quick.Count > 0, "There are no pinned tags.");
   var hadQuick = SelectedMedia.Where(i => i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase)).Select(i => i.Id).ToArray();
   await ToggleQuickTagAsync(1); var onAll = SelectedMedia.All(i => i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase));
   await ToggleQuickTagAsync(1); var offAll = SelectedMedia.All(i => !i.Tags.Contains(quick[0], StringComparer.OrdinalIgnoreCase));
@@ -84,6 +84,31 @@ public partial class MainWindow
   Require(ActiveTagFilters.Children.OfType<Button>().Any(b => b.Content as string == folderChip) && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The folder filter has no chip.");
   ClearFolderFilter(); await _lastRefresh;
   Require(_folder == null && !ActiveTagFilters.Children.OfType<Button>().Any(), "The folder chip did not end the filter.");
+  // Folders are a place: path and subfolders instead of a chip, the tree beside the media, filters keep the folder.
+  var folderItem = others[0].Item; var folderLocation = Path.GetDirectoryName(folderItem.Path)!;
+  await NavigateAreaAsync("folders"); await _lastRefresh; await Idle();
+  Require(_view == "folders" && FolderTreeShown && FolderCrumbs.IsVisible && IncludeFolderChildren.IsVisible && ViewTitle.Text == T("All folders"), "The folder view did not open at the top.");
+  Require(Logicals<RadioButton>(NavItems).Single(n => (string)n.Tag == "folders").IsChecked == true, "The bar did not mark the folder view.");
+  OpenFolder(folderLocation); await _lastRefresh; await Idle();
+  Require(_folder == folderLocation && ViewTitle.Text == Path.GetFileName(folderLocation) && FolderCrumbs.Children.OfType<Button>().Count() >= 2, "Opening a folder did not show its path.");
+  Require(!ActiveTagFilters.Children.OfType<Button>().Any() && FilterButtonText.Text == T("Filter"), "The folder of the folder view counts as a filter.");
+  Require(MediaList.Items.Cast<MediaCard>().Any(c => c.Item.Id == folderItem.Id), "The folder view does not show the folder's media.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-folder-view.png"));
+  FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Idle();
+  Require(FilterPanelShown && !FolderTreeShown, "The filters did not take the place of the tree.");
+  ShowFilterTab("more"); await Idle();
+  ShowKind("Image"); await _lastRefresh;
+  Require(_view == "folders" && _folder == folderLocation && _kindFilter == MediaKind.Image && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The media kind left the folder view.");
+  await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-filter-panel.png"));
+  ResetFiltersClicked(this, new RoutedEventArgs()); await _lastRefresh;
+  Require(_folder == folderLocation && _kindFilter == null, "Removing all filters did not keep the place.");
+  ShowFilterTab("tags"); FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Idle();
+  Require(FolderTreeShown && !FilterPanelShown, "Closing the filters did not bring the tree back.");
+  await WalkHistoryAsync(-1); await _lastRefresh;
+  OpenFolder(null); await _lastRefresh;
+  ApplyViewState(new ViewState { View = "Video" }); await _lastRefresh; MediaList.SelectedItems.Clear();
+  Require(!FolderTreeShown && !FolderCrumbs.IsVisible && !IncludeFolderChildren.IsVisible, "The folder tools stayed outside the folder view.");
+  ApplyViewState(new ViewState()); await _lastRefresh;
   // The interface size reaches the window and returns to normal.
   InterfaceScaling.Apply(1.25); Require(((FrameworkElement)Content).LayoutTransform is System.Windows.Media.ScaleTransform { ScaleX: 1.25 }, "The interface size did not reach the window.");
   await Idle(); Capture(this, Path.Combine(directory, "desktop-size-125.png"));

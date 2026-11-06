@@ -30,8 +30,7 @@ public partial class MainWindow
     private static Brush SuggestionChipBrush => Theme.Brush("ChipSuggestion");
 
     internal sealed record TagListEntry(string Tag, int Count, bool IsFavorite);
-    private sealed record TagRow(string Tag, string Label, string CountLabel, Brush Foreground, string Shortcut = "")
-    { public Visibility ShortcutVisibility => Shortcut.Length > 0 ? Visibility.Visible : Visibility.Collapsed; public string ShortcutHint => T("Assign to selected items") + " (" + Shortcut + ")"; }
+    private sealed record TagRow(string Tag, string Label, string CountLabel, Brush Foreground);
 
     private string? CurrentTag => _tag ?? _requiredTags.LastOrDefault();
     private IReadOnlyList<MediaItem> SelectedMedia => MediaList.SelectedItems.Cast<MediaCard>().Select(card => card.Item).Concat(_offWindowSelection).DistinctBy(item => item.Id).ToArray();
@@ -44,7 +43,7 @@ public partial class MainWindow
          .Select(tag => new TagListEntry(tag, counts.GetValueOrDefault(tag), favorites.Contains(tag))).ToArray();
     }
 
-    /// <summary>Tags for Ctrl+1 … Ctrl+9: favourite tags, then the most used ones, each group alphabetical so the numbers do not
+    /// <summary>The pinned tags of the tag mode (1–9): favourite tags, then the most used ones, each group alphabetical so the numbers do not
     /// move when a tag is used.</summary>
     internal IReadOnlyList<string> QuickTags
     {
@@ -62,11 +61,11 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>Keyboard tagging: the n-th quick tag is added to the selection, or removed when every selected medium has it.</summary>
+    /// <summary>The n-th pinned tag is added to the selection, or removed when every selected medium has it.</summary>
     internal async Task ToggleQuickTagAsync(int number)
     {
         var tags = QuickTags; var items = SelectedMedia;
-        if (number < 1 || number > tags.Count || string.IsNullOrEmpty(tags[number - 1])) { Status.Text = T("Ctrl+{0} is not assigned to a tag yet · favorite tags (★) come first", number); return; }
+        if (number < 1 || number > tags.Count || string.IsNullOrEmpty(tags[number - 1])) { Status.Text = T("Pin {0} is free · right-click a tag to pin it", number); return; }
         if (items.Count == 0) { Status.Text = T("Please select items first."); return; }
         var tag = tags[number - 1]; var ids = items.Select(i => i.Id).ToArray();
         if (items.All(i => i.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase))) await ChangeTagsAsync(ids, [], [tag]); else await ChangeTagsAsync(ids, [tag], []);
@@ -74,7 +73,6 @@ public partial class MainWindow
 
     private void RenderTagList()
     {
-        var quick = QuickTags.Select((tag, index) => (tag, index)).Where(p => p.tag.Length > 0).ToDictionary(p => p.tag, p => p.index + 1, StringComparer.OrdinalIgnoreCase);
         var filter = TagFilterBox.Text.Trim();
         bool Active(string tag) => _requiredTags.Contains(tag, StringComparer.OrdinalIgnoreCase) || _excludedTags.Contains(tag, StringComparer.OrdinalIgnoreCase);
         bool OnTop(string tag) => _tagRowsOnTop?.Contains(tag) ?? Active(tag);
@@ -85,7 +83,7 @@ public partial class MainWindow
         {
             var included = _requiredTags.Contains(e.Tag, StringComparer.OrdinalIgnoreCase); var excluded = _excludedTags.Contains(e.Tag, StringComparer.OrdinalIgnoreCase);
             var label = (included ? "✓ " : excluded ? "⊘ " : "") + (e.IsFavorite ? "★ " : "") + e.Tag;
-            return new TagRow(e.Tag, label, e.Count > 0 ? e.Count.ToString("N0") : "–", included ? IncludedTagBrush : excluded ? ExcludedTagBrush : e.Count == 0 ? UnusedTagBrush : TagBrush, quick.TryGetValue(e.Tag, out var key) ? KeyLabel("Ctrl+" + key) : "");
+            return new TagRow(e.Tag, label, e.Count > 0 ? e.Count.ToString("N0") : "–", included ? IncludedTagBrush : excluded ? ExcludedTagBrush : e.Count == 0 ? UnusedTagBrush : TagBrush);
         }).ToArray();
     }
     private void TagFilterChanged(object sender, TextChangedEventArgs e) { if (_repository != null) RenderTagList(); }
@@ -95,7 +93,6 @@ public partial class MainWindow
     private void TagItemClicked(object sender, MouseButtonEventArgs e)
     {
         if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
-        if (IsQuickBadge(e.OriginalSource)) return;
         e.Handled = true;
         // The row stays under the pointer, so a second click hits the same tag; the list sorts again once the pointer leaves it.
         _tagRowsOnTop ??= new HashSet<string>(_requiredTags.Concat(_excludedTags), StringComparer.OrdinalIgnoreCase);
@@ -115,8 +112,8 @@ public partial class MainWindow
         if (ids.Length > 0) { actions.Add(MenuSpec.Command(T("Assign to selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [tag], []))); actions.Add(MenuSpec.Command(T("Remove from selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [], [tag]))); }
         actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Submenu(T("Search in browser"), Specs(WebSearchEntries(tag)), "\uE774"));
         actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Command(T("Rename / merge …"), () => RenameGlobalTag(tag))); actions.Add(MenuSpec.Command(T("Remove from all items …"), () => DeleteGlobalTag(tag)));
-        actions.Add(MenuSpec.Submenu(T("Assign shortcut"), Enumerable.Range(1, 9).Select(n => MenuSpec.Command(KeyLabel("Ctrl+" + n) + " · " + (QuickTags.ElementAtOrDefault(n - 1) ?? ""), () => AssignQuickTag(n, tag)))));
-        actions.Add(MenuSpec.Command(T("Remove shortcut"), () => AssignQuickTag(0, tag)));
+        actions.Add(MenuSpec.Submenu(T("Pin at"), Enumerable.Range(1, 9).Select(n => MenuSpec.Command(n + " · " + (QuickTags.ElementAtOrDefault(n - 1) ?? ""), () => AssignQuickTag(n, tag)))));
+        if (QuickTags.Contains(tag, StringComparer.OrdinalIgnoreCase)) actions.Add(MenuSpec.Command(T("Unpin"), () => AssignQuickTag(0, tag)));
         Menus.Open(target, actions, MenuFailed);
     }
 
@@ -130,31 +127,36 @@ public partial class MainWindow
     private void ApplyTagFilterChanges()
     {
         if (_requiredTags.Count > 0) ViewTitle.Text = string.Join(" + ", _requiredTags);
+        else if (_view == FolderView && _tag == null) ViewTitle.Text = FolderTitle();
         else if (_view == "all" && _tag == null && _folder == null) ViewTitle.Text = T("All items");
         RenderTagFilterChips(); RenderTagList(); UpdateFilterBar(); Refresh();
     }
     private void RenderTagFilterChips()
     {
         ActiveTagFilters.Children.Clear();
-        var active = (RatingFilter.SelectedIndex > 0 ? 1 : 0) + (_category != null ? 1 : 0) + (_folder != null ? 1 : 0) + _requiredTags.Count + _excludedTags.Count + FilterChips().Count();
+        var folderIsFilter = _folder != null && _view != FolderView; var kindChip = _view == FolderView ? _kindFilter : null;
+        var active = (RatingFilter.SelectedIndex > 0 ? 1 : 0) + (_category != null ? 1 : 0) + (folderIsFilter ? 1 : 0) + (kindChip != null ? 1 : 0) + _requiredTags.Count + _excludedTags.Count + FilterChips().Count();
         FilterButtonText.Text = active > 0 ? T("Filter · {0:N0}", active) : T("Filter");
         FilterButton.SetResourceReference(BackgroundProperty, active > 0 ? "ChipFull" : "ButtonBackground");
-        Button Chip(string text, Brush background, string tooltip, Action remove) { var chip = new Button { Content = text, Background = background, Padding = new Thickness(10, 4, 10, 4), FontSize = 12, ToolTip = tooltip }; chip.Click += (_, _) => remove(); return chip; }
+        Button Chip(string text, Brush background, string tooltip, Action remove) { var chip = new Button { Content = text, Background = background, Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 3, 4, 3), FontSize = 12, ToolTip = tooltip }; chip.Click += (_, _) => remove(); return chip; }
         if (RatingFilter.SelectedIndex > 0) ActiveTagFilters.Children.Add(Chip(RatingLabel(RatingFilter.SelectedIndex) + "  ×", FullChipBrush, T("Remove filter"), () => RatingFilter.SelectedIndex = 0));
-        if (_folder is { } folder) ActiveTagFilters.Children.Add(Chip(T("Folder: {0}", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)) is { Length: > 0 } folderName ? folderName : folder) + "  ×", FullChipBrush, T("Remove folder filter"), ClearFolderFilter));
+        if (kindChip is { } kind) ActiveTagFilters.Children.Add(Chip(ViewName(kind.ToString()) + "  ×", FullChipBrush, T("Remove filter"), () => { _kindFilter = null; _anchor = 0; ApplyTagFilterChanges(); }));
+        if (folderIsFilter && _folder is { } folder) ActiveTagFilters.Children.Add(Chip(T("Folder: {0}", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)) is { Length: > 0 } folderName ? folderName : folder) + "  ×", FullChipBrush, T("Remove folder filter"), ClearFolderFilter));
         if (_category != null) ActiveTagFilters.Children.Add(Chip(_category + "  ×", FullChipBrush, T("Remove filter"), () => CategoryFilter.SelectedIndex = 0));
         foreach (var tag in _requiredTags.ToArray()) ActiveTagFilters.Children.Add(Chip(tag + "  ×", FullChipBrush, T("Remove tag filter"), () => { _browse.RemoveIncludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
         foreach (var tag in _excludedTags.ToArray()) ActiveTagFilters.Children.Add(Chip(T("without {0}", tag) + "  ×", ExcludedChipBrush, T("Remove exclusion"), () => { _browse.RemoveExcludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
         foreach (var (label, excluded, remove) in FilterChips().ToList()) ActiveTagFilters.Children.Add(Chip(label + "  ×", excluded ? ExcludedChipBrush : FullChipBrush, T("Remove filter"), remove));
         if (_requiredTags.Count > 1 && _tagsMatchAny) ActiveTagFilters.Children.Insert(0, new TextBlock { Text = T("at least one:"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 6), Foreground = Theme.Brush("Muted"), FontSize = 12 });
         if (active > 1)
-            ActiveTagFilters.Children.Add(Chip(T("Remove all filters"), Brushes.Transparent, T("Remove all tag and filter-bar filters"), () => { _browse.ClearTags(); _filter = new(); UpdateFilterBar(); ClearFolderFilter(); }));
+            ActiveTagFilters.Children.Add(Chip(T("Remove all filters"), Brushes.Transparent, T("Remove all tag and filter-bar filters"), () => { _browse.ClearTags(); _filter = new(); _kindFilter = null; UpdateFilterBar(); ClearFolderFilter(); }));
+        if (FilterPanelShown && FilterMoreTab.Visibility == Visibility.Visible) RenderFilterMore();
     }
     /// <summary>Ends the folder filter; the view shows its whole content again under its own name.</summary>
     private void ClearFolderFilter()
     {
-        _folder = null; _anchor = 0;
-        if (_tag == null && _playlist == null) ViewTitle.Text = ViewName(_view);
+        if (_view != FolderView) _folder = null;
+        _anchor = 0;
+        if (_tag == null && _playlist == null) ViewTitle.Text = _view == FolderView ? FolderTitle() : ViewName(_view);
         ApplyTagFilterChanges();
     }
     private string TagFilterDescription() =>

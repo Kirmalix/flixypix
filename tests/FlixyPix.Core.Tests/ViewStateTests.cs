@@ -11,6 +11,21 @@ public sealed class ViewStateTests : IDisposable
     public void Dispose() { SqliteConnection.ClearAllPools(); try { Directory.Delete(directory, true); } catch (IOException) { } }
     private string PathFor(string name) => Path.Combine(directory, name);
 
+    [Fact]
+    public void FolderViewIsAPlaceWithAnOptionalKind()
+    {
+        using var catalog = new CatalogRepository(PathFor("folders.db"));
+        var state = new ViewState { View = "folders", KindFilter = MediaKind.Image };
+        Assert.Equal("folders", catalog.Sanitize(state, out var dropped).View);
+        Assert.Empty(dropped);
+        Assert.Equal(MediaKind.Image, state.ToQuery(DateTimeOffset.Now).Kind);
+        Assert.Null((state with { KindFilter = null }).ToQuery(DateTimeOffset.Now).Kind);
+        // Only the folder view reads it; other views bring their own kind.
+        Assert.Null((state with { View = "all" }).ToQuery(DateTimeOffset.Now).Kind);
+        Assert.Equal(MediaKind.Video, (state with { View = "Video" }).ToQuery(DateTimeOffset.Now).Kind);
+        Assert.False(state.SameView(state with { KindFilter = MediaKind.Video }));
+    }
+
     [Theory]
     [InlineData("broken json")]
     [InlineData("{\"selection\":null}")]

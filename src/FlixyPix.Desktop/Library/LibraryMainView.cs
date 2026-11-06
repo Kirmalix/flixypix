@@ -33,11 +33,12 @@ public partial class MainWindow
  /// <summary>Highlights the library entry that matches what the grid shows; collections, folders and tags clear it.</summary>
  private void UpdateNavigation()
  {
-  var active = _playlist == null && _folder == null && _tagGroup == null && _tag == null && _advancedExpression == null ? _view : null;
+  var active = InFolderView ? FolderView : _playlist == null && _folder == null && _tagGroup == null && _tag == null && _advancedExpression == null ? _view : null;
   foreach (var entry in Logicals<RadioButton>(NavItems)) entry.IsChecked = (string)entry.Tag == active;
   // An entry that is hidden for lack of content stays while it is open, so the view never loses its place.
   if (_view == "inbox") InboxNav.Visibility = Visibility.Visible;
   if (_view == "Audio") AudioNav.Visibility = Visibility.Visible;
+  UpdateBrowsePanel(); RenderFolderNavigation();
  }
 
  /// <summary>The review inbox shows once reviewing is in use (or as set), with its open items as a badge; audio only
@@ -100,7 +101,7 @@ public partial class MainWindow
  /// <summary>Digits 0–5 rate every selected medium in whole stars, as in common photo tools.</summary>
  private void RateSelection(int stars) => RateMedia(SelectedMedia, stars);
 
- private static string ViewName(string view) => view switch { "publication-groups" => T("Publication groups"), "image-sets" => T("Image sets"), "inbox" => T("Review inbox"), "performers" => T("Performers"), "studios" => T("Studios"), "home" => T("Home"), "Video" => T("Videos"), "Image" => T("Images"), "Audio" => T("Audio"), "favorites" => T("Favorites"), "watchlater" => T("Watch later"), _ => T("All items") };
+ private static string ViewName(string view) => view switch { "publication-groups" => T("Publication groups"), "image-sets" => T("Image sets"), "inbox" => T("Review inbox"), "performers" => T("Performers"), "studios" => T("Studios"), "home" => T("Home"), "folders" => T("All folders"), "Video" => T("Videos"), "Image" => T("Images"), "Audio" => T("Audio"), "favorites" => T("Favorites"), "watchlater" => T("Watch later"), _ => T("All items") };
  private void CopyPathClicked(object sender, RoutedEventArgs e) { if (Selected is { } item) { Clipboard.SetText(item.Path); Status.Text = T("Path copied"); } }
  private void RevealClicked(object sender, RoutedEventArgs e) => Reveal();
 }

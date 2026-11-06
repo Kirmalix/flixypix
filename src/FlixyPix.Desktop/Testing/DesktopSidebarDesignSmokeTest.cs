@@ -12,13 +12,8 @@ public partial class MainWindow
  {
   static void Check(bool condition,string message) {if(!condition)throw new InvalidOperationException(message);}
   async Task Idle()=>await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-  foreach(var key in new[]{"folders","collections","tags"})Check(_sidebarSections[key].Template!=null,"Card template missing.");
+  Check(_sidebarSections["collections"].Template!=null,"Collection group template missing.");
   Check(SidebarCard.GetActions(_sidebarSections["collections"]) is Button,"Collection header action missing.");
-  var expanded=_sidebarSections["tags"].IsExpanded;
-  var action=(Button)SidebarCard.GetActions(_sidebarSections["tags"]);
-  action.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));await Idle();
-  if(_sidebarToolsMenu!=null)_sidebarToolsMenu.IsOpen=false;
-  Check(_sidebarSections["tags"].IsExpanded==expanded,"Header tools changed collapse state.");
   // Library entries: groups fold like cards, the review inbox waits until reviewing is in use, audio until there is audio.
   Check(_sidebarSections.ContainsKey("media")&&_sidebarSections.ContainsKey("discover"),"Library groups missing.");
   var view=_view;_view="all";
@@ -42,19 +37,13 @@ public partial class MainWindow
   Check(CategorizedTags.Visibility==Visibility.Visible&&TagListPanel.Visibility!=Visibility.Visible&&_repository.GetPreferences().Sidebar.TagsByCategory,"Tag categories mode did not switch.");
   TagListMode.IsChecked=true;TagModeClicked(this,new RoutedEventArgs());
   Check(TagListPanel.Visibility==Visibility.Visible&&!_repository.GetPreferences().Sidebar.TagsByCategory,"Tag list mode did not return.");
-  var height=_folderDesiredHeight;
-  FolderHeightDragging(this,new DragDeltaEventArgs(0,40));await Idle();SaveFolderViewportState();
-  Check(_repository.GetPreferences().Sidebar.FolderHeight==height+40,"Folder height was not persisted.");
-  FolderViewport.ScrollToHorizontalOffset(35);await Idle();SaveFolderViewportState();
-  // Folder rows show names only, so short test folders may fit; an offset is only kept when there is width to scroll.
-  Check(FolderViewport.ScrollableWidth<=0||_repository.GetPreferences().Sidebar.FolderHorizontalOffset>0,"Folder horizontal scrolling was not persisted.");
   var width=SidebarColumn.Width;SidebarColumn.Width=new GridLength(300);await Idle();
   Capture(RootContent,Path.Combine(directory,"sidebar-cards.png"));
   SidebarColumn.Width=new GridLength(180);await Idle();Capture(RootContent,Path.Combine(directory,"sidebar-cards-narrow.png"));
   var scaled=new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(Sidebar.ActualWidth*1.5),(int)Math.Ceiling(Sidebar.ActualHeight*1.5),144,144,PixelFormats.Pbgra32);
   var drawing=new DrawingVisual();using(var context=drawing.RenderOpen())context.DrawRectangle(new VisualBrush(Sidebar),null,new Rect(0,0,Sidebar.ActualWidth,Sidebar.ActualHeight));scaled.Render(drawing);
   var encoder=new System.Windows.Media.Imaging.PngBitmapEncoder();encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(scaled));using(var output=File.Create(Path.Combine(directory,"sidebar-cards-scaled.png")))encoder.Save(output);
-  SidebarColumn.Width=width;_folderDesiredHeight=height;FolderViewport.Height=height;
+  SidebarColumn.Width=width;
   var page=new HomePage(_cardContext);var host=new Window {Owner=this,Width=960,Height=760,Content=page,ShowInTaskbar=false};
   var featured=new MediaItem {Kind=MediaKind.Video,Title="Featured",Path="featured.mp4"};
   var row=new MediaItem {Kind=MediaKind.Video,Title="Ordinary",Path="ordinary.mp4"};

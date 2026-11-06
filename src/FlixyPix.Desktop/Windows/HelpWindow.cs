@@ -6,9 +6,9 @@ internal sealed class HelpWindow : Window
 {
  internal static IEnumerable<(string Title,string Body)> Guide()=>[
  (T("Libraries"),T("Add one or more media folders to a library. Import keeps your original files in place. Back up the catalog and media files separately.")),
- (T("Folders"),T("Use the folder tree to narrow the view. The subfolder switch affects browsing only. Wheel scrolls vertically; Shift+wheel scrolls horizontally.")),
+ (T("Folders"),T("Open “Folders” in the bar on the left and walk through them with the tree, the path above the media or the subfolders. The subfolder switch affects browsing only.")),
  (T("Filter"),T("Combine search, tags, rating and thumbnail filters. Click a filter chip to remove it. Save the view as a smart collection to reuse it.")),
- (T("Tags"),T("Select media before assigning tags. Ctrl+1–9 uses your fixed quick tags. Enter filters by the focused tag; Ctrl+Enter excludes it.")),
+ (T("Tags"),T("Select media before assigning tags. T starts the tag mode: 1–9 set your pinned tags. In the filter panel, Enter filters by the focused tag; Ctrl+Enter excludes it.")),
  (T("Collections"),T("The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.")),
  (T("Thumbnails"),T("Fit whole image preserves the complete thumbnail. Fill and crop fills the frame. High-resolution home artwork is generated only for the visible featured video.")),
  (T("Video player"),T("Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings."))];

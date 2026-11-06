@@ -27,6 +27,7 @@ public partial class MainWindow
    void Changed(object? sender,RoutedEventArgs e) { if(e.Source!=exp) return; SaveSidebar(s=>s with {CollapsedSections=_sidebarSections.Where(p=>!p.Value.IsExpanded).Select(p=>p.Key).ToList()}); }
    exp.Expanded+=Changed; exp.Collapsed+=Changed;
   }
+  _sidebarSections["collections"].Header=T("Collections").ToUpper(System.Globalization.CultureInfo.CurrentCulture);
   _restoringSidebar=false;
  }
  private static IEnumerable<T> Logicals<T>(DependencyObject parent) where T:DependencyObject
@@ -62,9 +63,6 @@ public partial class MainWindow
  }
  private void TagModeClicked(object sender,RoutedEventArgs e) { var byCategory=TagCategoryMode.IsChecked==true;ShowTagMode(byCategory);SaveSidebar(s=>s with {TagsByCategory=byCategory}); }
  private void FolderChildrenChanged(object sender,RoutedEventArgs e) { SaveSidebar(s=>s with {IncludeSubfolders=IncludeFolderChildren.IsChecked==true});_anchor=0;Refresh(); }
- private static bool IsQuickBadge(object source) { for(var node=source as DependencyObject;node!=null;node=VisualTreeHelper.GetParent(node))if(node is Button)return true;return false; }
- private async void QuickTagBadgeClicked(object sender,RoutedEventArgs e)
- { e.Handled=true;if((sender as FrameworkElement)?.DataContext is TagRow row) { var slot=QuickTags.ToList().FindIndex(t=>string.Equals(t,row.Tag,StringComparison.OrdinalIgnoreCase));if(slot>=0)await ToggleQuickTagAsync(slot+1); } }
  private void AssignQuickTag(int slot,string tag)
  {
   var current=_repository.GetPreferences();var slots=(current.QuickTags??[]).Take(9).ToList();while(slots.Count<9)slots.Add(null);

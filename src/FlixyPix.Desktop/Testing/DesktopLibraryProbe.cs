@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using FlixyPix.Core;
 
 namespace FlixyPix.Desktop;
 
@@ -15,7 +16,7 @@ public partial class MainWindow
  {
   await Startup; await _lastRefresh; await _previewReady;
   await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-  _sidebarSections["folders"].IsExpanded = true; UpdateLayout();
+  ApplyViewState(new ViewState { View = "folders" }); await _lastRefresh; UpdateLayout();
   await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
   static IEnumerable<DependencyObject> Visuals(DependencyObject root)
   {

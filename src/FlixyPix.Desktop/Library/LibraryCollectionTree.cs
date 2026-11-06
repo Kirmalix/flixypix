@@ -122,7 +122,6 @@ public partial class MainWindow
     foreach (var node in CollectionNodes()) node.WidthChanged();
    };
   }
-  SavedSearchHint.Visibility = searches.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
   CountSmartCollections(nodes.SelectMany(n => n.Descendants().Prepend(n)));
  }
 

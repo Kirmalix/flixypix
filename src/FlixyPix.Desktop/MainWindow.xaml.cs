@@ -262,7 +262,7 @@ public partial class MainWindow : Window
                 ShowCollections(playlists, snapshot.Sets, snapshot.Searches, snapshot.Target);
                 UpdateNavigation(); RenderTagFilterChips();
                 CountLabel.Text = Tn(snapshot.Page.TotalCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
-        + (_folder != null ? T(" · folder filter") : "") + (_playlist != null
+        + (_folder != null && !InFolderView ? T(" · folder filter") : "") + (_playlist != null
         ? $" · {(_playlist.Kind switch { PlaylistKind.Slideshow => T("Slideshow"), PlaylistKind.Quick => T("Quick collection"), _ => T("Playlist") })}" : "");
                 if (_advancedExpression != null) CountLabel.Text += T(" · Advanced search");
                 CountLabel.Text += FilterDescription();
@@ -409,7 +409,7 @@ public partial class MainWindow : Window
         foreach (var tag in parsed.Include) _browse.SetTagMode(tag, 1);
         foreach (var tag in parsed.Exclude) _browse.SetTagMode(tag, -1);
         if (parsed.MinimumStars is { } stars) RatingFilter.SelectedIndex = stars;
-        if (parsed.Kind is { } kind) { _view = kind.ToString(); UpdateNavigation(); }
+        if (parsed.Kind is { } kind) { if (_view == FolderView) _kindFilter = kind; else { _view = kind.ToString(); UpdateNavigation(); } }
         if (parsed.MarkTags.Count > 0) { _filter = _filter with { MarkTags = _filter.MarkTags.Concat(parsed.MarkTags).Distinct(StringComparer.OrdinalIgnoreCase).ToList() }; UpdateFilterBar(); }
         SearchBox.Text = parsed.Text; SearchBox.CaretIndex = SearchBox.Text.Length; _searchTimer.Stop();
         _anchor = 0; Status.Text = T("Short forms became filters");
@@ -565,8 +565,6 @@ public partial class MainWindow : Window
         {
             e.Handled = true; await WalkHistoryAsync(e.SystemKey == Key.Left || e.Key == Key.BrowserBack ? -1 : 1); return;
         }
-        var quickNumber = e.Key is >= Key.D1 and <= Key.D9 ? e.Key - Key.D0 : e.Key is >= Key.NumPad1 and <= Key.NumPad9 ? e.Key - Key.NumPad0 : 0;
-        if (Keyboard.Modifiers == ModifierKeys.Control && quickNumber > 0 && Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox) { e.Handled = true; await ToggleQuickTagAsync(quickNumber); return; }
         if (OpenWithHotkey(e) || MediaMenuKey(e)) return;
         // Bookmarks, scenes and the collection tree handle these keys themselves (rename, open or play, remove).
         if (e.Key is Key.F2 or Key.Enter or Key.Delete && (Scenes.IsKeyboardFocusWithin || Bookmarks.IsKeyboardFocusWithin || CollectionTree.IsKeyboardFocusWithin)) return;

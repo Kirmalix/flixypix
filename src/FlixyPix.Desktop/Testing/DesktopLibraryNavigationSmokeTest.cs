@@ -15,9 +15,9 @@ public partial class MainWindow
         var before = _repository.GetPreferences(); var state = CaptureViewState();
         try
         {
-            Check(_sidebarSections.Count == 5, "Sidebar sections were not discovered.");
-            _sidebarSections["tags"].IsExpanded = false; Check(_repository.GetPreferences().Sidebar.CollapsedSections.Contains("tags"), "Collapsed section was not saved.");
-            _sidebarSections["tags"].IsExpanded = true;
+            Check(_sidebarSections.Count == 3, "Sidebar sections were not discovered.");
+            _sidebarSections["collections"].IsExpanded = false; Check(_repository.GetPreferences().Sidebar.CollapsedSections.Contains("collections"), "Collapsed section was not saved.");
+            _sidebarSections["collections"].IsExpanded = true;
             var empty = Path.Combine(directory, "empty-root");
             _repository.SaveLibraryFolders([new() { Path = directory }, new() { Path = empty }]);
             await RefreshAsync(); var roots = ((IEnumerable<BrowseNode>)Folders.ItemsSource).Single().Children;
@@ -30,9 +30,9 @@ public partial class MainWindow
             try { SetKeyboardState(keyboard); MediaList.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(MediaList)!, 0, Key.NumPad9) { RoutedEvent = Keyboard.PreviewKeyDownEvent }); }
             finally { SetKeyboardState(saved); }
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); await _lastRefresh;
-            // Route handler is async: wait for the data write, not only its first yield.
-            for (int i = 0; i < 30 && !_repository.GetMedia(item.Id)!.Tags.Contains("stable-smoke"); i++) await Task.Delay(20);
-            Check(_repository.GetMedia(item.Id)!.Tags.Contains("stable-smoke"), "Ctrl+numpad shortcut did not tag the selection.");
+            // The pinned tags belong to the tag mode alone; the handler is async, so give it time to do something wrong.
+            await Task.Delay(100);
+            Check(!_repository.GetMedia(item.Id)!.Tags.Contains("stable-smoke"), "Ctrl+digit still tags the selection.");
             var quick = _repository.GetQuickCollection(); var member = quick.MediaIds.Contains(item.Id);
             MediaList.UpdateLayout(); var card = MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == item.Id);
             var container = (ListBoxItem)MediaList.ItemContainerGenerator.ContainerFromItem(card);
