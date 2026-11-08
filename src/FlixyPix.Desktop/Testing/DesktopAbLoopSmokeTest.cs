@@ -55,6 +55,9 @@ public partial class MainWindow
   Capture(window.ControlsSurface,Path.Combine(root,"compact-controls.png"));
   await window.ClearRangeAsync();if(listWanted)window.ToggleMarkPanel();
   // The row stays one line at every size: what does not fit moves into the menu, and a larger interface keeps its room.
+  double Middle(string name){var button=ActionButton(name);return button.TransformToAncestor(window.ControlsSurface).Transform(new Point(button.ActualWidth/2,0)).X-window.ControlsSurface.ActualWidth/2;}
+  Require(Math.Abs(Middle("Play or pause"))<2,"The play button left the middle of a narrow bar.");
+  Require(window.MoreMenuShown,"The menu of a narrow bar is missing.");
   double Line(string name)=>ActionButton(name).TransformToAncestor(window.ControlsSurface).Transform(new Point(0,ActionButton(name).ActualHeight/2)).Y;
   Require(Math.Abs(Line(T("Play or pause"))-Line(T("Full screen (F11)")))<2,"The control row wrapped.");
   Require(window.ControlsFolded&&window.FoldedControls.Count>0,"A narrow player did not fold its tools into the menu.");
@@ -63,6 +66,17 @@ public partial class MainWindow
   var scaledMenu=Menus.Create([MenuSpec.Command(T("Close"),()=>{})]);scaledMenu.IsOpen=true;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Require(scaledMenu.LayoutTransform is System.Windows.Media.ScaleTransform{ScaleX:1.25},"A menu did not follow the interface size.");scaledMenu.IsOpen=false;
   InterfaceScaling.Apply(1);Require(window.MinWidth==650,"The minimum size did not return to normal.");
+  // The narrowest window: everything stays in reach, the list steps aside without changing the saved choice, and it can still be opened.
+  var listSaved=db.GetPreferences().Playback.ShowMarks;if(!window.MarkPanelVisible&&!listSaved){window.ToggleMarkPanel();listSaved=true;}
+  window.Width=window.MinWidth;await Idle();
+  foreach(var button in Descendants<Button>(window.ControlsSurface).Where(button=>button.IsVisible))
+  {
+   var point=button.TransformToAncestor(window.ControlsSurface).Transform(new Point());
+   Require(point.X>=-1&&point.X+button.ActualWidth<=window.ControlsSurface.ActualWidth+1,"The narrowest player clips a control: "+button.Content);
+  }
+  Require(Math.Abs(Middle("Play or pause"))<2&&!window.MarkPanelVisible&&db.GetPreferences().Playback.ShowMarks==listSaved,"The narrowest player lost the middle, kept the list or changed the saved choice.");
+  window.ToggleMarkPanel();await Idle();Require(window.MarkPanelVisible&&db.GetPreferences().Playback.ShowMarks==listSaved,"The list could not be opened in a narrow window.");window.ToggleMarkPanel();
+  window.Width=1100;await Idle();Require(window.MarkPanelVisible==listSaved&&!window.ControlsFolded&&!window.MoreMenuShown&&Math.Abs(Middle("Play or pause"))<2,"A wider window did not bring everything back.");
   File.WriteAllText(Path.Combine(root,"ab-result.txt"),"PASS: range to scene and loop with native state, invalid end retention, repeat independence, discard, messages, fullscreen list/menu/refresh/overlay, range row and normal-state restoration.");
  }
 }

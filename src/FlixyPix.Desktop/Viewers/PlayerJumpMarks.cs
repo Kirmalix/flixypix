@@ -38,14 +38,19 @@ internal sealed partial class VideoPlayerWindow
  internal bool MarkStepsVisible => nextMarkButton.Visibility == Visibility.Visible;
  internal int RenderedMarkCount => markLayer.Children.Count;
 
- private Grid BuildTimeline()
+ private DockPanel BuildTimeline()
  {
   position.IsMoveToPointEnabled = true; position.Margin = new Thickness(0);
-  var grid = new Grid { Margin = new Thickness(8, 6, 8, 4) };
+  clock.Typography.NumeralAlignment = clockTotal.Typography.NumeralAlignment = FontNumeralAlignment.Tabular;
+  clockTotal.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+  var grid = new Grid();
   grid.Children.Add(rangeLayer); grid.Children.Add(position); grid.Children.Add(markLayer);
   grid.SizeChanged += (_, _) => { RenderMarkers(); RenderRange(); };
-  return grid;
- }
+  // The times stand at the ends of the line; the row below them keeps its room for the controls.
+  var line = new DockPanel { Margin = new Thickness(8, 6, 8, 2) };
+  DockPanel.SetDock(clock, Dock.Left); DockPanel.SetDock(clockTotal, Dock.Right);
+  line.Children.Add(clock); line.Children.Add(clockTotal); line.Children.Add(grid);
+  return line; }
 
  private Border BuildMarkPanel()
  {
@@ -90,15 +95,26 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Full-screen visibility is session-only; leaving restores the saved normal-window preference.</summary>
  private bool marksWanted;
  private bool fullscreenMarksWanted;
+ /// <summary>Below this room the list would leave the video only a strip, so it steps aside by itself.</summary>
+ private const double PanelNeedsWidth = 720;
+ private bool panelSqueezed, panelForced;
+ private void AdaptMarkPanel(double width)
+ {
+  var squeezed = width < PanelNeedsWidth; if (squeezed == panelSqueezed) return;
+  panelSqueezed = squeezed; panelForced = false;
+  if (!IsFullscreen) { ShowMarkPanel(marksWanted); ApplyTransform(); }
+ }
  internal void ToggleMarkPanel()
  {
   if(IsFullscreen){fullscreenMarksWanted=!fullscreenMarksWanted;ShowMarkPanel(fullscreenMarksWanted);ApplyTransform();ShowOverlay();return;}
+  // A window too narrow for the list only keeps it while asked; the choice for wider windows stays.
+  if(panelSqueezed){panelForced=!MarkPanelVisible;ShowMarkPanel(marksWanted||panelForced);ApplyTransform();return;}
   var wanted=!marksWanted;
   var current=repository.GetPreferences().Playback;
   repository.SavePlaybackPreferences(current with { ShowMarks=wanted });
   marksWanted=wanted; ShowMarkPanel(wanted); ApplyTransform();
  }
- private void ShowMarkPanel(bool visible) { markPanel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed; UpdateMarkSteps(); UpdateRangeControls(); }
+ private void ShowMarkPanel(bool visible) { markPanel.Visibility = visible && (!panelSqueezed || panelForced) ? Visibility.Visible : Visibility.Collapsed; UpdateMarkSteps(); UpdateRangeControls(); }
  /// <summary>While the list is hidden, previous/next buttons beside "Jump marks" step through the marks instead.</summary>
  private void UpdateMarkSteps() { previousMarkButton.Visibility = nextMarkButton.Visibility = !MarkPanelVisible && Marks.Count > 0 ? Visibility.Visible : Visibility.Collapsed; }
 

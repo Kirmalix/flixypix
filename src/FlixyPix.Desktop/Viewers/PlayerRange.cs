@@ -71,6 +71,13 @@ internal sealed partial class VideoPlayerWindow
   foreach (var (element, dock) in new (UIElement, Dock)[] { (tools.Start, Dock.Left), (tools.End, Dock.Left), (tools.Discard, Dock.Right), (tools.Loop, Dock.Right), (tools.Save, Dock.Right) })
   { DockPanel.SetDock(element, dock); rangeStrip.Children.Add(element); }
   rangeStrip.Children.Add(tools.Label);
+  // A narrow row keeps its symbols with their tooltips; the times and the main action stay readable.
+  rangeStrip.SizeChanged += (_, _) =>
+  {
+   var words = rangeStrip.ActualWidth >= 720;
+   foreach (var button in new[] { tools.Start, tools.End, tools.Loop })
+    if (button.Content is StackPanel { Children: [TextBlock glyph, TextBlock text] }) { text.Visibility = words ? Visibility.Visible : Visibility.Collapsed; glyph.Margin = new Thickness(0, 0, words ? 7 : 0, 0); }
+  };
   return rangeStrip;
  }
 

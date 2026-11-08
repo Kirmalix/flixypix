@@ -62,7 +62,7 @@ internal sealed partial class VideoPlayerWindow : Window
   };
   Width=1100; Height=760; MinWidth=650; MinHeight=460;
   WindowStartupLocation=WindowStartupLocation.CenterOwner;
-  var root=new DockPanel(); var bar=BuildControlBar(); DockPanel.SetDock(bar,Dock.Bottom); root.Children.Add(bar);
+  var root=new DockPanel(); root.SizeChanged+=(_,_)=>AdaptMarkPanel(root.ActualWidth); var bar=BuildControlBar(); DockPanel.SetDock(bar,Dock.Bottom); root.Children.Add(bar);
   var panel=BuildMarkPanel(); DockPanel.SetDock(panel,Dock.Right); root.Children.Add(panel);
   // Track lists stay as the model of the track menu; the menu sets their selection.
   audio.SelectionChanged+=async (_,_)=>{ if(!syncing && audio.SelectedItem is TrackChoice track && player!=null)await TrackPreference(()=>SelectAudioAsync(track)); };

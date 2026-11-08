@@ -23,7 +23,10 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 **Player**
 
-- A calmer player bar: only the time line and one row of controls remain, so the video gets the room.
+- A calmer player bar: only the time line and one row of controls remain, so the video gets the room. Play
+  stands out in the middle, with the times at the ends of the time line. When the window narrows, buttons keep
+  their size: the rating shrinks to one star, then tools move into the "More actions" menu, and a narrow
+  window hides the jump mark list unless you open it.
   The file path moved to the tooltip of the time and into the right-click menu, and messages appear briefly
   over the video instead of in a status line.
 - One range replaces the separate A–B loop and scene buttons: set a start and an end, then save it as a scene

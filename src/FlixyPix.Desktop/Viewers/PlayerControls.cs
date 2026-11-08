@@ -21,7 +21,8 @@ internal sealed partial class VideoPlayerWindow
  private readonly Button nextButton = Symbol("", T("Next video in the view"));
  private readonly CheckBox repeat = Toggle("", T("Loop: continue with the next video at the end, start over after the last one"));
  private readonly CheckBox shuffle = Toggle("", T("Shuffle: pick the next video at random from the view"));
- private readonly TextBlock clock = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 0), FontSize = 12 };
+ private readonly TextBlock clock = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0), FontSize = 12 };
+ private readonly TextBlock clockTotal = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), FontSize = 12 };
  private readonly Button fullscreenButton = Symbol("", T("Full screen (F11)"));
  private readonly Popup overlay = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, StaysOpen = true };
  private readonly Border overlayFrame = new() { CornerRadius = new CornerRadius(10), Padding = new Thickness(4, 6, 4, 2), Margin = new Thickness(24, 0, 24, 24) };
@@ -212,45 +213,52 @@ internal sealed partial class VideoPlayerWindow
  {
   AutomationProperties.SetName(volumeSlider,T("Volume"));AutomationProperties.SetName(position,T("Position"));AutomationProperties.SetName(speed,T("Speed"));
   controlBar.Children.Add(BuildTimeline());
-  var row = new PlayerControlRow();
-  pause.Content = ""; pause.Style = (Style)Application.Current.Resources["IconButton"]; pause.FontSize = 20; pause.ToolTip = T("Play / Pause"); AutomationProperties.SetName(pause, T("Play or pause"));
+  var row = new PlayerControlRow { Margin = new Thickness(8, 0, 8, 2) };
+  pause.Content = ""; pause.Style = (Style)Application.Current.Resources["PlayButton"]; pause.ToolTip = T("Play / Pause"); AutomationProperties.SetName(pause, T("Play or pause"));
   pause.Click += async (_, _) => await Command(TogglePauseAsync);
   previousButton.Click += async (_, _) => { if (StepRequested != null) await Command(() => StepRequested(-1)); };
   nextButton.Click += async (_, _) => { if (StepRequested != null) await Command(() => StepRequested(1)); };
-  row.Add(previousButton); row.Add(pause); row.Add(nextButton);
+  var jumps = new List<(Button Button, Func<IReadOnlyList<MenuSpec>> Entries)>();
   foreach (var (label, seconds) in new[] { ($"−{playback.SmallJumpBackwardSeconds:0.#} s", -playback.SmallJumpBackwardSeconds), ($"+{playback.SmallJumpForwardSeconds:0.#} s", playback.SmallJumpForwardSeconds) })
   {
    var jump = new Button { Content = label, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(2, 0, 2, 0), ToolTip = seconds < 0 ? T("Jump back") : T("Skip ahead") };
    jump.Click += async (_, _) => await Command(() => JumpAsync(seconds));
    var jumpLabel = jump.ToolTip + " (" + label + ")";
-   row.Add(jump, fold: 1, entries: () => [MenuSpec.Command(jumpLabel, () => _ = Command(() => JumpAsync(seconds)))]);
+   jumps.Add((jump, () => [MenuSpec.Command(jumpLabel, () => _ = Command(() => JumpAsync(seconds)))]));
   }
-  clock.Typography.NumeralAlignment = FontNumeralAlignment.Tabular; row.Add(clock);
 
   repeat.Click += (_, _) => PlaybackModeChanged?.Invoke(); shuffle.Click += (_, _) => PlaybackModeChanged?.Invoke();
-  row.Add(repeat, right: true, fold: 5, entries: () => [LoopEntry()]); row.Add(shuffle, right: true, fold: 5, entries: () => [ShuffleEntry()]);
-  volumeButton.Margin=new Thickness(6,0,2,0);
+  volumeButton.Margin=new Thickness(0,0,2,0);
   volumeButton.Click+=(_,_)=>ToggleMute();
   UpdateVolumeState();
   var volume = volumeSlider;
   AutomationProperties.SetName(volume, T("Volume"));
   volume.ValueChanged += async (_, _) => { UpdateVolumeState(); if (player != null) await Command(() => player.SetVolumeAsync(volume.Value)); };
-  row.Add(volumeButton, right: true); row.Add(volume, right: true);
-  speed.Margin = new Thickness(10, 0, 2, 0); speed.VerticalAlignment = VerticalAlignment.Center; speed.ToolTip = T("Playback speed"); speed.ItemStringFormat = "0.##×";
+  speed.Margin = new Thickness(0, 0, 2, 0); speed.VerticalAlignment = VerticalAlignment.Center; speed.ToolTip = T("Playback speed"); speed.ItemStringFormat = "0.##×";
   // xml:lang follows the UI language; numeric items follow the user's regional format.
   speed.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
   speed.SelectionChanged += async (_, _) => { if (!syncing && player != null && speed.SelectedItem is double value) await TrackPreference(() => SaveSpeedAsync(value)); };
-  row.Add(speed, right: true, fold: 7, entries: () => [MenuSpec.Submenu(T("Playback speed"), SpeedEntries())]);
   var tracks = Symbol("", T("Choose audio and subtitle track")); AutomationProperties.SetName(tracks, T("Tracks")); tracks.Click += (_, _) => TrackMenu(tracks);
-  var view = Labeled("", Tc("player", "View"), T("Time-based view: crop and position of the picture per point in time")); view.Click += (_, _) => ViewMenu(view);
-  row.Add(BuildRating(), right: true, fold: 3, entries: () => [MenuSpec.Submenu(T("Rating"), RatingEntries())]);
-  row.Add(BuildOCounter(), right: true, fold: 4, entries: OCounterEntries);
-  row.Add(tracks, right: true, fold: 8, entries: () => [MenuSpec.Submenu(T("Tracks"), TrackEntries(), tracks.Content as string)]);
+  var view = Symbol("", T("Time-based view: crop and position of the picture per point in time")); view.Click += (_, _) => ViewMenu(view);
   var marks = Pill(previousMarkButton, marksButton, nextMarkButton); marks.Margin = new Thickness(4, 0, 4, 0);
-  row.Add(marks, right: true, fold: 6, entries: MarkEntries); row.Add(view, right: true, fold: 2, entries: () => [MenuSpec.Submenu(Tc("player", "View"), ViewEntries())]);
   var more = Symbol("\uE712", T("More actions")); more.Click += (_, _) => Menus.Open(more, controlRow.FoldedEntries(), (_, error) => ShowMessage(error.Message), PlacementMode.Top);
+  fullscreenButton.Click += (_, _) => ToggleFullscreen();
+  // Volume and rating on the left, playback in the middle, the tools on the right. The numbers say who gives way first.
+  row.Add(volumeButton, RowZone.Left);
+  row.Add(volume, RowZone.Left, 9, () => [MenuSpec.Submenu(T("Volume"), VolumeEntries())]);
+  row.Add(BuildRating(), RowZone.Left, 1, compact: RatingChip());
+  row.Add(BuildOCounter(), RowZone.Left, 3, OCounterEntries);
+  row.Add(shuffle, RowZone.Center, 5, () => [ShuffleEntry()]);
+  row.Add(jumps[0].Button, RowZone.Center, 4, jumps[0].Entries);
+  row.Add(previousButton, RowZone.Center); row.Add(pause, RowZone.Center); row.Add(nextButton, RowZone.Center);
+  row.Add(jumps[1].Button, RowZone.Center, 4, jumps[1].Entries);
+  row.Add(repeat, RowZone.Center, 5, () => [LoopEntry()]);
+  row.Add(speed, RowZone.Right, 7, () => [MenuSpec.Submenu(T("Playback speed"), SpeedEntries())]);
+  row.Add(tracks, RowZone.Right, 8, () => [MenuSpec.Submenu(T("Tracks"), TrackEntries(), tracks.Content as string)]);
+  row.Add(marks, RowZone.Right, 6, MarkEntries);
+  row.Add(view, RowZone.Right, 2, () => [MenuSpec.Submenu(Tc("player", "View"), ViewEntries())]);
   row.AddMore(more);
-  fullscreenButton.Click += (_, _) => ToggleFullscreen(); row.Add(fullscreenButton, right: true);
+  row.Add(fullscreenButton, RowZone.Right);
   controlRow = row; controlBar.Children.Add(row);
   controlBar.Children.Add(BuildRangeStrip());
   status.Margin = new Thickness(0); status.MaxWidth = 640; status.FontSize = 12; status.Foreground = Brushes.White;
@@ -291,7 +299,7 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Clock and play symbol follow each poll; previous and next only appear when the library offers them.</summary>
  private void UpdateControls(double seconds)
  {
-  clock.Text = Time(seconds) + " / " + (durationSeconds is double duration ? Time(duration) : "–"); clock.ToolTip = Source?.Path;
+  clock.Text = Time(seconds); clockTotal.Text = durationSeconds is double duration ? Time(duration) : "–"; clock.ToolTip = Source?.Path;
   previousButton.Visibility = nextButton.Visibility = StepRequested != null ? Visibility.Visible : Visibility.Collapsed;
   KeepOverlayFresh();
  }
@@ -327,6 +335,7 @@ internal sealed partial class VideoPlayerWindow
 
  private PlayerControlRow controlRow = null!;
  internal bool ControlsFolded => controlRow.AnythingFolded;
+ internal bool MoreMenuShown => controlRow.MenuShown;
  internal IReadOnlyList<MenuSpec> FoldedControls => controlRow.FoldedEntries();
  private void TrackMenu(Button target) => Menus.Open(target, TrackEntries(), (_, error) => ShowMessage(error.Message), PlacementMode.Top);
  /// <summary>Audio and subtitle tracks with the current one checked, and the subtitle file and offset.</summary>

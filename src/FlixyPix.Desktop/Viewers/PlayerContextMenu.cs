@@ -50,6 +50,8 @@ internal sealed partial class VideoPlayerWindow
   MenuSpec.Command(AbLoop.Active ? T("End loop") : T("Loop range"), () => AbLoopUpdate = Command(ToggleRangeLoopAsync), enabled: RangeStart.HasValue && RangeEnd.HasValue && durationSeconds > 0),
   MenuSpec.Command(T("Discard range"), () => AbLoopUpdate = Command(ClearRangeAsync), enabled: RangeStart.HasValue),
  ];
+ private IEnumerable<MenuSpec> VolumeEntries() => new[] { 100, 75, 50, 25, 0 }.Select(value =>
+  (MenuSpec)new MenuCommand(T("Volume {0:0} %", value), () => volumeSlider.Value = value) { Checked = Math.Abs(volumeSlider.Value - value) < 1 });
  private MenuCommand LoopEntry() => new(T("Loop"), () => { repeat.IsChecked = repeat.IsChecked != true; PlaybackModeChanged?.Invoke(); }) { Icon = "", Checked = repeat.IsChecked == true };
  private MenuCommand ShuffleEntry() => new(T("Shuffle"), () => { shuffle.IsChecked = shuffle.IsChecked != true; PlaybackModeChanged?.Invoke(); }) { Icon = "", Checked = shuffle.IsChecked == true };
  private IEnumerable<MenuSpec> SpeedEntries() => speed.Items.OfType<double>().Select(value =>
