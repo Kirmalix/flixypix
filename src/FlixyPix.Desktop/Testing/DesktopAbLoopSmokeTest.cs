@@ -77,6 +77,12 @@ public partial class MainWindow
   Require(Math.Abs(Middle("Play or pause"))<2&&!window.MarkPanelVisible&&db.GetPreferences().Playback.ShowMarks==listSaved,"The narrowest player lost the middle, kept the list or changed the saved choice.");
   window.ToggleMarkPanel();await Idle();Require(window.MarkPanelVisible&&db.GetPreferences().Playback.ShowMarks==listSaved,"The list could not be opened in a narrow window.");window.ToggleMarkPanel();
   window.Width=1100;await Idle();Require(window.MarkPanelVisible==listSaved&&!window.ControlsFolded&&!window.MoreMenuShown&&Math.Abs(Middle("Play or pause"))<2,"A wider window did not bring everything back.");
+  // A late answer from mpv is no end of playback: the position keeps following, and only a lasting silence is reported.
+  var readPosition=window.ReadPosition;window.ReadPosition=_=>Task.FromException<double?>(new OperationCanceledException());
+  var ended=T("Playback finished · ");
+  await window.PollOnceAsync();Require(window.PollingActive&&!window.MessageText.StartsWith(ended,StringComparison.Ordinal),"One late answer ended the polling.");
+  await window.PollOnceAsync();await window.PollOnceAsync();Require(window.PollingActive&&window.MessageText==T("The player is not responding."),"Lasting silence was not reported or ended the polling.");
+  window.ReadPosition=readPosition;await window.PollOnceAsync();Require(window.PollingActive,"The polling did not continue after the answers returned.");
   File.WriteAllText(Path.Combine(root,"ab-result.txt"),"PASS: range to scene and loop with native state, invalid end retention, repeat independence, discard, messages, fullscreen list/menu/refresh/overlay, range row and normal-state restoration.");
  }
 }

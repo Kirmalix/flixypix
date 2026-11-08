@@ -12,6 +12,8 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   no longer protected by itself; choose folders FlixyPix must never write to under Settings → Storage →
   Protected folders. Folders holding FlixyPix's own data or a library cannot be protected.
 - The dialog for assigning media paths no longer suggests example folders.
+- A late answer from the video player no longer reads "Playback finished" and stops the time display while the
+  video plays on. The time display keeps following, and a player silent for longer is reported as not responding.
 - A larger interface size keeps the arrangement of the player. The control row stays one line with playback
   on the left and the tools on the right; what does not fit moves into a "More actions" menu. The player and
   dialogs open larger to match, as far as the screen allows, while windows already open keep their size

@@ -2851,6 +2851,7 @@
   "The PIN opens the lock on this computer. Digits, letters or both.": "PIN はこのコンピューターでロックを解除します。数字、文字、またはその両方を使えます。",
   "The plan contains duplicate items or targets.": "処理計画にメディアまたは出力先の重複があります。",
   "The player is not ready yet.": "プレーヤーはまだ準備できていません。",
+  "The player is not responding.": "プレーヤーが応答していません。",
   "The player window stays above other windows.": "プレーヤーのウィンドウを常にほかのウィンドウより手前に表示します。",
   "The position must lie within the item.": "位置はメディアの長さの範囲内にしてください。",
   "The previews belong to another job.": "プレビューは別のジョブに属しています。",

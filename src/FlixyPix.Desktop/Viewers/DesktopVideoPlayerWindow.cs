@@ -151,19 +151,26 @@ internal sealed partial class VideoPlayerWindow : Window
   }
   finally { syncing=false; }
  }
+ /// <summary>Reads the position; the smoke test replaces it because it cannot make a real mpv hang on demand.</summary>
+ internal Func<MpvPlayer,Task<double?>> ReadPosition { get; set; }=active=>active.GetPositionAsync();
+ internal Task PollOnceAsync()=>PollAsync();
+ internal bool PollingActive=>timer.IsEnabled;
+ private int unansweredPolls;
  private async Task PollAsync()
  {
   if(polling || player==null || closing)return; polling=true;
   try
   {
-   var seconds=await player.GetPositionAsync(); if(closing || seconds==null || processingMouse)return;
+   var seconds=await ReadPosition(player); unansweredPolls=0; if(closing || seconds==null || processingMouse)return;
    // A release outside the time line does not reach it: the poll ends the press and seeks where it was left.
    if(seeking && !keyboardSeeking && !PointerPressed()) { seeking=false; _=Command(()=>SeekToAsync(position.Value)); }
    LastPositionSeconds=seconds.Value; if(!seeking)position.Value=Math.Clamp(seconds.Value,0,position.Maximum);
    if(!paused)Coverage.Observe(seconds.Value,speed.SelectedItem is double rate?rate:1);
    ApplyTransform(); UpdateCurrentMark(); UpdateControls(seconds.Value); PositionTick?.Invoke(seconds.Value);
   }
-  catch(Exception error) when(error is IOException or InvalidOperationException or OperationCanceledException or ObjectDisposedException) { timer.Stop(); if(!closing)ShowMessage(T("Playback finished · ")+error.Message); }
+  // A busy mpv answers late (a slow seek, a drive waking up) and plays on; only a lost connection ends the polling.
+  catch(OperationCanceledException) { if(!closing && ++unansweredPolls==3)ShowMessage(T("The player is not responding.")); }
+  catch(Exception error) when(error is IOException or InvalidOperationException or ObjectDisposedException) { timer.Stop(); if(!closing)ShowMessage(T("Playback finished · ")+error.Message); }
   finally { polling=false; }
  }
  private void ApplyTransform() { if(host.VideoHandle!=0)host.Apply(transforms.IsChecked==true?(manualTransform??timeline.At(LastPositionSeconds)):PlayerTransformTimeline.Identity); }
@@ -175,7 +182,8 @@ internal sealed partial class VideoPlayerWindow : Window
  private async Task Command(Func<Task> action)
  {
   try { await action(); }
-  catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or OperationCanceledException or ObjectDisposedException or Microsoft.Data.Sqlite.SqliteException)
+  catch(OperationCanceledException) { if(!closing)ShowMessage(T("The player is not responding.")); }
+  catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or ObjectDisposedException or Microsoft.Data.Sqlite.SqliteException)
   { if(!closing)ShowMessage(error.Message); }
  }
  internal async Task TogglePauseAsync() { paused=!paused; await RequirePlayer().PauseAsync(paused); ShowPlayState(); }
