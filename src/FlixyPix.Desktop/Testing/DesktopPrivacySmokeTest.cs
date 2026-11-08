@@ -55,6 +55,29 @@ public partial class MainWindow
   try { window.SelectPage("Privacy"); window.LockOnMinimize.IsChecked = true; Require(window.TrySave() && window.Result?.Privacy?.PinHash == pinHash, "A lock with a PIN was refused or lost the PIN."); }
   finally { window.CloseDiscarding(); }
 
+  // Setting a first PIN also asks at start; a deliberate "off" stays off.
+  window = new SettingsWindow(this, _repository, _settings with { Privacy = new PrivacySettings() }, _settings.DataDirectory, () => { }, () => { }); window.Show();
+  try
+  {
+   window.SelectPage("Privacy");
+   Require(window.AskPinAtStart.IsChecked == false && !window.AskPinAtStart.IsEnabled, "The start question was offered without a PIN.");
+   window.SetPin(pinHash);
+   Require(window.AskPinAtStart.IsChecked == true && window.AskPinAtStart.IsEnabled, "Setting a PIN did not switch on the start question.");
+   window.RemovePin();
+   Require(window.AskPinAtStart.IsChecked == false && !window.AskPinAtStart.IsEnabled, "Removing the PIN kept the start question.");
+   window.SetPin(pinHash);
+   Require(window.TrySave() && window.Result?.Privacy is { AskPinAtStart: true } && window.Result.Privacy.PinHash == pinHash, "The start question did not reach the result.");
+  }
+  finally { window.CloseDiscarding(); }
+  window = new SettingsWindow(this, _repository, _settings with { Privacy = new PrivacySettings { PinHash = pinHash, AskPinAtStart = false } }, _settings.DataDirectory, () => { }, () => { }); window.Show();
+  try
+  {
+   window.SelectPage("Privacy");
+   window.SetPin(PinCode.Hash("1357"));
+   Require(window.AskPinAtStart.IsChecked == false, "Changing a PIN overruled the choice not to be asked at start.");
+  }
+  finally { window.CloseDiscarding(); }
+
   var idleBefore = AppLock.IdleTime; var muted = new List<bool>(); var paused = 0;
   void Muted(bool on) => muted.Add(on); void Paused() => paused++;
   AppShell.Muting += Muted; AppShell.Hiding += Paused;
@@ -177,13 +200,13 @@ public partial class MainWindow
    Require(!AppLock.IsLocked && AppShell.IsHidden, "The boss key locked although the setting is off.");
    AppShell.ShowAll(); await Settled();
    Require(AppShell.IsOnScreen(this), "Switched off, coming back asked for something.");
-   Require(new PrivacySettings().LockWithBossKey && System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>("{}")!.LockWithBossKey && !new PrivacySettings().LockAtStart, "The defaults of the lock options changed.");
-   Require(!new PrivacySettings { LockAtStart = true }.Validated([], "").LockAtStart && new PrivacySettings { LockAtStart = true, PinHash = pinHash }.Validated([], "").LockAtStart, "A start question without a PIN was kept.");
+   Require(new PrivacySettings().LockWithBossKey && System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>("{}")!.LockWithBossKey && new PrivacySettings().AskPinAtStart && System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>("{}")!.AskPinAtStart, "The defaults of the lock options changed.");
+   Require(!new PrivacySettings { AskPinAtStart = true }.Validated([], "").AskPinAtStart && new PrivacySettings { AskPinAtStart = true, PinHash = pinHash }.Validated([], "").AskPinAtStart, "A start question without a PIN was kept.");
 
    // The question at program start: when it comes, and that only the right PIN passes.
-   var asked = new PrivacySettings { LockAtStart = true, PinHash = pinHash };
+   var asked = new PrivacySettings { AskPinAtStart = true, PinHash = pinHash };
    Require(StartLock.Needed(asked, choosing: false, encrypted: false) && StartLock.Needed(asked, choosing: true, encrypted: false) && StartLock.Needed(asked, choosing: true, encrypted: true), "The start question was missing.");
-   Require(!StartLock.Needed(asked, choosing: false, encrypted: true) && !StartLock.Needed(new PrivacySettings { PinHash = pinHash }, false, false) && !StartLock.Needed(new PrivacySettings { LockAtStart = true }, false, false), "The start question came without need.");
+   Require(!StartLock.Needed(asked, choosing: false, encrypted: true) && StartLock.Needed(new PrivacySettings { PinHash = pinHash }, false, false) && !StartLock.Needed(new PrivacySettings { PinHash = pinHash, AskPinAtStart = false }, false, false) && !StartLock.Needed(new PrivacySettings { AskPinAtStart = true }, false, false), "The start question came without need.");
    Privacy.Prepare(new PrivacySettings { NeutralTitle = true, NeutralTitleText = "Notizen", BlockCapture = true });
    var question = new StartLockWindow(pinHash); question.Show(); await Settled();
    Privacy.Attach(question);

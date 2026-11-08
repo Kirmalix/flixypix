@@ -13,7 +13,7 @@ internal static class StartLock
 
  /// <summary>A library that opens directly and is encrypted asks for its password, which is the stronger question; one
  /// question is enough then.</summary>
- internal static bool Needed(PrivacySettings privacy, bool choosing, bool encrypted) => privacy.LockAtStart && privacy.PinHash != null && (choosing || !encrypted);
+ internal static bool Needed(PrivacySettings privacy, bool choosing, bool encrypted) => privacy.AskPinAtStart && privacy.PinHash != null && (choosing || !encrypted);
 
  /// <summary>False when the person quit at the question. Asks once per program start.</summary>
  internal static bool Pass(PrivacySettings privacy, bool choosing, string libraryDirectory)
@@ -57,7 +57,7 @@ internal sealed class StartLockWindow : Window
   Width = 440; SizeToContent = SizeToContent.Height; ResizeMode = ResizeMode.NoResize; ShowInTaskbar = true; WindowStartupLocation = WindowStartupLocation.CenterScreen;
   System.Windows.Automation.AutomationProperties.SetName(secret, T("PIN"));
   var panel = new StackPanel { Children = { new TextBlock { Text = T("PIN"), TextWrapping = TextWrapping.Wrap }, secret } };
-  frame = new WindowFrame(T("Locked"), T("Enter the PIN to continue."), panel, ((char)0xE72E).ToString(), scroll: false);
+  frame = new WindowFrame(T("Welcome back"), T("Enter your PIN to get started."), panel, ((char)0xE72E).ToString(), scroll: false);
   open = frame.Add(T("Unlock"), () => Checking = TryAsync(), primary: true);
   frame.Add(T("Quit"), Close, cancel: true);
   Content = frame;
@@ -79,7 +79,7 @@ internal sealed class StartLockWindow : Window
   if (right) { Opened = true; Close(); return; }
   failures++;
   var wait = LockWait.After(failures);
-  frame.Status.Text = wait > TimeSpan.Zero ? T("Wrong · try again in {0} s", (int)wait.TotalSeconds) : T("Wrong · please try again");
+  frame.Status.Text = wait > TimeSpan.Zero ? T("That was not right. Try again in {0} s.", (int)wait.TotalSeconds) : T("That was not right. Please try again.");
   if (wait > TimeSpan.Zero) await Task.Delay(wait);
   open.IsEnabled = true; secret.Focus();
  }

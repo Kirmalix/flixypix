@@ -171,7 +171,7 @@ internal sealed class LockWindow : Window
   Width = 440; SizeToContent = SizeToContent.Height; ResizeMode = ResizeMode.NoResize; ShowInTaskbar = true; WindowStartupLocation = WindowStartupLocation.CenterScreen;
   System.Windows.Automation.AutomationProperties.SetName(secret, T("Password or PIN"));
   var panel = new StackPanel { Children = { label, secret } };
-  frame = new WindowFrame(T("Locked"), T("The windows come back once it is open again."), panel, "", scroll: false);
+  frame = new WindowFrame(T("Locked"), T("Everything is just as you left it."), panel, "", scroll: false);
   open = frame.Add(T("Unlock"), () => Checking = TryAsync(), primary: true);
   frame.Add(T("Quit"), AppShell.Exit);
   Content = frame;
@@ -194,7 +194,7 @@ internal sealed class LockWindow : Window
    if (await AppLock.TryUnlockAsync(secret.Password)) { failures = 0; secret.Clear(); frame.Status.Text = ""; return; }
    failures++; secret.Clear();
    var wait = LockWait.After(failures);
-   frame.Status.Text = wait > TimeSpan.Zero ? T("Wrong · try again in {0} s", (int)wait.TotalSeconds) : T("Wrong · please try again");
+   frame.Status.Text = wait > TimeSpan.Zero ? T("That was not right. Try again in {0} s.", (int)wait.TotalSeconds) : T("That was not right. Please try again.");
    if (wait > TimeSpan.Zero) await Task.Delay(wait);
   }
   finally { open.IsEnabled = true; secret.Focus(); }
