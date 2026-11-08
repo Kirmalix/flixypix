@@ -270,7 +270,7 @@ internal sealed partial class VideoPlayerWindow
   var seekBox = new StackPanel(); seekBox.Children.Add(seekImage); seekBox.Children.Add(seekTime);
   seekPreview.Child = new Border { Background = new SolidColorBrush(Color.FromArgb(225, 10, 12, 16)), CornerRadius = new CornerRadius(6), Padding = new Thickness(4), Child = seekBox };
   seekPreview.PlacementTarget = position;
-  position.MouseMove += (_, e) => ShowSeekPreview(e.GetPosition(position).X);
+  position.MouseMove += (_, e) => { var x = e.GetPosition(position).X; ShowSeekPreview(x); if (seeking && position.IsMouseCaptured) DragTimelineTo(x); };
   position.MouseLeave += (_, _) => HideSeekPreview();
   overlayFrame.Background = new SolidColorBrush(Color.FromArgb(218, 12, 15, 21));
   overlay.Child = new Decorator { Child = overlayFrame }; overlay.PlacementTarget = host;
@@ -321,10 +321,13 @@ internal sealed partial class VideoPlayerWindow
   });
  }
 
+ /// <summary>Where on the time line a pointer place lies; the thumb reaches the ends with its centre.</summary>
+ private double TimelineShare(double x) => Math.Clamp((x - TimelineThumbWidth / 2) / (position.ActualWidth - TimelineThumbWidth), 0, 1);
+ internal void DragTimelineTo(double x) { if (position.ActualWidth > TimelineThumbWidth) position.Value = TimelineShare(x) * position.Maximum; }
  private void ShowSeekPreview(double x)
  {
   if (durationSeconds is not (> 0 and double duration) || position.ActualWidth <= TimelineThumbWidth) return;
-  var seconds = Math.Clamp((x - TimelineThumbWidth / 2) / (position.ActualWidth - TimelineThumbWidth), 0, 1) * duration;
+  var seconds = TimelineShare(x) * duration;
   seekTime.Text = Time(seconds) + (JumpMarks.Current(Marks, seconds) is { } mark ? " · " + mark.Title : "");
   InterfaceScaling.Fit((FrameworkElement)seekPreview.Child);
   seekPreview.HorizontalOffset = Math.Clamp(x - 124, 0, Math.Max(0, position.ActualWidth - 248));

@@ -184,6 +184,16 @@ public partial class MainWindow
                 for (var wait = 0; !Near() && wait < 40; wait++) await Task.Delay(50);
                 Require(Near(), $"A click on the time line did not seek there ({_videoWindow.LastPositionSeconds:0.##} instead of {clicked:0.##} s).");
                 await Task.Delay(1100);
+                // Dragging follows the pointer from anywhere on the line, and the release seeks exactly there.
+                pressed = true;
+                timeline.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent });
+                foreach (var share in new[] { .2, .5, .3 }) { _videoWindow.DragTimelineTo(14 / 2d + share * (timeline.ActualWidth - 14)); Require(Math.Abs(timeline.Value - share * timeline.Maximum) < timeline.Maximum * .01, "Dragging did not move the time line with the pointer."); await Task.Delay(200); }
+                clicked = timeline.Value; await Task.Delay(500); Require(Math.Abs(timeline.Value - clicked) < .01, "Polling moved the time line back during a drag.");
+                pressed = false;
+                timeline.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent });
+                for (var wait = 0; !Near() && wait < 40; wait++) await Task.Delay(50);
+                Require(Near(), $"The end of a drag did not seek there ({_videoWindow.LastPositionSeconds:0.##} instead of {clicked:0.##} s).");
+                await Task.Delay(1100);
                 _videoWindow.PointerPressed = () => System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed;
                 Theme.Apply(ColorScheme.Light); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Capture((FrameworkElement)_videoWindow.Content, Path.Combine(directory, "embedded-player-light.png"));

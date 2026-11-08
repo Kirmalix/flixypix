@@ -96,6 +96,12 @@ public sealed class MpvPlayer : IAsyncDisposable
         if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
         _ = await SendAsync("seek", seconds, "absolute+exact");
     }
+    /// <summary>Seeks to the nearest key frame: at once also in long files, for following a drag on the time line.</summary>
+    public async Task SeekNearAsync(double seconds)
+    {
+        if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        _ = await SendAsync("seek", seconds, "absolute+keyframes");
+    }
     /// <summary>Reads a text property or option, e.g. "hwdec", to confirm how the player was configured.</summary>
     public async Task<string?> GetTextPropertyAsync(string name)
     {

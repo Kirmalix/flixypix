@@ -68,15 +68,15 @@ internal sealed partial class VideoPlayerWindow : Window
   audio.SelectionChanged+=async (_,_)=>{ if(!syncing && audio.SelectedItem is TrackChoice track && player!=null)await TrackPreference(()=>SelectAudioAsync(track)); };
   subtitles.SelectionChanged+=async (_,_)=>{ if(!syncing && subtitles.SelectedItem is TrackChoice track && player!=null)await Command(()=>player.SelectSubtitleTrackAsync(track.Id)); };
   transforms.Checked+=(_,_)=>ApplyTransform(); transforms.Unchecked+=(_,_)=>ApplyTransform();
-  root.Children.Add(host); Content=root;
+  root.Children.Add(host); Content=root; InterfaceScaling.Prepare(this);
   // From pressing the time line until release the poll must not move it back: a click jumps to the clicked point
-  // (IsMoveToPointEnabled), dragging follows the thumb, release seeks to where it ended.
+  // (IsMoveToPointEnabled), dragging from anywhere on the line follows the pointer, release seeks to where it ended.
   // The slider marks these events handled itself (IsMoveToPointEnabled), so they are subscribed with handledEventsToo.
-  position.AddHandler(PreviewMouseLeftButtonDownEvent,new MouseButtonEventHandler((_,_)=>{ if(position.IsEnabled)seeking=true; }),true);
+  position.AddHandler(PreviewMouseLeftButtonDownEvent,new MouseButtonEventHandler((_,e)=>{ if(!position.IsEnabled)return; seeking=true; position.CaptureMouse(); e.Handled=true; }),true);
   position.ValueChanged+=(_,_)=>{ if(seeking && PointerPressed())Scrub(position.Value); };
   position.PreviewKeyDown+=(_,e)=>{if(e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.PageUp or Key.PageDown or Key.Home or Key.End)keyboardSeeking=seeking=true;};
   position.PreviewKeyUp+=async(_,e)=>{if(keyboardSeeking){keyboardSeeking=seeking=false;if(player!=null)await Command(()=>SeekToAsync(position.Value));}};
-  position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
+  position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ position.ReleaseMouseCapture(); if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
   timer.Tick+=async (_,_)=>await PollAsync();
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
    ready.TrySetResult(host.VideoHandle); if(player==null)ShowMessage(T("Starting the player …")); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
@@ -128,8 +128,13 @@ internal sealed partial class VideoPlayerWindow : Window
  private async void Scrub(double seconds)
  {
   scrubTarget=seconds; if(scrubbing || player==null)return; scrubbing=true;
-  try { while(scrubTarget is { } target) { scrubTarget=null; await Command(()=>SeekToAsync(target)); } }
+  try { while(scrubTarget is { } target) { scrubTarget=null; await Command(()=>SeekNearAsync(target)); } }
   finally { scrubbing=false; }
+ }
+ /// <summary>While dragging, the next key frame is enough and answers at once; the release seeks exactly.</summary>
+ private async Task SeekNearAsync(double seconds)
+ {
+  await RequirePlayer().SeekNearAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
  }
  internal async Task SeekToAsync(double seconds)
  {
@@ -294,7 +299,8 @@ internal sealed partial class VideoPlayerWindow : Window
   private static void EnsureClass()
   {
    if(registered)return;
-   var cls=new WindowClass { Style=8,Procedure=procedure,Instance=GetModuleHandle(null),Name=ClassName,Cursor=LoadCursor(0,32512) };
+   // Black until mpv draws: without a background the area keeps whatever stood there before, such as the bar at its earlier place.
+   var cls=new WindowClass { Style=8,Procedure=procedure,Instance=GetModuleHandle(null),Name=ClassName,Cursor=LoadCursor(0,32512),Background=GetStockObject(4) };
    if(RegisterClass(ref cls)==0)throw new Win32Exception(Marshal.GetLastWin32Error()); registered=true;
   }
   private int wheelRemainder;
@@ -334,6 +340,7 @@ internal sealed partial class VideoPlayerWindow : Window
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] private static extern nint DefWindowProc(nint hwnd,uint message,nint wParam,nint lParam);
   [DllImport("user32.dll")] private static extern nint LoadCursor(nint instance,int name);
   [DllImport("user32.dll")] private static extern short GetKeyState(int key);
+  [DllImport("gdi32.dll")] private static extern nint GetStockObject(int kind);
   private nint outer;
   internal nint VideoHandle { get; private set; }
   internal (int X,int Y,int Width,int Height) LastBounds { get; private set; }

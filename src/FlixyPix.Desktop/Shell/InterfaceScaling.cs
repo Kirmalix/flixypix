@@ -54,6 +54,9 @@ internal static class InterfaceScaling
         element.LayoutTransform = transform;
     }
 
+    /// <summary>Applies the size before the window first appears, for a window that must not show a first layout at all: the player, whose video area keeps what stood on it.</summary>
+    internal static void Prepare(Window window) => Open(window);
+
     private static void Open(Window window)
     {
         Fit(window.Content as FrameworkElement);
@@ -98,8 +101,10 @@ internal static class InterfaceScaling
     private static Rect WorkArea(Window window)
     {
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-        var handle = new WindowInteropHelper(window).Handle;
-        if (handle == 0 || PresentationSource.FromVisual(window)?.CompositionTarget is not { } target
+        // Before it appears, a window opens on the monitor of its owner.
+        var anchor = new WindowInteropHelper(window).Handle != 0 ? window : window.Owner ?? window;
+        var handle = new WindowInteropHelper(anchor).Handle;
+        if (handle == 0 || PresentationSource.FromVisual(anchor)?.CompositionTarget is not { } target
             || !GetMonitorInfo(MonitorFromWindow(handle, 2), ref info)) return SystemParameters.WorkArea;
         return new Rect(target.TransformFromDevice.Transform(new Point(info.Work.Left, info.Work.Top)), target.TransformFromDevice.Transform(new Point(info.Work.Right, info.Work.Bottom)));
     }
