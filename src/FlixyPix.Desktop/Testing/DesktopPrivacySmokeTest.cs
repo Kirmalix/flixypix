@@ -144,6 +144,57 @@ public partial class MainWindow
    await AppLock.Prompt!.EnterAsync(pin); await Settled();
    Require(!AppLock.IsLocked && WindowState == WindowState.Normal && AppShell.IsOnScreen(this), "Unlocking after minimizing did not restore the window.");
 
+   // The boss key with a PIN locks, leaves nothing on screen, and only the way back asks.
+   muted.Clear();
+   Use(new PrivacySettings { BossAction = BossAction.Vanish, BossPlayback = BossPlayback.Mute, PinHash = pinHash });
+   AppShell.Boss(); await Settled();
+   Require(AppLock.IsLocked && !AppLock.PromptShown && AppShell.IsHidden && !AppShell.TrayShown && !AppShell.IsOnScreen(this), "The boss key did not lock without showing anything.");
+   SendMessage(AppShell.HotkeyWindow, 0x312, 0xB056, 0); await Settled();
+   Require(AppLock.PromptShown && !AppShell.IsOnScreen(this), "The return shortcut went past the PIN.");
+   await AppLock.Prompt!.EnterAsync("1357");
+   Require(AppLock.IsLocked && !AppShell.IsOnScreen(this), "A wrong PIN brought the windows back.");
+   await AppLock.Prompt!.EnterAsync(pin); await Settled();
+   Require(!AppLock.IsLocked && AppShell.IsOnScreen(this) && muted.SequenceEqual([true, false]), "The right PIN did not bring windows and sound back.");
+   Use(new PrivacySettings { BossAction = BossAction.Tray, PinHash = pinHash });
+   AppShell.Boss(); await Settled();
+   // Where Windows has no notification area (a hidden test desktop, a restarting Explorer), the prompt is the way back.
+   Require(AppLock.IsLocked && AppShell.TrayShown != AppLock.PromptShown && !AppShell.IsOnScreen(this), $"The boss key with the tray icon did not lock quietly (tray {AppShell.TrayShown}, prompt {AppLock.PromptShown}).");
+   File.WriteAllText(Path.Combine(directory, "privacy-boss-tray.txt"), AppShell.TrayShown ? "tray icon" : "no notification area, prompt shown");
+   AppShell.ShowAll(); await Settled();
+   Require(AppLock.PromptShown && !AppShell.IsOnScreen(this), "The tray icon went past the PIN.");
+   await AppLock.Prompt!.EnterAsync(pin); await Settled();
+   Use(new PrivacySettings { BossAction = BossAction.Minimize, PinHash = pinHash });
+   AppShell.Boss(); await Settled();
+   Require(AppLock.IsLocked && AppLock.Prompt is { IsVisible: true, WindowState: WindowState.Minimized } && !AppShell.IsOnScreen(this), "The boss key with minimizing left no way back or showed the prompt.");
+   AppShell.ShowAll(); await Settled();
+   Require(AppLock.Prompt is { WindowState: WindowState.Normal, ActualHeight: > 100 } && !AppShell.IsOnScreen(this), "The prompt did not come up from the taskbar in its full size.");
+   Capture((FrameworkElement)AppLock.Prompt!.Content, Path.Combine(directory, "privacy-lock-boss.png"));
+   await AppLock.Prompt!.EnterAsync(pin); await Settled();
+   Require(!AppLock.IsLocked && AppShell.IsOnScreen(this), "Unlocking after the minimizing boss key did not bring the window back.");
+   // The setting: switched off, and without a PIN, the boss key only hides.
+   Use(new PrivacySettings { BossAction = BossAction.Vanish, PinHash = pinHash, LockWithBossKey = false });
+   AppShell.Boss(); await Settled();
+   Require(!AppLock.IsLocked && AppShell.IsHidden, "The boss key locked although the setting is off.");
+   AppShell.ShowAll(); await Settled();
+   Require(AppShell.IsOnScreen(this), "Switched off, coming back asked for something.");
+   Require(new PrivacySettings().LockWithBossKey && System.Text.Json.JsonSerializer.Deserialize<PrivacySettings>("{}")!.LockWithBossKey && !new PrivacySettings().LockAtStart, "The defaults of the lock options changed.");
+   Require(!new PrivacySettings { LockAtStart = true }.Validated([], "").LockAtStart && new PrivacySettings { LockAtStart = true, PinHash = pinHash }.Validated([], "").LockAtStart, "A start question without a PIN was kept.");
+
+   // The question at program start: when it comes, and that only the right PIN passes.
+   var asked = new PrivacySettings { LockAtStart = true, PinHash = pinHash };
+   Require(StartLock.Needed(asked, choosing: false, encrypted: false) && StartLock.Needed(asked, choosing: true, encrypted: false) && StartLock.Needed(asked, choosing: true, encrypted: true), "The start question was missing.");
+   Require(!StartLock.Needed(asked, choosing: false, encrypted: true) && !StartLock.Needed(new PrivacySettings { PinHash = pinHash }, false, false) && !StartLock.Needed(new PrivacySettings { LockAtStart = true }, false, false), "The start question came without need.");
+   Privacy.Prepare(new PrivacySettings { NeutralTitle = true, NeutralTitleText = "Notizen", BlockCapture = true });
+   var question = new StartLockWindow(pinHash); question.Show(); await Settled();
+   Privacy.Attach(question);
+   Require(Privacy.ShownTitle(question) == "Notizen" && Privacy.IsCaptureBlocked(question), "The start question ignored the neutral title or the capture protection.");
+   Capture((FrameworkElement)question.Content, Path.Combine(directory, "privacy-start-question.png"));
+   await question.EnterAsync("1357");
+   Require(!question.Opened && question.IsVisible && question.Feedback.Length > 0, "A wrong PIN passed the start question.");
+   await question.EnterAsync(pin); await Settled();
+   Require(question.Opened && !question.IsVisible, "The right PIN did not pass the start question.");
+   Privacy.Prepare(_settings.Privacy);
+
    // Blurred pictures: every tile picture is blurred, the pointer on one shows it, the shortcut switches all.
    Use(new PrivacySettings { BlurPictures = true }); Refresh(); await Settled();
    await Task.WhenAll(MediaList.Items.Cast<MediaCard>().Select(card => card.EnsureLoaded())); await Settled();

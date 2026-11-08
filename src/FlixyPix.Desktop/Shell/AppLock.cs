@@ -80,7 +80,19 @@ internal static class AppLock
   if (!IsLocked) return;
   prompt ??= new LockWindow();
   prompt.Reset();
+  prompt.ShowActivated = true;
+  if (prompt.WindowState == WindowState.Minimized) prompt.WindowState = WindowState.Normal;
   prompt.Show(); prompt.Activate();
+ }
+
+ /// <summary>Locked by the boss key with "minimize": only the button in the taskbar remains, and it leads to the prompt.</summary>
+ internal static void ShowPromptMinimized()
+ {
+  if (!IsLocked) return;
+  prompt ??= new LockWindow();
+  prompt.Reset();
+  prompt.ShowActivated = false; prompt.WindowState = WindowState.Minimized;
+  prompt.Show();
  }
 
  internal static void HidePrompt()
@@ -181,8 +193,7 @@ internal sealed class LockWindow : Window
   {
    if (await AppLock.TryUnlockAsync(secret.Password)) { failures = 0; secret.Clear(); frame.Status.Text = ""; return; }
    failures++; secret.Clear();
-   // A wait that grows with each wrong try makes guessing a short PIN slow.
-   var wait = TimeSpan.FromSeconds(Math.Min(30, failures <= 2 ? 0 : 1 << Math.Min(failures - 3, 5)));
+   var wait = LockWait.After(failures);
    frame.Status.Text = wait > TimeSpan.Zero ? T("Wrong · try again in {0} s", (int)wait.TotalSeconds) : T("Wrong · please try again");
    if (wait > TimeSpan.Zero) await Task.Delay(wait);
   }

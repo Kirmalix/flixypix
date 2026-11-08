@@ -18,6 +18,14 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - FlixyPix is sharp on every monitor, also with different scaling, and the title bar follows the colour scheme on
   Windows 11. The package starts from precompiled code, which makes starts a little faster.
 
+**Lock**
+
+- FlixyPix can ask for the PIN at program start, before libraries can be seen (Settings → Privacy → Lock; off by
+  default). An encrypted library that opens directly asks only for its password. Like the lock, this guards the
+  screen; only the encryption protects the files.
+- While a PIN is set, the boss key also locks: nothing appears on screen, and showing FlixyPix again asks for the
+  PIN. **Upgrading:** this is on by default; switch it off under Settings → Privacy → Lock.
+
 **Fixes**
 
 - FlixyPix can run from a drive named U:. That drive letter was always treated as write-protected, so a

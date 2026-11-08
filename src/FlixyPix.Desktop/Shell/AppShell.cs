@@ -64,7 +64,7 @@ internal static class AppShell
  /// Must run before the first window is created, because WPF seals the metadata on first use.</summary>
  internal static void PrepareTaskbar()
  {
-  foreach (var type in typeof(AppShell).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Window)) && t != typeof(MainWindow) && t != typeof(LockWindow) && !t.IsAbstract && !t.ContainsGenericParameters))
+  foreach (var type in typeof(AppShell).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Window)) && t != typeof(MainWindow) && t != typeof(LockWindow) && t != typeof(StartLockWindow) && !t.IsAbstract && !t.ContainsGenericParameters))
    Window.ShowInTaskbarProperty.OverrideMetadata(type, new FrameworkPropertyMetadata(false));
  }
 
@@ -135,6 +135,15 @@ internal static class AppShell
   {
    case BossPlayback.Pause: Hiding?.Invoke(); break;
    case BossPlayback.Mute: mutedByBoss = true; Muting?.Invoke(true); break;
+  }
+  if (privacy.LockWithBossKey && privacy.PinHash != null && root is { IsLoaded: true })
+  {
+   // The boss key must leave nothing on screen, so the prompt waits for the way back. Where hiding found no way back,
+   // the windows came back and the lock shows its prompt at once.
+   HideAll(pause: false, trayIcon: privacy.BossAction == BossAction.Tray);
+   AppLock.Lock();
+   if (privacy.BossAction == BossAction.Minimize && IsHidden && !AppLock.PromptShown) AppLock.ShowPromptMinimized();
+   return;
   }
   if (privacy.BossAction == BossAction.Minimize && root != null)
   {

@@ -222,6 +222,9 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         previous.Close();
         var settings = DesktopSettings.Load();
+        // An encrypted library asks only for its password; declining it must not lead past the PIN to the list of libraries.
+        Privacy.Prepare(settings.Privacy);
+        if (!StartLock.Pass(settings.Privacy, choosing: true, settings.DataDirectory)) { Shutdown(0); return; }
         var chooser = new DatabaseWindow(null, settings.Libraries, true, null, null, (_, _) => { }, chooser: true);
         chooser.Select(settings.DataDirectory);
         chooser.ShowDialog();
@@ -235,7 +238,15 @@ public partial class App : Application
         var firstPortableStart = AppStorage.Current.Mode == StorageMode.Portable && !File.Exists(DesktopSettings.SettingsPath);
         var settings = DesktopSettings.Load();
         if (requested != null) settings = settings with { DataDirectory = LibraryCatalogs.Normalize(requested) };
-        else if (settings.AskForLibraryAtStart && settings.Libraries.Count > 1)
+        var choosing = requested == null && settings.AskForLibraryAtStart && settings.Libraries.Count > 1;
+        // The instance that has this library open is unlocked or has its own lock.
+        if (!choosing && LibraryInstance.IsOpen(settings.DataDirectory)) { LibraryInstance.Activate(settings.DataDirectory); Shutdown(0); return; }
+        Privacy.Prepare(settings.Privacy);
+        // Closing the question must not end the application on its own.
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        if (!StartLock.Pass(settings.Privacy, choosing, settings.DataDirectory)) { Shutdown(0); return; }
+        ShutdownMode = ShutdownMode.OnLastWindowClose;
+        if (choosing)
         {
             // The chooser is the only window; closing it must not end the application before the main window exists.
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
