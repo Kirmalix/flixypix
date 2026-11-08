@@ -10,6 +10,10 @@
     <AssemblyName>FlixyPix</AssemblyName>
     <!-- Made by scripts/release/make-brand-assets.ps1 from assets/branding; also the default icon of every window. -->
     <ApplicationIcon>Assets\flixypix.ico</ApplicationIcon>
+    <!-- Sharp on every monitor (per-monitor scaling). -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The published package starts from compiled code instead of compiling at every start. -->
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' == 'win-x64'">true</PublishReadyToRun>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="../../CHANGELOG.md;../../LICENSE;../../THIRD-PARTY-NOTICES.md" Link="help/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>

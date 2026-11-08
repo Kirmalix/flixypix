@@ -1,4 +1,4 @@
-<Window x:Class="FlixyPix.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:FlixyPix.Desktop" Title="FlixyPix" Width="1440" Height="940" MinWidth="760" MinHeight="720" Background="{DynamicResource WindowBackground}" Foreground="{DynamicResource Text}" FontFamily="Segoe UI" FontSize="14" AllowDrop="True" Drop="OnDrop" PreviewKeyDown="OnKeyDown">
+<Window x:Class="FlixyPix.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:FlixyPix.Desktop" Title="FlixyPix" Width="1440" Height="940" MinWidth="760" MinHeight="560" Background="{DynamicResource WindowBackground}" Foreground="{DynamicResource Text}" FontFamily="Segoe UI" FontSize="14" AllowDrop="True" Drop="OnDrop" PreviewKeyDown="OnKeyDown">
  <Window.Resources>
   <!-- A foldable group of library entries: a small caption that shows its arrow on hover or while folded. -->
   <Style x:Key="NavGroup" TargetType="Expander">

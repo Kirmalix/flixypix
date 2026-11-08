@@ -14827,6 +14827,14 @@
       "status": "corrected",
       "digest": "9526848d75d14c5a8ddb7f3160a47440ca984d840ba14544dad136895a932209",
       "previous_digest": "6deea506555e15822d2e9560ecbd9b7c78f631ac9cbaa82846f8108ecf785294"
+    },
+    "Drop files or folders here": {
+      "status": "unchanged",
+      "digest": "e3079bb604c376c24529cd4137ed5438367adf59815d5ae08bcf1d7af66196bd"
+    },
+    "This is taking longer than usual.": {
+      "status": "unchanged",
+      "digest": "6b1878b64b607544705cad2b7556aa41ff09fe5d95dae9ed84719856d3a6b67e"
     }
   }
 }

@@ -141,28 +141,20 @@ public partial class MainWindow
         ShowDetails(); UpdatePager();
     }
 
-    /// <summary>The window comes back where it was; a place on a screen that is gone falls back to the default.</summary>
-    private void RestoreWindowPlace()
-    {
-        if (PlaceToRestore() is not { } place) return;
-        var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
-        var bounds = new Rect(place.Left, place.Top, place.Width, place.Height);
-        // At least the title bar must be reachable on some screen.
-        if (!screen.IntersectsWith(new Rect(bounds.Left + 40, bounds.Top, Math.Max(1, bounds.Width - 80), 40))) return;
-        WindowStartupLocation = WindowStartupLocation.Manual;
-        Left = place.Left; Top = place.Top; Width = place.Width; Height = place.Height;
-        if (place.Maximized) WindowState = WindowState.Maximized;
-    }
-
     /// <summary>The stored place of the main window when the library wants it back ("Fensterplatz merken") and it is usable.</summary>
     internal WindowPlace? PlaceToRestore() =>
      _repository.GetPreferences().General.RememberWindow && _settings.MainWindowPlace is { } place && place.Width >= MinWidth && place.Height >= MinHeight ? place : null;
 
     private void SaveWindowPlace()
     {
-        var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
-        if (bounds.IsEmpty || bounds.Width <= 0) return;
-        _settings = _settings with { MainWindowPlace = new WindowPlace(bounds.Left, bounds.Top, bounds.Width, bounds.Height, WindowState == WindowState.Maximized) };
+        // The window takes its place before the library is open, so the wish of the library is kept in this choice.
+        if (!_repository.GetPreferences().General.RememberWindow) _settings = _settings with { MainWindowPlace = null, MainWindowPixels = null };
+        else
+        {
+            var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
+            if (bounds.IsEmpty || bounds.Width <= 0) return;
+            _settings = _settings with { MainWindowPlace = new WindowPlace(bounds.Left, bounds.Top, bounds.Width, bounds.Height, WindowState == WindowState.Maximized), MainWindowPixels = WindowPlacement.Read(this) };
+        }
         try { (_settings with { DataDirectory = _pendingDataDirectory ?? _settings.DataDirectory }).Save(); }
         catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException) { ErrorLog.Write("Fensterposition merken", error); }
     }

@@ -13,6 +13,8 @@ namespace FlixyPix.Desktop;
 
 /// <summary>Where a window was: its normal bounds and whether it was maximized.</summary>
 internal sealed record WindowPlace(double Left, double Top, double Width, double Height, bool Maximized);
+/// <summary>The same in pixels of the screen, which stay right across monitors with different scaling.</summary>
+internal sealed record WindowPixels(int Left, int Top, int Width, int Height, bool Maximized);
 
 internal sealed partial record DesktopSettings
 {
@@ -30,6 +32,8 @@ internal sealed partial record DesktopSettings
  public string LastView { get; init; } = "all";
  /// <summary>Main window place on the screen (original "rememberform"); null until the window was closed once.</summary>
  public WindowPlace? MainWindowPlace { get; init; }
+ /// <summary>The place the window comes back to, known before the library opens; null when it should not be remembered.</summary>
+ public WindowPixels? MainWindowPixels { get; init; }
  /// <summary>Hides all of FlixyPix at once, leaving only a tray icon; empty switches it off.</summary>
  public string BossKey { get; init; } = "Escape";
  /// <summary>Minimizing hides FlixyPix into the notification area instead of the taskbar.</summary>

@@ -115,6 +115,7 @@ InterfaceScale = Fix(nameof(InterfaceScale), !double.IsFinite(InterfaceScale) ||
    PlayerVolume = Fix(nameof(PlayerVolume), PlayerVolume is < 0 or > 100, PlayerVolume, defaults.PlayerVolume),
    MainWindowPlace = Fix(nameof(MainWindowPlace), MainWindowPlace is { } place && !(double.IsFinite(place.Left) && double.IsFinite(place.Top)
     && double.IsFinite(place.Width) && double.IsFinite(place.Height) && place.Width > 0 && place.Height > 0), MainWindowPlace, null),
+   MainWindowPixels = Fix(nameof(MainWindowPixels), MainWindowPixels is { Width: <= 0 } or { Height: <= 0 }, MainWindowPixels, null),
    Ffmpeg = string.IsNullOrWhiteSpace(Ffmpeg) ? null : Ffmpeg, Ffprobe = string.IsNullOrWhiteSpace(Ffprobe) ? null : Ffprobe, Mpv = string.IsNullOrWhiteSpace(Mpv) ? null : Mpv,
    ProtectedSourcePaths = Clean(ProtectedSourcePaths), QuickAccessFolders = Clean(QuickAccessFolders),
    Libraries = (Libraries ?? []).Where(l => l != null && !string.IsNullOrWhiteSpace(l.Directory) && Path.IsPathFullyQualified(l.Directory))

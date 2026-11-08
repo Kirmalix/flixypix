@@ -5,6 +5,19 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 ## 0.7.0
 
+**A calmer start**
+
+- The window stands at once and shows its outline while the library opens, with the logo for a moment above it.
+  The change to the finished window is a soft fade. Cancelling is offered when a start takes longer than usual.
+- An encrypted library asks for its password first; the logo follows the answer. With a neutral title the start
+  shows neither logo nor name.
+- The welcome page of an empty library invites you to drop files, and during the first import the new items appear
+  while they are found.
+- The window takes its place before it appears instead of moving during the start, and always fits the screen.
+  It may now be smaller (minimum height 560), so it fits laptops with a large display scale.
+- FlixyPix is sharp on every monitor, also with different scaling, and the title bar follows the colour scheme on
+  Windows 11. The package starts from precompiled code, which makes starts a little faster.
+
 **Fixes**
 
 - FlixyPix can run from a drive named U:. That drive letter was always treated as write-protected, so a
