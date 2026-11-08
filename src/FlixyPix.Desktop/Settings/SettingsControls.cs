@@ -381,7 +381,7 @@ internal sealed class HotkeyBox : Border
 }
 
 /// <summary>Colour scheme choice as three tiles with a miniature window; "Wie Windows" shows a light and a dark half.</summary>
-internal sealed class ThemePicker : StackPanel
+internal sealed class ThemePicker : WrapPanel
 {
  private readonly List<(ColorScheme Mode, RadioButton Tile)> tiles = [];
  internal event Action? Changed;
@@ -401,7 +401,7 @@ internal sealed class ThemePicker : StackPanel
    else preview.Children.Add(Mockup(mode == ColorScheme.Dark));
    var frame = new Border { Child = preview, BorderBrush = SettingsUi.CardBorder, BorderThickness = new Thickness(1), ClipToBounds = true };
    var content = new StackPanel { Children = { frame, new TextBlock { Text = label, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 8, 0, 0) } } };
-   var tile = new RadioButton { GroupName = group, Content = content, Style = (Style)Application.Current.Resources["ThemeTile"], Margin = new Thickness(0, 0, 12, 0) };
+   var tile = new RadioButton { GroupName = group, Content = content, Style = (Style)Application.Current.Resources["ThemeTile"], Margin = new Thickness(0, 0, 12, 8) };
    AutomationProperties.SetName(tile, T("Color scheme ") + label);
    tile.Checked += (_, _) => Changed?.Invoke();
    tiles.Add((mode, tile)); Children.Add(tile);

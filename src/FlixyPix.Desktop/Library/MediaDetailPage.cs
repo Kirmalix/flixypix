@@ -119,11 +119,11 @@ internal sealed class MediaDetailPage : ScrollViewer
     private DockPanel Actions(MediaItem item)
     {
         var row = new DockPanel { Margin = new Thickness(0, 2, 0, 12) };
-        var tools = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        var tools = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
         tools.HorizontalAlignment = HorizontalAlignment.Right;
         Button Tool(string label, Action click, bool primary = false)
         {
-            var button = new Button { Content = label, Margin = new Thickness(6, 0, 0, 0) };
+            var button = new Button { Content = label, Margin = new Thickness(6, 0, 0, 4) };
             if (primary) button.Style = (Style)Application.Current.Resources["Primary"];
             button.Click += (_, _) => click();
             tools.Children.Add(button);

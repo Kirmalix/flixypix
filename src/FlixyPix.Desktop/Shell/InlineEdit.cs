@@ -25,6 +25,7 @@ internal static class InlineEdit
   var box = new TextBox { Text = text, FontSize = title.FontSize, Padding = new Thickness(2, 0, 2, 0), Width = Math.Max(120, list.ActualWidth - left - 14) };
   System.Windows.Automation.AutomationProperties.SetName(box, T("Name"));
   var popup = new Popup { PlacementTarget = title, Placement = PlacementMode.Relative, HorizontalOffset = -3, VerticalOffset = -2, Child = box, StaysOpen = false, AllowsTransparency = true };
+  InterfaceScaling.Fit(box);
   var done = false;
   void Finish(bool keep)
   {

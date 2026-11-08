@@ -200,44 +200,46 @@ internal sealed partial class VideoPlayerWindow
   AutomationProperties.SetName(volumeSlider,T("Volume"));AutomationProperties.SetName(position,T("Position"));AutomationProperties.SetName(speed,T("Speed"));
   controlBar.Children.Add(BuildTimeline());
   controlBar.Children.Add(BuildRangeControls());
-  var row = new WrapPanel();
-  var left = new StackPanel { Orientation = Orientation.Horizontal };
+  var row = new PlayerControlRow();
   pause.Content = ""; pause.Style = (Style)Application.Current.Resources["IconButton"]; pause.FontSize = 20; pause.ToolTip = T("Play / Pause"); AutomationProperties.SetName(pause, T("Play or pause"));
   pause.Click += async (_, _) => await Command(TogglePauseAsync);
   previousButton.Click += async (_, _) => { if (StepRequested != null) await Command(() => StepRequested(-1)); };
   nextButton.Click += async (_, _) => { if (StepRequested != null) await Command(() => StepRequested(1)); };
-  left.Children.Add(previousButton); left.Children.Add(pause); left.Children.Add(nextButton);
+  row.Add(previousButton); row.Add(pause); row.Add(nextButton);
   foreach (var (label, seconds) in new[] { ($"−{playback.SmallJumpBackwardSeconds:0.#} s", -playback.SmallJumpBackwardSeconds), ($"+{playback.SmallJumpForwardSeconds:0.#} s", playback.SmallJumpForwardSeconds) })
   {
    var jump = new Button { Content = label, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(2, 0, 2, 0), ToolTip = seconds < 0 ? T("Jump back") : T("Skip ahead") };
-   jump.Click += async (_, _) => await Command(() => JumpAsync(seconds)); left.Children.Add(jump);
+   jump.Click += async (_, _) => await Command(() => JumpAsync(seconds));
+   var jumpLabel = jump.ToolTip + " (" + label + ")";
+   row.Add(jump, fold: 1, entries: () => [MenuSpec.Command(jumpLabel, () => _ = Command(() => JumpAsync(seconds)))]);
   }
-  left.Children.Add(clock);
-  DockPanel.SetDock(left, Dock.Left); row.Children.Add(left);
+  clock.Typography.NumeralAlignment = FontNumeralAlignment.Tabular; row.Add(clock);
 
-  var right = new WrapPanel();
   repeat.Click += (_, _) => PlaybackModeChanged?.Invoke(); shuffle.Click += (_, _) => PlaybackModeChanged?.Invoke();
-  right.Children.Add(repeat); right.Children.Add(shuffle);
+  row.Add(repeat, right: true, fold: 5, entries: () => [LoopEntry()]); row.Add(shuffle, right: true, fold: 5, entries: () => [ShuffleEntry()]);
   volumeButton.Margin=new Thickness(6,0,2,0);
   volumeButton.Click+=(_,_)=>ToggleMute();
   UpdateVolumeState();
   var volume = volumeSlider;
   AutomationProperties.SetName(volume, T("Volume"));
   volume.ValueChanged += async (_, _) => { UpdateVolumeState(); if (player != null) await Command(() => player.SetVolumeAsync(volume.Value)); };
-  right.Children.Add(volumeButton); right.Children.Add(volume);
+  row.Add(volumeButton, right: true); row.Add(volume, right: true);
   speed.Margin = new Thickness(10, 0, 2, 0); speed.VerticalAlignment = VerticalAlignment.Center; speed.ToolTip = T("Playback speed"); speed.ItemStringFormat = "0.##×";
   // xml:lang follows the UI language; numeric items follow the user's regional format.
   speed.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
   speed.SelectionChanged += async (_, _) => { if (!syncing && player != null && speed.SelectedItem is double value) await TrackPreference(() => SaveSpeedAsync(value)); };
-  right.Children.Add(speed);
+  row.Add(speed, right: true, fold: 7, entries: () => [MenuSpec.Submenu(T("Playback speed"), SpeedEntries())]);
   var tracks = Symbol("", T("Choose audio and subtitle track")); AutomationProperties.SetName(tracks, T("Tracks")); tracks.Click += (_, _) => TrackMenu(tracks);
   var view = Labeled("", Tc("player", "View"), T("Time-based view: crop and position of the picture per point in time")); view.Click += (_, _) => ViewMenu(view);
-  right.Children.Add(BuildRating()); right.Children.Add(BuildOCounter()); right.Children.Add(tracks);
+  row.Add(BuildRating(), right: true, fold: 3, entries: () => [MenuSpec.Submenu(T("Rating"), RatingEntries())]);
+  row.Add(BuildOCounter(), right: true, fold: 4, entries: OCounterEntries);
+  row.Add(tracks, right: true, fold: 8, entries: () => [MenuSpec.Submenu(T("Tracks"), TrackEntries(), tracks.Content as string)]);
   var marks = Pill(null, null, previousMarkButton, marksButton, nextMarkButton); marks.Margin = new Thickness(4, 0, 4, 0);
-  right.Children.Add(marks); right.Children.Add(view);
-  fullscreenButton.Click += (_, _) => ToggleFullscreen(); right.Children.Add(fullscreenButton);
-  DockPanel.SetDock(right, Dock.Right); row.Children.Add(right);
-  controlBar.Children.Add(row);
+  row.Add(marks, right: true, fold: 6, entries: MarkEntries); row.Add(view, right: true, fold: 2, entries: () => [MenuSpec.Submenu(Tc("player", "View"), ViewEntries())]);
+  var more = Symbol("\uE712", T("More actions")); more.Click += (_, _) => Menus.Open(more, controlRow.FoldedEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
+  row.AddMore(more);
+  fullscreenButton.Click += (_, _) => ToggleFullscreen(); row.Add(fullscreenButton, right: true);
+  controlRow = row; controlBar.Children.Add(row);
   if(Source!=null)controlBar.Children.Add(new TextBlock{Text=Source.Path,ToolTip=Source.Path,TextTrimming=TextTrimming.CharacterEllipsis,Margin=new Thickness(8,2,8,2),FontSize=11});
   status.Margin = new Thickness(8, 0, 8, 2); status.FontSize = 12; status.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
   controlBar.Children.Add(status);
@@ -250,7 +252,7 @@ internal sealed partial class VideoPlayerWindow
   position.MouseMove += (_, e) => ShowSeekPreview(e.GetPosition(position).X);
   position.MouseLeave += (_, _) => HideSeekPreview();
   overlayFrame.Background = new SolidColorBrush(Color.FromArgb(218, 12, 15, 21));
-  overlay.Child = overlayFrame; overlay.PlacementTarget = host;
+  overlay.Child = new Decorator { Child = overlayFrame }; overlay.PlacementTarget = host;
   overlay.MouseMove += (_, _) => lastMovement = DateTime.UtcNow;
   // The bar lies outside mpv's picture, so its wheel arrives here: it does what the wheel over the video does,
   // except over the volume slider (volume) and the speed list (its own wheel).
@@ -287,6 +289,7 @@ internal sealed partial class VideoPlayerWindow
   pause.Content = paused ? "" : "";
   flashGlyph.Text = paused ? "" : "";
   if (host.ActualWidth <= 0 || !playback.ShowMessages) return;
+  InterfaceScaling.Fit((FrameworkElement)flash.Child);
   flash.HorizontalOffset = host.ActualWidth / 2 - 48; flash.VerticalOffset = host.ActualHeight / 2 - 48;
   flash.IsOpen = true; flash.Child.Opacity = 1;
   flashTimer?.Stop();
@@ -302,12 +305,16 @@ internal sealed partial class VideoPlayerWindow
   if (durationSeconds is not (> 0 and double duration) || position.ActualWidth <= TimelineThumbWidth) return;
   var seconds = Math.Clamp((x - TimelineThumbWidth / 2) / (position.ActualWidth - TimelineThumbWidth), 0, 1) * duration;
   seekTime.Text = Time(seconds) + (JumpMarks.Current(Marks, seconds) is { } mark ? " · " + mark.Title : "");
+  InterfaceScaling.Fit((FrameworkElement)seekPreview.Child);
   seekPreview.HorizontalOffset = Math.Clamp(x - 124, 0, Math.Max(0, position.ActualWidth - 248));
   seekPreview.VerticalOffset = -(seekImage.Source != null ? seekImage.ActualHeight + 52 : 44);
   seekPreview.IsOpen = true;
   _ = LoadSeekFrameAsync(seconds,CancellationToken.None);
  }
 
+ private PlayerControlRow controlRow = null!;
+ internal bool ControlsFolded => controlRow.AnythingFolded;
+ internal IReadOnlyList<MenuSpec> FoldedControls => controlRow.FoldedEntries();
  private void TrackMenu(Button target) => Menus.Open(target, TrackEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
  /// <summary>Audio and subtitle tracks with the current one checked, and the subtitle file and offset.</summary>
  private IReadOnlyList<MenuSpec> TrackEntries()
@@ -333,18 +340,15 @@ internal sealed partial class VideoPlayerWindow
   return entries;
  }
 
- private void ViewMenu(Button target)
- {
-  var menu = new ContextMenu { PlacementTarget = target, Placement = PlacementMode.Top };
-  var enabled = new MenuItem { Header = T("Use time-based view"), IsCheckable = true, IsChecked = transforms.IsChecked == true };
-  enabled.Click += async (_, _) => { transforms.IsChecked = enabled.IsChecked; await SaveTransformsEnabledAsync(); };
-  menu.Items.Add(enabled); menu.Items.Add(new Separator());
-  foreach (var (label, action) in new (string, Func<Task>)[] { (T("Edit view at time …"), EditTransformAsync),
-   (T("Reset view"), () => { manualTransform = PlayerTransformTimeline.Identity; ApplyTransform(); return Task.CompletedTask;
-   }), (T("Manage points in time …"), ManageTransformsAsync) })
-  { var item = new MenuItem { Header = label }; item.Click += async (_, _) => await Command(action); menu.Items.Add(item); }
-  menu.IsOpen = true;
- }
+ private void ViewMenu(Button target) => Menus.Open(target, ViewEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
+ private IReadOnlyList<MenuSpec> ViewEntries() =>
+ [
+  new MenuCommand(T("Use time-based view"), () => { transforms.IsChecked = transforms.IsChecked != true; _ = SaveTransformsEnabledAsync(); }) { Checked = transforms.IsChecked == true },
+  MenuSpec.Separator,
+  MenuSpec.Command(T("Edit view at time …"), () => _ = Command(EditTransformAsync)),
+  MenuSpec.Command(T("Reset view"), () => { manualTransform = PlayerTransformTimeline.Identity; ApplyTransform(); }),
+  MenuSpec.Command(T("Manage points in time …"), () => _ = Command(ManageTransformsAsync)),
+ ];
 
  // Full screen: the bar moves into a popup over the video and shows while the mouse moves.
  private void EnterOverlayMode()
@@ -364,6 +368,8 @@ internal sealed partial class VideoPlayerWindow
  {
   if (overlayFrame.Child == null || host.ActualWidth <= 0) return;
   lastMovement = DateTime.UtcNow;
+  // The frame is measured inside its scaled parent, so its size stays in the same units as the place over the video.
+  InterfaceScaling.Fit((FrameworkElement)overlay.Child);
   overlayFrame.Width = Math.Max(300, host.ActualWidth - 48);
   overlay.HorizontalOffset = 0; overlayFrame.Measure(new Size(overlayFrame.Width + 48, double.PositiveInfinity));
   overlay.VerticalOffset = host.ActualHeight - overlayFrame.DesiredSize.Height;

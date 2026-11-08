@@ -43,6 +43,15 @@ public partial class MainWindow
    Require(point.X>=-1&&point.X+button.ActualWidth<=window.ControlsSurface.ActualWidth+1,"Narrow player clips a control: "+button.Content);
   }
   Capture(window.ControlsSurface,Path.Combine(root,"compact-controls.png"));
+  // The row stays one line at every size: what does not fit moves into the menu, and a larger interface keeps its room.
+  double Line(string name)=>ActionButton(name).TransformToAncestor(window.ControlsSurface).Transform(new Point(0,ActionButton(name).ActualHeight/2)).Y;
+  Require(Math.Abs(Line(T("Play or pause"))-Line(T("Full screen (F11)")))<2,"The control row wrapped.");
+  Require(window.ControlsFolded&&window.FoldedControls.Count>0,"A narrow player did not fold its tools into the menu.");
+  InterfaceScaling.Apply(1.25);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Require(window.MinWidth>650&&Math.Abs(Line(T("Play or pause"))-Line(T("Full screen (F11)")))<2,"The minimum size or the row did not follow the interface size.");
+  var scaledMenu=Menus.Create([MenuSpec.Command(T("Close"),()=>{})]);scaledMenu.IsOpen=true;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Require(scaledMenu.LayoutTransform is System.Windows.Media.ScaleTransform{ScaleX:1.25},"A menu did not follow the interface size.");scaledMenu.IsOpen=false;
+  InterfaceScaling.Apply(1);Require(window.MinWidth==650,"The minimum size did not return to normal.");
   File.WriteAllText(Path.Combine(root,"ab-result.txt"),"PASS: actual AB controls/native state, invalid B retention, independent scene/bookmark/repeat, reset, fullscreen list/menu/refresh/overlay and normal-state restoration.");
  }
 }

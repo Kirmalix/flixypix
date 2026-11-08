@@ -62,10 +62,12 @@ public partial class MainWindow
  /// <summary>After each refresh and resize: the details show only when needed; narrow windows fold the bars by themselves.</summary>
  private void AdaptToWidth()
  {
-  var sidebarNarrow = ActualWidth < SidebarFoldWidth;
+  // Both limits were chosen at 100 %; a larger interface has less room in the same window.
+  var roomWidth = ActualWidth / InterfaceScaling.Current;
+  var sidebarNarrow = roomWidth < SidebarFoldWidth;
   if (sidebarNarrow && !_sidebarAutoFolded && SidebarExpanded) { _sidebarAutoFolded = true; SetSidebar(false); }
   else if (!sidebarNarrow && _sidebarAutoFolded) { _sidebarAutoFolded = false; SetSidebar(!_settings.SidebarCollapsed); }
-  var detailsNarrow = ActualWidth < DetailsFoldWidth;
+  var detailsNarrow = roomWidth < DetailsFoldWidth;
   if (DetailsNotNeeded) SetDetails(false);
   else if (detailsNarrow && !_detailsAutoFolded && !_settings.DetailsCollapsed) { _detailsAutoFolded = true; SetDetails(false); }
   else if (!detailsNarrow && _detailsAutoFolded) { _detailsAutoFolded = false; SetDetails(!_settings.DetailsCollapsed); }

@@ -86,7 +86,8 @@ public partial class MainWindow : Window
             InitializeHoverPreview();
             InitializeScrolling();
             UpdateFilterBar();
-            SizeChanged += (_, _) => AdaptToWidth();
+            // The content also changes its size when only the interface size changes.
+            ((FrameworkElement)Content).SizeChanged += (_, _) => AdaptToWidth();
             InitializeToasts();
 
             InitializeViewHistory(startupData.Preferences);

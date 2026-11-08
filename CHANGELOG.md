@@ -12,6 +12,14 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   no longer protected by itself; choose folders FlixyPix must never write to under Settings → Storage →
   Protected folders. Folders holding FlixyPix's own data or a library cannot be protected.
 - The dialog for assigning media paths no longer suggests example folders.
+- A larger interface size keeps the arrangement of the player. The control row stays one line with playback
+  on the left and the tools on the right; what does not fit moves into a "More actions" menu. The player and
+  dialogs open larger to match, as far as the screen allows, while windows already open keep their size
+  unless they fall below the larger minimum size.
+- Menus, tooltips, the full-screen bar, the time line preview and the play symbol follow the interface size.
+  At 85 and 90 % the full-screen bar no longer runs off the screen.
+- The main window folds its side bars according to the interface size, so the search and the buttons at the
+  top stay in the window; colour scheme tiles and the action buttons of the detail page wrap when space is short.
 
 ## 0.6.0
 
