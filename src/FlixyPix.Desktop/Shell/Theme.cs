@@ -73,6 +73,8 @@ internal static class Theme
   ("TimelineTrack", "#34435B", "#C3CCD9"),
   ("TimelineMark", "#F3C76B", "#C98A00"),
   ("SceneMark", "#7ED39A", "#2B9A5B"),
+  ("Skeleton", "#1E2839", "#E2E7EF"),
+  ("SkeletonHighlight", "#2B3850", "#F2F5F9"),
  ];
 
  /// <summary>Text/background pairs that must stay readable in both schemes (WCAG AA: 4.5 for text, 3 for large text and icons).</summary>
@@ -175,6 +177,11 @@ internal static class Theme
   var dark = IsDark ? 1 : 0;
   // Attribute 20 is DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1 and later); older systems ignore it.
   _ = DwmSetWindowAttribute(handle, 20, ref dark, sizeof(int));
+  // Attributes 35 and 36 are the caption and its text (Windows 11); the bar then continues the window. Older systems ignore them.
+  var caption = Colorref(Color("ChromeBackground", IsDark)); var text = Colorref(Color("Text", IsDark));
+  _ = DwmSetWindowAttribute(handle, 35, ref caption, sizeof(int));
+  _ = DwmSetWindowAttribute(handle, 36, ref text, sizeof(int));
  }
+ private static int Colorref(Color color) => color.R | color.G << 8 | color.B << 16;
  [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(nint hwnd, int attribute, ref int value, int size);
 }

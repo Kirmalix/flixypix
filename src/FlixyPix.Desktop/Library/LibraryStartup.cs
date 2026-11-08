@@ -11,11 +11,12 @@ public partial class MainWindow
     private readonly LibraryStartupCoordinator _startup = new();
     private bool _startupReady;
     private bool _returnToSelectionOnCancel = true;
-    private Grid _startupSurface = null!;
-    private TextBlock _startupPhase = null!;
-    private Button _startupCancel = null!;
-    private readonly DispatcherTimer _startupTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private StartupSurface _startupSurface = null!;
+    private readonly DispatcherTimer _startupTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+    /// <summary>Time the start worked; a question that waits for an answer does not count.</summary>
     private readonly System.Diagnostics.Stopwatch _startupWatch = new();
+    private bool _startupAsks, _startupQuestionSeen;
+    private static bool _firstWindowLogged;
 
     private void InitializeStartup(CatalogKey? suppliedKey)
     {
@@ -23,44 +24,23 @@ public partial class MainWindow
         Startup = _startup.Completion;
         RootContent.IsEnabled = false;
         RootContent.Visibility = Visibility.Hidden;
-        _startupPhase = new TextBlock { Text = T("Checking library"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 12) };
-        _startupCancel = new Button { Content = T("Cancel"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 18, 0, 0) };
-        _startupCancel.Click += (_, _) => RequestStartupCancellation();
-        var panel = new StackPanel { MaxWidth = 480, Margin = new Thickness(32), VerticalAlignment = VerticalAlignment.Center };
-        var logo = new Image
-        {
-            Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/flixypix-mark-192.png")),
-            Width = 96, Height = 96, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 16)
-        };
-        System.Windows.Media.RenderOptions.SetBitmapScalingMode(logo, System.Windows.Media.BitmapScalingMode.HighQuality);
-        System.Windows.Automation.AutomationProperties.SetName(logo, ProductIdentity.Name);
-        panel.Children.Add(logo);
-        panel.Children.Add(new TextBlock { Text = ProductIdentity.Name, FontSize = 30, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) });
-        panel.Children.Add(new TextBlock { Text = LibraryName, FontSize = 24, TextWrapping = TextWrapping.Wrap });
-        panel.Children.Add(_startupPhase);
-        var progress = new ProgressBar { IsIndeterminate = true, Height = 6 };
-        System.Windows.Automation.AutomationProperties.SetName(progress, T("Progress"));
-        panel.Children.Add(progress);
-        var elapsed = new TextBlock { Margin = new Thickness(0, 12, 0, 0) };
-        panel.Children.Add(elapsed);
-        _startupTimer.Tick += (_, _) => { if (_startupWatch.Elapsed.TotalSeconds >= 10) elapsed.Text = T("Elapsed: {0}", _startupWatch.Elapsed.ToString(@"mm\:ss")); };
-        panel.Children.Add(_startupCancel);
-        var close = new Button { Content = T("Close"), Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0) };
-        close.Click += (_, _) => { _closeCompleted = true; Close(); };
-        panel.Children.Add(close);
-        _startupSurface = new Grid();
-        _startupSurface.SetResourceReference(BackgroundProperty, "WindowBackground");
-        _startupSurface.Children.Add(panel);
+        _startupSurface = new StartupSurface(Privacy.Settings.NeutralTitle, Math.Clamp(_settings.SidebarWidth, SidebarMinimum, SidebarMaximum), _settings.SidebarCollapsed, RequestStartupCancellation);
+        _startupSurface.SetPhase(T("Checking library"), .05);
+        _startupTimer.Tick += (_, _) => WatchStartup();
         Content = null;
         var host = new Grid(); host.Children.Add(RootContent); host.Children.Add(_startupSurface); Content = host;
         ContentRendered += Begin;
         async void Begin(object? sender, EventArgs args)
         {
             ContentRendered -= Begin;
+            LogFirstWindow();
             _startupWatch.Start();
             _startupTimer.Start();
             try
             {
+                // An encrypted library asks first; the logo then belongs to the moment it really loads.
+                _startupAsks = key == null && CatalogEncryption.IsEncrypted(Path.Combine(_settings.DataDirectory, "catalog.db"));
+                if (!_startupAsks) _startupSurface.PlayIntro();
                 await Dispatcher.Yield(DispatcherPriority.Background);
                 await _startup.EnterAsync();
                 await InitializeLibraryAsync(key);
@@ -69,7 +49,8 @@ public partial class MainWindow
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
                 _startupReady = true;
                 RootContent.IsEnabled = true;
-                _startupSurface.Visibility = Visibility.Collapsed;
+                if (_view == "home") _home.Reveal();
+                _startupSurface.FadeOut();
                 _startup.Ready();
                 RecordStartupPhase("Ready");
                 WarmSearchIndex();
@@ -90,11 +71,7 @@ public partial class MainWindow
                 _closing = true;
                 await ReleaseFailedStartAsync();
                 ErrorLog.Write("Library startup", error);
-                _startupPhase.Text = T("The library could not be opened.\n{0}", ErrorLog.RedactPaths(error.Message));
-                progress.IsIndeterminate = false;
-                close.Visibility = Visibility.Visible;
-                _startupCancel.Content = T("Libraries");
-                _startupCancel.IsEnabled = true;
+                _startupSurface.ShowFailure(T("The library could not be opened.\n{0}", ErrorLog.RedactPaths(error.Message)), LibraryName, RequestStartupCancellation, () => { _closeCompleted = true; Close(); });
                 _startup.Failed(error);
                 RecordStartupPhase("Failed:" + error.GetType().Name);
                 _ = Startup.Exception; // The visible failure panel observes the error; callers may still await it.
@@ -103,10 +80,30 @@ public partial class MainWindow
         }
     }
 
-    private void SetStartupPhase(string phase)
+    /// <summary>While a question of the start is open (password, conversion), it waits for the person and nothing runs on.</summary>
+    private void WatchStartup()
     {
-        _startupPhase.Text = phase;
+        var open = OwnedWindows.Cast<Window>().Any(window => window.IsVisible);
+        if (open) { _startupQuestionSeen = true; _startupWatch.Stop(); }
+        else if (!_startupWatch.IsRunning) _startupWatch.Start();
+        _startupSurface.SetWaiting(open);
+        if (!open && _startupAsks && _startupQuestionSeen) _startupSurface.PlayIntro();
+        _startupSurface.ShowTime(_startupWatch.Elapsed);
+    }
+
+    private void SetStartupPhase(string phase, double share, double seconds = .4)
+    {
+        _startupSurface.SetPhase(phase, share, seconds);
         RecordStartupPhase(phase);
+    }
+
+    /// <summary>How long Windows and .NET took until the first picture, which the time of the library does not contain.</summary>
+    private void LogFirstWindow()
+    {
+        if (_firstWindowLogged) return;
+        _firstWindowLogged = true;
+        using var process = System.Diagnostics.Process.GetCurrentProcess();
+        RecordStartupPhase($"First window {(DateTime.Now - process.StartTime).TotalMilliseconds:0}ms after process start");
     }
 
     private void RecordStartupPhase(string phase)
@@ -124,8 +121,7 @@ public partial class MainWindow
     private void RequestStartupCancellation()
     {
         if (_startupReady || _closeCompleted) return;
-        _startupCancel.IsEnabled = false;
-        _startupPhase.Text = T("Cancelling …");
+        _startupSurface.SetCancelling();
         _closing = true;
         _startup.RequestCancellation();
         _ = _libraryTasks.StopAsync();

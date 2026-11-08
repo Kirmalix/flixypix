@@ -61,6 +61,8 @@ public partial class MainWindow : Window
         _instance = LibraryInstance.Claim(_settings.DataDirectory, () => Dispatcher.BeginInvoke(BringToFront))
             ?? throw new InvalidOperationException(T("This library is already open in another FlixyPix window."));
         Closing += OnClosing;
+        // Tests and probes open where they expect to.
+        if (_persistPreferences) SourceInitialized += (_, _) => WindowPlacement.Apply(this, _settings.MainWindowPixels, _settings.MainWindowPlace);
         InitializeStartup(unlockedKey);
     }
 
@@ -68,13 +70,14 @@ public partial class MainWindow : Window
     {
         SourceProtection.Apply(_settings);
         DesktopImaging.Configure(_settings.DataDirectory);
-        SetStartupPhase(T("Checking library"));
-        _repository = await SecretDialogs.OpenLibraryAsync(this, Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey, _startup.Token, () => SetStartupPhase(T("Opening catalog")));
+        SetStartupPhase(T("Checking library"), .1);
+        _repository = await SecretDialogs.OpenLibraryAsync(this, Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey, _startup.Token, () => SetStartupPhase(T("Opening catalog"), .25));
         await _startup.OpenedAsync();
-        SetStartupPhase(T("Preparing library"));
+        SetStartupPhase(T("Preparing library"), .4);
         await Task.Run(() => _repository.PreparePortableLocation(AppStorage.Current.ApplicationDirectory, AppStorage.Current.Mode == StorageMode.Portable, _startup.Token), _startup.Token);
         _startup.Token.ThrowIfCancellationRequested();
-        SetStartupPhase(T("Loading view"));
+        // The longest step without steps of its own: the line moves on slowly and arrives when the window is ready.
+        SetStartupPhase(T("Loading view"), .9, 4);
         var startupData = await Task.Run(() => (Preferences: _repository.GetPreferences(), Drafts: _repository.GetMetadataDrafts()), _startup.Token);
         try
         {
@@ -99,9 +102,6 @@ public partial class MainWindow : Window
             _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); Refresh(); };
             _positionTimer.Tick += async (_, _) => await _libraryTasks.Run(_ => SavePlaybackPosition());
             _positionTimer.Start();
-
-            if (_persistPreferences) RestoreWindowPlace();
-            // Tests and probes open where they expect to; they check the start page on their own.
 
             _showStartupRecovery?.Invoke();
             await StartAsync(mayOpenHome: _persistPreferences);
@@ -377,9 +377,22 @@ public partial class MainWindow : Window
         await RunOperation(T("Import media"), async token =>
         {
             var progress = new Progress<ScanProgress>(p => Status.Text = T("Import · {0:N0} checked, {1:N0} added · {2}", p.Processed, p.Imported, Path.GetFileName(p.Path)));
-            var result = await Task.Run(() => new MediaScanner(_repository).ScanAsync(paths, progress, token), token);
-            await AfterImportAsync(token);
-            ShowImportResult(result);
+            // The first import of a library: the welcome page gives way and the new items arrive while they are found.
+            DispatcherTimer? growing = null;
+            if (_view == "home" && _total == 0)
+            {
+                ApplyViewState(new ViewState { View = "all", SortOrder = 2 });
+                growing = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+                growing.Tick += (_, _) => { if (_lastRefresh.IsCompleted && !_closing) Refresh(); };
+                growing.Start();
+            }
+            try
+            {
+                var result = await Task.Run(() => new MediaScanner(_repository).ScanAsync(paths, progress, token), token);
+                await AfterImportAsync(token);
+                ShowImportResult(result);
+            }
+            finally { growing?.Stop(); }
         });
     }
     private void ShowImportResult(ImportResult result)

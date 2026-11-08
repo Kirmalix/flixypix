@@ -71,6 +71,23 @@ public static class Motion
   shadow.BeginAnimation(DropShadowEffect.OpacityProperty, fade);
  }
 
+ /// <summary>An element of a new page settles into place, one shortly after the other. The element is whole again afterwards.</summary>
+ internal static void Arrive(FrameworkElement element, int index)
+ {
+  if (!Enabled) return;
+  var delay = TimeSpan.FromMilliseconds(index * 28); var total = delay + TimeSpan.FromMilliseconds(260);
+  DoubleAnimationUsingKeyFrames Move(double from, double to)
+  {
+   var frames = new DoubleAnimationUsingKeyFrames { Duration = total, FillBehavior = FillBehavior.Stop };
+   frames.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+   frames.KeyFrames.Add(new LinearDoubleKeyFrame(from, KeyTime.FromTimeSpan(delay)));
+   frames.KeyFrames.Add(new EasingDoubleKeyFrame(to, KeyTime.FromTimeSpan(total), EaseOut));
+   return frames;
+  }
+  element.BeginAnimation(UIElement.OpacityProperty, Move(0, 1));
+  Transform(element).BeginAnimation(TranslateTransform.YProperty, Move(6, 0));
+ }
+
  private static TranslateTransform Transform(FrameworkElement element)
  {
   if (element.RenderTransform is TranslateTransform existing && !existing.IsFrozen) return existing;

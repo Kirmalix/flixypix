@@ -95,18 +95,33 @@ internal sealed class HomePage : Grid
   }
  }
 
+ /// <summary>The window opens: the first cards settle into place while what stood before them fades.</summary>
+ internal void Reveal() { for (var index = 0; index < Math.Min(cards.Count, 10); index++) Motion.Arrive(cards[index], index); }
+
  private FrameworkElement Welcome()
  {
-  var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 120, 0, 0) };
-  panel.Children.Add(new Image { Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/flixypix-mark-192.png")), Width = 120, Height = 120 });
-  panel.Children.Add(new TextBlock { Text = T("Welcome to FlixyPix"), FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 18, 0, 8) });
-  panel.Children.Add(new TextBlock { Text = T("Import a folder and the home page fills with continue watching, suggestions and more."), Foreground = SettingsUi.Muted, HorizontalAlignment = HorizontalAlignment.Center });
-  var import = new Button { Content = T("Import folder …"), Style = (Style)Application.Current.Resources["Primary"], HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 22, 0, 0) };
+  var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(24, 64, 24, 24), MaxWidth = 560 };
+  var logo = new Image { Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/flixypix-mark-192.png")), Width = 96, Height = 96 };
+  RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
+  panel.Children.Add(logo);
+  panel.Children.Add(new TextBlock { Text = T("Welcome to FlixyPix"), FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 8) });
+  panel.Children.Add(new TextBlock { Text = T("Import a folder and the home page fills with continue watching, suggestions and more."), Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center });
+  // The whole window takes files; this place says so.
+  var drop = new Grid { Margin = new Thickness(0, 24, 0, 0) };
+  var edge = new Rectangle { RadiusX = 10, RadiusY = 10, StrokeThickness = 1.5, StrokeDashArray = [5, 4], IsHitTestVisible = false };
+  edge.SetResourceReference(Shape.StrokeProperty, "FieldBorder");
+  drop.Children.Add(edge);
+  var inside = new StackPanel { Margin = new Thickness(24, 20, 24, 20), HorizontalAlignment = HorizontalAlignment.Center };
+  inside.Children.Add(new TextBlock { Text = T("Drop files or folders here"), HorizontalAlignment = HorizontalAlignment.Center, FontWeight = FontWeights.SemiBold });
+  var import = new Button { Content = T("Import folder …"), Style = (Style)Application.Current.Resources["Primary"], HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 12) };
   import.Click += (_, _) => Import?.Invoke();
-  panel.Children.Add(import);
+  inside.Children.Add(import);
+  inside.Children.Add(new TextBlock { Text = T("Your files stay where they are. Your library grows here."), FontSize = 12, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center });
+  drop.Children.Add(inside);
+  panel.Children.Add(drop);
   if (ContentPackAvailable?.Invoke() == true)
   {
-   var pack = new Button { Content = T("Adult Content Pack"), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0,12,0,0) };
+   var pack = new Button { Content = T("Adult Content Pack"), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0,14,0,0) };
    pack.Click += (_, _) => ContentPack?.Invoke(); panel.Children.Add(pack);
   }
   return panel;
