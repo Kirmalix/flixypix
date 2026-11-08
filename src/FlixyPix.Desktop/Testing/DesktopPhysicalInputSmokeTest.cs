@@ -51,7 +51,7 @@ internal sealed record PlayerInputCase(string Id,string Instruction,bool Fullscr
   new("context-menu","Right-click the native picture. Keep its player menu open for at least one second, then dismiss it."),
   new("ctrl-wheel","Hold Ctrl over the native picture and turn the wheel down one notch. Native and visible volume must change together."),
   new("timeline","While still paused, click or drag the WPF timeline at least three seconds away from its initial position."),
-  new("ab-loop","Click Set A, seek several seconds forward with the timeline, then click Set B. Both points must reach mpv."),
+  new("ab-loop","Hide the jump mark list. Press the range start key, seek several seconds forward with the timeline, press the range end key, then click Loop in the row under the controls. Both points must reach mpv."),
   new("marks","Use the visible controls to create a bookmark and a scene: Scene start, seek forward, Scene end, Create scene."),
   new("fullscreen-marks","Press L in fullscreen to toggle the jump-mark list; keep fullscreen active.",true),
   new("focus-return","Switch to another application and back to the player with Alt+Tab, then press Space once."),
@@ -81,7 +81,7 @@ internal sealed partial class VideoPlayerWindow
  {
   if(OpenPlayerMenu is {} menu)menu.IsOpen=false;
   if(IsFullscreen!=fullscreen)ToggleFullscreen();
-  await ChangeAbLoopAsync(2);await SeekToAsync(10);if(!IsPaused)await TogglePauseAsync();
+  await ClearRangeAsync();await SeekToAsync(10);if(!IsPaused)await TogglePauseAsync();
  }
  private sealed class AcceptanceSubscription(Action dispose):IDisposable{public void Dispose()=>dispose();}
 }

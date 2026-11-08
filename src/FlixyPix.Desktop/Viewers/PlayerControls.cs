@@ -151,7 +151,20 @@ internal sealed partial class VideoPlayerWindow
   wheelOverride = WheelMode == PlayerWheelAction.Volume ? PlayerWheelAction.Seek : PlayerWheelAction.Volume;
   Notify(T("Mouse wheel: {0}", WheelMode == PlayerWheelAction.Volume ? T("Volume") : T("seek")));
  }
- private DispatcherTimerLike? flashTimer;
+ private DispatcherTimerLike? flashTimer, messageTimer;
+ private readonly Popup messagePopup = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, IsHitTestVisible = false, HorizontalOffset = 12, VerticalOffset = 12 };
+ internal bool MessageShown => messagePopup.IsOpen;
+ internal string MessageText => status.Text;
+ /// <summary>A popup does not follow its window by itself; opening it again places it anew.</summary>
+ private void KeepMessageInPlace() { if (messagePopup.IsOpen) { messagePopup.IsOpen = false; messagePopup.IsOpen = true; } }
+ /// <summary>A message over the video for a few seconds; the video keeps the room of a status line.</summary>
+ private void ShowMessage(string text)
+ {
+  status.Text = text; if (closing || host.ActualWidth <= 0) return;
+  InterfaceScaling.Fit((FrameworkElement)messagePopup.Child);
+  messagePopup.IsOpen = true;
+  messageTimer?.Stop(); messageTimer = new DispatcherTimerLike(TimeSpan.FromSeconds(4), () => messagePopup.IsOpen = false);
+ }
  private (int X, int Y) lastCursor; private DateTime lastMovement = DateTime.MinValue;
 
  /// <summary>Asks the library for the previous (−1) or next (+1) video of the current view; the library honours shuffle.</summary>
@@ -199,7 +212,6 @@ internal sealed partial class VideoPlayerWindow
  {
   AutomationProperties.SetName(volumeSlider,T("Volume"));AutomationProperties.SetName(position,T("Position"));AutomationProperties.SetName(speed,T("Speed"));
   controlBar.Children.Add(BuildTimeline());
-  controlBar.Children.Add(BuildRangeControls());
   var row = new PlayerControlRow();
   pause.Content = ""; pause.Style = (Style)Application.Current.Resources["IconButton"]; pause.FontSize = 20; pause.ToolTip = T("Play / Pause"); AutomationProperties.SetName(pause, T("Play or pause"));
   pause.Click += async (_, _) => await Command(TogglePauseAsync);
@@ -234,15 +246,16 @@ internal sealed partial class VideoPlayerWindow
   row.Add(BuildRating(), right: true, fold: 3, entries: () => [MenuSpec.Submenu(T("Rating"), RatingEntries())]);
   row.Add(BuildOCounter(), right: true, fold: 4, entries: OCounterEntries);
   row.Add(tracks, right: true, fold: 8, entries: () => [MenuSpec.Submenu(T("Tracks"), TrackEntries(), tracks.Content as string)]);
-  var marks = Pill(null, null, previousMarkButton, marksButton, nextMarkButton); marks.Margin = new Thickness(4, 0, 4, 0);
+  var marks = Pill(previousMarkButton, marksButton, nextMarkButton); marks.Margin = new Thickness(4, 0, 4, 0);
   row.Add(marks, right: true, fold: 6, entries: MarkEntries); row.Add(view, right: true, fold: 2, entries: () => [MenuSpec.Submenu(Tc("player", "View"), ViewEntries())]);
-  var more = Symbol("\uE712", T("More actions")); more.Click += (_, _) => Menus.Open(more, controlRow.FoldedEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
+  var more = Symbol("\uE712", T("More actions")); more.Click += (_, _) => Menus.Open(more, controlRow.FoldedEntries(), (_, error) => ShowMessage(error.Message), PlacementMode.Top);
   row.AddMore(more);
   fullscreenButton.Click += (_, _) => ToggleFullscreen(); row.Add(fullscreenButton, right: true);
   controlRow = row; controlBar.Children.Add(row);
-  if(Source!=null)controlBar.Children.Add(new TextBlock{Text=Source.Path,ToolTip=Source.Path,TextTrimming=TextTrimming.CharacterEllipsis,Margin=new Thickness(8,2,8,2),FontSize=11});
-  status.Margin = new Thickness(8, 0, 8, 2); status.FontSize = 12; status.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
-  controlBar.Children.Add(status);
+  controlBar.Children.Add(BuildRangeStrip());
+  status.Margin = new Thickness(0); status.MaxWidth = 640; status.FontSize = 12; status.Foreground = Brushes.White;
+  messagePopup.Child = new Border { Background = new SolidColorBrush(Color.FromArgb(200, 10, 12, 16)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 5, 10, 5), Child = status };
+  messagePopup.PlacementTarget = host;
 
   flash.Child = new Border { Width = 96, Height = 96, CornerRadius = new CornerRadius(48), Background = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0)), Child = flashGlyph };
   flash.PlacementTarget = host;
@@ -278,7 +291,7 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Clock and play symbol follow each poll; previous and next only appear when the library offers them.</summary>
  private void UpdateControls(double seconds)
  {
-  clock.Text = Time(seconds) + " / " + (durationSeconds is double duration ? Time(duration) : "–");
+  clock.Text = Time(seconds) + " / " + (durationSeconds is double duration ? Time(duration) : "–"); clock.ToolTip = Source?.Path;
   previousButton.Visibility = nextButton.Visibility = StepRequested != null ? Visibility.Visible : Visibility.Collapsed;
   KeepOverlayFresh();
  }
@@ -315,7 +328,7 @@ internal sealed partial class VideoPlayerWindow
  private PlayerControlRow controlRow = null!;
  internal bool ControlsFolded => controlRow.AnythingFolded;
  internal IReadOnlyList<MenuSpec> FoldedControls => controlRow.FoldedEntries();
- private void TrackMenu(Button target) => Menus.Open(target, TrackEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
+ private void TrackMenu(Button target) => Menus.Open(target, TrackEntries(), (_, error) => ShowMessage(error.Message), PlacementMode.Top);
  /// <summary>Audio and subtitle tracks with the current one checked, and the subtitle file and offset.</summary>
  private IReadOnlyList<MenuSpec> TrackEntries()
  {
@@ -340,7 +353,7 @@ internal sealed partial class VideoPlayerWindow
   return entries;
  }
 
- private void ViewMenu(Button target) => Menus.Open(target, ViewEntries(), (_, error) => status.Text = error.Message, PlacementMode.Top);
+ private void ViewMenu(Button target) => Menus.Open(target, ViewEntries(), (_, error) => ShowMessage(error.Message), PlacementMode.Top);
  private IReadOnlyList<MenuSpec> ViewEntries() =>
  [
   new MenuCommand(T("Use time-based view"), () => { transforms.IsChecked = transforms.IsChecked != true; _ = SaveTransformsEnabledAsync(); }) { Checked = transforms.IsChecked == true },

@@ -28,9 +28,12 @@ internal sealed partial class VideoPlayerWindow
    LoopEntry(),
    ShuffleEntry(),
    MenuSpec.Separator,
+   MenuSpec.Submenu(T("Range"), RangeEntries()),
    Act(T("Save screenshot"), PlayerActions.Screenshot, ""),
    Act(T("O counter +1"), PlayerActions.AddO),
    new MenuCommand(T("Full screen"), ToggleFullscreen) { Icon = "", Shortcut = Shortcut(PlayerActions.Fullscreen), Checked = IsFullscreen },
+   MenuSpec.Separator,
+   MenuSpec.Command(T("Copy path"), () => Clipboard.SetText(Source!.Path), enabled: Source != null),
    MenuSpec.Separator,
    MenuSpec.Command(T("Close"), Close, ""),
   ];
@@ -39,6 +42,14 @@ internal sealed partial class VideoPlayerWindow
  private string? MenuShortcut(string action) => playback.Hotkeys.GetValueOrDefault(action, "") is { Length: > 0 } key ? DisplayKey(key) : null;
  private MenuCommand ActionEntry(string label, string action, string? icon = null, bool enabled = true) =>
   new(label, () => _ = Command(() => RunActionAsync(action))) { Icon = icon, Shortcut = MenuShortcut(action), Enabled = enabled && player != null };
+ private IEnumerable<MenuSpec> RangeEntries() =>
+ [
+  ActionEntry(T("Set range start"), PlayerActions.ClipStart),
+  ActionEntry(T("Set range end"), PlayerActions.ClipEnd, null, RangeStart.HasValue),
+  ActionEntry(T("Save as scene"), PlayerActions.ClipCreate, null, RangeStart.HasValue && RangeEnd.HasValue),
+  MenuSpec.Command(AbLoop.Active ? T("End loop") : T("Loop range"), () => AbLoopUpdate = Command(ToggleRangeLoopAsync), enabled: RangeStart.HasValue && RangeEnd.HasValue && durationSeconds > 0),
+  MenuSpec.Command(T("Discard range"), () => AbLoopUpdate = Command(ClearRangeAsync), enabled: RangeStart.HasValue),
+ ];
  private MenuCommand LoopEntry() => new(T("Loop"), () => { repeat.IsChecked = repeat.IsChecked != true; PlaybackModeChanged?.Invoke(); }) { Icon = "", Checked = repeat.IsChecked == true };
  private MenuCommand ShuffleEntry() => new(T("Shuffle"), () => { shuffle.IsChecked = shuffle.IsChecked != true; PlaybackModeChanged?.Invoke(); }) { Icon = "", Checked = shuffle.IsChecked == true };
  private IEnumerable<MenuSpec> SpeedEntries() => speed.Items.OfType<double>().Select(value =>
@@ -59,7 +70,7 @@ internal sealed partial class VideoPlayerWindow
  internal ContextMenu? OpenPlayerMenu { get; private set; }
  internal ContextMenu ShowPlayerMenu()
  {
-  var menu = Menus.Create(PlayerMenu(), (_, error) => status.Text = error.Message);
+  var menu = Menus.Create(PlayerMenu(), (_, error) => ShowMessage(error.Message));
   if (GetCursorPos(out var cursor) && PresentationSource.FromVisual(this) != null)
   {
    var point = PointFromScreen(new Point(cursor.X, cursor.Y));

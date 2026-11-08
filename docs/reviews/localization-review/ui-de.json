@@ -1612,21 +1612,6 @@
       "digest": "8e068b9614efedcd476f99adea9f90ca611e26be8f0d643b8eec38f0548cc79f",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "Mark scene start": {
-      "status": "unchanged",
-      "digest": "307cbb1af950a8893d9ca9823ffb858c749a7761676d69f3f588c86b18b3723f",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Mark scene end": {
-      "status": "unchanged",
-      "digest": "82455791b267806b45daf941e83ef8659cbaba1caf8662c857c03b9dbbbc3625",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Create scene from marks": {
-      "status": "unchanged",
-      "digest": "d6a3c0cc8f7940ac153dc48be131f6e77ab9beda29262c48217119bbcb148d81",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Save screenshot": {
       "status": "unchanged",
       "digest": "c514f9e7a3c9b4a62f2ea9d8fe62d9d8983d9d493eba5c2b617f480bbefe01a3",
@@ -8327,26 +8312,6 @@
       "digest": "590e0736e6dc860146664fca575185a5d342b0ce58fa335225a47c14e43c42bb",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "Scene start · ": {
-      "status": "unchanged",
-      "digest": "2b924de1b7c15093b6faba298647cd8783d43b36743f6c7db60dc802ab6c5f2a",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Scene end · ": {
-      "status": "unchanged",
-      "digest": "0cf2b9c0b785972ea0f7869702ff2f9580144c254b77da304c9d7a18112641c3",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    " · Scene {0}–{1} ready": {
-      "status": "unchanged",
-      "digest": "9cf708b08eb85d7b28b98362c297bedfc955f473a0a4164205c907d2478b4926",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Mark the scene start first and then a later scene end.": {
-      "status": "unchanged",
-      "digest": "7f1bfbf2685bad3fbb42ef08f4f476eef5942fac2e49313130809f832217681e",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Scene {0}–{1}": {
       "status": "unchanged",
       "digest": "279a92f4e620a1f69e7ca76e692b238cd522256a1b48a5be6ef60634dc580944",
@@ -14518,10 +14483,6 @@
       "status": "unchanged",
       "digest": "40f6e91bfff9ae384fb97ec06914b948d6a3617c4c54a0e5d6408014ef64e0a9"
     },
-    "Create scene": {
-      "status": "unchanged",
-      "digest": "7d118a5a001a68df767f9e2939d86ff3b63cd0b5258776237e0bd24acb43798c"
-    },
     "Data and storage": {
       "status": "unchanged",
       "digest": "c22d0cd16fd3bd9ef9146ed3ff34f6adf83163df26170489583a6acce9b7e4db"
@@ -14778,10 +14739,6 @@
       "status": "unchanged",
       "digest": "d7e28147be1df868122f403b7bed14770d6f72eec23269a1ae9e75d1a5353aa0"
     },
-    "Reset A–B": {
-      "status": "unchanged",
-      "digest": "97403cb055188b7564744494b9c377f3813c3bf7ec5fc49a1d7d659dc165f9da"
-    },
     "Review inbox": {
       "status": "unchanged",
       "digest": "49585c4b96be67558857d8cecc54cc3a2633a32292b771b0732b22d5ec59f20a"
@@ -14798,14 +14755,6 @@
       "status": "unchanged",
       "digest": "358728aff4cc8ecf1105a8125b5a16543f593721a3a30358fff27830924256fb"
     },
-    "Scene end": {
-      "status": "unchanged",
-      "digest": "930e0479e05f0fdd653ca4b3c55e3d448546f267995ebde05b6e1bee67a4c69f"
-    },
-    "Scene start": {
-      "status": "unchanged",
-      "digest": "36615eaa04fabc7134799213141c127aeec6c23c43b560e3cdd58ca8ce9691c4"
-    },
     "Select at least one library.": {
       "status": "unchanged",
       "digest": "7037b5ae3c270f96a4fb12d05f28fdf40d45c06095e544a39f40b31a183e5772"
@@ -14813,14 +14762,6 @@
     "Selection": {
       "status": "unchanged",
       "digest": "a32ef5f81ddd4c105b83501341b900876f4f0940d9532d12d417e622f3def4b2"
-    },
-    "Set A": {
-      "status": "unchanged",
-      "digest": "6c21a911ee1a6056c068af98bac0ee228bb950d79797f05b76b580727f6eaba4"
-    },
-    "Set B": {
-      "status": "unchanged",
-      "digest": "104913c7fe14319220235af5ff7acfcee2f7a71b5d36e5f5e8d78ec30107a900"
     },
     "SHA-256 compares file content. Visual similarity compares appearance. Searching does not remove items or files.": {
       "status": "unchanged",
@@ -15333,10 +15274,6 @@
       "status": "unchanged",
       "digest": "5da1e2f3361f4a933033760c6cc5a4fcefa5c40c6834af517f45f41abf19619c"
     },
-    "A–B loop": {
-      "status": "unchanged",
-      "digest": "81109207b7fcd1ad12e0d0a8d50d5c0a88dc0ea3f3ac913f91b2320f5ae6ee19"
-    },
     " · {0:N0} done": {
       "status": "corrected",
       "digest": "cf821c21080b133e4d9f7499d0510021189c77ea738fd626982336689a1b83e6",
@@ -15627,6 +15564,76 @@
     "This folder cannot be protected because FlixyPix keeps its own data or a library there: {0}": {
       "status": "unchanged",
       "digest": "b86966e3c68f640868ea3b637a9c5a91705f8d7533775a65215d294fc40c9131"
+    },
+    "Discard range": {
+      "status": "corrected",
+      "digest": "6df82e265e1e251eadb5c457f0af35ddc35417aead58de46c40c07a6755d0382",
+      "previous_digest": "0ef698a0a934abe9192e67ed48f1eacf193e88e689e4f7ed3adfdc7ce7d31661"
+    },
+    "End loop": {
+      "status": "corrected",
+      "digest": "66ea9d95d4ade495a92ab461226131ad12c477cb92652c99b99350ede3b82259",
+      "previous_digest": "976bb26eb966fac2f7082c9a3ec5c883f9959c0397774f19489760f1251193a8"
+    },
+    "Loop range": {
+      "status": "corrected",
+      "digest": "a166d7d24e3c8ffc414ede8fc603cde3ab3fe0a46a4ba298edb58168f5230ea0",
+      "previous_digest": "3b7f5dcc7734bc039b43550b0b91b2deb2427b14a357990573cf46bda9747198"
+    },
+    "Looping {0}–{1}": {
+      "status": "corrected",
+      "digest": "5084dc0c090148c707d1d9e8cd22ff0cd2614f1040fbcc9558d9bdbb590668d9",
+      "previous_digest": "17abcc792ecedae8b8c18b652602be931ae7162722dbbc314f6979f31944bf43"
+    },
+    "RANGE": {
+      "status": "corrected",
+      "digest": "ca2555b3d3af6dab422eb351e0d15bae6ca285366659b2ffe7a96659c8ed9dee",
+      "previous_digest": "0baf9a40baab2c3797c476c1fcec9ad765d90983de9a6061427bf9a055ceaecb"
+    },
+    "Range": {
+      "status": "corrected",
+      "digest": "69e15b9de3181b9b0364f28689ada9d19ac0995eeefeeddb4345dba45440d10b",
+      "previous_digest": "e0edb07a1c0d148196d03356e157740fa92a83283ad419b7f0eb74c3901bf34f"
+    },
+    "range\u0004End": {
+      "status": "corrected",
+      "digest": "5fb0dcd2ce97cb14b5471dfe9b5fcc199bdfea0cea20585c217bcc3fefaaa6da",
+      "previous_digest": "8ea6522f2aa746a1394b829e0419720699cf7ef4576318ed8ad2397583311683"
+    },
+    "range\u0004Start": {
+      "status": "corrected",
+      "digest": "ff023a0edca252ed509279b5df6a567645580a3db62370808a3a42d3db724738",
+      "previous_digest": "e203049e09611e675e47717a848e1b3cb10fae24c3888cb8b4c4be2d307c98ec"
+    },
+    "Range end · {0}": {
+      "status": "corrected",
+      "digest": "de50946b7ccc52726dac212b5e6fa6bf325450ac12b8f57796387de4b97e3a07",
+      "previous_digest": "ada19a3e608833c7bdde9601d7eecf443dc12a7eaccf404ae0c3828503935e5a"
+    },
+    "Range start · {0}": {
+      "status": "corrected",
+      "digest": "dfcf5bf28618e82480a20265ecfe8dc39f7d7cdf2f23e8098f9bc3eca96da77e",
+      "previous_digest": "321138a29e5fc06fd1427edbf91a8937d1e87324ae66aae9d0258d2953f8847d"
+    },
+    "Save as scene": {
+      "status": "corrected",
+      "digest": "394edeec3abe8a3b17c26c1b3bd788f39d4ff0607263202eb30b15c1c01c586b",
+      "previous_digest": "d9c6fbfadb83b5ab0dfecd1267d12f27efeea6c2aa9da3b2d486b87ea2bcf12b"
+    },
+    "Set range end": {
+      "status": "corrected",
+      "digest": "b38fbf591315d7b7e8f20d1370dcdb331f1e6405e5187128f187cf620721d5b3",
+      "previous_digest": "ec6aa95b458774253089845bdfc372c80e6901098d8130015d0cc80426b367ec"
+    },
+    "Set range start": {
+      "status": "corrected",
+      "digest": "f9dc04dddf560e6f94488eececaa53bcb5633a5eece9e5adaf880cae8ad2f9c6",
+      "previous_digest": "921909e85a02b9b26ad66f8c77b3e1a888c7c91717581a9919ed8ce36c3bf567"
+    },
+    "Set the start of the range first and then a later end.": {
+      "status": "corrected",
+      "digest": "41437d5791dc275612cc6dcc65a5f37fdcac863416a94279ccf5119ab23b19da",
+      "previous_digest": "f78a89c4fcb3b5fc3bb92a92514376875236a647d5d49c4c66643c902e2d6d98"
     }
   }
 }

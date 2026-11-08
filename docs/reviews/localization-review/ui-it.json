@@ -184,11 +184,6 @@
       "digest": "60a7fa1154e7e949e9ce9003cc2767689bc08ca7b77eb61b308835d1797c8d10",
       "previous_digest": "b18ab1db95ea9d681cb2049f4b11cbe2c492f9c37e2c6069105904cb81461927"
     },
-    " · Scene {0}–{1} ready": {
-      "status": "corrected",
-      "digest": "bfaa3d8fe3a4ceb05b000d079b8506c886d1e011f3124c67ee478ef5bfb17f4f",
-      "previous_digest": "3865e6ec0d6efa46f352a12c516c57164f6cb83af260412998cf4073dec9fcfa"
-    },
     " · Tag: {0}": {
       "status": "corrected",
       "digest": "40a442976aa03abc494c14a32775e462e657726c8d7b480d3d003a80324d9498",
@@ -3669,11 +3664,6 @@
       "status": "corrected",
       "digest": "33eb76aa249dbeb1bbd7088a00da2899aaf3c86e5bc682466e0aace29be050cd",
       "previous_digest": "4013410c32c2675f439d2ec09b5a72b224ceb35b14839c5c298c3524f9b22339"
-    },
-    "Mark the scene start first and then a later scene end.": {
-      "status": "corrected",
-      "digest": "5d2ff80ec3e0633bf928dc753efb691e78f1d98add7ae31da07a73335087abca",
-      "previous_digest": "ea2ee43a66d774c2bcf7f8ca4dc9723926aec44e2e907516b3c23cfd25f0b739"
     },
     "Create": {
       "status": "unchanged",
@@ -7975,11 +7965,6 @@
       "digest": "569f30a8543cfcf4b06c55276a4f261ced15c5b86965c046d9cae7523c9c02a1",
       "previous_digest": "6e7a0014f78505482a08c4e928a1aa16a8c9ba678c53e7308f53f3bced3c2c6f"
     },
-    "Create scene from marks": {
-      "status": "corrected",
-      "digest": "ff50bdfdb292a908880c668cc751e82a7109b45e9f3dc7427bb05987bbb04ddb",
-      "previous_digest": "3c2b711603b71b586a4bded2b1adffee6ee2b3f6326b1037d545810e449a974b"
-    },
     "Edit scene": {
       "status": "corrected",
       "digest": "4283753ca205f7578db4f7cef1f78535b2c7fac8e22a51c8b1be0a61ec784aa9",
@@ -8034,16 +8019,6 @@
       "digest": "912105d06dab3499ac00c3f14df9d1c6200dbd0b6c3854147cffe5fa5ea4a9dc",
       "previous_digest": "d7d280467344e2bc549e192dc95b1ee50e46cb90a6b64af1667beccb1582e56c"
     },
-    "Mark scene start": {
-      "status": "corrected",
-      "digest": "b6be4a2afa28acc65ef978faff749d40bd8fbc36ea354baa17a15de124214a68",
-      "previous_digest": "175d51c193851a6c923fe3becb0119eb9826ddcd7bd68937a1359e8ccd8d5c80"
-    },
-    "Scene start · ": {
-      "status": "corrected",
-      "digest": "156dfc54e69a103438d820de0b5dcf8d72f97fe421980ad0f3724bf6b6da630e",
-      "previous_digest": "a4c3b266828b8473aa6198f3a1e06374e8cab996bad10b8885727a4ad5316217"
-    },
     "Scene image": {
       "status": "corrected",
       "digest": "f54be26c4bf8bd6672c0de381ea414414c67d3f7b7e6f10ceef17afa88e77a99",
@@ -8088,16 +8063,6 @@
       "status": "corrected",
       "digest": "bfbb87ea0d0c9d4368fccdc760e4805d6596f508f036208cf5bf6e2d535741d0",
       "previous_digest": "dcfb2a8c4557f04e4874980636301b79878ce4987a84272bf9b144be8fd4a2a4"
-    },
-    "Mark scene end": {
-      "status": "corrected",
-      "digest": "13e0b53b7608441e2d1c315586938d0b3832bc6f1d8623313060bf2a2fb90dea",
-      "previous_digest": "a1e95f0b6b4aa79cdfacf471d1f7f7f43a3e63d2233d7f1f8065ace881e3c85c"
-    },
-    "Scene end · ": {
-      "status": "corrected",
-      "digest": "7d0856034a22577ed0d7b63e7f7943a068c3e215506326b509b911cbabca2e62",
-      "previous_digest": "ed0dc9c6b0ea7aeda08cb7f4e28fb858ece502204fec04bdd3ae98d1e37c696a"
     },
     "Table": {
       "status": "corrected",
@@ -13724,10 +13689,6 @@
       "status": "unchanged",
       "digest": "281bb2e30374f22694ce9570de3fc31c3f0543272791139a3cae6eb26f22cfb7"
     },
-    "Create scene": {
-      "status": "unchanged",
-      "digest": "5f281ef914ba8838fde7f4f95a96129c25aebabd7db70ff969f2ef23cf4c5537"
-    },
     "Data and storage": {
       "status": "unchanged",
       "digest": "0b5f6fb026e8af89f7da6805303c49d022b1de929722a7efc85311ac3d2cbdef"
@@ -13952,10 +13913,6 @@
       "status": "unchanged",
       "digest": "75a510e7d1fd32f56884c69bc60367e968c8a53b1d9c359cd665d647da6e025e"
     },
-    "Reset A–B": {
-      "status": "unchanged",
-      "digest": "726d3a4309c58e933f7e4ec98583af2620adcf89a4c5d9c791632e2db288f795"
-    },
     "Review inbox": {
       "status": "unchanged",
       "digest": "e54417e19265655344a0d7b33cfca06bf581d0fdfd85a6621b64229d0d4f32d0"
@@ -13972,29 +13929,13 @@
       "status": "unchanged",
       "digest": "0a9e1ff2d905e4a2b2330684674b3af999621f0111454ffa2e1ac427ae3388ac"
     },
-    "Scene end": {
-      "status": "unchanged",
-      "digest": "3ff0756b6bd5f3b658c5572754ae5094cdff7b7a901ca5e5da87753f80e358d8"
-    },
-    "Scene start": {
-      "status": "unchanged",
-      "digest": "8695204667d13ba31450e7680d31fc8fcddb2edf691df9e0a9cac32717aac9a0"
-    },
     "Selection": {
       "status": "unchanged",
       "digest": "b45a1a86215cae8a16d3b3007a07f15ce0540da64b6406159208b21c87e7312e"
     },
-    "Set A": {
-      "status": "unchanged",
-      "digest": "2816b210d130e10507e1674d1484a4afbbe96622233149a8c96472893a0e4b86"
-    },
     "Set as cover": {
       "status": "unchanged",
       "digest": "e899a39cac9040af79a667757e3c4f92ad2d68d1dcc0352520e3eb2aec34d724"
-    },
-    "Set B": {
-      "status": "unchanged",
-      "digest": "11a3c0c3f3d0b31f7e4b4b0f2d9ecc3da119d2044ab4448bd13b5d7fb1a365b4"
     },
     "SHA-256 compares file content. Visual similarity compares appearance. Searching does not remove items or files.": {
       "status": "unchanged",
@@ -14561,10 +14502,6 @@
       "status": "unchanged",
       "digest": "46bb1500cb39162ebb365e258bce8fbc26589fc3c8b4520072502d74b13db98a"
     },
-    "A–B loop": {
-      "status": "unchanged",
-      "digest": "077e4707091d3e6578537bb8bf6597c9463a2b12d12b4b4c2098c0650cbb1661"
-    },
     " · {0:N0} done": {
       "status": "corrected",
       "digest": "8231f5ce56e71027e69e53fd4a2b191adce0e1754be4bd80a988f4023e2a10d4",
@@ -14855,6 +14792,76 @@
     "This folder cannot be protected because FlixyPix keeps its own data or a library there: {0}": {
       "status": "unchanged",
       "digest": "3a721802d7d25039eaf55e5cb0243652093b4fca38a5f69be699b1f7dc960d9b"
+    },
+    "Discard range": {
+      "status": "corrected",
+      "digest": "ff544d3f622a49ce8f04ae0fb62c88d09944c804fb1289e82f7f2febeb2f8e89",
+      "previous_digest": "0ef698a0a934abe9192e67ed48f1eacf193e88e689e4f7ed3adfdc7ce7d31661"
+    },
+    "End loop": {
+      "status": "corrected",
+      "digest": "e814c636aaf2f81770fee20476fc3dce87ff6bc6eb975a3d7255e2da1cbb3445",
+      "previous_digest": "976bb26eb966fac2f7082c9a3ec5c883f9959c0397774f19489760f1251193a8"
+    },
+    "Loop range": {
+      "status": "corrected",
+      "digest": "be0c3aba123d7eb554c11933be236940b31f380b58c3e2c08218ec5db15eadc9",
+      "previous_digest": "3b7f5dcc7734bc039b43550b0b91b2deb2427b14a357990573cf46bda9747198"
+    },
+    "Looping {0}–{1}": {
+      "status": "corrected",
+      "digest": "34e8d426de2e90e257ed4e465c37b223caef28260d0ef27e21be17c8b5c4cc3c",
+      "previous_digest": "17abcc792ecedae8b8c18b652602be931ae7162722dbbc314f6979f31944bf43"
+    },
+    "RANGE": {
+      "status": "corrected",
+      "digest": "b1925ab217b2fc94074ea939610eed3e1fb30705d238887dba463679a5dcb9de",
+      "previous_digest": "0baf9a40baab2c3797c476c1fcec9ad765d90983de9a6061427bf9a055ceaecb"
+    },
+    "Range": {
+      "status": "corrected",
+      "digest": "72bf56654c01d6c0c9fbd8a95af31f758778e7dfa6caaab879aedeee339bf363",
+      "previous_digest": "e0edb07a1c0d148196d03356e157740fa92a83283ad419b7f0eb74c3901bf34f"
+    },
+    "range\u0004End": {
+      "status": "corrected",
+      "digest": "2aa9e874dfdeb0e8d07134630df95a9f82a958843bab1c50c6716d3fbdf270ad",
+      "previous_digest": "8ea6522f2aa746a1394b829e0419720699cf7ef4576318ed8ad2397583311683"
+    },
+    "range\u0004Start": {
+      "status": "corrected",
+      "digest": "b4bd651bc08b0c92dfb3f31d9c4d13a7602e679f8aaabce42efb0a2b3fbbee24",
+      "previous_digest": "e203049e09611e675e47717a848e1b3cb10fae24c3888cb8b4c4be2d307c98ec"
+    },
+    "Range end · {0}": {
+      "status": "corrected",
+      "digest": "7ed65179a4393ee4f0bf21fa0f1af0603f5dc5b954f43e8a823e09807d15563e",
+      "previous_digest": "ada19a3e608833c7bdde9601d7eecf443dc12a7eaccf404ae0c3828503935e5a"
+    },
+    "Range start · {0}": {
+      "status": "corrected",
+      "digest": "38f01ea84525c5df09cc553d65de8c9705e133ccc2264fcbb67d0061e90da209",
+      "previous_digest": "321138a29e5fc06fd1427edbf91a8937d1e87324ae66aae9d0258d2953f8847d"
+    },
+    "Save as scene": {
+      "status": "corrected",
+      "digest": "ad6a0cb88c5a6357200d16787b50780610aaf7776d457ea558513ba69ba0fd71",
+      "previous_digest": "d9c6fbfadb83b5ab0dfecd1267d12f27efeea6c2aa9da3b2d486b87ea2bcf12b"
+    },
+    "Set range end": {
+      "status": "corrected",
+      "digest": "ffebc450a218a06b14325a6bc9643776bce2a3b0f9a230aa7157ed88fa5f417e",
+      "previous_digest": "ec6aa95b458774253089845bdfc372c80e6901098d8130015d0cc80426b367ec"
+    },
+    "Set range start": {
+      "status": "corrected",
+      "digest": "dd7c0c262fba0e7689c58324f53568d70af51a99c68cbba2178ca0286a9f0dcd",
+      "previous_digest": "921909e85a02b9b26ad66f8c77b3e1a888c7c91717581a9919ed8ce36c3bf567"
+    },
+    "Set the start of the range first and then a later end.": {
+      "status": "corrected",
+      "digest": "4be6dd00b2002a81db9272c4fb77efccd26976468a378d56d1e8cf732de221c0",
+      "previous_digest": "f78a89c4fcb3b5fc3bb92a92514376875236a647d5d49c4c66643c902e2d6d98"
     }
   }
 }

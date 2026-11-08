@@ -21,6 +21,17 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - The main window folds its side bars according to the interface size, so the search and the buttons at the
   top stay in the window; colour scheme tiles and the action buttons of the detail page wrap when space is short.
 
+**Player**
+
+- A calmer player bar: only the time line and one row of controls remain, so the video gets the room.
+  The file path moved to the tooltip of the time and into the right-click menu, and messages appear briefly
+  over the video instead of in a status line.
+- One range replaces the separate A–B loop and scene buttons: set a start and an end, then save it as a scene
+  or loop it. **Changed:** a loop now starts with a click on "Loop" and no longer by itself after the end is
+  set. The range tools stand in the jump mark list; while the list is hidden or in full screen, a small row
+  appears once a range is begun, and the range shows on the time line.
+- The pencil in the jump mark list appears when the pointer is over a mark, which leaves more room for names.
+
 ## 0.6.0
 
 **Upgrading from 0.5.0:** the catalog format changes. FlixyPix asks before converting a library and

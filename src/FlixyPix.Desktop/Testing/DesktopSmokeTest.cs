@@ -107,7 +107,7 @@ public partial class MainWindow
                 // The further shortcuts of the original: scene from start and end marks, toggle a bookmark, screenshot, slow motion.
                 var scenesBefore = _repository.GetScenes(imported.Id).Count;
                 await _videoWindow.SeekToAsync(.1); _videoWindow.Act(PlayerActions.ClipStart); await _videoWindow.SeekToAsync(.3); _videoWindow.Act(PlayerActions.ClipEnd); _videoWindow.Act(PlayerActions.ClipCreate);
-                Require(_repository.GetScenes(imported.Id).Count == scenesBefore + 1 && _videoWindow.ClipStart == null, "Start and end marks did not create a scene.");
+                Require(_repository.GetScenes(imported.Id).Count == scenesBefore + 1 && _videoWindow.RangeStart == null, "Start and end marks did not create a scene.");
                 var bookmarksBefore = _repository.GetBookmarks(imported.Id).Count;
                 await _videoWindow.SeekToAsync(.6); _videoWindow.ToggleBookmarkHere(); Require(_repository.GetBookmarks(imported.Id).Count == bookmarksBefore + 1, "Toggling did not set a bookmark.");
                 _videoWindow.ToggleBookmarkHere(); Require(_repository.GetBookmarks(imported.Id).Count == bookmarksBefore, "Toggling again did not remove the bookmark.");

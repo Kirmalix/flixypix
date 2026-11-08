@@ -22,7 +22,7 @@ internal sealed partial class VideoPlayerWindow
   var step=new PlayerTransform(Parse(0),Parse(1),Parse(2),Parse(3),Parse(4));
   var updated=PlayerTransformTimeline.Validate(timeline with { Enabled=true,Steps=timeline.Steps.Where(s=>s.PositionSeconds!=step.PositionSeconds).Append(step).ToList() });
   timeline=repository.SavePlayerTransforms(media.Id,updated); transforms.IsChecked=true; manualTransform=null; ApplyTransform();
-  status.Text=T("View saved · ")+TimeSpan.FromSeconds(step.PositionSeconds).ToString(@"hh\:mm\:ss"); return Task.CompletedTask;
+  ShowMessage(T("View saved · ")+TimeSpan.FromSeconds(step.PositionSeconds).ToString(@"hh\:mm\:ss")); return Task.CompletedTask;
  }
  private Task ManageTransformsAsync()
  {

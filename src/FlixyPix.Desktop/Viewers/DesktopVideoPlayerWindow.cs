@@ -79,11 +79,12 @@ internal sealed partial class VideoPlayerWindow : Window
   position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
   timer.Tick+=async (_,_)=>await PollAsync();
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
-   ready.TrySetResult(host.VideoHandle); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
-   } catch(Exception error) { ready.TrySetException(error); status.Text=error.Message; } };
-  Closed+=(_,_)=>{ closing=true;DisposeSeekPreview(); if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=false; ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
-  host.SizeChanged+=(_,_)=>{ ApplyTransform(); if(overlay.IsOpen)ShowOverlay(); };
-  Deactivated+=(_,_)=>{ overlay.IsOpen=false; HideSeekPreview(); };
+   ready.TrySetResult(host.VideoHandle); if(player==null)ShowMessage(T("Starting the player …")); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
+   } catch(Exception error) { ready.TrySetException(error); ShowMessage(error.Message); } };
+  Closed+=(_,_)=>{ closing=true;DisposeSeekPreview(); if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=messagePopup.IsOpen=false; ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
+  host.SizeChanged+=(_,_)=>{ ApplyTransform(); if(overlay.IsOpen)ShowOverlay(); KeepMessageInPlace(); };
+  Deactivated+=(_,_)=>{ overlay.IsOpen=messagePopup.IsOpen=false; HideSeekPreview(); };
+  LocationChanged+=(_,_)=>KeepMessageInPlace();
   PreviewKeyDown+=async (_,e)=>
   {
    if(e.Key==Key.F1) {e.Handled=true;if(HelpRequested!=null)HelpRequested(Keyboard.Modifiers==ModifierKeys.Control);else new HelpWindow(this,T("Help"),HelpWindow.Guide()).ShowDialog();return;}
@@ -118,6 +119,7 @@ internal sealed partial class VideoPlayerWindow : Window
   position.Maximum=Math.Max(1,durationSeconds??1); position.IsEnabled=durationSeconds>0; RenderMarkers();
   pause.Content=paused?"":"";
   await Command(() => RestoreSubtitlesAsync(player)); await Command(RestorePlaybackSettingsAsync); await RefreshTracksAsync(); RefreshMarks();UpdateRangeControls(); await PollAsync(); timer.Start();
+  if(status.Text==T("Starting the player …"))messagePopup.IsOpen=false;
  }
  /// <summary>Whether the left mouse button is down; the smoke test replaces it because it cannot press a real button.</summary>
  internal Func<bool> PointerPressed { get; set; } = ()=>Mouse.LeftButton==MouseButtonState.Pressed;
@@ -158,11 +160,10 @@ internal sealed partial class VideoPlayerWindow : Window
    // A release outside the time line does not reach it: the poll ends the press and seeks where it was left.
    if(seeking && !keyboardSeeking && !PointerPressed()) { seeking=false; _=Command(()=>SeekToAsync(position.Value)); }
    LastPositionSeconds=seconds.Value; if(!seeking)position.Value=Math.Clamp(seconds.Value,0,position.Maximum);
-   status.Text=notice is { } n && n.Until>DateTime.UtcNow ? n.Text : media.Title+CurrentMarkLabel();
    if(!paused)Coverage.Observe(seconds.Value,speed.SelectedItem is double rate?rate:1);
    ApplyTransform(); UpdateCurrentMark(); UpdateControls(seconds.Value); PositionTick?.Invoke(seconds.Value);
   }
-  catch(Exception error) when(error is IOException or InvalidOperationException or OperationCanceledException or ObjectDisposedException) { timer.Stop(); if(!closing)status.Text=T("Playback finished · ")+error.Message; }
+  catch(Exception error) when(error is IOException or InvalidOperationException or OperationCanceledException or ObjectDisposedException) { timer.Stop(); if(!closing)ShowMessage(T("Playback finished · ")+error.Message); }
   finally { polling=false; }
  }
  private void ApplyTransform() { if(host.VideoHandle!=0)host.Apply(transforms.IsChecked==true?(manualTransform??timeline.At(LastPositionSeconds)):PlayerTransformTimeline.Identity); }
@@ -175,7 +176,7 @@ internal sealed partial class VideoPlayerWindow : Window
  {
   try { await action(); }
   catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or OperationCanceledException or ObjectDisposedException or Microsoft.Data.Sqlite.SqliteException)
-  { if(!closing)status.Text=error.Message; }
+  { if(!closing)ShowMessage(error.Message); }
  }
  internal async Task TogglePauseAsync() { paused=!paused; await RequirePlayer().PauseAsync(paused); ShowPlayState(); }
  /// <summary>Pauses for the boss key or the lock; the play button then shows the pause.</summary>
@@ -207,8 +208,8 @@ internal sealed partial class VideoPlayerWindow : Window
    case PlayerActions.NextVideo or PlayerActions.PreviousVideo:
     if(StepRequested!=null)await StepRequested(action==PlayerActions.NextVideo?1:-1); else Notify(T("Back and forward navigation is only available from a library view.")); break;
    case PlayerActions.ToggleBookmark: ToggleBookmarkHere(); break;
-   case PlayerActions.ClipStart: ClipStart=LastPositionSeconds;UpdateRangeControls(); Notify(T("Scene start · ")+Time(LastPositionSeconds)+ClipHint()); break;
-   case PlayerActions.ClipEnd: ClipEnd=LastPositionSeconds;UpdateRangeControls(); Notify(T("Scene end · ")+Time(LastPositionSeconds)+ClipHint()); break;
+   case PlayerActions.ClipStart: SetRangeStart(); break;
+   case PlayerActions.ClipEnd: SetRangeEnd(); break;
    case PlayerActions.ClipCreate: CreateSceneFromMarks(); break;
    case PlayerActions.Screenshot: await SaveScreenshotAsync(); break;
    case PlayerActions.SlowMotion: ToggleSlowMotion(); break;
@@ -220,21 +221,10 @@ internal sealed partial class VideoPlayerWindow : Window
   }
  }
 
- // Scene marks (original hotkeyclipstart/hotkeyclipend/hotkeyclipcreate): start and end, then one key creates the scene.
- internal double? ClipStart { get; private set; }
- internal double? ClipEnd { get; private set; }
- private string ClipHint()=>ClipStart is { } start && ClipEnd is { } end && end>start ? T(" · Scene {0}–{1} ready", Time(start), Time(end))+KeyHint(PlayerActions.ClipCreate) : "";
  /// <summary>Runs a player action as its shortcut would (used by the smoke test for actions without their own entry point).</summary>
  internal void Act(string action)
  {
-  switch(action) { case PlayerActions.ClipStart: ClipStart=LastPositionSeconds; break; case PlayerActions.ClipEnd: ClipEnd=LastPositionSeconds; break; case PlayerActions.ClipCreate: CreateSceneFromMarks(); break; }
-  UpdateRangeControls();
- }
- internal void CreateSceneFromMarks()
- {
-  if(ClipStart is not { } start || ClipEnd is not { } end || end<=start) { Notify(T("Mark the scene start first and then a later scene end.")+KeyHint(PlayerActions.ClipStart)); return; }
-  repository.UpsertScene(new Scene { MediaId=media.Id,Title=T("Scene {0}–{1}", Time(start), Time(end)),StartSeconds=start,EndSeconds=end });
-  ClipStart=ClipEnd=null;UpdateRangeControls(); RefreshMarks(); Notify(T("Scene created · {0}–{1}", Time(start), Time(end)));
+  switch(action) { case PlayerActions.ClipStart: SetRangeStart(); break; case PlayerActions.ClipEnd: SetRangeEnd(); break; case PlayerActions.ClipCreate: CreateSceneFromMarks(); break; }
  }
  /// <summary>Removes a bookmark close to the current position (within 1 s, or 1 % of a short video), otherwise sets one there.</summary>
  internal void ToggleBookmarkHere()
@@ -253,9 +243,7 @@ internal sealed partial class VideoPlayerWindow : Window
   var path=playback.Screenshots.NextPath(folder,media.Title,LastPositionSeconds);
   await RequirePlayer().ScreenshotAsync(path); Notify(T("Screenshot saved · ")+path); return path;
  }
- private (string Text,DateTime Until)? notice;
- /// <summary>A message in the status line for a few seconds; afterwards the line shows title and current mark again.</summary>
- private void Notify(string text) { if(!playback.ShowMessages)return; notice=(text,DateTime.UtcNow.AddSeconds(4)); status.Text=text; }
+ private void Notify(string text) { if(playback.ShowMessages)ShowMessage(text); }
  private double speedBeforeSlowMotion=1;
  internal bool SlowMotion=>speed.SelectedItem is double value && value<=.25;
  /// <summary>Switches to quarter speed and back to the previous speed (original "Toggle slow motion").</summary>

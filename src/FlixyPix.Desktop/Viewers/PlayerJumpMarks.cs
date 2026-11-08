@@ -18,11 +18,12 @@ internal sealed partial class VideoPlayerWindow
  /// <summary>Width of the time line thumb in the app's slider template; marks sit on the thumb's centre line.</summary>
  private const double TimelineThumbWidth = 14;
  private const string MarkTemplate =
-  "<DataTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:local=\"clr-namespace:FlixyPix.Desktop;assembly=FlixyPix\"><Grid Margin=\"6,5\"><Grid.ColumnDefinitions><ColumnDefinition Width=\"16\"/><ColumnDefinition Width=\"66\"/><ColumnDefinition Width=\"Auto\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>"
+  "<DataTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:FlixyPix.Desktop;assembly=FlixyPix\"><Grid Margin=\"6,5\"><Grid.ColumnDefinitions><ColumnDefinition Width=\"16\"/><ColumnDefinition Width=\"66\"/><ColumnDefinition Width=\"Auto\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>"
   + "<TextBlock Text=\"{Binding Number}\" Foreground=\"{DynamicResource Subtle}\" FontSize=\"11\" VerticalAlignment=\"Center\"/>"
   + "<StackPanel Grid.Column=\"1\" Orientation=\"Horizontal\" VerticalAlignment=\"Center\"><Ellipse Width=\"7\" Height=\"7\" Fill=\"{Binding Dot}\" Margin=\"0,0,7,0\"/><TextBlock Text=\"{Binding Mark.TimeLabel}\" Typography.NumeralAlignment=\"Tabular\" Foreground=\"{DynamicResource Muted}\" FontSize=\"12\"/></StackPanel>"
   + "<Border Grid.Column=\"2\" Width=\"64\" Height=\"36\" Margin=\"0,0,8,0\" Background=\"#22000000\" CornerRadius=\"3\"><Image Source=\"{Binding Mark.PreviewAssetId, Converter={StaticResource MarkThumb}}\" Stretch=\"UniformToFill\"/></Border>"
-  + "<StackPanel Grid.Column=\"3\" VerticalAlignment=\"Center\"><TextBlock Text=\"{Binding Mark.Title}\" Tag=\"title\" TextTrimming=\"CharacterEllipsis\" ToolTip=\"{Binding Mark.Title}\"/><TextBlock Text=\"{Binding Mark.KindLabel}\" FontSize=\"10\" Foreground=\"{DynamicResource Subtle}\"/></StackPanel><Button Grid.Column=\"4\" Content=\"&#xE70F;\" FontFamily=\"Segoe MDL2 Assets\" Style=\"{StaticResource IconButton}\" Tag=\"rename\" ToolTip=\"{local:T Rename}\" AutomationProperties.Name=\"{local:T Rename}\"/></Grid></DataTemplate>";
+  + "<StackPanel Grid.Column=\"3\" VerticalAlignment=\"Center\"><TextBlock Text=\"{Binding Mark.Title}\" Tag=\"title\" TextTrimming=\"CharacterEllipsis\" ToolTip=\"{Binding Mark.Title}\"/><TextBlock Text=\"{Binding Mark.KindLabel}\" FontSize=\"10\" Foreground=\"{DynamicResource Subtle}\"/></StackPanel><Button Grid.Column=\"4\" Content=\"&#xE70F;\" FontFamily=\"Segoe MDL2 Assets\" Style=\"{StaticResource IconButton}\" Tag=\"rename\" ToolTip=\"{local:T Rename}\" AutomationProperties.Name=\"{local:T Rename}\" Visibility=\"Collapsed\" x:Name=\"rename\"/></Grid>"
+  + "<DataTemplate.Triggers><DataTrigger Binding=\"{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}\" Value=\"True\"><Setter TargetName=\"rename\" Property=\"Visibility\" Value=\"Visible\"/></DataTrigger></DataTemplate.Triggers></DataTemplate>";
 
  private readonly Canvas markLayer = new();
  private readonly ListBox markList = new() { Margin = new Thickness(6, 0, 4, 8) };
@@ -41,8 +42,8 @@ internal sealed partial class VideoPlayerWindow
  {
   position.IsMoveToPointEnabled = true; position.Margin = new Thickness(0);
   var grid = new Grid { Margin = new Thickness(8, 6, 8, 4) };
-  grid.Children.Add(position); grid.Children.Add(markLayer);
-  grid.SizeChanged += (_, _) => RenderMarkers();
+  grid.Children.Add(rangeLayer); grid.Children.Add(position); grid.Children.Add(markLayer);
+  grid.SizeChanged += (_, _) => { RenderMarkers(); RenderRange(); };
   return grid;
  }
 
@@ -73,11 +74,12 @@ internal sealed partial class VideoPlayerWindow
   {
    if((e.OriginalSource as FrameworkElement)?.DataContext is not MarkRow row)return;
    e.Handled=true; markList.SelectedItem=row;
-   var menu=Menus.Create([MenuSpec.Command(T("Rename"),()=>BeginRenameMark(row),shortcut:"F2")],(_,error)=>status.Text=error.Message);
+   var menu=Menus.Create([MenuSpec.Command(T("Rename"),()=>BeginRenameMark(row),shortcut:"F2")],(_,error)=>ShowMessage(error.Message));
    OpenMarkMenu=menu; markMenuOpen=true; menu.Closed+=(_,_)=>{markMenuOpen=false;}; menu.IsOpen=true;
   };
-  var body = new DockPanel(); DockPanel.SetDock(header, Dock.Top); DockPanel.SetDock(hint, Dock.Top);
-  body.Children.Add(header); body.Children.Add(hint); body.Children.Add(new Grid { Children = { markList, noMarks } });
+  var range = BuildPanelRange();
+  var body = new DockPanel(); DockPanel.SetDock(header, Dock.Top); DockPanel.SetDock(range, Dock.Top); DockPanel.SetDock(hint, Dock.Top);
+  body.Children.Add(header); body.Children.Add(range); body.Children.Add(hint); body.Children.Add(new Grid { Children = { markList, noMarks } });
   markPanel.Child = body;
   marksButton.Click += (_, _) => ToggleMarkPanel();
   foreach (var (button, action) in new[] { (previousMarkButton, PlayerActions.PreviousBookmark), (nextMarkButton, PlayerActions.NextBookmark) })
@@ -96,7 +98,7 @@ internal sealed partial class VideoPlayerWindow
   repository.SavePlaybackPreferences(current with { ShowMarks=wanted });
   marksWanted=wanted; ShowMarkPanel(wanted); ApplyTransform();
  }
- private void ShowMarkPanel(bool visible) { markPanel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed; UpdateMarkSteps(); }
+ private void ShowMarkPanel(bool visible) { markPanel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed; UpdateMarkSteps(); UpdateRangeControls(); }
  /// <summary>While the list is hidden, previous/next buttons beside "Jump marks" step through the marks instead.</summary>
  private void UpdateMarkSteps() { previousMarkButton.Visibility = nextMarkButton.Visibility = !MarkPanelVisible && Marks.Count > 0 ? Visibility.Visible : Visibility.Collapsed; }
 
@@ -183,7 +185,7 @@ internal sealed partial class VideoPlayerWindow
    }
    RefreshMarks(); MarkRenamed?.Invoke();
   }
-  catch(Exception error) when(error is InvalidOperationException or ArgumentException or System.IO.IOException) { status.Text=error.Message; }
+  catch(Exception error) when(error is InvalidOperationException or ArgumentException or System.IO.IOException) { ShowMessage(error.Message); }
  }
  private void NameBookmark(Bookmark bookmark)
  {
@@ -195,8 +197,6 @@ internal sealed partial class VideoPlayerWindow
 
  internal async Task SeekToMarkAsync(JumpMark mark) { await SeekToAsync(mark.PositionSeconds); UpdateCurrentMark(); }
 
- private string CurrentMarkLabel() => JumpMarks.Current(Marks, LastPositionSeconds) is { } mark ? " · ▸ " + mark.Title : "";
-
  private static int? DigitOf(Key key) => key switch
  {
   >= Key.D1 and <= Key.D9 => key - Key.D0,
@@ -204,6 +204,7 @@ internal sealed partial class VideoPlayerWindow
   _ => null,
  };
 
+ internal string KeyHintOf(string action) => KeyHint(action);
  private string KeyHint(string action) => playback.Hotkeys.GetValueOrDefault(action, "") is { Length: > 0 } key ? " (" + DisplayKey(key) + ")" : "";
  private static string DisplayKey(string hotkey) => string.Join("+", hotkey.Split('+').Select(SettingsUi.KeyName));
 }
