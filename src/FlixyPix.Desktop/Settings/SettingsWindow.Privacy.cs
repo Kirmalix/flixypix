@@ -11,7 +11,7 @@ internal sealed partial class SettingsWindow
  internal readonly SegmentedChoice BossActionChoice = new([((int)BossAction.Tray, T("Notification area")), ((int)BossAction.Minimize, T("Minimize")), ((int)BossAction.Vanish, T("Hide completely"))]);
  internal readonly SegmentedChoice BossPlaybackChoice = new([((int)BossPlayback.Pause, T("Pause")), ((int)BossPlayback.Mute, T("Mute")), ((int)BossPlayback.Continue, T("Keep playing"))]);
  internal readonly CheckBox BossGlobal = SettingsUi.Switch(), LockOnMinimize = SettingsUi.Switch(), LockWithWindows = SettingsUi.Switch(), BlurPictures = SettingsUi.Switch(),
-  HideRecent = SettingsUi.Switch(), NeutralTitle = SettingsUi.Switch(), BlockCapture = SettingsUi.Switch();
+  HideRecent = SettingsUi.Switch(), NeutralTitle = SettingsUi.Switch(), BlockCapture = SettingsUi.Switch(), LockWithBossKey = SettingsUi.Switch(), LockAtStart = SettingsUi.Switch();
  internal NumberBox LockMinutes = null!;
  internal readonly HotkeyBox BlurKey = new(), RestoreKey = new();
  internal readonly TextBox NeutralTitleText = new() { MinWidth = 260, MaxLength = 60 };
@@ -24,15 +24,15 @@ internal sealed partial class SettingsWindow
  {
   privacyBefore = privacy;
   LockMinutes = Number(0, PrivacySettings.MaximumLockMinutes, 1, "min", T("Lock after inactivity"));
-  foreach (var check in new[] { BossGlobal, LockOnMinimize, LockWithWindows, BlurPictures, HideRecent, NeutralTitle, BlockCapture }) { check.Checked += (_, _) => Touch(); check.Unchecked += (_, _) => Touch(); }
+  foreach (var check in new[] { BossGlobal, LockOnMinimize, LockWithWindows, LockWithBossKey, LockAtStart, BlurPictures, HideRecent, NeutralTitle, BlockCapture }) { check.Checked += (_, _) => Touch(); check.Unchecked += (_, _) => Touch(); }
   foreach (var choice in new[] { BossActionChoice, BossPlaybackChoice }) choice.Changed += Touch;
   RestoreKey.Changed += Touch; AutomationProperties.SetName(RestoreKey, T("Show FlixyPix again"));
   BlurKey.Changed += Touch; NeutralTitleText.TextChanged += (_, _) => Touch();
   AutomationProperties.SetName(BlurKey, T("Shortcut for blurring")); AutomationProperties.SetName(NeutralTitleText, T("Neutral title"));
-  foreach (var (check, name) in new[] { (BossGlobal, T("System-wide")), (LockOnMinimize, T("Lock on minimizing")), (LockWithWindows, T("Lock with Windows")),
+  foreach (var (check, name) in new[] { (BossGlobal, T("System-wide")), (LockOnMinimize, T("Lock on minimizing")), (LockWithWindows, T("Lock with Windows")), (LockWithBossKey, T("Lock with the boss key")), (LockAtStart, T("Ask at program start")),
    (BlurPictures, T("Blur pictures")), (HideRecent, T("No recent items")), (NeutralTitle, T("Neutral title")), (BlockCapture, T("Block screen captures")) }) AutomationProperties.SetName(check, name);
   setPin.Click += (_, _) => ChoosePin();
-  removePin.Click += (_, _) => { pinHash = null; ShowPin(); Touch(); };
+  removePin.Click += (_, _) => { pinHash = null; LockAtStart.IsChecked = false; ShowPin(); Touch(); };
   LoadPrivacy(privacy);
   AddPage("Privacy",
    SettingsUi.Card(T("Boss key"),
@@ -47,7 +47,9 @@ internal sealed partial class SettingsWindow
     new SettingRow(T("Lock after inactivity"), T("Minutes without mouse or keyboard input in Windows; 0 turns it off. A running video or slideshow keeps the lock away."), LockMinutes),
     new SettingRow(T("Lock on minimizing"), T("Also when the boss key minimizes."), LockOnMinimize),
     new SettingRow(T("Lock with Windows"), T("When Windows is locked (Win+L) or the computer goes to sleep with a lock."), LockWithWindows),
-    new SettingRow(T("PIN"), T("At least four characters. Opens the lock also for an encrypted library; FlixyPix keeps only a check value of it."), SettingsUi.Buttons(pinStatus, setPin, removePin))),
+    new SettingRow(T("Lock with the boss key"), T("While a PIN is set, the boss key also locks. Nothing appears on screen; showing FlixyPix again asks for the PIN."), LockWithBossKey),
+    new SettingRow(T("PIN"), T("At least four characters. Opens the lock also for an encrypted library; FlixyPix keeps only a check value of it."), SettingsUi.Buttons(pinStatus, setPin, removePin)),
+    new SettingRow(T("Ask at program start"), T("Needs a PIN. Asks for it before libraries can be seen. An encrypted library that opens directly asks only for its password. If you forget the PIN, delete “PinHash” from appsettings.json."), LockAtStart)),
    SettingsUi.Card(T("Blurred pictures"), T("Thumbnails, portraits and the pictures of the home page appear blurred until the pointer rests on them. Video and image viewer stay sharp."),
     new SettingRow(T("Blur pictures"), T("State at start. The shortcut switches at any time."), BlurPictures),
     new SettingRow(T("Shortcut"), T("Works in all FlixyPix windows. Default: Ctrl+Shift+U."), BlurKey)),
@@ -61,7 +63,7 @@ internal sealed partial class SettingsWindow
  private void LoadPrivacy(PrivacySettings privacy)
  {
   BossActionChoice.Value = (int)privacy.BossAction; BossPlaybackChoice.Value = (int)privacy.BossPlayback; BossGlobal.IsChecked = privacy.BossGlobal; RestoreKey.Value = privacy.RestoreKey;
-  LockMinutes.Value = privacy.LockAfterMinutes; LockOnMinimize.IsChecked = privacy.LockOnMinimize; LockWithWindows.IsChecked = privacy.LockWithWindows;
+  LockMinutes.Value = privacy.LockAfterMinutes; LockOnMinimize.IsChecked = privacy.LockOnMinimize; LockWithWindows.IsChecked = privacy.LockWithWindows; LockWithBossKey.IsChecked = privacy.LockWithBossKey; LockAtStart.IsChecked = privacy.LockAtStart;
   pinHash = privacy.PinHash; ShowPin();
   BlurPictures.IsChecked = privacy.BlurPictures; BlurKey.Value = privacy.BlurKey;
   HideRecent.IsChecked = privacy.HideRecent; NeutralTitle.IsChecked = privacy.NeutralTitle; NeutralTitleText.Text = privacy.NeutralTitleText; BlockCapture.IsChecked = privacy.BlockCapture;
@@ -79,6 +81,7 @@ internal sealed partial class SettingsWindow
   pinStatus.Text = pinHash == null ? T("No PIN set") : T("PIN set");
   setPin.Content = pinHash == null ? T("Set PIN …") : T("Change PIN …");
   removePin.Visibility = pinHash == null ? Visibility.Collapsed : Visibility.Visible;
+  LockAtStart.IsEnabled = pinHash != null;
  }
 
  private void ChoosePin()
@@ -101,7 +104,7 @@ internal sealed partial class SettingsWindow
   {
    BossAction = (BossAction)BossActionChoice.Value, BossPlayback = (BossPlayback)BossPlaybackChoice.Value, BossGlobal = BossGlobal.IsChecked == true, RestoreKey = RestoreKey.Value,
    LockAfterMinutes = (int)Math.Round(LockMinutes.Value ?? throw new ArgumentException(T("Please enter the minutes for the lock as a number from 0 to {0}.", PrivacySettings.MaximumLockMinutes))),
-   LockOnMinimize = LockOnMinimize.IsChecked == true, LockWithWindows = LockWithWindows.IsChecked == true, PinHash = pinHash,
+   LockOnMinimize = LockOnMinimize.IsChecked == true, LockWithWindows = LockWithWindows.IsChecked == true, LockWithBossKey = LockWithBossKey.IsChecked == true, LockAtStart = LockAtStart.IsChecked == true && pinHash != null, PinHash = pinHash,
    BlurPictures = BlurPictures.IsChecked == true, BlurKey = BlurKey.Value,
    HideRecent = HideRecent.IsChecked == true, NeutralTitle = NeutralTitle.IsChecked == true, NeutralTitleText = NeutralTitleText.Text.Trim(), BlockCapture = BlockCapture.IsChecked == true,
   };

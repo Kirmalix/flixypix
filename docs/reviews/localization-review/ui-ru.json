@@ -14857,6 +14857,26 @@
     "This is taking longer than usual.": {
       "status": "unchanged",
       "digest": "61a626e8eec72ab5aab0b794d1d0bcb11fba6cbb891accb94821f721b8298bdc"
+    },
+    "Ask at program start": {
+      "status": "unchanged",
+      "digest": "8ce57730b329b45ab4cbe0bbd1613603045a8107b6b1fdec459459aca74f3f7f"
+    },
+    "Enter the PIN to continue.": {
+      "status": "unchanged",
+      "digest": "72f09624f1cff489ba5a194f147bc42e61fc708fe4eb985414aceb0bf2d9f406"
+    },
+    "Lock with the boss key": {
+      "status": "unchanged",
+      "digest": "7d3179884ad5ec21077e1356be7c560fdc7c30fdb07192136e8a638f054b6cca"
+    },
+    "Needs a PIN. Asks for it before libraries can be seen. An encrypted library that opens directly asks only for its password. If you forget the PIN, delete “PinHash” from appsettings.json.": {
+      "status": "unchanged",
+      "digest": "181f055c9353203e0617ab96e61cacdd32db682ff0dcd5f5898a0d6bdcb8ac80"
+    },
+    "While a PIN is set, the boss key also locks. Nothing appears on screen; showing FlixyPix again asks for the PIN.": {
+      "status": "unchanged",
+      "digest": "54192bd9fe1975085481bb85ec277bb2b72305380eac3930d0971cf80ea34026"
     }
   }
 }
