@@ -26,7 +26,7 @@ Ein anderer Bibliotheksordner wird nach Neustart wirksam. Ältere Kataloge erhal
 
 JSON-Version 4 enthält Katalog, gespeicherte Grafikbytes, historische Entwürfe und bewahrte Binärdaten in geprüften Abschnitten. Ältere Versionen 1, 2 und 3 bleiben lesbar. Externe Mediendateien werden nur auf ausdrückliche Auswahl im vollständigen `.flixypixbackup`-Paket mitgesichert. Wiederherstellung prüft alle Prüfsummen und benötigt einen neuen Zielordner. Der bestehende Katalog wird dabei nicht ersetzt.
 
-U: ist als schreibgeschützte Quelle voreingestellt. Ein offline geschaltetes Medienlaufwerk verhindert keine Katalogmigration. Der Import erhält seine Pfade und bereitet keine Medien automatisch vor. Historische Such-, Parser- und Auftragsentwürfe bleiben inaktiv. Tagbilder lassen sich unter Ordnen verwalten.
+Ordner und Laufwerke, in die FlixyPix nie schreiben soll, legst du unter Einstellungen → Speicherplatz → Geschützte Ordner fest. Ein offline geschaltetes Medienlaufwerk verhindert keine Katalogmigration. Der Import erhält seine Pfade und bereitet keine Medien automatisch vor. Historische Such-, Parser- und Auftragsentwürfe bleiben inaktiv. Tagbilder lassen sich unter Ordnen verwalten.
 
 Menü → Hilfe (F1) öffnet die Offline-Hilfe; Strg+F1 zeigt die aktuellen Tastenkürzel. Menü → Über FlixyPix zeigt die Version.
 

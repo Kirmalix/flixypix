@@ -66,7 +66,7 @@ public partial class MainWindow : Window
 
     private async Task InitializeLibraryAsync(CatalogKey? unlockedKey)
     {
-        SourceProtection.Configure(_settings.ProtectedSourcePaths);
+        SourceProtection.Apply(_settings);
         DesktopImaging.Configure(_settings.DataDirectory);
         SetStartupPhase(T("Checking library"));
         _repository = await SecretDialogs.OpenLibraryAsync(this, Path.Combine(_settings.DataDirectory, "catalog.db"), unlockedKey, _startup.Token, () => SetStartupPhase(T("Opening catalog")));
@@ -499,8 +499,10 @@ public partial class MainWindow : Window
             Privacy = choice.Privacy ?? _settings.Privacy,
             ExternalPrograms = choice.ExternalPrograms is { } programs ? [.. programs] : _settings.ExternalPrograms,
             QuickAccessFolders = choice.QuickAccessFolders is { } folders ? [.. folders] : _settings.QuickAccessFolders,
+            ProtectedSourcePaths = choice.ProtectedFolders is { } guarded ? [.. guarded] : _settings.ProtectedSourcePaths,
             WebSearchProviders = choice.WebSearchProviders is { } providers ? [.. providers] : null
         };
+        SourceProtection.Apply(settings, _settings.DataDirectory);
         AppShell.Configure(settings);
         if (_persistPreferences) settings.Save();
         _pendingDataDirectory = settings.DataDirectory;

@@ -37,7 +37,7 @@ A change of library folder takes effect after restart. Older catalogs receive a 
 
 JSON format 4 includes the catalog, saved artwork, historical drafts and preserved binary data in checked sections. Versions 1–3 remain readable. External media is included in a complete `.flixypixbackup` only when explicitly selected. Restore verifies checksums and requires a new destination folder; it does not replace the current catalog.
 
-An offline media drive does not prevent catalog migration. Paths are preserved without preparing media automatically. Historical searches, parsers and job drafts remain inactive until explicitly adopted. Tag artwork is managed under Organize.
+Choose folders and drives FlixyPix must never write to under Settings → Storage → Protected folders. An offline media drive does not prevent catalog migration. Paths are preserved without preparing media automatically. Historical searches, parsers and job drafts remain inactive until explicitly adopted. Tag artwork is managed under Organize.
 
 Menu → Help (F1) opens the offline help; Ctrl+F1 shows current keyboard shortcuts. Menu → About FlixyPix shows the version.
 

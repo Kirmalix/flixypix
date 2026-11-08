@@ -6,6 +6,12 @@ namespace FlixyPix.Desktop;
 
 internal static class SourceProtection
 {
+ /// <summary>Protects the folders chosen in the settings, except those FlixyPix needs for its own data.</summary>
+ internal static void Apply(DesktopSettings settings, params string[] libraries) =>
+  Configure(ProtectedFolders.Usable(settings.ProtectedSourcePaths, OwnFolders(settings, libraries)));
+ /// <summary>Folders FlixyPix itself writes to, so they can never be protected.</summary>
+ internal static IReadOnlyList<string> OwnFolders(DesktopSettings settings, params string[] libraries) =>
+  [AppStorage.Current.Root, AppStorage.Current.ApplicationDirectory, settings.DataDirectory, .. libraries, .. settings.Libraries.Select(library => library.Directory)];
  internal static void Configure(IEnumerable<string> additionalPaths)
  {
   var paths=additionalPaths.ToList();

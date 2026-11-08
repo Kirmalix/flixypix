@@ -14780,6 +14780,30 @@
       "status": "corrected",
       "digest": "2247315c6c524a77eeecec1be7db497c8d68a31c8f05ae00bff5075efaa59ee0",
       "previous_digest": "8a5f3f6abb31b77ba32912ff2bdd7acb2851cee59b99690e978aeeace8439777"
+    },
+    "Choose a folder to protect": {
+      "status": "unchanged",
+      "digest": "6da6d2fdc63876388afdac80a684e1d272a473e9b28f2876145527e1d6b6f3b3"
+    },
+    "FlixyPix never writes to, changes or deletes files in these folders. Reading and importing them stays possible.": {
+      "status": "unchanged",
+      "digest": "35bcc08da29639f9a8d642af578091034ce7adb05f37d9d995755cfe8b01d097"
+    },
+    "No protected folders yet.": {
+      "status": "unchanged",
+      "digest": "e94a3f8498b64cd33ee9ec7a55a97afd4b0a3746e619f610868b0947a019a0fd"
+    },
+    "Not active: FlixyPix keeps its own data or a library here.": {
+      "status": "unchanged",
+      "digest": "3f956208c029909d7ac46b7bb8f4d9eadb8ac85eb11e798ac49fdba327f09f3a"
+    },
+    "Protected folders": {
+      "status": "unchanged",
+      "digest": "845c98358b1487d487b639bec136feffdc184950d744842e3ea997eb47a37472"
+    },
+    "This folder cannot be protected because FlixyPix keeps its own data or a library there: {0}": {
+      "status": "unchanged",
+      "digest": "bfbaf894ca38e12618906ad8005cd6915cae42e4991f83f214e43a9e0f6d4fef"
     }
   }
 }

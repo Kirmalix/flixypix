@@ -4,6 +4,7 @@ using Xunit;
 
 namespace FlixyPix.Core.Tests;
 
+[Collection("Process file access policy")]
 public sealed class FileAccessPolicyTests : IDisposable
 {
  private readonly string root=Path.Combine(Path.GetTempPath(),"flixypix-access-"+Guid.NewGuid().ToString("N"));
@@ -39,7 +40,45 @@ public sealed class FileAccessPolicyTests : IDisposable
   var policy=new FileAccessPolicy([@"U:\"]);
   Assert.Throws<UnauthorizedAccessException>(()=>policy.EnsureWritable(@"u:\offline\file.mp4"));
   Assert.Throws<UnauthorizedAccessException>(()=>policy.EnsureWritable(@"U:\offline\..\file.mp4"));
-  Assert.Throws<UnauthorizedAccessException>(()=>FileAccessPolicy.Current.EnsureWritable(@"U:\offline\file.mp4"));
+ }
+
+ [Fact]
+ public void NoDriveIsProtectedUnlessTheUserConfiguresIt()
+ {
+  Assert.Empty(FileAccessPolicy.Current.ProtectedPaths);
+  var protectedFolder=Path.Combine(root,"protected");
+  try
+  {
+   FileAccessPolicy.ConfigureCurrent([protectedFolder]);
+   Assert.Equal(protectedFolder,Assert.Single(FileAccessPolicy.Current.ProtectedPaths));
+   Assert.True(FileAccessPolicy.Current.IsWriteProtected(Path.Combine(protectedFolder,"file.mp4")));
+   Assert.False(FileAccessPolicy.Current.IsWriteProtected(Path.Combine(root,"other","file.mp4")));
+  }
+  finally { FileAccessPolicy.ConfigureCurrent([]); }
+ }
+
+ [Fact]
+ public void ProtectedFoldersCannotCoverFlixyPixsOwnData()
+ {
+  var data=Path.Combine(root,"app","Data");var media=Path.Combine(root,"media");
+  Directory.CreateDirectory(data);Directory.CreateDirectory(media);
+  Assert.True(ProtectedFolders.CollidesWithOwnData(data,[data]));
+  Assert.True(ProtectedFolders.CollidesWithOwnData(root,[data]));
+  Assert.True(ProtectedFolders.CollidesWithOwnData(Path.Combine(data,"Library"),[data]));
+  Assert.True(ProtectedFolders.CollidesWithOwnData(Path.GetPathRoot(data)!,[data]));
+  Assert.False(ProtectedFolders.CollidesWithOwnData(media,[data]));
+  Assert.False(ProtectedFolders.CollidesWithOwnData(media,[@"Q:\absent-drive\library"]));
+  Assert.True(ProtectedFolders.CollidesWithOwnData(@"\\?\C:\bypass",[data]));
+  Assert.Equal(media,Assert.Single(ProtectedFolders.Usable([data,media,"  "],[data])));
+ }
+
+ [Fact]
+ public void ALinkToOwnDataCannotBeProtected()
+ {
+  var data=Path.Combine(root,"Data");Directory.CreateDirectory(data);
+  var alias=Path.Combine(root,"alias");Junction(alias,data);
+  Assert.True(ProtectedFolders.CollidesWithOwnData(alias,[data]));
+  Directory.Delete(alias);
  }
 
  [Fact]

@@ -6,7 +6,7 @@ public sealed class FileAccessPolicy
 {
     private readonly string[] protectedPaths;
     private readonly string[] resolvedProtectedPaths;
-    private static FileAccessPolicy current = new([@"U:\"]);
+    private static FileAccessPolicy current = new([]);
     public static FileAccessPolicy Current => Volatile.Read(ref current);
     public IReadOnlyList<string> ProtectedPaths => Array.AsReadOnly(protectedPaths);
 
@@ -18,10 +18,10 @@ public sealed class FileAccessPolicy
             .Select(ResolveExistingLinks).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
-    public static void ConfigureCurrent(IEnumerable<string> additionalProtectedPaths)
+    public static void ConfigureCurrent(IEnumerable<string> protectedPaths)
     {
-        ArgumentNullException.ThrowIfNull(additionalProtectedPaths);
-        Interlocked.Exchange(ref current, new FileAccessPolicy(new[] { @"U:\" }.Concat(additionalProtectedPaths)));
+        ArgumentNullException.ThrowIfNull(protectedPaths);
+        Interlocked.Exchange(ref current, new FileAccessPolicy(protectedPaths));
     }
 
     public bool IsWriteProtected(string path)
@@ -63,7 +63,7 @@ public sealed class FileAccessPolicy
                 try
                 {
                     FileSystemInfo link = (attributes & FileAttributes.Directory) != 0 ? new DirectoryInfo(prefix) : new FileInfo(prefix);
-                    // Resolve one hop so a link into protected U: is rejected before accessing its target.
+                    // Resolve one hop so a link into a protected source is rejected before accessing its target.
                     var target = link.ResolveLinkTarget(false) ?? throw new IOException(T("Unresolved reparse point."));
                     path = Normalize(Path.Combine(new[] { target.FullName }.Concat(parts.Skip(index + 1)).ToArray()));
                     if (protectedPaths.Any(p => Contains(p, path))) throw new UnauthorizedAccessException(T("The link leads into a write-protected source."));
@@ -90,9 +90,9 @@ public sealed class FileAccessPolicy
     }
 
     private static bool IsDriveRoot(string path) => string.Equals(path, Path.GetPathRoot(path), StringComparison.OrdinalIgnoreCase);
-    private static bool Contains(string parent, string child) => child.Equals(parent, StringComparison.OrdinalIgnoreCase) ||
+    internal static bool Contains(string parent, string child) => child.Equals(parent, StringComparison.OrdinalIgnoreCase) ||
         child.StartsWith(parent.EndsWith(Path.DirectorySeparatorChar) ? parent : parent + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
-    private static string Normalize(string path)
+    internal static string Normalize(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         var full = Path.GetFullPath(path);

@@ -20,7 +20,7 @@ internal sealed partial class SettingsWindow : Window
  internal sealed record DesktopChoice(string DataDirectory, string? Ffmpeg, string? Ffprobe, string? Mpv, bool AutoGeneratePreviews, string Theme, bool RegenerateThumbnails = false, string BossKey = "Escape", string Language = Texts.Automatic,
   IReadOnlyList<ExternalProgram>? ExternalPrograms = null, IReadOnlyList<string>? QuickAccessFolders = null,
   IReadOnlyList<WebSearchProvider>? WebSearchProviders = null, bool MinimizeToTray = false, bool DetailsTabs = false,
-  PrivacySettings? Privacy = null);
+  PrivacySettings? Privacy = null, IReadOnlyList<string>? ProtectedFolders = null);
  /// <summary>Boss key of this computer (appsettings.json).</summary>
  internal readonly HotkeyBox BossKey = new() { AcceptsEscape = true };
  internal readonly CheckBox MinimizeToTray = SettingsUi.Switch();
@@ -159,7 +159,7 @@ internal sealed partial class SettingsWindow : Window
   importButton.Click+=(_,_)=> {if(!ConfirmDiscard())return;dirty=false;Close();importProfile?.Invoke();};
   var openStorage=SettingsUi.SmallButton(T("Open folder"));openStorage.Click+=(_,_)=>OpenFolder(AppStorage.Current.Root);
   Owner = owner; this.repository = repository; libraryDirectory = settings.DataDirectory; this.renderSample = renderSample;
-  displayedDirectory = displayedDataDirectory; this.manageLibraries = manageLibraries; programs = [.. settings.ExternalPrograms]; quickFolders = [.. settings.QuickAccessFolders]; searchProviders = [.. settings.WebSearchProviders ?? WebSearch.Defaults];
+  displayedDirectory = displayedDataDirectory; this.manageLibraries = manageLibraries; programs = [.. settings.ExternalPrograms]; quickFolders = [.. settings.QuickAccessFolders]; protectedFolders = [.. settings.ProtectedSourcePaths]; ownFolders = SourceProtection.OwnFolders(settings, displayedDataDirectory); searchProviders = [.. settings.WebSearchProviders ?? WebSearch.Defaults];
   Title = T("Settings · FlixyPix"); Width = 1020; Height = 740; MinWidth = 820; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner;
   smallBackward = Number(1, 3600, 1, "s", T("Small jump back")); smallForward = Number(1, 3600, 1, "s", T("Small jump forward"));
   largeBackward = Number(1, 3600, 5, "s", T("Large jump back")); largeForward = Number(1, 3600, 5, "s", T("Large jump forward"));
@@ -220,7 +220,7 @@ internal sealed partial class SettingsWindow : Window
   AddPages(manageEncryption, takeOverOriginal, settings.Privacy);
   AddPage("Storage", SettingsUi.Card(T("Data and storage"), AppStorage.Current.Root,
    new SettingRow(AppStorage.Current.Mode == StorageMode.Portable ? T("Portable") : T("Windows profile"), T("The storage mode changes after a restart. Existing data is preserved."), storageButton),
-   new SettingRow(T("Copy profile data"), null, importButton),new SettingRow(T("Open folder"),null,openStorage)));
+   new SettingRow(T("Copy profile data"), null, importButton),new SettingRow(T("Open folder"),null,openStorage)), ProtectedFoldersCard());
 
   scroller = new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(0, 0, 12, 0) };
   navigation.SelectionChanged += (_, _) => ShowSelectedPage();

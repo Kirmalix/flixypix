@@ -67,10 +67,12 @@ public partial class MainWindow
   if(functions.SearchDraftCount!=1||functions.ParserDraftCount!=1||functions.JobDraftCount!=1)throw new InvalidOperationException("Historical translation choices did not render.");
   if(catalog.PreviewLegacySearchTranslation(catalog.GetLegacySearchDrafts().Single().Id).CanApply)throw new InvalidOperationException("Unknown search option became active.");
   Capture((FrameworkElement)functions.Content,Path.Combine(directory,"historical-functions.png"));functions.Close();
-  var mapping=catalog.PlanPathMapping([new(@"U:\offline",@"U:\neu-zugeordnet")]);if(mapping.Changes.Count!=1||mapping.Conflicts.Count!=0)throw new InvalidOperationException("Offline prefix mapping failed.");
+  // The availability check below needs a drive that is really absent on this computer.
+  var absentDrive=Enumerable.Range('D',23).Select(letter=>(char)letter+@":\").Last(drive=>!Directory.Exists(drive));var mappedFolder=absentDrive+"neu-zugeordnet";
+  var mapping=catalog.PlanPathMapping([new(@"U:\offline",mappedFolder)]);if(mapping.Changes.Count!=1||mapping.Conflicts.Count!=0)throw new InvalidOperationException("Offline prefix mapping failed.");
   var mappingWindow=new PathMappingPreviewWindow(this,mapping);mappingWindow.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture((FrameworkElement)mappingWindow.Content,Path.Combine(directory,"migration-paths.png"));mappingWindow.Close();
-  catalog.ApplyPathMappingPlan(mapping);if(catalog.GetMedia(media.Id)!.Path!=@"U:\neu-zugeordnet\never-opened.mp4")throw new InvalidOperationException("Prefix mapping failed to update the catalog.");
-  var availability=new MediaAvailabilityWindow(this,catalog);availability.Show();await availability.ReadyTask;if(availability.OfflineCount!=1)throw new InvalidOperationException("Configured offline source was reported missing.");
+  catalog.ApplyPathMappingPlan(mapping);if(catalog.GetMedia(media.Id)!.Path!=Path.Combine(mappedFolder,"never-opened.mp4"))throw new InvalidOperationException("Prefix mapping failed to update the catalog.");
+  var availability=new MediaAvailabilityWindow(this,catalog);availability.Show();await availability.ReadyTask;if(availability.OfflineCount!=1)throw new InvalidOperationException("Absent drive was reported as missing media.");
   await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture((FrameworkElement)availability.Content,Path.Combine(directory,"migration-offline.png"));availability.Close();
   await RefreshAsync(includePreviews:false);
   if(MediaList.Items.OfType<MediaCard>().Any(c=>c.Thumbnail!=null))throw new InvalidOperationException("Metadata-only refresh loaded media thumbnails.");

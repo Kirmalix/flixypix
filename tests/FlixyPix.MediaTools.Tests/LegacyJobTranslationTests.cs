@@ -28,7 +28,13 @@ public sealed class LegacyJobTranslationTests : IDisposable
     [Fact]
     public void ProtectedOutputOpaqueOrUntranslatedOptionCannotBeEnqueued()
     {
-        Assert.False(LegacyJobTranslator.PreviewCombine(List(@"U:\A.mp4", @"U:\B.mp4"), @"U:\out.mp4").CanEnqueue);
+        var source = Path.Combine(scratch, "protected-source");
+        try
+        {
+            FileAccessPolicy.ConfigureCurrent([source]);
+            Assert.False(LegacyJobTranslator.PreviewCombine(List(@"U:\A.mp4", @"U:\B.mp4"), Path.Combine(source, "out.mp4")).CanEnqueue);
+        }
+        finally { FileAccessPolicy.ConfigureCurrent([]); }
         Assert.False(LegacyJobTranslator.PreviewCombine(List(@"U:\A.mp4", @"U:\B.mp4") with { Status = HistoricalProjectionStatus.Opaque }, Path.Combine(scratch, "out.mp4")).CanEnqueue);
         // The preview projects the preserved bytes again, so only issues found in the original payload count.
         var draft = List(@"U:\A.mp4", @"U:\B.mp4"); draft.Entries[0].BlockingIssues.Add("edited projection");

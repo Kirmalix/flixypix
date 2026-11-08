@@ -31,10 +31,17 @@ public sealed class MigrationTests:IDisposable
   var resolved=db.ResolveMigrationMediaConflict(updated.Migration.Batch,media.Id,["title"],preview.CurrentSha256);Assert.Equal("Updated source",resolved.Title);Assert.Equal(9,resolved.Rating);Assert.Contains("Local",resolved.Tags);
   Assert.Throws<InvalidOperationException>(()=>db.ResolveMigrationMediaConflict(updated.Migration.Batch,media.Id,["title"],preview.CurrentSha256));
  }
+ [Fact]public void MediaAvailabilityLooksAtTheFileUnlessARootIsConfiguredOffline()
+ {
+  using var db=new CatalogRepository(Path.Combine(root,"catalog.db"));var present=Path.Combine(root,"present.mp4");File.WriteAllBytes(present,[1,2,3]);
+  db.Upsert(new(){Path=present,Kind=MediaKind.Video});
+  var result=Assert.Single(db.CheckMediaAvailability());Assert.Equal(MediaAvailability.Available,result.Status);Assert.Equal(3,result.Size);
+  Assert.Equal(MediaAvailability.TemporarilyOffline,Assert.Single(db.CheckMediaAvailability(offlineRoots:[root])).Status);
+ }
  [Fact]public void OfflinePathsCanBeMappedAndRoundtrippedWithoutMediaAccess()
  {
   using var db=new CatalogRepository(Path.Combine(root,"catalog.db"));var item=db.Upsert(new(){Path=@"U:\old\movie.mp4",Kind=MediaKind.Video});
-  Assert.Equal(MediaAvailability.TemporarilyOffline,Assert.Single(db.CheckMediaAvailability()).Status);
+  Assert.Equal(MediaAvailability.TemporarilyOffline,Assert.Single(db.CheckMediaAvailability(offlineRoots:[@"U:\"])).Status);
   var plan=db.PlanPathMapping([new(@"U:\old",@"U:\new")]);Assert.Empty(plan.Conflicts);Assert.Equal(1,db.ApplyPathMappingPlan(plan));Assert.Equal(@"U:\new\movie.mp4",db.GetMedia(item.Id)!.Path);Assert.Equal(@"U:\old\movie.mp4",db.GetMedia(item.Id)!.Extra["migration.originalPath"]);
   Assert.Throws<InvalidOperationException>(()=>db.ApplyPathMappingPlan(plan));
  }

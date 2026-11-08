@@ -160,7 +160,7 @@ internal sealed partial class SettingsWindow
    CatalogRepository.ValidatePlayback(playback); CatalogRepository.ValidatePreviews(previews); CatalogRepository.ValidateSlideshow(slideshow); CatalogRepository.ValidateHistory(history);
    var choice = new DesktopChoice(displayedDirectory, NullIfEmpty(ffmpeg.Text), NullIfEmpty(ffprobe.Text), NullIfEmpty(mpv.Text),
     autoPreviews.IsChecked == true, Theme.ModeName(themePicker.Value), RegenerateAfterSave.IsChecked == true, BossKey.Value,
-    (string)((ComboBoxItem)LanguageChoice.SelectedItem).Tag, programs.ToList(), quickFolders.ToList(), ChosenProviders(), MinimizeToTray.IsChecked == true, DetailsTabs.IsChecked == true, ChosenPrivacy());
+    (string)((ComboBoxItem)LanguageChoice.SelectedItem).Tag, programs.ToList(), quickFolders.ToList(), ChosenProviders(), MinimizeToTray.IsChecked == true, DetailsTabs.IsChecked == true, ChosenPrivacy(), protectedFolders.ToList());
    repository.SavePreferences(preferences with
    {
     Playback = playback, Previews = previews, Slideshow = slideshow, History = history,

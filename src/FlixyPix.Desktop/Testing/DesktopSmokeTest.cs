@@ -747,6 +747,7 @@ public partial class MainWindow
         queue.Close(); await queue.ClosedTask;
         var reopened = new MediaQueuePage(this, queueDirectory, _tools, first.Path, []); Require(reopened.JobCount == 1, "Queue window did not persist prepared job."); reopened.Close(); await reopened.ClosedTask;
         await RunSettingsSmokeTestAsync(directory);
+        await RunProtectedFoldersSmokeTestAsync(directory);
         await RunSettingsEffectSmokeTestAsync(fixtureDirectory);
         await RunOpeningSmokeTestAsync(directory);
         await RunPrivacySmokeTestAsync(directory);

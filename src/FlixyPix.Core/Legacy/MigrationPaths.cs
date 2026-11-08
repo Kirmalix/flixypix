@@ -57,7 +57,7 @@ public sealed partial class CatalogRepository
  }
  public IReadOnlyList<MediaAvailabilityResult> CheckMediaAvailability(int offset=0,int limit=120,IReadOnlyList<string>? offlineRoots=null,CancellationToken token=default)
  {
-  var offline=(offlineRoots??new[]{@"U:\"}).Select(Prefix).ToArray();
+  var offline=(offlineRoots??[]).Select(Prefix).ToArray();
   var items=QueryPage(new(){Offset=offset,Limit=limit},token).Items;var results=new List<MediaAvailabilityResult>();
   foreach(var item in items)
   {

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace FlixyPix.Core.Tests;
 
+[Collection("Process file access policy")]
 public sealed class TagAssetTests : IDisposable
 {
     private readonly string root = Path.Combine(Path.GetTempPath(), "flixypix-tag-assets-" + Guid.NewGuid());
@@ -144,11 +145,18 @@ public sealed class TagAssetTests : IDisposable
     }
 
     [Fact]
-    public void ExportAndMaterializationRejectProtectedOfflineDriveBeforeAnyFilesystemAccessThere()
+    public void ExportAndMaterializationRejectProtectedSourcesWithoutWritingThere()
     {
         using var catalog = Open(); var asset = catalog.UpsertTagAsset(new() { Tag = new("People", "Alex"), Data = Png });
-        Assert.Throws<UnauthorizedAccessException>(() => catalog.ExportTagAsset(asset.Id, "U:\\blocked-tag-export.png"));
-        Assert.Throws<UnauthorizedAccessException>(() => catalog.MaterializeTagAsset(asset, "U:\\blocked-cache"));
+        var source = Path.Combine(root, "protected-source"); Directory.CreateDirectory(source);
+        try
+        {
+            FileAccessPolicy.ConfigureCurrent([source]);
+            Assert.Throws<UnauthorizedAccessException>(() => catalog.ExportTagAsset(asset.Id, Path.Combine(source, "blocked-tag-export.png")));
+            Assert.Throws<UnauthorizedAccessException>(() => catalog.MaterializeTagAsset(asset, Path.Combine(source, "blocked-cache")));
+            Assert.Empty(Directory.EnumerateFileSystemEntries(source));
+        }
+        finally { FileAccessPolicy.ConfigureCurrent([]); }
     }
 
     [Fact]

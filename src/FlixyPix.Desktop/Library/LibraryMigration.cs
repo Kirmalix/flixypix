@@ -149,7 +149,7 @@ public partial class MainWindow
  private void ShowMigrationReports()=>new MigrationReportWindow(this,_repository,onChanged:()=>RefreshAsync(includePreviews:false)).ShowDialog();
  private async void MapMigrationPaths()
  {
-  var fields=Dialogs.Fields(this,T("Assign media paths in the catalog"),(T("Previous folder prefix"),Selected is {} item?Path.GetDirectoryName(item.Path)??"":@"X:\BisherigeMedien"),(T("Current folder prefix"),@"U:\Medien"));if(fields==null)return;
+  var fields=Dialogs.Fields(this,T("Assign media paths in the catalog"),(T("Previous folder prefix"),Selected is {} item?Path.GetDirectoryName(item.Path)??"":""),(T("Current folder prefix"),""));if(fields==null)return;
   await RunOperation(T("Assign media paths"),async token=>
   {
    var plan=await Task.Run(()=>_repository.PlanPathMapping([new(fields[0],fields[1])],token),token);

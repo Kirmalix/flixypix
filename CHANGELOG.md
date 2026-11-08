@@ -3,6 +3,16 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
+## 0.7.0
+
+**Fixes**
+
+- FlixyPix can run from a drive named U:. That drive letter was always treated as write-protected, so a
+  portable copy on it refused to start and files on it were always listed as offline. **Upgrading:** U: is
+  no longer protected by itself; choose folders FlixyPix must never write to under Settings → Storage →
+  Protected folders. Folders holding FlixyPix's own data or a library cannot be protected.
+- The dialog for assigning media paths no longer suggests example folders.
+
 ## 0.6.0
 
 **Upgrading from 0.5.0:** the catalog format changes. FlixyPix asks before converting a library and
