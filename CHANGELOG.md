@@ -20,9 +20,9 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 **Lock**
 
-- FlixyPix can ask for the PIN at program start, before libraries can be seen (Settings → Privacy → Lock; off by
-  default). An encrypted library that opens directly asks only for its password. Like the lock, this guards the
-  screen; only the encryption protects the files.
+- A PIN is now also asked for at program start, before libraries can be seen; this can be switched off under
+  Settings → Privacy → Lock. An encrypted library that opens directly asks only for its password. Like the lock,
+  this guards the screen; only the encryption protects the files.
 - While a PIN is set, the boss key also locks: nothing appears on screen, and showing FlixyPix again asks for the
   PIN. **Upgrading:** this is on by default; switch it off under Settings → Privacy → Lock.
 

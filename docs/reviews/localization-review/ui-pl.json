@@ -12917,10 +12917,6 @@
       "status": "unchanged",
       "digest": "9ac9c7364d93dcaea63e9a4d44988da177d7a1d73d6fd6b6c8e0af3fd7a54c74"
     },
-    "The windows come back once it is open again.": {
-      "status": "unchanged",
-      "digest": "96893d7c36909625b0c07432e49cc4fa57bd4ab15812c889fe09cad0534e0eee"
-    },
     "Thumbnails, portraits and the pictures of the home page appear blurred until the pointer rests on them. Video and image viewer stay sharp.": {
       "status": "unchanged",
       "digest": "cdc5607279ee28966d3f241511baf1a404c894214e73f68ea468546c296903f9"
@@ -12948,14 +12944,6 @@
     "Works in all FlixyPix windows. Default: Ctrl+Shift+U.": {
       "status": "unchanged",
       "digest": "14e6829df84f4372a618960d4bdd96bd375b5a56503b7b0e97a363dd43639432"
-    },
-    "Wrong · please try again": {
-      "status": "unchanged",
-      "digest": "294809424394bb1dbf1012ad5e541d91ca9bd5e3031f707ffb7ce988eff7b79e"
-    },
-    "Wrong · try again in {0} s": {
-      "status": "unchanged",
-      "digest": "9e63a0263bdb0c795e62be2bc64a56cf2a1953bfbe618227e15322b327ccb572"
     },
     "60 fps": {
       "status": "unchanged",
@@ -14770,10 +14758,6 @@
       "status": "unchanged",
       "digest": "42cb7b02cffa6e60e0901e47d60e3bd0442fa884016cb88ee2949e5d40c8da06"
     },
-    "Enter the PIN to continue.": {
-      "status": "unchanged",
-      "digest": "d40d08490dac7c3c18fafe34812aed7d167fcc2e84d154aa168a98d87ca86493"
-    },
     "Lock with the boss key": {
       "status": "unchanged",
       "digest": "c55d5c8d52e436dc8d273a9c0dadaf3bc6d593a9f436bb014c070a97df87c53d"
@@ -14785,6 +14769,26 @@
     "While a PIN is set, the boss key also locks. Nothing appears on screen; showing FlixyPix again asks for the PIN.": {
       "status": "unchanged",
       "digest": "42310df48d4be2890f8f786afc893564cee839c76899f699b6d7b45882d7da2a"
+    },
+    "Enter your PIN to get started.": {
+      "status": "unchanged",
+      "digest": "93d98c986182485d9f466ec3f055d3bd8b148bd595b8c6b2bd8b7485c282d57c"
+    },
+    "Everything is just as you left it.": {
+      "status": "unchanged",
+      "digest": "58918514f1e144998dec582a0362eaa24bdba540567ef971c35381ad7f0e62c0"
+    },
+    "That was not right. Please try again.": {
+      "status": "unchanged",
+      "digest": "b34a3ada0e6747ca386b6f69e4e6fc30ce7da60f4b7b44294f3a518020e0679a"
+    },
+    "That was not right. Try again in {0} s.": {
+      "status": "unchanged",
+      "digest": "08204b600c68cd868539a7bb8f1d336645dc99177e0a3008bb5f029d97257e23"
+    },
+    "Welcome back": {
+      "status": "unchanged",
+      "digest": "ef42335163e2fafc53c4c81c975b6a7b139ae897f1da15e7d6a8239c911c174a"
     }
   }
 }

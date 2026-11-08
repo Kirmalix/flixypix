@@ -41,8 +41,8 @@ internal sealed record PrivacySettings
  public string? PinHash { get; init; }
  /// <summary>The boss key also locks while a PIN is set; showing FlixyPix again then asks for it.</summary>
  public bool LockWithBossKey { get; init; } = true;
- /// <summary>The PIN is asked for before anything else at program start; needs a PIN.</summary>
- public bool LockAtStart { get; init; }
+ /// <summary>The PIN is asked for before anything else at program start, as anyone setting a PIN expects. Without a PIN nothing is asked.</summary>
+ public bool AskPinAtStart { get; init; } = true;
  /// <summary>Thumbnails, portraits and the home page start blurred.</summary>
  public bool BlurPictures { get; init; }
  public string BlurKey { get; init; } = "Ctrl+Shift+U";
@@ -65,7 +65,7 @@ internal sealed record PrivacySettings
   if (!Enum.IsDefined(BossPlayback)) { reset.Add(prefix + nameof(BossPlayback)); result = result with { BossPlayback = BossPlayback.Pause }; }
   if (LockAfterMinutes is < 0 or > MaximumLockMinutes) { reset.Add(prefix + nameof(LockAfterMinutes)); result = result with { LockAfterMinutes = 0 }; }
   if (PinHash != null && !PinCode.IsHash(PinHash)) { reset.Add(prefix + nameof(PinHash)); result = result with { PinHash = null }; }
-  return result with { LockAtStart = LockAtStart && result.PinHash != null, RestoreKey = RestoreKey ?? "Shift+Escape", BlurKey = BlurKey ?? "", NeutralTitleText = NeutralTitleText ?? "" };
+  return result with { AskPinAtStart = AskPinAtStart && result.PinHash != null, RestoreKey = RestoreKey ?? "Shift+Escape", BlurKey = BlurKey ?? "", NeutralTitleText = NeutralTitleText ?? "" };
  }
 }
 
