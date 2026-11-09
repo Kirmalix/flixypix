@@ -335,32 +335,39 @@ public sealed partial class CatalogRepository
 
     /// <summary>Reads what the lists beside the tiles need on a reader of its own and keeps it, if the catalog did not change
     /// meanwhile; otherwise the usual calls read it again. False if that reading failed.</summary>
-    public bool LoadBrowsingAside(CancellationToken cancellationToken=default)
+    public bool LoadBrowsingAside(CancellationToken cancellationToken=default) => LoadBrowsingAside(cancellationToken, null);
+
+    internal bool LoadBrowsingAside(CancellationToken cancellationToken, Action? whileReading)
     {
-        (long Changes, long DataVersion) before;
         lock (gate)
         {
             ThrowIfDisposed();
-            before = ChangeStamp();
+            asideReadStamp = ChangeStamp();
         }
         try
         {
             using var aside = OpenAside();
             var database2 = new CatalogDatabase(aside, new object(), () => false);
             var facets = new CatalogFacetsCache(database2).Read(cancellationToken);
+            whileReading?.Invoke();
             var navigation = database2.Run(cancellationToken, () => ReadNavigationCounts(aside));
             var usage = database2.Run(cancellationToken, () => ReadTagUsage(aside));
             return database.Run(cancellationToken, () =>
             {
-                if (ChangeStamp() != before) return false;
-                facetsCache.Install(facets, before);
-                cachedNavigationCounts = navigation; cachedNavigationCountsStamp = before;
-                cachedTagUsage = usage; cachedTagUsageStamp = before;
+                var current = ChangeStamp();
+                if (current != asideReadStamp) return false;
+                facetsCache.Install(facets, current);
+                cachedNavigationCounts = navigation; cachedNavigationCountsStamp = current;
+                cachedTagUsage = usage; cachedTagUsageStamp = current;
                 return true;
             });
         }
         catch (SqliteException) { return false; }
+        finally { lock (gate) asideReadStamp = null; }
     }
+    /// <summary>The state of the catalog a reading beside the connection stands for. Saving the view while one looks around
+    /// moves it along: that changes none of what is being read, and reading everything again would take seconds.</summary>
+    private (long Changes, long DataVersion)? asideReadStamp;
 
     /// <summary>How many media match, counted beside the shared connection; only building the query needs it.</summary>
     private long CountAside(MediaQuery query, CancellationToken cancellationToken)

@@ -174,11 +174,14 @@ public partial class MainWindow : Window
             PresentViewState(accepted);
             _anchor = anchor; _pendingDirectoryState = pendingDirectory;
             RefreshRoleView();
+            ReturnPageIfLeft();
             return Task.CompletedTask;
         }
         _browse.ApplyTransition(resolved);
         if (resolved.View != requested.View) { ViewTitle.Text = ViewName(resolved.View); UpdateNavigation(); }
+        var changesView = _pageChanging || _shownView is { } shown && !shown.SameView(requested);
         var request = _browse.BeginLoad(SelectedMedia.Select(i => i.Id));
+        if (changesView || _loadingFor != null) ExpectLoading(request);
         return _libraryTasks.Track(async token =>
         {
             try { await RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard); }
@@ -187,6 +190,7 @@ public partial class MainWindow : Window
             {
                 if (_browse.IsCurrent(request))
                 {
+                    EndLoading();
                     if (_pageChanging) Motion.EnterPage(MediaPane); else if (_resultsChanged) Motion.EnterResults(MediaArea);
                     _pageChanging = _resultsChanged = false;
                 }
@@ -229,8 +233,10 @@ public partial class MainWindow : Window
             // A requested medium outside the view becomes the new top; one in view keeps the scroll position.
             var anchor = _anchor; var visibleFirst = _visibleFirst; var visibleLast = _visibleLast;
             // The first view of a start shows tiles; the lists and the folder tree follow right after. A view that names a tag needs them now.
-            var quickStart = !_startupReady && state.Tag == null && state.TagCategory == null;
-            if (quickStart) _browsingFilled ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+            var namesTag = state.Tag != null || state.TagCategory != null;
+            if (!_startupReady && !namesTag) _browsingFilled ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+            // While they are still being read beside the connection, a change of view does not read them a second time.
+            var listsFollow = !namesTag && _browsingFilled is { Task.IsCompleted: false };
             var read = await Task.Run(() =>
             {
                 MediaPage page;
@@ -248,11 +254,11 @@ public partial class MainWindow : Window
                     var result = _repository.QueryPlaylistPage(playlist, query, sort == 5, selectId, token);
                     query = query with { Offset = result.Offset }; page = result.Page;
                 }
-                var facets = quickStart ? _repository.QuickFacets(token) : _repository.GetFacets(token);
+                var facets = listsFollow ? _repository.QuickFacets(token) : _repository.GetFacets(token);
                 StartupMark("facets");
                 var preferences = _repository.GetPreferences();
-                IReadOnlyList<TagUsage> tagUsage = quickStart ? [] : _repository.GetTagUsage(); StartupMark("tag usage");
-                var navigationCounts = quickStart ? new NavigationCounts(0, 0, 0, 0) : _repository.GetNavigationCounts(); StartupMark("navigation counts");
+                IReadOnlyList<TagUsage> tagUsage = listsFollow ? [] : _repository.GetTagUsage(); StartupMark("tag usage");
+                var navigationCounts = listsFollow ? new NavigationCounts(0, 0, 0, 0) : _repository.GetNavigationCounts(); StartupMark("navigation counts");
                 var playlists = _repository.GetPlaylists(); var searches = _repository.GetSavedSearches(); var sets = _repository.GetCollectionSets(); var target = _repository.FindTargetCollection(); StartupMark("collections");
                 var finished = FinishedMedia(matches, kept); StartupMark("finished media");
                 return (Preferences: preferences, Page: page, Browse: PrepareBrowsing(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
@@ -282,7 +288,8 @@ public partial class MainWindow : Window
                 Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
                 _refreshing = true;
                 _offWindowSelection = [];
-                ApplyBrowsing(snapshot.Browse);
+                // Empty lists only for the first view: read beside the start, the real ones may already be in place.
+                if (!listsFollow || !_startupReady) ApplyBrowsing(snapshot.Browse);
                 VirtualizingTilePanel.SetTotalCount(MediaList, _total); VirtualizingTilePanel.SetWindowStart(MediaList, _windowStart);
                 // Other filters, a search or another order show new results; an edit or a scroll keeps them in place.
                 if (_startupReady && _shownView is { } shown && !shown.SameView(state)) _resultsChanged = true;

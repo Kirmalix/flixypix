@@ -118,17 +118,17 @@ public static class Motion
  private static readonly DependencyProperty MotionTurnProperty = DependencyProperty.RegisterAttached("MotionTurn", typeof(int), typeof(Motion));
  private static int NextTurn(FrameworkElement area) { var turn = (int)area.GetValue(MotionTurnProperty) + 1; area.SetValue(MotionTurnProperty, turn); return turn; }
 
- /// <summary>The page steps back as soon as another is asked for, while that one loads. It never stays dimmed: if no new
- /// page follows (a failed or abandoned load), it comes back by itself.</summary>
+ /// <summary>The page steps back as soon as another is asked for and stays back while that one loads, however long it takes.
+ /// The new page ends this, or the return when none follows; the time limit is only the last resort, so it never stays dimmed.</summary>
  internal static void LeavePage(FrameworkElement page)
  {
   if (!Smooth) return;
   NextTurn(page); page.CacheMode = null;
   var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = 0;
-  var dim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(1700), FillBehavior = FillBehavior.Stop };
+  var dim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromSeconds(60.2), FillBehavior = FillBehavior.Stop };
   dim.KeyFrames.Add(new EasingDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(90)), EaseOut));
-  dim.KeyFrames.Add(new LinearDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1500))));
-  dim.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1700)), EaseOut));
+  dim.KeyFrames.Add(new LinearDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(60))));
+  dim.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(60.2)), EaseOut));
   page.BeginAnimation(UIElement.OpacityProperty, dim);
  }
 
