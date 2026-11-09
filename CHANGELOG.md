@@ -46,6 +46,8 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 **Fixes**
 
+- A page of tiles counts what you see: a row at least half in view belongs to it. With large tiles there were
+  far too many pages, and the next page moved on only a little.
 - FlixyPix can run from a drive named U:. That drive letter was always treated as write-protected, so a
   portable copy on it refused to start and files on it were always listed as offline. **Upgrading:** U: is
   no longer protected by itself; choose folders FlixyPix must never write to under Settings → Storage →
