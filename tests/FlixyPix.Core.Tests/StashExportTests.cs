@@ -117,7 +117,8 @@ public sealed class StashExportTests:IDisposable
  public async Task RepeatedRevalidationSkipsOnlySettledUnchangedFilesAndStillSeesLaterWrites()
  {
   var old=Add("tags/old.json","{\"name\":\"Settled\"}");File.SetLastWriteTimeUtc(old,new DateTime(2001,2,3,4,5,6,DateTimeKind.Utc));
-  var fresh=Add("tags/fresh.json","{\"name\":\"Fresh\"}");
+  // Never settled however slowly this test runs: real time would count it as settled after three seconds on a busy machine.
+  var fresh=Add("tags/fresh.json","{\"name\":\"Fresh\"}");File.SetLastWriteTimeUtc(fresh,DateTime.UtcNow.AddHours(1));
   using var snapshot=await StashExport.ReadDirectoryAsync(Source,Stage);await snapshot.VerifySourceAsync();await snapshot.VerifySourceAsync();
   // A settled file that is rewritten with the same length gets a new time stamp and is hashed again.
   File.WriteAllText(old,"{\"name\":\"Changed\"}");
