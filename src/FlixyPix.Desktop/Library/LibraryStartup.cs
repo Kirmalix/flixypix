@@ -45,14 +45,17 @@ public partial class MainWindow
                 await _startup.EnterAsync();
                 await InitializeLibraryAsync(key);
                 _startup.Token.ThrowIfCancellationRequested();
+                StartupMark("library ready");
                 RootContent.Visibility = Visibility.Visible;
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                StartupMark("first picture");
                 _startupReady = true;
                 RootContent.IsEnabled = true;
                 if (_view == "home") _home.Reveal();
                 _startupSurface.FadeOut();
                 _startup.Ready();
                 RecordStartupPhase("Ready");
+                FillBrowsingAfterStart();
                 WarmSearchIndex();
             }
             catch (OperationCanceledException)
@@ -105,6 +108,35 @@ public partial class MainWindow
         using var process = System.Diagnostics.Process.GetCurrentProcess();
         RecordStartupPhase($"First window {(DateTime.Now - process.StartTime).TotalMilliseconds:0}ms after process start");
     }
+
+    /// <summary>Set when the first view left its lists for later, and finished once they are there.</summary>
+    private TaskCompletionSource? _browsingFilled;
+
+    /// <summary>Folders, filters, tag lists and the numbers of the sidebar after the first view. They are read beside the shared
+    /// connection, so the window answers meanwhile, and they are put in place without touching the tiles.</summary>
+    private void FillBrowsingAfterStart()
+    {
+        if (_searchCountsWaiting is { } rows) { _searchCountsWaiting = null; CountSmartCollections(rows); }
+        if (_browsingFilled is not { } filled) return;
+        _ = _libraryTasks.Run(async token =>
+        {
+            try
+            {
+                await Task.Run(() => _repository.LoadBrowsingAside(token), token);
+                var browse = await Task.Run(() => PrepareBrowsing(_repository.GetFacets(token), _repository.GetPreferences(), _repository.GetTagUsage(), _repository.GetNavigationCounts()), token);
+                if (_closing || token.IsCancellationRequested) return;
+                var refreshing = _refreshing; _refreshing = true;
+                try { ApplyBrowsing(browse); } finally { _refreshing = refreshing; }
+                UpdateNavigation(); RenderTagFilterChips(); RecordStartupPhase("Lists filled");
+            }
+            catch (Exception error) when (error is OperationCanceledException or ObjectDisposedException) { }
+            finally { filled.TrySetResult(); }
+        });
+    }
+
+    /// <summary>A step inside a phase, while the program starts: only its name and the time, also from other threads.</summary>
+    private void StartupMark(string step) { if (!_startupReady) lock (_startupLog) RecordStartupPhase("· " + step); }
+    private readonly object _startupLog = new();
 
     private void RecordStartupPhase(string phase)
     {

@@ -88,6 +88,11 @@ public partial class MainWindow
         var feedback = (_suggestionFeedback ??= new(_repository.GetPreferences().TagSuggestionFeedback ?? [], StringComparer.OrdinalIgnoreCase)).ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
         var wantCombinations = _tagWork && present.Length > 0;
         (IReadOnlyList<TagSuggestion> Suggestions, IReadOnlyList<TagCombination> Combinations) assist;
+        // Suggestions read every path, beside the shared connection so nothing waits for it. During a start after the lists, which read them too.
+        if (_browsingFilled is { Task.IsCompleted: false } filling) { await filling.Task; if (version != _tagAssistVersion || _closing) return; }
+        try { await Task.Run(() => _repository.PrepareTagSuggestions(libraryToken), libraryToken); }
+        catch (ObjectDisposedException) { return; }
+        if (version != _tagAssistVersion || _closing) return;
         try { assist = await Task.Run(() => (_repository.SuggestTags(ids, 10, feedback), wantCombinations ? _repository.GetTagCombinations(present, 4) : [])); }
         catch (ObjectDisposedException) { return; }
         if (version != _tagAssistVersion || _closing) return;

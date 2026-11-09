@@ -79,6 +79,7 @@ public partial class MainWindow : Window
         // The longest step without steps of its own: the line moves on slowly and arrives when the window is ready.
         SetStartupPhase(T("Loading view"), .9, 4);
         var startupData = await Task.Run(() => (Preferences: _repository.GetPreferences(), Drafts: _repository.GetMetadataDrafts()), _startup.Token);
+        StartupMark("settings and drafts read");
         try
         {
             InitializeBrowsing(startupData.Preferences);
@@ -103,13 +104,17 @@ public partial class MainWindow : Window
             _positionTimer.Tick += async (_, _) => await _libraryTasks.Run(_ => SavePlaybackPosition());
             _positionTimer.Start();
 
+            StartupMark("window parts built");
             _showStartupRecovery?.Invoke();
             await StartAsync(mayOpenHome: _persistPreferences);
+            StartupMark("start view done");
             if (_view == "home") await HomeTask;
             if (_roleBrowser != null && IsRoleView) await _roleBrowser.ProfileReady;
             _startup.Token.ThrowIfCancellationRequested();
             RememberOpenLibrary();
+            StartupMark("open library noted");
             InitializeFolderSync(checkAtStart: _persistPreferences);
+            StartupMark("folder sync set");
             if (_persistPreferences && DesktopSettings.LastRepair is { } repair) ShowSettingsRepair(repair);
         }
         catch
@@ -214,13 +219,18 @@ public partial class MainWindow : Window
         {
             // One state describes the view; saved searches and restoring the last view use the same query.
             var matches = state.ToQuery(DateTimeOffset.Now);
+            StartupMark("refresh begins");
             await UpdateKeptMediaAsync(state, matches, request.Revision);
+            StartupMark("kept media");
             if (!_browse.IsCurrent(request) || _closing) return;
             UpdateThumbnailCheck(state);
             var kept = _keptMedia.ToArray();
             var query = matches with { Limit = WindowSize, Offset = WindowStartFor(_anchor), KeepIds = kept };
             // A requested medium outside the view becomes the new top; one in view keeps the scroll position.
             var anchor = _anchor; var visibleFirst = _visibleFirst; var visibleLast = _visibleLast;
+            // The first view of a start shows tiles; the lists and the folder tree follow right after. A view that names a tag needs them now.
+            var quickStart = !_startupReady && state.Tag == null && state.TagCategory == null;
+            if (quickStart) _browsingFilled ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
             var read = await Task.Run(() =>
             {
                 MediaPage page;
@@ -229,6 +239,7 @@ public partial class MainWindow : Window
                     if (selectId is { } requested && _repository.GetPosition(query, requested, token) is { } position && (position < visibleFirst || position > visibleLast))
                     { anchor = position; query = query with { Offset = WindowStartFor(position) }; }
                     page = _repository.QueryPage(query, token);
+                    StartupMark("media page");
                     if (page.TotalCount > 0 && page.Items.Count == 0)
                     { query = query with { Offset = (int)Math.Max(0, page.TotalCount - WindowSize) }; anchor = (int)page.TotalCount - 1; page = _repository.QueryPage(query, token); }
                 }
@@ -237,17 +248,24 @@ public partial class MainWindow : Window
                     var result = _repository.QueryPlaylistPage(playlist, query, sort == 5, selectId, token);
                     query = query with { Offset = result.Offset }; page = result.Page;
                 }
-                var facets = _repository.GetFacets(token);
+                var facets = quickStart ? _repository.QuickFacets(token) : _repository.GetFacets(token);
+                StartupMark("facets");
                 var preferences = _repository.GetPreferences();
-                return (Preferences: preferences, Page: page, Browse: PrepareBrowsing(facets, preferences, _repository.GetTagUsage(), _repository.GetNavigationCounts()), Playlists: _repository.GetPlaylists(), Searches: _repository.GetSavedSearches(),
-        Sets: _repository.GetCollectionSets(), Target: _repository.FindTargetCollection(), CatalogEmpty: facets.MediaCount == 0, Finished: FinishedMedia(matches, kept));
+                IReadOnlyList<TagUsage> tagUsage = quickStart ? [] : _repository.GetTagUsage(); StartupMark("tag usage");
+                var navigationCounts = quickStart ? new NavigationCounts(0, 0, 0, 0) : _repository.GetNavigationCounts(); StartupMark("navigation counts");
+                var playlists = _repository.GetPlaylists(); var searches = _repository.GetSavedSearches(); var sets = _repository.GetCollectionSets(); var target = _repository.FindTargetCollection(); StartupMark("collections");
+                var finished = FinishedMedia(matches, kept); StartupMark("finished media");
+                return (Preferences: preferences, Page: page, Browse: PrepareBrowsing(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
+        Sets: sets, Target: target, CatalogEmpty: facets.MediaCount == 0, Finished: finished);
             });
             if (!_browse.IsCurrent(request) || _closing) return;
             var pageItems = read.Page.Items;
             var imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1 };
-            var imageCount = checked((int)(await Task.Run(() => playlist == null ? _repository.QueryPage(imageQuery, token) : _repository.QueryPlaylistPage(playlist, imageQuery, sort == 5, null, token).Page)).TotalCount);
+            var imageCount = checked((int)await Task.Run(() => playlist == null ? _repository.CountMedia(imageQuery, token) : _repository.QueryPlaylistPage(playlist, imageQuery, sort == 5, null, token).Page.TotalCount));
+            StartupMark("image count");
             var general = read.Preferences.General;
             var preparedCards = await Task.Run(() => pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList());
+            StartupMark("cards prepared");
             if (!_browse.IsCurrent(request) || _closing) return;
             if (publicationGuard is not null && (!publicationGuard() || !_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)))) return;
             if (!_browse.TryPublish(request.Complete((Snapshot: read, Cards: preparedCards)), result =>
@@ -297,7 +315,9 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; throw; }
         finally { _refreshing = false; }
+        StartupMark("view published");
         ShowDetails(includePreviews);
+        StartupMark("details shown");
         WarmSearchIndex();
     }
 

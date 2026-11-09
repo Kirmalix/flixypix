@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using System.Text.Json;
 
 namespace FlixyPix.Core;
@@ -71,13 +72,28 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
-            var states = new Dictionary<long, long>();
-            using (var command = Command("SELECT review_state,count(*) FROM media_query GROUP BY review_state", null))
-            using (var reader = command.ExecuteReader()) while (reader.Read()) states[reader.GetInt64(0)] = reader.GetInt64(1);
-            using var audio = Command("SELECT count(*) FROM media_query WHERE kind=$kind", null, ("$kind", nameof(MediaKind.Audio)));
-            return new(Convert.ToInt64(audio.ExecuteScalar() ?? 0L), states.GetValueOrDefault((long)ReviewState.Unreviewed),
-                states.GetValueOrDefault((long)ReviewState.NeedsAttention), states.GetValueOrDefault((long)ReviewState.Reviewed));
+            var stamp = ChangeStamp();
+            if (cachedNavigationCounts is { } known && cachedNavigationCountsStamp == stamp) return known;
+            cachedNavigationCounts = ReadNavigationCounts(connection); cachedNavigationCountsStamp = stamp;
+            return cachedNavigationCounts;
         }
+    }
+    private NavigationCounts? cachedNavigationCounts;
+    private (long Changes, long DataVersion) cachedNavigationCountsStamp;
+
+    private static NavigationCounts ReadNavigationCounts(SqliteConnection source)
+    {
+        var states = new Dictionary<long, long>();
+        using (var command = source.CreateCommand())
+        {
+            command.CommandText = "SELECT review_state,count(*) FROM media_query GROUP BY review_state";
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) states[reader.GetInt64(0)] = reader.GetInt64(1);
+        }
+        using var audio = source.CreateCommand();
+        audio.CommandText = "SELECT count(*) FROM media_query WHERE kind=$kind"; audio.Parameters.AddWithValue("$kind", nameof(MediaKind.Audio));
+        return new(Convert.ToInt64(audio.ExecuteScalar() ?? 0L), states.GetValueOrDefault((long)ReviewState.Unreviewed),
+            states.GetValueOrDefault((long)ReviewState.NeedsAttention), states.GetValueOrDefault((long)ReviewState.Reviewed));
     }
 
     public CatalogMaintenanceLog GetMaintenanceLog()

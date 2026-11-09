@@ -25,6 +25,17 @@ internal sealed class CatalogFacetsCache(CatalogDatabase database)
         return Value;
     });
 
+    /// <summary>What is known without reading: the facets if still valid, otherwise null.</summary>
+    internal CatalogFacets? Known() => Value is not null && stamp == database.ChangeStamp() ? Value : null;
+
+    /// <summary>Takes facets read elsewhere, if nothing changed since that reading began.</summary>
+    internal bool Install(CatalogFacets facets, (long Changes, long DataVersion) before)
+    {
+        if (database.ChangeStamp() != before) return false;
+        Value = facets; stamp = before;
+        return true;
+    }
+
     internal void PreserveAfterIndexing(long before, long after)
     {
         if (Value is not null && stamp.Changes == before) stamp = stamp with { Changes = after };

@@ -26,10 +26,10 @@ public sealed partial class CatalogRepository
     public (long Total, long New) CountSavedSearch(SavedSearch search, DateTimeOffset now, CancellationToken cancellationToken = default)
     {
         var query = StateOf(search).ToQuery(now) with { Limit = 1 };
-        var total = QueryPage(query, cancellationToken).TotalCount;
+        var total = CountAside(query, cancellationToken);
         if (search.LastOpenedAt is not { } opened || total == 0) return (total, 0);
         var since = SearchExpression.Where(new() { Field = SearchField.AddedAt, Comparison = SearchComparison.GreaterThan, Date = opened });
-        var fresh = QueryPage(query with { Expression = query.Expression is null ? since : SearchExpression.All(query.Expression, since) }, cancellationToken).TotalCount;
+        var fresh = CountAside(query with { Expression = query.Expression is null ? since : SearchExpression.All(query.Expression, since) }, cancellationToken);
         return (total, fresh);
     }
 

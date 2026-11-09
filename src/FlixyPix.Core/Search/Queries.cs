@@ -50,24 +50,24 @@ public sealed partial class CatalogRepository
     internal static void AddOrdinalCollation(SqliteConnection target) =>
         target.CreateCollation(ProductIdentity.OrdinalCollation, (left, right) => StringComparer.OrdinalIgnoreCase.Compare(left, right));
 
-    private void RegisterQueryFunctions()
+    private static void RegisterQueryFunctions(SqliteConnection target)
     {
-        AddOrdinalCollation(connection);
-        connection.CreateFunction<string?, string?, bool>("efp_contains", (value, term) =>
+        AddOrdinalCollation(target);
+        target.CreateFunction<string?, string?, bool>("efp_contains", (value, term) =>
             value?.Contains(term ?? "", StringComparison.OrdinalIgnoreCase) ?? false, isDeterministic: true);
-        connection.CreateFunction<string?, string?, bool>("efp_starts", (value, term) =>
+        target.CreateFunction<string?, string?, bool>("efp_starts", (value, term) =>
             value?.StartsWith(term ?? "", StringComparison.OrdinalIgnoreCase) ?? false, isDeterministic: true);
-        connection.CreateFunction<string?, string?, bool>("efp_ends", (value, term) =>
+        target.CreateFunction<string?, string?, bool>("efp_ends", (value, term) =>
             value?.EndsWith(term ?? "", StringComparison.OrdinalIgnoreCase) ?? false, isDeterministic: true);
-        connection.CreateFunction<string?, string>("efp_folder", value => Path.GetDirectoryName(value ?? "") ?? "", isDeterministic: true);
-        connection.CreateFunction<string?, string>("efp_filename", value => Path.GetFileName(value ?? ""), isDeterministic: true);
-        connection.CreateFunction<string?, string>("efp_extension", value => Path.GetExtension(value ?? "").TrimStart('.'), isDeterministic: true);
-        connection.CreateFunction<string?, string>("efp_directory", value =>
+        target.CreateFunction<string?, string>("efp_folder", value => Path.GetDirectoryName(value ?? "") ?? "", isDeterministic: true);
+        target.CreateFunction<string?, string>("efp_filename", value => Path.GetFileName(value ?? ""), isDeterministic: true);
+        target.CreateFunction<string?, string>("efp_extension", value => Path.GetExtension(value ?? "").TrimStart('.'), isDeterministic: true);
+        target.CreateFunction<string?, string>("efp_directory", value =>
         {
             var directory = Path.GetDirectoryName(value ?? "") ?? "";
             return directory.Length == 0 || Path.EndsInDirectorySeparator(directory) ? directory : directory + Path.DirectorySeparatorChar;
         }, isDeterministic: true);
-        connection.CreateFunction<string?, string?, bool, bool>("efp_in_folder", (path, folder, recursive) =>
+        target.CreateFunction<string?, string?, bool, bool>("efp_in_folder", (path, folder, recursive) =>
         {
             if (path is null || folder is null) return false;
             var directory = Path.GetDirectoryName(path) ?? "";
@@ -227,6 +227,7 @@ public sealed partial class CatalogRepository
     }
 
     public MediaPage QueryPage(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryPage(query,cancellationToken);
+    public long CountMedia(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.Count(query,cancellationToken);
 
     private CompiledMediaQuery BuildQuery(MediaQuery query, SqliteTransaction? transaction)
     {
@@ -312,4 +313,75 @@ public sealed partial class CatalogRepository
 
     private (long Changes,long DataVersion) ChangeStamp() => database.ChangeStamp();
     public CatalogFacets GetFacets(CancellationToken cancellationToken=default) => facetsCache.Read(cancellationToken);
+
+    /// <summary>For the first view of a start: the facets if they are known, otherwise only the number of media. The lists
+    /// follow with <see cref="LoadFacetsAside"/>, because reading them takes seconds on a slow disk.</summary>
+    public CatalogFacets QuickFacets(CancellationToken cancellationToken=default) => database.Run(cancellationToken, () =>
+    {
+        if (facetsCache.Known() is { } known) return known;
+        using var count = database.Command("SELECT count(*) FROM media_query", null);
+        return new CatalogFacets(Convert.ToInt64(count.ExecuteScalar()), [], [], [], [], new Dictionary<string, IReadOnlyList<string>>());
+    });
+
+    /// <summary>A reader of its own beside the shared connection: the catalog is in WAL mode, so it neither waits for that
+    /// connection nor makes others wait, however long a read takes on a slow disk.</summary>
+    private SqliteConnection OpenAside()
+    {
+        var aside = new SqliteConnection(CatalogEncryption.ConnectionString(DatabasePath, key, SqliteOpenMode.ReadOnly).ToString());
+        aside.Open();
+        RegisterQueryFunctions(aside);
+        return aside;
+    }
+
+    /// <summary>Reads what the lists beside the tiles need on a reader of its own and keeps it, if the catalog did not change
+    /// meanwhile; otherwise the usual calls read it again. False if that reading failed.</summary>
+    public bool LoadBrowsingAside(CancellationToken cancellationToken=default)
+    {
+        (long Changes, long DataVersion) before;
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            before = ChangeStamp();
+        }
+        try
+        {
+            using var aside = OpenAside();
+            var database2 = new CatalogDatabase(aside, new object(), () => false);
+            var facets = new CatalogFacetsCache(database2).Read(cancellationToken);
+            var navigation = database2.Run(cancellationToken, () => ReadNavigationCounts(aside));
+            var usage = database2.Run(cancellationToken, () => ReadTagUsage(aside));
+            return database.Run(cancellationToken, () =>
+            {
+                if (ChangeStamp() != before) return false;
+                facetsCache.Install(facets, before);
+                cachedNavigationCounts = navigation; cachedNavigationCountsStamp = before;
+                cachedTagUsage = usage; cachedTagUsageStamp = before;
+                return true;
+            });
+        }
+        catch (SqliteException) { return false; }
+    }
+
+    /// <summary>How many media match, counted beside the shared connection; only building the query needs it.</summary>
+    private long CountAside(MediaQuery query, CancellationToken cancellationToken)
+    {
+        var (where, parameters) = database.Run(cancellationToken, () =>
+        {
+            using var transaction = connection.BeginTransaction();
+            var compiled = BuildQuery(query, transaction);
+            CommitAfterIndexing(transaction);
+            return compiled;
+        });
+        try
+        {
+            using var aside = OpenAside();
+            var database2 = new CatalogDatabase(aside, new object(), () => false);
+            return database2.Run(cancellationToken, () =>
+            {
+                using var command = database2.Command("SELECT count(*) FROM media_query q " + where, null, parameters);
+                return Convert.ToInt64(command.ExecuteScalar());
+            });
+        }
+        catch (SqliteException error) when (error.SqliteErrorCode != 9) { return CountMedia(query, cancellationToken); }
+    }
 }

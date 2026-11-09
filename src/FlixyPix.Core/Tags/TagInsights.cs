@@ -51,11 +51,39 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
-            var statistics = Statistics();
-            return statistics.Counts.Select(pair => new TagUsage(statistics.Display[pair.Key], pair.Value))
-                .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
+            var stamp = ChangeStamp();
+            if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == stamp)
+                return statistics.Counts.Select(pair => new TagUsage(statistics.Display[pair.Key], pair.Value))
+                    .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
+            if (cachedTagUsage is not null && cachedTagUsageStamp == stamp) return cachedTagUsage;
+            // The usage alone comes from one table. The statistics also need every path, which on a cold disk takes seconds at each start.
+            cachedTagUsage = ReadTagUsage(connection);
+            cachedTagUsageStamp = stamp;
+            return cachedTagUsage;
         }
     }
+
+    private static IReadOnlyList<TagUsage> ReadTagUsage(SqliteConnection source)
+    {
+        var perMedium = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var display = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT media_id,tag FROM media_tags";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tag = reader.GetString(1).Trim(); if (tag.Length == 0) continue;
+            var id = reader.GetString(0);
+            if (!perMedium.TryGetValue(id, out var tags)) perMedium[id] = tags = [];
+            if (!tags.Contains(tag, StringComparer.OrdinalIgnoreCase)) { tags.Add(tag); counts[tag] = counts.GetValueOrDefault(tag) + 1; }
+            display.TryAdd(tag, tag);
+        }
+        return counts.Select(pair => new TagUsage(display[pair.Key], pair.Value))
+            .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+    private IReadOnlyList<TagUsage>? cachedTagUsage;
+    private (long Changes, long DataVersion) cachedTagUsageStamp;
 
     /// <summary>Suggests tags for the given media from co-occurring tags, tags of folder neighbours and words in file or folder names.
     /// Tags already present on every given medium are never suggested.</summary>
@@ -182,27 +210,77 @@ public sealed partial class CatalogRepository
     {
         var stamp = ChangeStamp();
         if (cachedTagStatistics is not null && cachedTagStatisticsStamp == stamp) return cachedTagStatistics;
+        var statistics = BuildTagStatistics(ReadTagStatisticsRows(connection));
+        cachedTagStatistics = statistics; cachedTagStatisticsStamp = stamp;
+        return statistics;
+    }
+
+    /// <summary>Reads what suggestions need on a reader of its own, so the first selection does not hold up everything else
+    /// while every path is read from a slow disk. Otherwise the suggestions read it themselves.</summary>
+    public void PrepareTagSuggestions(CancellationToken cancellationToken = default)
+    {
+        (long Changes, long DataVersion) before;
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            before = ChangeStamp();
+            if (cachedTagStatistics is not null && cachedTagStatisticsStamp == before) return;
+        }
+        (List<(string Id, string Path)> Paths, List<(string Id, string Tag)> Tags) rows;
+        try
+        {
+            using var aside = OpenAside();
+            rows = new CatalogDatabase(aside, new object(), () => false).Run(cancellationToken, () => ReadTagStatisticsRows(aside));
+        }
+        catch (SqliteException error) when (error.SqliteErrorCode != 9) { return; }
+        database.Run(cancellationToken, () =>
+        {
+            if (ChangeStamp() == before) { cachedTagStatistics = BuildTagStatistics(rows); cachedTagStatisticsStamp = before; }
+            return true;
+        });
+    }
+
+    /// <summary>Both tables in one pass each: looking up a path per tag jumps through the file, which a cold disk answers slowly.
+    /// The order takes the paths from their index, which the lists beside the tiles have usually just read.</summary>
+    private static (List<(string Id, string Path)> Paths, List<(string Id, string Tag)> Tags) ReadTagStatisticsRows(SqliteConnection source)
+    {
+        var paths = new List<(string, string)>(); var tags = new List<(string, string)>();
+        using (var command = source.CreateCommand())
+        {
+            command.CommandText = "SELECT id,path FROM media_query ORDER BY path COLLATE EFP_ORDINAL";
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) paths.Add((reader.GetString(0), reader.GetString(1)));
+        }
+        using (var command = source.CreateCommand())
+        {
+            command.CommandText = "SELECT media_id,tag FROM media_tags";
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) tags.Add((reader.GetString(0), reader.GetString(1)));
+        }
+        return (paths, tags);
+    }
+
+    private TagStatistics BuildTagStatistics((List<(string Id, string Path)> Paths, List<(string Id, string Tag)> Tags) rows)
+    {
         var statistics = new TagStatistics();
         var media = new Dictionary<string, (string Folder, List<string> Tags)>(StringComparer.Ordinal);
-        using (var command = Command("SELECT t.media_id,t.tag,q.path FROM media_tags t JOIN media_query q ON q.id=t.media_id", null))
-        using (var reader = command.ExecuteReader())
-            while (reader.Read())
-            {
-                var tag = reader.GetString(1).Trim(); if (tag.Length == 0) continue;
-                if (!media.TryGetValue(reader.GetString(0), out var entry)) media[reader.GetString(0)] = entry = (Path.GetDirectoryName(reader.GetString(2)) ?? "", []);
-                if (!entry.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase)) entry.Tags.Add(tag);
-                statistics.Display.TryAdd(tag, tag);
-            }
-        using (var command = Command("SELECT path FROM media_query", null))
-        using (var reader = command.ExecuteReader())
-            while (reader.Read())
-            {
-                var folder = Path.GetDirectoryName(reader.GetString(0)) ?? "";
-                statistics.FolderMedia[folder] = statistics.FolderMedia.GetValueOrDefault(folder) + 1;
-            }
+        var folders = new Dictionary<string, string>(rows.Paths.Count, StringComparer.Ordinal);
+        foreach (var (id, path) in rows.Paths)
+        {
+            var folder = Path.GetDirectoryName(path) ?? "";
+            folders[id] = folder;
+            statistics.FolderMedia[folder] = statistics.FolderMedia.GetValueOrDefault(folder) + 1;
+        }
+        foreach (var (id, raw) in rows.Tags)
+        {
+            var tag = raw.Trim(); if (tag.Length == 0) continue;
+            if (!folders.TryGetValue(id, out var folder)) continue;
+            if (!media.TryGetValue(id, out var entry)) media[id] = entry = (folder, []);
+            if (!entry.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase)) entry.Tags.Add(tag);
+            statistics.Display.TryAdd(tag, tag);
+        }
         foreach (var (id, (folder, tags)) in media) CountTags(statistics, id, folder, tags.ToArray(), +1);
         BuildNameCandidates(statistics);
-        cachedTagStatistics = statistics; cachedTagStatisticsStamp = stamp;
         return statistics;
     }
 
