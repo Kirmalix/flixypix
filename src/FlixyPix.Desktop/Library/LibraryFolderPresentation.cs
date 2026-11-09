@@ -53,7 +53,7 @@ public partial class MainWindow
   var lines=SystemParameters.WheelScrollLines;
   var distance=lines<0?(horizontal?FolderViewport.ViewportWidth:FolderViewport.ViewportHeight):lines*28;
   if(horizontal)FolderViewport.ScrollToHorizontalOffset(FolderViewport.HorizontalOffset-steps*distance);
-  else FolderViewport.ScrollToVerticalOffset(FolderViewport.VerticalOffset-steps*distance);
+  else Motion.GlideBy(FolderViewport,-steps*distance);
  }
  private void SidebarTagTools(object sender,RoutedEventArgs e)=>_sidebarToolsMenu=MenuBelow(sender,
   (T("Open directory"),()=>DirectoryClicked(sender,e)));

@@ -171,6 +171,7 @@ public partial class MainWindow
   if (radio.IsChecked != true) radio.IsChecked = true;
   ApplyDetailsLayout();
   DetailsScroll.ScrollToTop();
+  if (_settings.DetailsTabs && DetailsScroll.IsVisible) Motion.EnterResults(DetailsScroll);
  }
  /// <summary>Everything one below the other, or only the part of the chosen tab; the top (picture, title, actions,
  /// rating) always stays.</summary>

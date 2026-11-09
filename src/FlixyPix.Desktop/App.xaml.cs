@@ -51,7 +51,7 @@ public partial class App : Application
         // Implicit styles only match the exact type; derived windows would otherwise render white.
         var windowStyle = (Style)Resources[typeof(Window)];
         foreach (var type in typeof(App).Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(Window)))) Resources.Add(type, new Style(type, windowStyle));
-        Theme.Install(this); InterfaceScaling.Install();
+        Theme.Install(this); InterfaceScaling.Install(); Motion.InstallWheel();
         // Test modes start dark, or light with FLIXYPIX_TEST_THEME=light; a normal start follows the saved choice (default: like Windows).
         DesktopSettings? saved = null;
         if (arguments.Length == 0) { try { saved = DesktopSettings.Load(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { } }

@@ -62,7 +62,7 @@ public partial class MainWindow
   e.Handled = true;
   var lines = SystemParameters.WheelScrollLines;
   var distance = lines < 0 ? SidebarScroll.ViewportHeight : lines * 16;
-  SidebarScroll.ScrollToVerticalOffset(SidebarScroll.VerticalOffset - e.Delta / 120d * distance);
+  Motion.GlideBy(SidebarScroll, -e.Delta / 120d * distance);
  }
 
  private void TileSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => ApplyTileSize(e.NewValue);

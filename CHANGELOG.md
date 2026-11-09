@@ -24,6 +24,7 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Areas settle into place when you change them, the tiles of the next page come from the side you are heading to,
   and new filter results arrive softly. The side bars and details glide open and shut. Nothing waits for a motion:
   the new content shows as soon as it is ready. All of this stops when Windows turns animations off.
+- The wheel glides in every page at the same pace on any screen, and dialogs and settings pages arrive softly.
 - Notices rise into place and leave to the side; the arrows of folding groups turn, and a new favorite answers
   with a short pop.
 
