@@ -124,7 +124,9 @@ public partial class MainWindow
         if (_window is not { } window) return;
         var request = _browse.CaptureRequest(SelectedMedia.Select(i => i.Id));
         var index = state.Position;
-        if (state.AnchorId is { } anchor && await Task.Run(() => PositionInView(window, anchor).Position) is { } found) index = found;
+        // Usually the medium still stands where it stood; numbering the whole result is only needed if not.
+        if (state.AnchorId is { } anchor && !(window.Playlist == null && await Task.Run(() => _repository.IsAtPosition(window.Query, index, anchor, _libraryTasks.Token)))
+            && await Task.Run(() => PositionInView(window, anchor).Position) is { } found) index = found;
         if (!_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)) || _closing) return;
         index = Math.Clamp(index, 0, Math.Max(0, _total - 1));
         if (index > 0) await ScrollToAsync(index);

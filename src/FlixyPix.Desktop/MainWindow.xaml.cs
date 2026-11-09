@@ -41,7 +41,6 @@ public partial class MainWindow : Window
     private Task _lastRefresh = Task.CompletedTask;
     private string? _pendingDataDirectory;
     private MediaQuery _imageQuery = new() { Kind = MediaKind.Image };
-    private int _imageCount;
     private Playlist? _imagePlaylist;
     private bool _imageCollectionOrder;
     private Task _previewReady = Task.CompletedTask;
@@ -261,14 +260,12 @@ public partial class MainWindow : Window
                 var navigationCounts = listsFollow ? new NavigationCounts(0, 0, 0, 0) : _repository.GetNavigationCounts(); StartupMark("navigation counts");
                 var playlists = _repository.GetPlaylists(); var searches = _repository.GetSavedSearches(); var sets = _repository.GetCollectionSets(); var target = _repository.FindTargetCollection(); StartupMark("collections");
                 var finished = FinishedMedia(matches, kept); StartupMark("finished media");
-                return (Preferences: preferences, Page: page, Browse: PrepareBrowsing(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
+                return (Preferences: preferences, Page: page, Browse: BrowsingFor(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
         Sets: sets, Target: target, CatalogEmpty: facets.MediaCount == 0, Finished: finished);
             });
             if (!_browse.IsCurrent(request) || _closing) return;
             var pageItems = read.Page.Items;
             var imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1 };
-            var imageCount = checked((int)await Task.Run(() => playlist == null ? _repository.CountMedia(imageQuery, token) : _repository.QueryPlaylistPage(playlist, imageQuery, sort == 5, null, token).Page.TotalCount));
-            StartupMark("image count");
             var general = read.Preferences.General;
             var preparedCards = await Task.Run(() => pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList());
             StartupMark("cards prepared");
@@ -281,7 +278,7 @@ public partial class MainWindow : Window
                 var keepSelection = selectionNow.Select(item => item.Id).ToHashSet();
                 _windowStart = query.Offset; _total = checked((int)snapshot.Page.TotalCount); _window = (query, playlist, sort == 5);
                 _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
-                _imageQuery = imageQuery; _imageCount = imageCount;
+                _imageQuery = imageQuery;
                 _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
                 _cardContext.QuickMembers = snapshot.Playlists.FirstOrDefault(p => p.Kind == PlaylistKind.Quick)?.MediaIds.ToHashSet() ?? [];
                 _cardContext.FinishedMembers = snapshot.Finished; _cardContext.Display = general; _cardContext.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? [];

@@ -91,11 +91,12 @@ public partial class MainWindow
         var imageQuery = _imageQuery;
         var imagePlaylist = _imagePlaylist; var collectionOrder = _imageCollectionOrder;
         var initial = imagePlaylist == null ? _repository.GetPosition(imageQuery, item.Id) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery, collectionOrder, item.Id).Offset;
+        var imageCount = !initial.HasValue ? 0 : checked((int)(imagePlaylist == null ? _repository.CountMedia(imageQuery) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery, collectionOrder).Page.TotalCount));
         _viewer = initial.HasValue ? new ImageViewerWindow(this, images, item.Id, index => _libraryTasks.Run<MediaItem?>(async token =>
         {
             var page = await Task.Run(() => imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page);
             return page.Items.FirstOrDefault() is { } image ? await EnsureArchiveImageAsync(image, token) : null;
-        }), _imageCount, initial.Value) : new ImageViewerWindow(this, images, item.Id);
+        }), imageCount, initial.Value) : new ImageViewerWindow(this, images, item.Id);
         var viewer = (ImageViewerWindow)_viewer; var preferences = _repository.GetPreferences();
         viewer.DeleteMedium = image => DeleteWithQuestion(image, viewer); viewer.ToggleFavorite = ToggleFavorite;
         viewer.UseAsTagPicture = image => ChooseTagPicture(image, viewer); viewer.UseAsThumbnail = image => ChooseThumbnailTarget(image, viewer);

@@ -19,6 +19,14 @@ public sealed record NavigationCounts(long Audio, long Unreviewed, long NeedsAtt
     /// <summary>Media the review inbox lists.</summary>
     public long Inbox => Unreviewed + NeedsAttention;
 
+    /// <summary>The counts after an edit of one medium.</summary>
+    internal NavigationCounts Moved(MediaItem old, MediaItem updated)
+    {
+        long Delta(Func<MediaItem, bool> counted) => (counted(updated) ? 1 : 0) - (counted(old) ? 1 : 0);
+        return new(Audio + Delta(m => m.Kind == MediaKind.Audio), Unreviewed + Delta(m => m.ReviewState == ReviewState.Unreviewed),
+            NeedsAttention + Delta(m => m.ReviewState == ReviewState.NeedsAttention), Reviewed + Delta(m => m.ReviewState == ReviewState.Reviewed));
+    }
+
     public bool ShowsReviewInbox(ReviewInboxMode mode) => mode switch
     {
         ReviewInboxMode.Always => true,

@@ -28,9 +28,34 @@ public sealed partial class CatalogRepository
         return IsFavoriteCore(item, GetPreferences());
     }
 
+    // A large tag vocabulary makes this document megabytes long, and it is asked for constantly, also by the window.
+    // The parsed form stays until the stored text differs; callers treat it as read-only and change it with "with".
+    private CatalogPreferences? preferencesParsed;
+    private string? preferencesText;
+    private (long Changes, long DataVersion)? preferencesStamp;
+
     private CatalogPreferences ReadPreferences(SqliteTransaction? transaction = null)
     {
-        var preferences = ReadDocuments<CatalogPreferences>("preferences", transaction).FirstOrDefault() ?? new();
+        // Nothing written since the stamp, not even in this transaction: the text cannot differ. A later rollback leaves the
+        // change count higher, so a read after it compares the text again.
+        var stamp = database.ChangeStamp(transaction);
+        if (preferencesParsed is { } known && preferencesStamp == stamp) return known;
+        using var command = Command("SELECT document FROM preferences ORDER BY rowid LIMIT 1", transaction);
+        var text = command.ExecuteScalar() as string;
+        if (preferencesParsed is { } same && text == preferencesText)
+        {
+            if (transaction is null) preferencesStamp = stamp;
+            return same;
+        }
+        var parsed = ParsePreferences(text);
+        // What an open transaction wrote may yet be rolled back, so it is not kept.
+        if (transaction is null) { preferencesParsed = parsed; preferencesText = text; preferencesStamp = stamp; }
+        return parsed;
+    }
+
+    private static CatalogPreferences ParsePreferences(string? text)
+    {
+        var preferences = (text is null ? null : System.Text.Json.JsonSerializer.Deserialize<CatalogPreferences>(text, Json)) ?? new();
         // Libraries saved before an action existed get its default shortcut.
         if (preferences.Playback.Hotkeys.Count != PlayerActions.All.Count)
             preferences = preferences with { Playback = preferences.Playback with { Hotkeys = PlayerActions.Complete(preferences.Playback.Hotkeys) } };

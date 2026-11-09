@@ -34,6 +34,34 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
 
     });
 
+    /// <summary>A page without counting all hits: scrolling on through a result already knows how many there are.</summary>
+    internal IReadOnlyList<MediaItem> QueryItems(MediaQuery query, CancellationToken cancellationToken = default)
+     => database.Run(cancellationToken, () =>
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        if (query.Offset < 0 || query.Limit is < 1 or > 1000) throw new ArgumentOutOfRangeException(nameof(query), "Offset must be nonnegative and page size 1–1000.");
+        database.ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
+        using var transaction = database.Connection.BeginTransaction();
+        var (where, parameters) = compile(query, transaction);
+        var items = ReadItems(query, transaction, cancellationToken, where, parameters);
+        commit(transaction);
+        return items;
+    });
+
+    /// <summary>Whether the medium stands at this place of the result; far cheaper than numbering the whole result.</summary>
+    internal bool IsAt(MediaQuery query, int position, Guid id, CancellationToken cancellationToken = default)
+     => database.Run(cancellationToken, () =>
+    {
+        database.ThrowIfDisposed();
+        using var transaction = database.Connection.BeginTransaction();
+        var (where, parameters) = compile(query, transaction);
+        using var command = database.Command($"SELECT q.id FROM media_query q {where} ORDER BY {OrderSql(query)} LIMIT 1 OFFSET $offset", transaction, parameters);
+        command.Parameters.AddWithValue("$offset", position);
+        var found = command.ExecuteScalar() as string;
+        commit(transaction);
+        return found == id.ToString();
+    });
+
     /// <summary>How many media match, without reading any of them; with a large catalog on a slow disk this is far cheaper than a page.</summary>
     internal long Count(MediaQuery query, CancellationToken cancellationToken = default)
      => database.Run(cancellationToken, () =>

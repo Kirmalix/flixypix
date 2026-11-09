@@ -292,23 +292,30 @@ public sealed partial class CatalogRepository
 
     private static bool IsInside(string key, string folderKey) => key.StartsWith(folderKey + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal);
 
-    /// <summary>Catalog entries below a folder, read through the path index without loading whole documents.</summary>
+    /// <summary>Catalog entries below a folder, read through the path index on a reader of its own: with many media this takes
+    /// long, and the window goes on working meanwhile.</summary>
     private List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> MediaUnder(string folder)
     {
+        lock (gate) ThrowIfDisposed();
+        using var aside = OpenAside();
+        return MediaUnder(folder, aside);
+    }
+
+    private static List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> MediaUnder(string folder, SqliteConnection source)
+    {
         var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
-        lock (gate)
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT document FROM media WHERE (path_key >= $prefix AND path_key < $end) OR id IN (SELECT media_id FROM media_files WHERE path_key >= $prefix AND path_key < $end)";
+        command.Parameters.AddWithValue("$prefix", prefix); command.Parameters.AddWithValue("$end", prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1));
+        using var reader = command.ExecuteReader();
+        var result = new List<(Guid, string, MediaKind, long?, DateTimeOffset?)>();
+        while (reader.Read())
         {
-            using var command = Command("SELECT document FROM media WHERE (path_key >= $prefix AND path_key < $end) OR id IN (SELECT media_id FROM media_files WHERE path_key >= $prefix AND path_key < $end)", null, ("$prefix", prefix), ("$end", prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1)));
-            using var reader = command.ExecuteReader();
-            var result = new List<(Guid, string, MediaKind, long?, DateTimeOffset?)>();
-            while (reader.Read())
-            {
-                var item = JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!;
-                foreach (var file in MediaVersions.All(item))
-                    if (PathKey(file.Path).StartsWith(prefix, StringComparison.Ordinal)) result.Add((item.Id, file.Path, item.Kind, file.FileSize, file.FileModifiedAtUtc));
-            }
-            return result;
+            var item = JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!;
+            foreach (var file in MediaVersions.All(item))
+                if (PathKey(file.Path).StartsWith(prefix, StringComparison.Ordinal)) result.Add((item.Id, file.Path, item.Kind, file.FileSize, file.FileModifiedAtUtc));
         }
+        return result;
     }
 
     private static LibraryFolder NormalizeLibraryFolder(LibraryFolder folder)

@@ -46,13 +46,72 @@ internal sealed class CatalogFacetsCache(CatalogDatabase database)
     {
         if (Value is not { } facets || stamp != before || !samePaths ||
             changes.Any(c => !string.Equals(c.Old.Category, c.New.Category, StringComparison.Ordinal))) return;
-        if (!sameTags)
-        {
-            var tags = ReadTags(null, CancellationToken.None);
-            facets = facets with { Tags = tags.Tags, TagCategories = tags.Groups.Keys.ToArray(), CategorizedTags = tags.Groups, TagCategoryCounts = tags.Counts };
-        }
-        Value = facets;
+        Value = sameTags ? facets : WithTagChanges(facets, changes);
         stamp = after;
+    }
+
+    /// <summary>The tag lists after an edit of some media. Reading them anew costs a pass over all tags of the library at every
+    /// click; only what the edit took away has to be looked up, because other media may still use it.</summary>
+    private CatalogFacets WithTagChanges(CatalogFacets facets, IReadOnlyList<(MediaItem Old, MediaItem New)> changes)
+    {
+        var tags = facets.Tags.ToList();
+        var groups = facets.CategorizedTags.ToDictionary(p => p.Key, p => p.Value.ToList(), StringComparer.OrdinalIgnoreCase);
+        var counts = new Dictionary<string, long>(facets.TagCategoryCounts ?? new Dictionary<string, long>(), StringComparer.OrdinalIgnoreCase);
+        var removed = new HashSet<(string Category, string Tag)>(TagRowComparer);
+        foreach (var (old, updated) in changes)
+        {
+            var before = TagRows(old); var now = TagRows(updated);
+            foreach (var (category, tag) in now.Except(before, TagRowComparer))
+            {
+                InsertSorted(tags, tag);
+                if (category.Length == 0) continue;
+                if (!groups.TryGetValue(category, out var group)) groups[category] = group = [];
+                InsertSorted(group, tag);
+            }
+            removed.UnionWith(before.Except(now, TagRowComparer));
+            var categoriesBefore = before.Select(r => r.Category).Where(c => c.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var categoriesNow = now.Select(r => r.Category).Where(c => c.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var category in categoriesNow.Except(categoriesBefore, StringComparer.OrdinalIgnoreCase)) counts[category] = counts.GetValueOrDefault(category) + 1;
+            foreach (var category in categoriesBefore.Except(categoriesNow, StringComparer.OrdinalIgnoreCase))
+                if (counts.GetValueOrDefault(category) <= 1) counts.Remove(category); else counts[category]--;
+        }
+        foreach (var (category, tag) in removed)
+        {
+            if (category.Length > 0 && !Exists("SELECT 1 FROM media_tags WHERE category=$category COLLATE EFP_ORDINAL AND tag=$tag COLLATE EFP_ORDINAL LIMIT 1", ("$category", category), ("$tag", tag))
+                && groups.TryGetValue(category, out var group))
+            {
+                RemoveSorted(group, tag);
+                if (group.Count == 0) groups.Remove(category);
+            }
+            if (!Exists("SELECT 1 FROM media_tags WHERE tag=$tag COLLATE EFP_ORDINAL LIMIT 1", ("$tag", tag))) RemoveSorted(tags, tag);
+        }
+        var ordered = groups.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToArray();
+        return facets with
+        {
+            Tags = tags, TagCategories = ordered.Select(p => p.Key).ToArray(), TagCategoryCounts = counts,
+            CategorizedTags = ordered.ToDictionary(p => p.Key, p => (IReadOnlyList<string>)p.Value.ToArray(), StringComparer.OrdinalIgnoreCase),
+        };
+        bool Exists(string sql, params (string Name, object Value)[] values) { using var command = database.Command(sql, null, values); return command.ExecuteScalar() is not null; }
+    }
+
+    private static readonly IEqualityComparer<(string Category, string Tag)> TagRowComparer = EqualityComparer<(string Category, string Tag)>.Create(
+        (a, b) => string.Equals(a.Category, b.Category, StringComparison.OrdinalIgnoreCase) && string.Equals(a.Tag, b.Tag, StringComparison.OrdinalIgnoreCase),
+        row => HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(row.Category), StringComparer.OrdinalIgnoreCase.GetHashCode(row.Tag)));
+
+    /// <summary>The rows the triggers keep in media_tags for this medium.</summary>
+    private static HashSet<(string Category, string Tag)> TagRows(MediaItem item) =>
+        item.Tags.Select(tag => ("", tag)).Concat(item.TagCategories.SelectMany(group => group.Value.Select(tag => (group.Key, tag)))).ToHashSet(TagRowComparer);
+
+    private static void InsertSorted(List<string> list, string value)
+    {
+        var place = list.BinarySearch(value, StringComparer.OrdinalIgnoreCase);
+        if (place < 0) list.Insert(~place, value);
+    }
+
+    private static void RemoveSorted(List<string> list, string value)
+    {
+        var place = list.BinarySearch(value, StringComparer.OrdinalIgnoreCase);
+        if (place >= 0) list.RemoveAt(place);
     }
 
     private TagFacets ReadTags(SqliteTransaction? transaction, CancellationToken token)
