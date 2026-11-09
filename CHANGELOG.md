@@ -21,8 +21,9 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 **A window that moves with you**
 
 - Buttons, navigation entries and lists answer the pointer softly, and a pressed button gives way a little.
-- Pages settle into place when you change them, and the side bars and details glide open and shut. Nothing waits
-  for a motion: the new page shows as soon as it is ready. All of this stops when Windows turns animations off.
+- Areas settle into place when you change them, the tiles of the next page come from the side you are heading to,
+  and new filter results arrive softly. The side bars and details glide open and shut. Nothing waits for a motion:
+  the new content shows as soon as it is ready. All of this stops when Windows turns animations off.
 - Notices rise into place and leave to the side; the arrows of folding groups turn, and a new favorite answers
   with a short pop.
 

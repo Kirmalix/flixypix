@@ -110,15 +110,20 @@ public static class Motion
 
  // ----- Pages -----
 
- private const double PageDim = .3, PageRise = 8;
- private static int _pageMotion;
+ private const double PageDim = .3, PageRise = 8, ResultsRise = 6, PageTurn = 28;
+ /// <summary>Practically invisible, but still drawn: at zero the costly first drawing would wait for the first visible frame.</summary>
+ private const double Unseen = .01;
+ private static readonly Duration ResultsTime = TimeSpan.FromMilliseconds(170);
+ /// <summary>Counts the motions of an area; a later one replaces what an earlier one still had planned.</summary>
+ private static readonly DependencyProperty MotionTurnProperty = DependencyProperty.RegisterAttached("MotionTurn", typeof(int), typeof(Motion));
+ private static int NextTurn(FrameworkElement area) { var turn = (int)area.GetValue(MotionTurnProperty) + 1; area.SetValue(MotionTurnProperty, turn); return turn; }
 
  /// <summary>The page steps back as soon as another is asked for, while that one loads. It never stays dimmed: if no new
  /// page follows (a failed or abandoned load), it comes back by itself.</summary>
  internal static void LeavePage(FrameworkElement page)
  {
   if (!Smooth) return;
-  _pageMotion++;
+  NextTurn(page); page.CacheMode = null;
   var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = 0;
   var dim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(1700), FillBehavior = FillBehavior.Stop };
   dim.KeyFrames.Add(new EasingDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(90)), EaseOut));
@@ -127,22 +132,77 @@ public static class Motion
   page.BeginAnimation(UIElement.OpacityProperty, dim);
  }
 
- /// <summary>The new page is in place: it fades in from nothing and settles from below, however fast it loaded (usually
- /// before the old page has stepped back far, which would leave nothing to see). The motion starts once the first frame has
- /// been laid out, so the costly first layout does not eat its start; a hold that nothing follows ends by itself.</summary>
- internal static void EnterPage(FrameworkElement page)
+ /// <summary>The new page is in place and is seen to arrive, however fast it loaded.</summary>
+ internal static void EnterPage(FrameworkElement page) => Enter(page, PageRise, Soft, "page");
+ /// <summary>Other filters, a search or another order: only the tiles arrive anew, a little quicker.</summary>
+ internal static void EnterResults(FrameworkElement results) => Enter(results, ResultsRise, ResultsTime, "results");
+
+ /// <summary>Turning to another page of tiles: the old ones go before the jump, so the new ones never flash up first.
+ /// If nothing follows, they return by themselves.</summary>
+ internal static void LeaveTiles(FrameworkElement results)
  {
-  if (!Smooth) { page.BeginAnimation(UIElement.OpacityProperty, null); if (page.RenderTransform is TranslateTransform still) { still.BeginAnimation(TranslateTransform.YProperty, null); still.Y = 0; } return; }
-  var motion = ++_pageMotion;
-  var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = PageRise;
-  page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 0, TimeSpan.FromSeconds(1)) { FillBehavior = FillBehavior.Stop });
-  page.Dispatcher.BeginInvoke(() =>
+  if (!Smooth) return;
+  NextTurn(results);
+  results.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(Unseen, Unseen, TimeSpan.FromSeconds(1)) { FillBehavior = FillBehavior.Stop });
+ }
+ /// <summary>The new page of tiles comes from the side one is heading to: forward from the right, back from the left.</summary>
+ internal static void EnterTiles(FrameworkElement results, bool forward) => Enter(results, 0, ResultsTime, "paging", forward ? PageTurn : -PageTurn);
+
+ /// <summary>Fades in from nothing and settles from below. New content first costs a long frame or two, and an animation runs
+ /// by the clock: started at once, it would be over when the first picture appears. So the area is drawn unseen first and
+ /// moves as a cached picture, which keeps the frames short on large screens. A hold that nothing follows ends by itself.</summary>
+ private static void Enter(FrameworkElement area, double rise, Duration time, string kind, double side = 0)
+ {
+  if (!Smooth)
   {
-   if (motion != _pageMotion) { shift.Y = 0; return; }
-   shift.Y = 0;
-   shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(PageRise, 0, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
-   page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+   Trace($"{kind}: not smooth (animations {Enabled}, steady {Steady}, tier {RenderCapability.Tier >> 16})");
+   area.BeginAnimation(UIElement.OpacityProperty, null);
+   if (area.RenderTransform is TranslateTransform still) { still.BeginAnimation(TranslateTransform.YProperty, null); still.Y = 0; still.BeginAnimation(TranslateTransform.XProperty, null); still.X = 0; }
+   return;
+  }
+  var turn = NextTurn(area);
+  var shift = Transform(area); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = rise; shift.BeginAnimation(TranslateTransform.XProperty, null); shift.X = side;
+  area.CacheMode = new BitmapCache { SnapsToDevicePixels = true };
+  area.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(Unseen, Unseen, TimeSpan.FromSeconds(1)) { FillBehavior = FillBehavior.Stop });
+  var clock = System.Diagnostics.Stopwatch.StartNew();
+  area.Dispatcher.BeginInvoke(() =>
+  {
+   var laidOut = clock.Elapsed.TotalMilliseconds; var frames = 0; var gaps = new List<int>(); var last = clock.Elapsed;
+   void Waiting(object? sender, EventArgs e)
+   {
+    if ((int)area.GetValue(MotionTurnProperty) != turn) { CompositionTarget.Rendering -= Waiting; shift.Y = shift.X = 0; area.CacheMode = null; return; }
+    gaps.Add((int)(clock.Elapsed - last).TotalMilliseconds); last = clock.Elapsed;
+    if (++frames < 2 && clock.ElapsedMilliseconds < 250) return;
+    CompositionTarget.Rendering -= Waiting;
+    var waited = clock.Elapsed.TotalMilliseconds; var heldGaps = string.Join(",", gaps); gaps.Clear(); last = clock.Elapsed;
+    void Following(object? s, EventArgs a) { gaps.Add((int)(clock.Elapsed - last).TotalMilliseconds); last = clock.Elapsed; }
+    CompositionTarget.Rendering += Following;
+    shift.Y = shift.X = 0;
+    if (rise != 0) shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(rise, 0, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+    if (side != 0) shift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(side, 0, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+    var show =new DoubleAnimation(Unseen, 1, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop };
+    show.Completed += (_, _) =>
+    {
+     CompositionTarget.Rendering -= Following;
+     Trace($"{kind}: laid out {laidOut:0} ms, moving from {waited:0} ms, held gaps {heldGaps}, moving gaps {string.Join(",", gaps)}");
+     if ((int)area.GetValue(MotionTurnProperty) == turn) area.CacheMode = null;
+    };
+    area.BeginAnimation(UIElement.OpacityProperty, show);
+   }
+   CompositionTarget.Rendering += Waiting;
   }, System.Windows.Threading.DispatcherPriority.Loaded);
+ }
+
+ /// <summary>Temporary, for judging motion on a real screen: only timings, no titles or paths.</summary>
+ private static void Trace(string line)
+ {
+  if (Steady) return;
+  try
+  {
+   var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "flixypix-motion"); System.IO.Directory.CreateDirectory(folder);
+   System.IO.File.AppendAllText(System.IO.Path.Combine(folder, "trace.txt"), $"{DateTime.Now:HH:mm:ss.fff} {line}{Environment.NewLine}");
+  }
+  catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException) { }
  }
 
  // ----- Side bars -----

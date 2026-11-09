@@ -178,10 +178,17 @@ public partial class MainWindow : Window
         {
             try { await RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard); }
             // A later request brings its own page; this one no longer shows.
-            finally { if (_pageChanging && _browse.IsCurrent(request)) { _pageChanging = false; Motion.EnterPage(MediaPane); } }
+            finally
+            {
+                if (_browse.IsCurrent(request))
+                {
+                    if (_pageChanging) Motion.EnterPage(MediaPane); else if (_resultsChanged) Motion.EnterResults(MediaArea);
+                    _pageChanging = _resultsChanged = false;
+                }
+            }
         });
     }
-    private bool _pageChanging;
+    private bool _pageChanging, _resultsChanged;
     private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard)
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
@@ -259,6 +266,8 @@ public partial class MainWindow : Window
                 _offWindowSelection = [];
                 ApplyBrowsing(snapshot.Browse);
                 VirtualizingTilePanel.SetTotalCount(MediaList, _total); VirtualizingTilePanel.SetWindowStart(MediaList, _windowStart);
+                // Other filters, a search or another order show new results; an edit or a scroll keeps them in place.
+                if (_startupReady && _shownView is { } shown && !shown.SameView(state)) _resultsChanged = true;
                 MediaList.ItemsSource = cards; _shownView = state;
                 if (anchor < visibleFirst || anchor > visibleLast) { MediaList.UpdateLayout(); Tiles?.ScrollToIndex(anchor); }
                 if (selectId is null && keepSelection.Count > 0) foreach (var card in cards.Where(c => keepSelection.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
