@@ -133,9 +133,9 @@ public static class Motion
  }
 
  /// <summary>The new page is in place and is seen to arrive, however fast it loaded.</summary>
- internal static void EnterPage(FrameworkElement page) => Enter(page, PageRise, Soft, "page");
+ internal static void EnterPage(FrameworkElement page) => Enter(page, PageRise, Soft);
  /// <summary>Other filters, a search or another order: only the tiles arrive anew, a little quicker.</summary>
- internal static void EnterResults(FrameworkElement results) => Enter(results, ResultsRise, ResultsTime, "results");
+ internal static void EnterResults(FrameworkElement results) => Enter(results, ResultsRise, ResultsTime);
 
  /// <summary>Turning to another page of tiles: the old ones go before the jump, so the new ones never flash up first.
  /// If nothing follows, they return by themselves.</summary>
@@ -146,16 +146,15 @@ public static class Motion
   results.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(Unseen, Unseen, TimeSpan.FromSeconds(1)) { FillBehavior = FillBehavior.Stop });
  }
  /// <summary>The new page of tiles comes from the side one is heading to: forward from the right, back from the left.</summary>
- internal static void EnterTiles(FrameworkElement results, bool forward) => Enter(results, 0, ResultsTime, "paging", forward ? PageTurn : -PageTurn);
+ internal static void EnterTiles(FrameworkElement results, bool forward) => Enter(results, 0, ResultsTime, forward ? PageTurn : -PageTurn);
 
  /// <summary>Fades in from nothing and settles from below. New content first costs a long frame or two, and an animation runs
  /// by the clock: started at once, it would be over when the first picture appears. So the area is drawn unseen first and
  /// moves as a cached picture, which keeps the frames short on large screens. A hold that nothing follows ends by itself.</summary>
- private static void Enter(FrameworkElement area, double rise, Duration time, string kind, double side = 0)
+ private static void Enter(FrameworkElement area, double rise, Duration time, double side = 0)
  {
   if (!Smooth)
   {
-   Trace($"{kind}: not smooth (animations {Enabled}, steady {Steady}, tier {RenderCapability.Tier >> 16})");
    area.BeginAnimation(UIElement.OpacityProperty, null);
    if (area.RenderTransform is TranslateTransform still) { still.BeginAnimation(TranslateTransform.YProperty, null); still.Y = 0; still.BeginAnimation(TranslateTransform.XProperty, null); still.X = 0; }
    return;
@@ -167,43 +166,23 @@ public static class Motion
   var clock = System.Diagnostics.Stopwatch.StartNew();
   area.Dispatcher.BeginInvoke(() =>
   {
-   var laidOut = clock.Elapsed.TotalMilliseconds; var frames = 0; var gaps = new List<int>(); var last = clock.Elapsed;
+   var frames = 0;
    void Waiting(object? sender, EventArgs e)
    {
     if ((int)area.GetValue(MotionTurnProperty) != turn) { CompositionTarget.Rendering -= Waiting; shift.Y = shift.X = 0; area.CacheMode = null; return; }
-    gaps.Add((int)(clock.Elapsed - last).TotalMilliseconds); last = clock.Elapsed;
     if (++frames < 2 && clock.ElapsedMilliseconds < 250) return;
     CompositionTarget.Rendering -= Waiting;
-    var waited = clock.Elapsed.TotalMilliseconds; var heldGaps = string.Join(",", gaps); gaps.Clear(); last = clock.Elapsed;
-    void Following(object? s, EventArgs a) { gaps.Add((int)(clock.Elapsed - last).TotalMilliseconds); last = clock.Elapsed; }
-    CompositionTarget.Rendering += Following;
     shift.Y = shift.X = 0;
     if (rise != 0) shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(rise, 0, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
     if (side != 0) shift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(side, 0, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
     var show =new DoubleAnimation(Unseen, 1, time) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop };
-    show.Completed += (_, _) =>
-    {
-     CompositionTarget.Rendering -= Following;
-     Trace($"{kind}: laid out {laidOut:0} ms, moving from {waited:0} ms, held gaps {heldGaps}, moving gaps {string.Join(",", gaps)}");
-     if ((int)area.GetValue(MotionTurnProperty) == turn) area.CacheMode = null;
-    };
+    show.Completed += (_, _) => { if ((int)area.GetValue(MotionTurnProperty) == turn) area.CacheMode = null; };
     area.BeginAnimation(UIElement.OpacityProperty, show);
    }
    CompositionTarget.Rendering += Waiting;
   }, System.Windows.Threading.DispatcherPriority.Loaded);
  }
 
- /// <summary>Temporary, for judging motion on a real screen: only timings, no titles or paths.</summary>
- private static void Trace(string line)
- {
-  if (Steady) return;
-  try
-  {
-   var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "flixypix-motion"); System.IO.Directory.CreateDirectory(folder);
-   System.IO.File.AppendAllText(System.IO.Path.Combine(folder, "trace.txt"), $"{DateTime.Now:HH:mm:ss.fff} {line}{Environment.NewLine}");
-  }
-  catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException) { }
- }
 
  // ----- Side bars -----
 
