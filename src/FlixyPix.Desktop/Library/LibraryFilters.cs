@@ -57,11 +57,18 @@ public partial class MainWindow
         if (!LeaveRoleView()) { UpdateNavigation(); return false; }
         if (IsRoleView) RecordView();
         RememberCurrentArea();
+        var before = _startupReady && Motion.Smooth ? CaptureViewState() : null;
         state = _browse.ApplyTransition(state);
+        if (before != null && !SamePage(before, state)) { _pageChanging = true; Motion.LeavePage(MediaPane); }
         PresentViewState(state, title);
         Refresh();
         return true;
     }
+
+    /// <summary>A new place moves as a page; another filter or sort order within a place only changes the tiles.</summary>
+    private static bool SamePage(ViewState a, ViewState b) => a.View == b.View && a.PlaylistId == b.PlaylistId && a.DetailId == b.DetailId
+        && a.ImageSetId == b.ImageSetId && a.PublicationGroupId == b.PublicationGroupId && a.Folder == b.Folder
+        && (a.TagCategory != null ? a.Tag : null) == (b.TagCategory != null ? b.Tag : null);
 
     private void PresentViewState(ViewState state, string? title = null)
     {

@@ -174,8 +174,14 @@ public partial class MainWindow : Window
         _browse.ApplyTransition(resolved);
         if (resolved.View != requested.View) { ViewTitle.Text = ViewName(resolved.View); UpdateNavigation(); }
         var request = _browse.BeginLoad(SelectedMedia.Select(i => i.Id));
-        return _libraryTasks.Track(token => RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard));
+        return _libraryTasks.Track(async token =>
+        {
+            try { await RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard); }
+            // A later request brings its own page; this one no longer shows.
+            finally { if (_pageChanging && _browse.IsCurrent(request)) { _pageChanging = false; Motion.EnterPage(MediaPane); } }
+        });
     }
+    private bool _pageChanging;
     private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard)
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
@@ -291,7 +297,9 @@ public partial class MainWindow : Window
     private void UpdateSelectionBar()
     {
         var count = SelectedMedia.Count; var hidden = _offWindowSelection.Count;
+        var wasShown = SelectionBar.Visibility == Visibility.Visible;
         SelectionBar.Visibility = !IsPageView && (count > 1 || hidden > 0) ? Visibility.Visible : Visibility.Collapsed;
+        if (!wasShown && SelectionBar.Visibility == Visibility.Visible) Motion.Arrive(SelectionBar, 0);
         // Notices keep clear of the bar and its actions.
         _toasts.Margin = new Thickness(0, 0, 360, SelectionBar.Visibility == Visibility.Visible ? 92 : 40);
         SelectionBarText.Text = Tn(count, "1 item selected", "{0:N0} items selected") + (hidden > 0 ? T(" · {0:N0} not in this view", hidden) : "");

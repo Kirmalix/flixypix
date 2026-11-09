@@ -242,7 +242,8 @@ public partial class MainWindow
                     for (var wait = 0; _videoWindow.LastPositionSeconds < .2 * length && wait < 40; wait++) await Task.Delay(50);
                     Require(length > 0 && Math.Abs(_videoWindow.LastPositionSeconds - .25 * length) < .05 * length + .05, $"Shift+wheel did not seek a quarter of the video ({_videoWindow.LastPositionSeconds:0.##} of {length:0.##} s).");
                     await NativePlayerWheelAsync(240, System.Windows.Input.ModifierKeys.Shift);
-                    Require(Math.Abs(_videoWindow.LastPositionSeconds - .75 * length) < .05 * length + .05, "Rapid native wheel steps were lost.");
+                    for (var wait = 0; _videoWindow.LastPositionSeconds < .7 * length && wait < 40; wait++) await Task.Delay(50);
+                    Require(Math.Abs(_videoWindow.LastPositionSeconds - .75 * length) < .05 * length + .05, $"Rapid native wheel steps were lost ({_videoWindow.LastPositionSeconds:0.##} of {length:0.##} s).");
                     await NativePlayerWheelAsync(-120, System.Windows.Input.ModifierKeys.None);
                     Require(_videoWindow.LastPositionSeconds < .05, "Native wheel down did not seek backwards.");
                     var nine = new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(_videoWindow)!, 0, System.Windows.Input.Key.D9) { RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent };
@@ -552,7 +553,7 @@ public partial class MainWindow
         ApplyViewState(new ViewState()); _lastPlayedId = null; await Settled(); await ScrollToAsync(0);
         await RestoreLastViewAsync(); await Settled();
         Require(_filter.Imported.Window == DateWindow.LastYear && Selected?.Id == placeId && Math.Abs(_visibleFirst - placeIndex) <= Tiles!.Columns,
-         $"Restoring everything lost filter, place or selection (first {_visibleFirst}, was {placeIndex}).");
+         $"Restoring everything lost filter, place or selection (filter {_filter.Imported.Window}, first {_visibleFirst}, was {placeIndex}, selected {Selected?.Id}, was {placeId}, {SelectedMedia.Count} selected, {MediaList.Items.Count} loaded of {_total}).");
         Capture(RootContent, Path.Combine(directory, "desktop-restored.png"));
         _repository.SavePreferences(_repository.GetPreferences() with { General = generalBefore });
         ApplyViewState(new ViewState()); await Settled();

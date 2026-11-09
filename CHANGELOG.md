@@ -18,6 +18,14 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - FlixyPix is sharp on every monitor, also with different scaling, and the title bar follows the colour scheme on
   Windows 11. The package starts from precompiled code, which makes starts a little faster.
 
+**A window that moves with you**
+
+- Buttons, navigation entries and lists answer the pointer softly, and a pressed button gives way a little.
+- Pages settle into place when you change them, and the side bars and details glide open and shut. Nothing waits
+  for a motion: the new page shows as soon as it is ready. All of this stops when Windows turns animations off.
+- Notices rise into place and leave to the side; the arrows of folding groups turn, and a new favorite answers
+  with a short pop.
+
 **Lock**
 
 - A PIN is now also asked for at program start, before libraries can be seen; this can be switched off under

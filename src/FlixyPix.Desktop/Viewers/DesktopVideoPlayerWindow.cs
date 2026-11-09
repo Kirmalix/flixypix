@@ -160,6 +160,7 @@ internal sealed partial class VideoPlayerWindow : Window
  internal Func<MpvPlayer,Task<double?>> ReadPosition { get; set; }=active=>active.GetPositionAsync();
  internal Task PollOnceAsync()=>PollAsync();
  internal bool PollingActive=>timer.IsEnabled;
+ internal bool PollPending=>polling;
  private int unansweredPolls;
  private async Task PollAsync()
  {

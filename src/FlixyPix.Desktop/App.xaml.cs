@@ -18,6 +18,7 @@ public partial class App : Application
             if (portable && profile) throw new ArgumentException("Choose only one storage mode.");
             var args = e.Args.Where(a => a is not ("--portable" or "--profile")).ToArray();
             var test = Array.FindIndex(args, a => a is "--draft-crash-test" or "--folder-sync-test" or "--storage-crash-test" or "--storage-test" or "--smoke-test" or "--lifetime-test" or "--localization-test" or "--perf-probe" or "--player-input-test");
+            Motion.Steady = test >= 0;
             var inputTest = Array.IndexOf(args, "--player-input-test");
             if (inputTest >= 0)
             {
@@ -152,7 +153,7 @@ public partial class App : Application
                 var window = new MainWindow(new DesktopSettings { DataDirectory = Path.Combine(directory, "catalog") }, persistPreferences: false);
                 window.Loaded += async (_, _) =>
                 {
-                    try { await window.Startup; await window.RunSmokeTestAsync(directory); await window.RunOpenWithSmokeTestAsync(directory); var last = await window.RunLibrarySwitchSmokeTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: import, edit, half-star rating, search, tags, collections, scenes, backup, open with, libraries and WPF rendering."); last.Close(); }
+                    try { await window.Startup; await window.RunSmokeTestAsync(directory); await window.RunMotionSmokeTestAsync(directory); await window.RunOpenWithSmokeTestAsync(directory); var last = await window.RunLibrarySwitchSmokeTestAsync(directory); File.WriteAllText(Path.Combine(directory, "result.txt"), "PASS: import, edit, half-star rating, search, tags, collections, scenes, backup, open with, libraries and WPF rendering."); last.Close(); }
                     catch (Exception ex) { File.WriteAllText(Path.Combine(directory, "result.txt"), ex.ToString()); Shutdown(1); }
                 };
                 window.Show();

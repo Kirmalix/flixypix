@@ -78,6 +78,8 @@ public partial class MainWindow
   window.ToggleMarkPanel();await Idle();Require(window.MarkPanelVisible&&db.GetPreferences().Playback.ShowMarks==listSaved,"The list could not be opened in a narrow window.");window.ToggleMarkPanel();
   window.Width=1100;await Idle();Require(window.MarkPanelVisible==listSaved&&!window.ControlsFolded&&!window.MoreMenuShown&&Math.Abs(Middle("Play or pause"))<2,"A wider window did not bring everything back.");
   // A late answer from mpv is no end of playback: the position keeps following, and only a lasting silence is reported.
+  // A poll of the player's own timer may still wait for mpv; its answer would start the count anew.
+  for(var wait=0;window.PollPending&&wait<100;wait++)await Task.Delay(20);
   var readPosition=window.ReadPosition;window.ReadPosition=_=>Task.FromException<double?>(new OperationCanceledException());
   var ended=T("Playback finished · ");
   await window.PollOnceAsync();Require(window.PollingActive&&!window.MessageText.StartsWith(ended,StringComparison.Ordinal),"One late answer ended the polling.");
