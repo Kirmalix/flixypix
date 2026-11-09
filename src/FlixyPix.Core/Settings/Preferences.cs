@@ -4,9 +4,20 @@ namespace FlixyPix.Core;
 
 public sealed partial class CatalogRepository
 {
+    /// <summary>While a long read holds the catalog, the window gets the settings as last read instead of waiting for it. Only what is
+    /// committed counts, and what that read may be writing is not committed yet.</summary>
     public CatalogPreferences GetPreferences()
     {
-        lock (gate) { ThrowIfDisposed(); return ReadPreferences(); }
+        var taken = false;
+        try
+        {
+            Monitor.TryEnter(gate, ref taken);
+            if (!taken && preferencesParsed is { } known) return known;
+            if (!taken) Monitor.Enter(gate, ref taken);
+            ThrowIfDisposed();
+            return ReadPreferences();
+        }
+        finally { if (taken) Monitor.Exit(gate); }
     }
 
     public CatalogPreferences SavePreferences(CatalogPreferences preferences)
@@ -15,9 +26,13 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed();
+            var before = ChangeStamp();
             using var transaction = connection.BeginTransaction();
             SaveDocument("preferences", Guid.Empty, preferences, transaction);
             transaction.Commit();
+            // Folding a section of the sidebar must not make the lists of a large library read anew. The suggestions stay out:
+            // they use the vocabulary, which is part of the settings.
+            CarryListsAcross(before);
             return preferences;
         }
     }

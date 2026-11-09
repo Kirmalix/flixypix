@@ -13,6 +13,10 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Working in a large library is lighter: settings are no longer read anew all the time, a tag change no longer goes
   through all tags, and checking media folders reads only what lies in them, beside the window. A power failure can
   now cost the last changes, but the library stays intact.
+- Very large libraries open and answer quickly: tests with a million media change areas in about 0.15 s. Folders,
+  filters and tag lists are kept in the catalog and are there at once at the next start; after new media they follow
+  while you work. New indexes serve the media types, watch later and the common filters, and the catalog format
+  changes for them: the first start asks and makes a safety copy, as with every change of format.
 - The window stands at once and shows its outline while the library opens, with the logo for a moment above it.
   The change to the finished window is a soft fade. Cancelling is offered when a start takes longer than usual.
 - An encrypted library asks for its password first; the logo follows the answer. With a neutral title the start

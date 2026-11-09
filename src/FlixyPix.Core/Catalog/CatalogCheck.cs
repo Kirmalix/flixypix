@@ -405,6 +405,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
             int Execute(string sql, params (string, object)[] parameters) { using var command = Command(sql, transaction, parameters); return command.ExecuteNonQuery(); }
+            Execute("DELETE FROM browsing_lists"); // They may have been read from what is repaired now.
             if (kinds.Contains(CatalogFindingKind.OrphanRows))
                 repaired[CatalogFindingKind.OrphanRows] = new[] { "scenes", "bookmarks", "media_assets", "media_tags", "media_fingerprints", "play_history", "wall_marks" }
                     .Where(table => { using var exists = Command("SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name", transaction, ("$name", table)); return exists.ExecuteScalar() is not null; })
@@ -484,6 +485,7 @@ public sealed partial class CatalogRepository
         using var command = Command("""
             DELETE FROM media_query; DELETE FROM media_tags; UPDATE media SET document=document;
             DELETE FROM media_search; DELETE FROM media_search_queue; INSERT INTO media_search_queue SELECT rowid FROM media_query;
+            DELETE FROM browsing_lists;
             """, transaction);
         command.ExecuteNonQuery();
     }

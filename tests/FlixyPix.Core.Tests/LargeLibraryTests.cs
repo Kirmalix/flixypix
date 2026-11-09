@@ -41,6 +41,59 @@ public sealed class LargeLibraryTests : IDisposable
     }
 
     [Fact]
+    public void SettingsDoNotWaitForALongRead()
+    {
+        var known = repository.GetPreferences();
+        repository.SavePreferences(known with { ImageFavoriteMinimumRating = 3 });
+        var current = repository.GetPreferences();
+        var holding = new ManualResetEventSlim(); var release = new ManualResetEventSlim();
+        var gate = typeof(CatalogRepository).GetField("gate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(repository)!;
+        var holder = new Thread(() => { lock (gate) { holding.Set(); release.Wait(); } });
+        holder.Start(); holding.Wait();
+        try { Assert.Same(current, repository.GetPreferences()); }
+        finally { release.Set(); holder.Join(); }
+    }
+
+    [Fact]
+    public void ListsAreKnownOnlyWhileTheyAreCurrent()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
+        Assert.False(repository.BrowsingKnown);
+        _ = repository.GetFacets(); _ = repository.GetTagUsage(); _ = repository.GetNavigationCounts();
+        Assert.True(repository.BrowsingKnown);
+        repository.UpdateTags([one.Id], ["Berg"], []);
+        Assert.True(repository.BrowsingKnown);
+        repository.Upsert(Item("two.jpg"));
+        Assert.False(repository.BrowsingKnown);
+    }
+
+    [Fact]
+    public void SavingSettingsKeepsTheListsButNotTheSuggestions()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
+        var facets = repository.GetFacets(); _ = repository.GetTagUsage(); _ = repository.GetNavigationCounts();
+        repository.SavePreferences(repository.GetPreferences() with { ImageFavoriteMinimumRating = 3 });
+        Assert.True(repository.BrowsingKnown);
+        Assert.Same(facets, repository.GetFacets());
+        // A tag only the vocabulary knows is offered at once, because the suggestions were built anew.
+        repository.PrepareTagSuggestions();
+        repository.SavePreferences(repository.GetPreferences() with { TagVocabulary = [new TagVocabularyEntry("one", "People")] });
+        Assert.Contains(repository.SuggestTags([one.Id], 10), suggestion => suggestion.Tag == "one");
+    }
+
+    [Fact]
+    public void WatchLaterAnswersWithAndWithoutKeptMedia()
+    {
+        var later = repository.Upsert(Item("later.jpg") with { WatchLater = true });
+        var other = repository.Upsert(Item("other.jpg"));
+        Assert.Equal([later.Id], repository.QueryPage(new() { WatchLater = true }).Items.Select(i => i.Id));
+        Assert.Equal([later.Id], repository.QueryPage(new() { WatchLater = true, Sort = MediaSort.AddedAt, Descending = true }).Items.Select(i => i.Id));
+        Assert.Equal(2, repository.QueryPage(new() { WatchLater = true, KeepIds = [other.Id] }).TotalCount);
+        Assert.Equal(2, repository.QueryPage(new() { WatchLater = true, KeepIds = [other.Id] }).Items.Count);
+        Assert.Equal([other.Id], repository.QueryPage(new() { WatchLater = false }).Items.Select(i => i.Id));
+    }
+
+    [Fact]
     public void SettingsWrittenByAnotherConnectionAreSeen()
     {
         repository.SavePreferences(repository.GetPreferences() with { ImageFavoriteMinimumRating = 3 });
@@ -111,6 +164,110 @@ public sealed class LargeLibraryTests : IDisposable
         _ = repository.GetNavigationCounts();
         repository.ApplyImmediateEdit([one.Id], ImmediateEditFields.Rating, item => item with { ReviewState = ReviewState.NeedsAttention, Rating = 4 });
         Assert.Equal(Fresh().Navigation, repository.GetNavigationCounts());
+    }
+
+    [Fact]
+    public void ListsKeptForTheNextStartAreThoseReadAnew()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"], groups: new() { ["People"] = ["Anna"] }));
+        repository.Upsert(Item("two.mp3", MediaKind.Audio, groups: new() { ["people"] = ["Tom"] }));
+        Assert.False(repository.LoadBrowsingLists());
+        KeepLists();
+        using var again = new CatalogRepository(Database);
+        Assert.True(again.LoadBrowsingLists());
+        var kept = again.GetFacets();
+        Assert.Same(kept, again.GetFacets());
+        var fresh = Fresh();
+        Assert.Equal(fresh.Facets.MediaCount, kept.MediaCount);
+        Assert.Equal(fresh.Facets.Tags, kept.Tags);
+        Assert.Equal(fresh.Facets.Folders, kept.Folders);
+        Assert.Equal(fresh.Facets.FolderCounts, kept.FolderCounts);
+        Assert.Equal(fresh.Facets.TagCategoryCounts, kept.TagCategoryCounts);
+        Assert.Equal(fresh.Usage, again.GetTagUsage());
+        Assert.Equal(fresh.Navigation, again.GetNavigationCounts());
+        Assert.True(kept.CategorizedTags.ContainsKey("PEOPLE")); // Compared without regard to case, as when read anew.
+    }
+
+    private void KeepLists()
+    {
+        _ = repository.GetFacets(); _ = repository.GetTagUsage(); _ = repository.GetNavigationCounts();
+        repository.SaveBrowsingLists();
+    }
+
+    [Fact]
+    public void WhatDoesNotAffectTheListsKeepsThem()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
+        KeepLists();
+        repository.ApplyImmediateEdit([one.Id], ImmediateEditFields.Rating, item => item with { Rating = 4 });
+        repository.SaveViewState(new ViewState { View = "Video" });
+        repository.UpdatePlaybackPosition(one.Id, 12);
+        Assert.True(repository.LoadBrowsingLists());
+    }
+
+    [Fact]
+    public void EverythingThatAffectsTheListsMakesThemOld()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
+        void Check(Action change)
+        {
+            KeepLists();
+            Assert.True(repository.LoadBrowsingLists());
+            change();
+            Assert.False(repository.LoadBrowsingLists());
+        }
+        Check(() => repository.UpdateTags([one.Id], ["Berg"], []));
+        Check(() => repository.ApplyImmediateEdit([one.Id], ImmediateEditFields.Tags, item => item with { TagCategories = new() { ["People"] = ["Anna"] } }));
+        Check(() => repository.Upsert(repository.GetMedia(one.Id)! with { Category = "Natur" }));
+        Check(() => repository.Upsert(repository.GetMedia(one.Id)! with { ReviewState = ReviewState.Reviewed }));
+        Check(() => repository.Upsert(Item("two.jpg")));
+        Check(() => repository.Delete(one.Id));
+        // Another SQLite writer needs no knowledge of the lists.
+        var three = repository.Upsert(Item("three.jpg"));
+        KeepLists();
+        using (var sql = new SqliteConnection($"Data Source={Database};Pooling=False"))
+        {
+            sql.Open(); CatalogRepository.AddOrdinalCollation(sql);
+            using var command = sql.CreateCommand();
+            command.CommandText = "UPDATE media SET document=json_set(document,'$.path','X:/moved.jpg') WHERE id=$id"; command.Parameters.AddWithValue("$id", three.Id.ToString());
+            command.ExecuteNonQuery();
+        }
+        Assert.False(repository.LoadBrowsingLists());
+    }
+
+    [Fact]
+    public void DamagedKeptListsAreReadAnew()
+    {
+        repository.Upsert(Item("one.jpg"));
+        KeepLists();
+        using (var sql = new SqliteConnection($"Data Source={Database};Pooling=False"))
+        {
+            sql.Open();
+            using var command = sql.CreateCommand(); command.CommandText = "UPDATE browsing_lists SET document='{not json'"; command.ExecuteNonQuery();
+        }
+        Assert.False(repository.LoadBrowsingLists());
+        Assert.Equal(1, repository.GetFacets().MediaCount);
+    }
+
+    [Theory]
+    [InlineData(MediaSort.Title, false)] [InlineData(MediaSort.Title, true)] [InlineData(MediaSort.AddedAt, true)] [InlineData(MediaSort.Rating, true)]
+    [InlineData(MediaSort.Duration, false)] [InlineData(MediaSort.FileDate, true)] [InlineData(MediaSort.OCount, true)] [InlineData(MediaSort.Bitrate, true)]
+    public void PagesKeepTheOrderInEveryFilter(MediaSort sort, bool descending)
+    {
+        for (var i = 0; i < 40; i++)
+            repository.Upsert(new MediaItem { Path = Path.Combine(directory, "media", $"{i}.jpg"), Title = $"t{i % 7}", Kind = i % 3 == 0 ? MediaKind.Video : MediaKind.Image, Rating = i % 11, DurationSeconds = i % 5, WatchLater = i % 4 == 0, IsFavorite = i % 9 == 0, OCount = i % 3, AddedAt = DateTimeOffset.UtcNow.AddHours(-(i % 6)) });
+        foreach (var filter in new MediaQuery[] { new(), new() { Kind = MediaKind.Video }, new() { Kind = MediaKind.Image }, new() { WatchLater = true }, new() { IsFavorite = true }, new() { MinimumRating = 6 } })
+        {
+            var query = filter with { Sort = sort, Descending = descending };
+            var whole = repository.QueryPage(query with { Limit = 1000 });
+            var pieces = repository.QueryPage(query with { Limit = 5 }).Items.Concat(repository.QueryItems(query with { Limit = 995, Offset = 5 }));
+            Assert.Equal(whole.Items.Select(i => i.Id), pieces.Select(i => i.Id));
+            Assert.Equal(whole.TotalCount, repository.CountMedia(query));
+            Assert.Equal(whole.Items.Select(i => i.Id).Order(), repository.Search().Where(i => Matches(i, filter)).Select(i => i.Id).Order());
+        }
+        bool Matches(MediaItem item, MediaQuery filter) =>
+            (filter.Kind is null || item.Kind == filter.Kind) && (filter.WatchLater is null || item.WatchLater == filter.WatchLater) && item.Rating >= filter.MinimumRating
+            && (filter.IsFavorite is null || repository.IsFavorite(item));
     }
 
     [Fact]

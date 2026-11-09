@@ -174,7 +174,16 @@ public sealed partial class CatalogRepository
                 video_codec TEXT, frame_rate REAL, bit_rate REAL, hdr REAL, versions REAL, lines REAL, review_state INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS media_tags(
                 media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE, tag TEXT NOT NULL, category TEXT NOT NULL DEFAULT '');
-            CREATE INDEX IF NOT EXISTS media_query_title_page ON media_query(title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
+            DROP INDEX IF EXISTS media_query_title_page;
+            CREATE INDEX IF NOT EXISTS media_query_kind ON media_query(kind);
+            -- The usual order with the common filters in it: a filter walks this index alone instead of jumping through the table for
+            -- every medium. With a kind, the place in the order is found at once; a few marked media need no walk at all.
+            CREATE INDEX IF NOT EXISTS media_query_title_filters ON media_query(title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id,kind,rating,pinned,watch_later);
+            CREATE INDEX IF NOT EXISTS media_query_kind_title ON media_query(kind,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
+            CREATE INDEX IF NOT EXISTS media_query_kind_imported ON media_query(kind,imported,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
+            CREATE INDEX IF NOT EXISTS media_query_later ON media_query(title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id) WHERE watch_later=1;
+            -- Small, for counting: the numbers of the sidebar and of filters do not read titles and paths along the way.
+            CREATE INDEX IF NOT EXISTS media_query_filter ON media_query(review_state,rating,kind,pinned,watch_later);
             CREATE INDEX IF NOT EXISTS media_query_path_page ON media_query(path COLLATE EFP_ORDINAL,title COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_rating_page ON media_query(rating,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_duration_page ON media_query(duration,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
@@ -184,7 +193,6 @@ public sealed partial class CatalogRepository
             CREATE INDEX IF NOT EXISTS media_query_started ON media_query(progress) WHERE progress > 0;
             CREATE INDEX IF NOT EXISTS media_query_last_played ON media_query(last_played) WHERE last_played IS NOT NULL;
             CREATE INDEX IF NOT EXISTS media_query_review ON media_query(review_state,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
-            CREATE INDEX IF NOT EXISTS media_query_kind ON media_query(kind);
             CREATE INDEX IF NOT EXISTS media_query_o_page ON media_query(o_count,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_lines_page ON media_query(lines,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
             CREATE INDEX IF NOT EXISTS media_query_bit_rate_page ON media_query(bit_rate,title COLLATE EFP_ORDINAL,path COLLATE EFP_ORDINAL,id);
@@ -239,7 +247,8 @@ public sealed partial class CatalogRepository
         if (query.MinimumRating != 0) conditions.Add("q.rating >= " + Parameter(query.MinimumRating));
         if (query.ReviewStates == null || query.ReviewStates.Any(state => !Enum.IsDefined(state))) throw new ArgumentException("Invalid review-state filter.");
         if (query.ReviewStates.Count > 0) conditions.Add("q.review_state IN(" + string.Join(",", query.ReviewStates.Distinct().Select(state => Parameter((int)state))) + ")");
-        if (query.WatchLater is { } later) conditions.Add("q.watch_later=" + Parameter(later ? 1 : 0));
+        // Spelled out: only then the database sees that the index of marked media fits.
+        if (query.WatchLater is { } later) conditions.Add(later ? "q.watch_later=1" : "q.watch_later=0");
         if (query.Kind is { } kind)
         {
             if (!Enum.IsDefined(kind)) throw new ArgumentException("Invalid media kind.", nameof(query));

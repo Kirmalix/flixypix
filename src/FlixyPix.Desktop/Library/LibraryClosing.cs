@@ -23,6 +23,8 @@ public partial class MainWindow
             await StopPlayer();
             await draining;
             await _keyboardNavigationGate.WaitAsync(); _keyboardNavigationGate.Release();
+            try { _repository.SaveBrowsingLists(); }
+            catch (Exception error) when (error is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException) { ErrorLog.Write("Keeping the lists", error); } // Costs only the next start some time.
             _repository.Dispose(); _instance.Dispose();
             // Nothing of this window may run on once it is gone; switching libraries keeps the process.
             _viewSaveTimer.Stop(); _searchTimer.Stop(); AppShell.Hiding -= PauseOnHide; AppShell.Muting -= MuteOnHide;

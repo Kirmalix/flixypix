@@ -85,7 +85,7 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
         // A deep page must not pull 100000 complete records through the media table.
         var sql = transaction is null
             ? $"SELECT m.document FROM media_query q JOIN media m ON m.id=q.id {where} ORDER BY {order}"
-            : $"SELECT m.document FROM (SELECT q.* FROM media_query q {where} ORDER BY {order} LIMIT $limit OFFSET $offset) q JOIN media m ON m.id=q.id ORDER BY {order}";
+            : $"SELECT m.document FROM (SELECT {OrderColumns(query)} FROM media_query q {(query.WatchLater == true && query.KeepIds.Count == 0 ? "INDEXED BY media_query_later " : "")}{where} ORDER BY {order} LIMIT $limit OFFSET $offset) q JOIN media m ON m.id=q.id ORDER BY {order}";
         using var command = database.Command(sql, transaction, parameters!);
         if (transaction is not null) { command.Parameters.AddWithValue("$limit", query.Limit); command.Parameters.AddWithValue("$offset", query.Offset); }
 
@@ -125,6 +125,14 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
         commit(transaction); return (new(items, count), offset);
 
     });
+
+    /// <summary>What the order needs, nothing more: an index holding it answers without touching the table.</summary>
+    private static string OrderColumns(MediaQuery query) => "q.id,q.title,q.path" + query.Sort switch
+    {
+        MediaSort.AddedAt => ",q.imported", MediaSort.Rating => ",q.rating", MediaSort.Duration => ",q.duration", MediaSort.FileSize => ",q.file_size",
+        MediaSort.FileDate => ",q.file_date", MediaSort.OCount => ",q.o_count", MediaSort.Resolution => ",q.lines", MediaSort.Bitrate => ",q.bit_rate",
+        _ => "",
+    };
 
     internal static string OrderSql(MediaQuery query)
     {
