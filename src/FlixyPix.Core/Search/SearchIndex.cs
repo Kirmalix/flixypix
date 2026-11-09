@@ -144,8 +144,9 @@ public sealed partial class CatalogRepository
     // Transaction that indexed for the quick search, with total_changes() before its first portion.
     private (SqliteTransaction Transaction, long ChangesBefore)? indexing;
 
-    /// <summary>Commits a transaction whose only writes may be quick-search indexing. Indexing changes no media, so facets and
-    /// tag statistics that were current stay current. FTS5 writes its pending data during the commit, hence the count after it.</summary>
+    /// <summary>Commits a transaction whose only writes may be quick-search indexing. Indexing changes no media, so the lists and
+    /// tag statistics that were current stay current; otherwise every edit would make a large library read its lists anew
+    /// once its rows are indexed. FTS5 writes its pending data during the commit, hence the count after it.</summary>
     private void CommitAfterIndexing(SqliteTransaction transaction)
     {
         transaction.Commit();
@@ -153,23 +154,41 @@ public sealed partial class CatalogRepository
         indexing = null;
         using var changes = Command("SELECT total_changes()", null); var after = Convert.ToInt64(changes.ExecuteScalar());
         facetsCache.PreserveAfterIndexing(run.ChangesBefore,after);
-        if (cachedTagStatistics is not null && cachedTagStatisticsStamp.Changes == run.ChangesBefore) cachedTagStatisticsStamp = cachedTagStatisticsStamp with { Changes = after };
+        (long, long) Moved((long Changes, long DataVersion) stamp) => stamp.Changes == run.ChangesBefore ? stamp with { Changes = after } : stamp;
+        if (cachedTagStatistics is not null) cachedTagStatisticsStamp = Moved(cachedTagStatisticsStamp);
+        if (cachedTagUsage is not null) cachedTagUsageStamp = Moved(cachedTagUsageStamp);
+        if (cachedNavigationCounts is not null) cachedNavigationCountsStamp = Moved(cachedNavigationCountsStamp);
+        if (asideReadStamp is { } aside) asideReadStamp = Moved(aside);
     }
 
     /// <summary>Index condition for the quick-search terms of three or more characters, or null when the row-by-row comparison
     /// should answer: outside a transaction, while rows still wait to be indexed, or for very common terms.</summary>
     private string? SearchIndexCondition(IReadOnlyList<string> terms, SqliteTransaction? transaction, Func<object, string> parameter)
     {
-        if (transaction is null || terms.Count == 0) return null;
-        SyncSearchIndex(transaction, SearchIndexQueryBatch);
-        using (var waiting = Command("SELECT EXISTS(SELECT 1 FROM media_search_queue)", transaction))
-            if (Convert.ToInt64(waiting.ExecuteScalar()) != 0) return null;
+        if (transaction is null || terms.Count == 0 || !SearchIndexCurrent(transaction)) return null;
         var patterns = terms.Select(SearchPattern).ToArray();
         var match = string.Join(" AND ", patterns.Select((_, i) => "text GLOB $p" + i));
         using (var probe = Command($"SELECT count(*) FROM (SELECT 1 FROM media_search WHERE {match} LIMIT {SearchIndexBroadLimit + 1})", transaction,
             patterns.Select((p, i) => ("$p" + i, (object)p)).ToArray()))
             if (Convert.ToInt64(probe.ExecuteScalar()) > SearchIndexBroadLimit) return null;
         return "q.rowid IN (SELECT rowid FROM media_search WHERE " + string.Join(" AND ", patterns.Select(p => "text GLOB " + parameter(p))) + ")";
+    }
+
+    /// <summary>Whether the index holds every row, after indexing a small backlog in this transaction.</summary>
+    private bool SearchIndexCurrent(SqliteTransaction transaction)
+    {
+        SyncSearchIndex(transaction, SearchIndexQueryBatch);
+        using var waiting = Command("SELECT EXISTS(SELECT 1 FROM media_search_queue)", transaction);
+        return Convert.ToInt64(waiting.ExecuteScalar()) == 0;
+    }
+
+    /// <summary>Counts a search of text alone in the index: it holds one folded text per medium and nothing else, so SQLite
+    /// compares far fewer pages than the rows hold, without a call into .NET per row. On a cold disk a search for one or two
+    /// letters is counted in a quarter of the time. Null when the index is not current.</summary>
+    private string? TextOnlyCountSql(IReadOnlyList<string> terms, SqliteTransaction? transaction, Func<object, string> parameter)
+    {
+        if (transaction is null || terms.Count == 0 || !SearchIndexCurrent(transaction)) return null;
+        return "SELECT count(*) FROM media_search WHERE " + string.Join(" AND ", terms.Select(term => "text GLOB " + parameter(SearchPattern(term))));
     }
 
     /// <summary>GLOB pattern for an exact substring of folded text; GLOB metacharacters become one-character classes.</summary>
