@@ -199,7 +199,7 @@ public partial class MainWindow
             if (File.Exists(CatalogEncryption.KeyFilePath(copy))) File.Copy(CatalogEncryption.KeyFilePath(copy), CatalogEncryption.KeyFilePath(catalog));
             window.AddLibrary(directory, name);
             if (open && Message.Show(window, T("The copy is now a library of its own, “{0}”. The open library stays unchanged.\n\nOpen it now?", name),
-             T("Restore"), MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) window.Choose(directory);
+             T("Restore"), MessageBoxButton.YesNo, MessageBoxImage.Question, yes: T("Open"), no: T("Later")) == MessageBoxResult.Yes) window.Choose(directory);
             else window.Report(T("“{0}” is now listed under Libraries.", name));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)

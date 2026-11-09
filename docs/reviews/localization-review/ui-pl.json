@@ -91,11 +91,6 @@
       "status": "unchanged",
       "digest": "eae2596cd5c278f45a97e7f3c5aa5540ea9a29579c6fee75b2bec6ff2fca9093"
     },
-    " · cancelled": {
-      "status": "corrected",
-      "digest": "324642df4c6648289b2f186a4a350e7a8623685c94c7e9965fd1aa6eb9399c71",
-      "previous_digest": "bb23e74b4c402db1ff067b5f442ee2aa566c0b85e2f55abda065c8660b6372b8"
-    },
     " · completed": {
       "status": "unchanged",
       "digest": "8aa04f2fdab1b30b53b998e500942bec1ca67b0b4eebff96009f8e3501acc98d"
@@ -897,11 +892,6 @@
     "Also assigned to: {0}": {
       "status": "unchanged",
       "digest": "1e66eb22ece5e3b83bc69643936b09d378d2f78a9f1e9891b7f4797e2c4eaeb1"
-    },
-    "Also copy the external image, video and audio files into the backup?\n\nYes: catalog, stored artwork, previews and available media.\nNo: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
-      "status": "corrected",
-      "digest": "2326c8c43d3b5758bb6a98c6ad8e736af422c42ebc219faab15fa179eb8a71ce",
-      "previous_digest": "50cc0580eda9d94f743d4c7489775337d305df6bd3f6101be58e8669d6931f26"
     },
     "Also back up the media files": {
       "status": "unchanged",
@@ -12673,10 +12663,6 @@
       "status": "unchanged",
       "digest": "d3f3e3ec7c7c61fb8c775b76443d60ad53675eedac753a80cd15ab079868ef0b"
     },
-    "Smart collection saved · ": {
-      "status": "unchanged",
-      "digest": "83066b31103be730fde8987742803396c7706619888e75afb4b16a279461e4c3"
-    },
     "Smart collection “{0}” saved": {
       "status": "unchanged",
       "digest": "ef493e4c88eea4c61aae7fb9001ba0b2d05dc9169a849eb7ec5ee97ea72abaaa"
@@ -14789,6 +14775,51 @@
     "Welcome back": {
       "status": "unchanged",
       "digest": "ef42335163e2fafc53c4c81c975b6a7b139ae897f1da15e7d6a8239c911c174a"
+    },
+    "Also copy the external image, video and audio files into the backup?\n\nWith media: catalog, stored artwork, previews and available media.\nWithout media: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
+      "status": "corrected",
+      "digest": "a7331f6e85d047e7680b677d7f1e03e7af8903d85923a0c55cb68d9f48b4c875",
+      "previous_digest": "d9ea77913c083d64ddc28e3c78109b674f9ddf61cde50472ca9d4622613d70af"
+    },
+    "Discard": {
+      "status": "corrected",
+      "digest": "1a55f4c375d639d4e4318870298253f695d9582874397313d2da1f64f0a52093",
+      "previous_digest": "186e1895446f0f4ff6409517ce704b9dbac605e92f99a121a071f3823efd336f"
+    },
+    "Reload": {
+      "status": "corrected",
+      "digest": "6f0f3f92d985d7cfad586d5a15009d3edfea8831bf94a95faba6a6b45e3255df",
+      "previous_digest": "4d94886a1ebfcef3d9a412802ab4e65480d019dcb2c0975242acecf3ba15702e"
+    },
+    "Replace": {
+      "status": "corrected",
+      "digest": "94d37312e94763055ba8d142fea72b5b1a91e789d679328b5de98743807646ef",
+      "previous_digest": "e2c8f00938cc494efa5b195644c44809a609d213ba06393cef3bfb86641ab7b6"
+    },
+    "Restart now": {
+      "status": "corrected",
+      "digest": "f7a02bc41e22f45f666125ad000f99d8541dd979761fb8788e4ce7cd5b0292d8",
+      "previous_digest": "e7c876f1bc11348efb2da6b7b5bf045d2f193d13bb11dac05bfbcf0a1dfdeda7"
+    },
+    "Start import": {
+      "status": "corrected",
+      "digest": "8edc39c37827cd98a83c55401c137d0cea6c50b8880737949829fcaea7a3e268",
+      "previous_digest": "ece77d5f3c373047e1c8f317ad0c546cc58c7165e4ab931084dbd105bdd541de"
+    },
+    "With media": {
+      "status": "corrected",
+      "digest": "f3a4c1e0f7f3baf593a445739408e5fd18ded4a5f0f96456166b334c9667bae4",
+      "previous_digest": "4821817d80e2f0cc7daf84a78a29a40cb85cc9dec5b4837e1eff9cb76fb14444"
+    },
+    "Without media": {
+      "status": "corrected",
+      "digest": "dc1304267cc67e6ca66076770e5b06a1f8a6ac88c2d9985e123d552031297556",
+      "previous_digest": "579cbcfe2fe03afe27b0400a29bad7ae942ff36abd79c809629a237f4fac6ff3"
+    },
+    "Write": {
+      "status": "corrected",
+      "digest": "803d1f7123f86ea34ff83a5e08633521d9d89bb3bb08c928915713b6701babb8",
+      "previous_digest": "fb87b9e659ecc2b8f7adfb14cfb858bf395a69ffcf3bace6d5fa71789b1ad8b9"
     }
   }
 }

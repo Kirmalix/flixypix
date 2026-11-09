@@ -46,7 +46,7 @@ public partial class MainWindow
    var (ids, scope) = await MetadataScopeAsync(selection, token);
    if (ids.Count == 0) return;
    if (Message.Show(this, T("Write title, description, rating and tags of {0} into XMP sidecars next to the media files?\n\nExisting sidecars are added to, not replaced. The media files themselves stay unchanged.", scope),
-    T("Write XMP sidecars"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    T("Write XMP sidecars"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Write")) != MessageBoxResult.Yes) return;
    var result = await Task.Run(() => _repository.ExportSidecars(ids, token), token);
    ShowSidecarResult(result);
   }, refresh: false);

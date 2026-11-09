@@ -17,7 +17,7 @@ public partial class MainWindow
  internal void OfferProfileImport(bool initial = false)
  {
   if (AppStorage.Current.Mode != StorageMode.Portable || _operation != null) return;
-  if (initial && Message.Show(this,T("Copy existing profile data into this portable edition? The originals are kept."),T("Data and storage"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (initial && Message.Show(this,T("Copy existing profile data into this portable edition? The originals are kept."),T("Data and storage"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No, yes: T("Copy")) != MessageBoxResult.Yes) return;
   try
   {
    var profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FlixyPix");

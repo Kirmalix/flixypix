@@ -141,7 +141,7 @@ public partial class MainWindow
    if (kinds.Count == 0) return;
    var lines = string.Join("\n", report.Findings.Where(f => kinds.Contains(f.Kind)).Select(f => "• " + FindingTitle(f.Kind) + " (" + f.Count.ToString("N0") + ")"));
    if (!confirmed && Message.Show(window, T("The following will be changed:\n\n{0}\n\nFlixyPix first saves a copy of the catalog in the backup folder.", lines),
-    T("Fix problems"), MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.Cancel) != MessageBoxResult.OK) return;
+    T("Fix problems"), MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.Cancel, yes: T("Fix problems")) != MessageBoxResult.OK) return;
    var repository = _repository; var backups = BackupFolder; CatalogRepairResult? result = null;
    await window.RunHereAsync(async () =>
    {

@@ -374,11 +374,12 @@ public partial class MainWindow : Window
         var started = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            await action(cancellation.Token); Status.Text = title + T(" · completed");
+            await action(cancellation.Token);
             // A longer run may have been left alone; a notification tells when it is done.
-            if (started.Elapsed > TimeSpan.FromSeconds(2)) ShowToast(title + T(" · completed"));
+            if (started.Elapsed > TimeSpan.FromSeconds(2)) { Status.Text = T("Ready · drop files here or import a folder"); ShowToast(title + T(" · completed")); }
+            else Status.Text = title + T(" · completed");
         }
-        catch (OperationCanceledException) { Status.Text = T("Operation cancelled. Items already imported stay in the catalog."); ShowToast(title + T(" · cancelled"), MessageBoxImage.Warning); }
+        catch (OperationCanceledException) { Status.Text = T("Ready · drop files here or import a folder"); ShowToast(T("Operation cancelled. Items already imported stay in the catalog."), MessageBoxImage.Warning); }
         catch (Exception ex) { Status.Text = T("Operation failed"); ErrorLog.Write("Vorgang „" + title + "“", ex); Message.Show(this, ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning); }
         finally { CompleteLibraryOperation(); Progress.Visibility = CancelButton.Visibility = Visibility.Collapsed; if (refresh) await RefreshAsync(); }
     });
@@ -554,7 +555,7 @@ public partial class MainWindow : Window
     }
     internal void OfferLanguageRestart()
     {
-        if (_persistPreferences && Message.Show(this, T("The new language applies after FlixyPix restarts. Restart now?"), T("Language"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+        if (_persistPreferences && Message.Show(this, T("The new language applies after FlixyPix restarts. Restart now?"), T("Language"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes, yes: T("Restart now"), no: T("Later")) == MessageBoxResult.Yes)
         { _restartAfterClose = true; Close(); }
     }
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)

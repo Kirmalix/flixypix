@@ -2567,11 +2567,6 @@
       "digest": "2411b88dd1b429de44e040141861f4a1dcf6188dd7875f4025fba48e55403eac",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    " · cancelled": {
-      "status": "unchanged",
-      "digest": "fd3d4a93bf2cafe93e6d2383bf36bb1d00eba0b49638869ad34605016b25762a",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Operation failed": {
       "status": "unchanged",
       "digest": "eb5a9c1d2cb7a58b7fa5206fa03c432ceca5e27cf1c678915e630233ba038c63",
@@ -2870,11 +2865,6 @@
     "FlixyPix backup|*.flixypixbackup": {
       "status": "unchanged",
       "digest": "1559f5d49f135642be4821328c830a6a6503f811ab1a6d822b1605d4bba71a36",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Also copy the external image, video and audio files into the backup?\n\nYes: catalog, stored artwork, previews and available media.\nNo: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
-      "status": "unchanged",
-      "digest": "2d6c3263646f0fcca84d9e38d65dc933b7939b18b69abb655b55e1355b92e9f4",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Back up media too": {
@@ -13557,10 +13547,6 @@
       "status": "unchanged",
       "digest": "4da32a1b8316753d8f6e3cdd6186ec033e1b7fa5c9a429f9e64569c934b0bbf8"
     },
-    "Smart collection saved · ": {
-      "status": "unchanged",
-      "digest": "4c30063cbd7cf985d03c4c1f3b3dc7ad3564b7c02d908d6f0b4e953e7b7dbdfa"
-    },
     "Smart collection “{0}” saved": {
       "status": "unchanged",
       "digest": "eefe40f3059509730a0f234bff1bce43ede6e84a45ff38d173ae2540dd7bdac5"
@@ -15671,6 +15657,51 @@
     "Welcome back": {
       "status": "unchanged",
       "digest": "44fbefc54ec71a30d81ff37a2286a1ec528a8933e1f71b961849212ee9e8c4fa"
+    },
+    "Also copy the external image, video and audio files into the backup?\n\nWith media: catalog, stored artwork, previews and available media.\nWithout media: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
+      "status": "corrected",
+      "digest": "63f5a18da15ea8b25962e41d9a5169556885618eee8ba709ce0f191e676f61c2",
+      "previous_digest": "d9ea77913c083d64ddc28e3c78109b674f9ddf61cde50472ca9d4622613d70af"
+    },
+    "Discard": {
+      "status": "corrected",
+      "digest": "dc72f8e0a3497646e6ee7114c23948fc1549311aa3e1b4438b77111ccd24f3e7",
+      "previous_digest": "186e1895446f0f4ff6409517ce704b9dbac605e92f99a121a071f3823efd336f"
+    },
+    "Reload": {
+      "status": "corrected",
+      "digest": "8a3ada8bcf7568a5f2fe80dad520cc96c177ad6e2e340edf0460dc75d1a05120",
+      "previous_digest": "4d94886a1ebfcef3d9a412802ab4e65480d019dcb2c0975242acecf3ba15702e"
+    },
+    "Replace": {
+      "status": "corrected",
+      "digest": "24e2f9670547b77a87186262f88c732079fd1443eee15282f8b2e043888eb9bf",
+      "previous_digest": "e2c8f00938cc494efa5b195644c44809a609d213ba06393cef3bfb86641ab7b6"
+    },
+    "Restart now": {
+      "status": "corrected",
+      "digest": "b5a23e24154a4e095822188bb390e06ccbe365f935d939a076906cd7ccbb70c5",
+      "previous_digest": "e7c876f1bc11348efb2da6b7b5bf045d2f193d13bb11dac05bfbcf0a1dfdeda7"
+    },
+    "Start import": {
+      "status": "corrected",
+      "digest": "0da0425946edc16bf2ccc3caa3b1f4a05bfa7dc578c7bd4ce8e16d60d44bffd6",
+      "previous_digest": "ece77d5f3c373047e1c8f317ad0c546cc58c7165e4ab931084dbd105bdd541de"
+    },
+    "With media": {
+      "status": "corrected",
+      "digest": "0b2efc4089bea74877630f8d1840ce3fb04361fe0e3a845dd96d6f29129e89c4",
+      "previous_digest": "4821817d80e2f0cc7daf84a78a29a40cb85cc9dec5b4837e1eff9cb76fb14444"
+    },
+    "Without media": {
+      "status": "corrected",
+      "digest": "fd38ab2b483d4b1a493f91fae66118278f290e1c44e27417d677892d4cea6cd8",
+      "previous_digest": "579cbcfe2fe03afe27b0400a29bad7ae942ff36abd79c809629a237f4fac6ff3"
+    },
+    "Write": {
+      "status": "corrected",
+      "digest": "3353e39cd3346cc2a396508f3786818bfcdde9e91b19b53aba24eff11a699d06",
+      "previous_digest": "fb87b9e659ecc2b8f7adfb14cfb858bf395a69ffcf3bace6d5fa71789b1ad8b9"
     }
   }
 }

@@ -95,10 +95,6 @@
       "digest": "1104dce13251d2ec2c62c8e33b8cf534935001c18840f8b470558ef847dcf6e1",
       "previous_digest": "713c0f0548990d6e6fb5e4bbf4a2ae338bc126d501857c498d044b1a7403f81e"
     },
-    " · cancelled": {
-      "status": "unchanged",
-      "digest": "e2663f5431add3e8eaa35cd7c327406d1dc2b3032fc59ec6a799ecc692cc2bc8"
-    },
     " · completed": {
       "status": "unchanged",
       "digest": "25982b71c12fa15166f84c0315b3035038d412b73059d9319b31a27a59059933"
@@ -921,11 +917,6 @@
     "Also assigned to: {0}": {
       "status": "unchanged",
       "digest": "6a2e46fc1151e7c599561ca9f817a0a9bf3afd89fa2eee31529227175e8919be"
-    },
-    "Also copy the external image, video and audio files into the backup?\n\nYes: catalog, stored artwork, previews and available media.\nNo: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
-      "status": "corrected",
-      "digest": "1e2fa0d8054b01cd4ff53e3da7098a1ae31432b93d49333adb97345c7972895f",
-      "previous_digest": "414bfd85ac483525b1f25a5f396051058babc6d1a35713bd1957511fe32b5650"
     },
     "Also back up the media files": {
       "status": "unchanged",
@@ -12743,10 +12734,6 @@
       "status": "unchanged",
       "digest": "e051296f27462a9675c952b0729bbee835b782eed27ff4646c26c25d082211b6"
     },
-    "Smart collection saved · ": {
-      "status": "unchanged",
-      "digest": "fe0571dd3c628487438ee53d2d45bebae4c880fc96ff6f9b4ceeda7992616541"
-    },
     "Smart collection “{0}” saved": {
       "status": "unchanged",
       "digest": "8bde29f49c9ccabdf6df8c374849dbb89504c4239b4e90374523d02f5becbcf7"
@@ -14859,6 +14846,51 @@
     "Welcome back": {
       "status": "unchanged",
       "digest": "fe6ebe52aa1fb15b3b776e9c9a53f5346ed0b61709475a789128740a4eccc2bc"
+    },
+    "Also copy the external image, video and audio files into the backup?\n\nWith media: catalog, stored artwork, previews and available media.\nWithout media: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
+      "status": "corrected",
+      "digest": "95f5c513ecd8bd69de915c35fb214599e03c4f94866fdafa9bc494adec51c148",
+      "previous_digest": "d9ea77913c083d64ddc28e3c78109b674f9ddf61cde50472ca9d4622613d70af"
+    },
+    "Discard": {
+      "status": "corrected",
+      "digest": "1f68165e46664d8384f0665755fae8c69e34cdad41e2dd29863f656bc9b51471",
+      "previous_digest": "186e1895446f0f4ff6409517ce704b9dbac605e92f99a121a071f3823efd336f"
+    },
+    "Reload": {
+      "status": "corrected",
+      "digest": "e43b83a2202fe9bc2330030f05eab37f4d63060f31126e2a4720092cef61055f",
+      "previous_digest": "4d94886a1ebfcef3d9a412802ab4e65480d019dcb2c0975242acecf3ba15702e"
+    },
+    "Replace": {
+      "status": "corrected",
+      "digest": "be7b16e32756a234f48aae8a3c60c62d13dff4e9c15f97533b45e175902b59dc",
+      "previous_digest": "e2c8f00938cc494efa5b195644c44809a609d213ba06393cef3bfb86641ab7b6"
+    },
+    "Restart now": {
+      "status": "corrected",
+      "digest": "4e40dde4603cbbfba3f43e758370be8f5aea56628ce3277aa090d685bd4d6bd8",
+      "previous_digest": "e7c876f1bc11348efb2da6b7b5bf045d2f193d13bb11dac05bfbcf0a1dfdeda7"
+    },
+    "Start import": {
+      "status": "corrected",
+      "digest": "0da0425946edc16bf2ccc3caa3b1f4a05bfa7dc578c7bd4ce8e16d60d44bffd6",
+      "previous_digest": "ece77d5f3c373047e1c8f317ad0c546cc58c7165e4ab931084dbd105bdd541de"
+    },
+    "With media": {
+      "status": "corrected",
+      "digest": "feb45adada32189d27fc3dc71c86908499f0b11be8e2d15ed2724e8c51121a7f",
+      "previous_digest": "4821817d80e2f0cc7daf84a78a29a40cb85cc9dec5b4837e1eff9cb76fb14444"
+    },
+    "Without media": {
+      "status": "corrected",
+      "digest": "6a54bb89b09ccff67b65de8d6666e27f09910f10d39c493cc9aa2d67c9b565d9",
+      "previous_digest": "579cbcfe2fe03afe27b0400a29bad7ae942ff36abd79c809629a237f4fac6ff3"
+    },
+    "Write": {
+      "status": "corrected",
+      "digest": "4c083c7eea223df2bb804f92bc83733b87c9049b380af30eb2747bbed9dabd95",
+      "previous_digest": "fb87b9e659ecc2b8f7adfb14cfb858bf395a69ffcf3bace6d5fa71789b1ad8b9"
     }
   }
 }

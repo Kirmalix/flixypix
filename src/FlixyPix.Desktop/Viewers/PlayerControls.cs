@@ -25,7 +25,7 @@ internal sealed partial class VideoPlayerWindow
  private readonly TextBlock clockTotal = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), FontSize = 12 };
  private readonly Button fullscreenButton = Symbol("", T("Full screen (F11)"));
  private readonly Popup overlay = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, StaysOpen = true };
- private readonly Border overlayFrame = new() { CornerRadius = new CornerRadius(10), Padding = new Thickness(4, 6, 4, 2), Margin = new Thickness(24, 0, 24, 24) };
+ private readonly Border overlayFrame = new() { CornerRadius = new CornerRadius(8), Padding = new Thickness(4, 6, 4, 2), Margin = new Thickness(24, 0, 24, 24) };
  private readonly Popup flash = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, IsHitTestVisible = false };
  private readonly TextBlock flashGlyph = new() { FontFamily = SettingsUi.Icons, FontSize = 46, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
  private readonly Popup seekPreview = new() { AllowsTransparency = true, Placement = PlacementMode.Relative, IsHitTestVisible = false };

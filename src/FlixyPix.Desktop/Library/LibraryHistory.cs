@@ -71,7 +71,7 @@ public partial class MainWindow
     private void ClearMediumHistory(object sender, RoutedEventArgs e)
     {
         if (Selected is not { } item || SelectedMedia.Count > 1) return;
-        if (Message.Show(this, T("Delete the playback history of “{0}”? Play count and O counter stay.", item.Title), T("Delete history"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (Message.Show(this, T("Delete the playback history of “{0}”? Play count and O counter stay.", item.Title), T("Delete history"), MessageBoxButton.YesNo, MessageBoxImage.Question, yes: T("Delete")) != MessageBoxResult.Yes) return;
         var removed = _repository.ClearHistory(item.Id);
         Status.Text = Tn(removed, "1 history entry deleted", "{0:N0} history entries deleted");
         ShowHistory(_repository.GetMedia(item.Id));

@@ -17,7 +17,7 @@
             </Grid.RowDefinitions>
             <Border x:Name="HeaderBand" Background="{DynamicResource SidebarBackground}"
                     BorderBrush="{DynamicResource DividerSoft}" BorderThickness="1"
-                    CornerRadius="10" Padding="4" Margin="0,0,0,20"
+                    CornerRadius="8" Padding="4" Margin="0,0,0,20"
                     HorizontalAlignment="Left">
               <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                             CanContentScroll="False" Focusable="False">

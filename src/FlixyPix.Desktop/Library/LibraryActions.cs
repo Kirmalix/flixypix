@@ -26,7 +26,7 @@ public partial class MainWindow
   if (searches.Count == 0) { Message.Show(this, T("No searches have been saved yet.")); return; }
   Menu(searches.Select(search => (search.Name, (Action)(() => { if (Message.Show(this, T("Delete saved search “{0}”?", search.Name),
    T("Delete search"), MessageBoxButton.YesNo, MessageBoxImage.Question,
-   MessageBoxResult.No) == MessageBoxResult.Yes) _repository.DeleteSavedSearch(search.Id); }))).ToArray());
+   MessageBoxResult.No, yes: T("Delete")) == MessageBoxResult.Yes) _repository.DeleteSavedSearch(search.Id); }))).ToArray());
  }
  private void NewTagRule() => EditRule(new FilenameTagRule());
  private void EditTagRule()
@@ -52,7 +52,7 @@ public partial class MainWindow
   if (rules.Count == 0) { Message.Show(this, T("No rules have been saved yet.")); return; }
   Menu(rules.Select(rule => (rule.Name, (Action)(() => { if (Message.Show(this, T("Delete rule “{0}”? Tags already assigned will be kept.",
    rule.Name), T("Delete rule"), MessageBoxButton.YesNo, MessageBoxImage.Question,
-   MessageBoxResult.No) == MessageBoxResult.Yes) _repository.DeleteFilenameTagRule(rule.Id); }))).ToArray());
+   MessageBoxResult.No, yes: T("Delete")) == MessageBoxResult.Yes) _repository.DeleteFilenameTagRule(rule.Id); }))).ToArray());
  }
  private async void ApplyTagRules()
  {

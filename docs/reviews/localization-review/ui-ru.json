@@ -91,11 +91,6 @@
       "status": "unchanged",
       "digest": "72d6154fd2d2e55fd7b13e791baae46ec840b18fbb50ad47e34509848845f7eb"
     },
-    " · cancelled": {
-      "status": "corrected",
-      "digest": "2022174b422a8670cd4f03653fef2f528aed41e9a0cb26dc8a237e9f4f81ee4c",
-      "previous_digest": "01c1cf0164256a8be09b94ebf01bb9aefa2a185f516a580ccae53b3f868ac3a1"
-    },
     " · completed": {
       "status": "corrected",
       "digest": "f950d633ea4a839cb4bfd431cc0efb0c71a709bf331099c74552878643422fed",
@@ -910,11 +905,6 @@
       "status": "corrected",
       "digest": "9985e6db073060c50c79b44a89c34077df26db512370b74dafa7a1dc4e6a45f1",
       "previous_digest": "a2f05a6459c2c94ef3f164535fdad57021980b5a5ee2508646a0133606a34390"
-    },
-    "Also copy the external image, video and audio files into the backup?\n\nYes: catalog, stored artwork, previews and available media.\nNo: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
-      "status": "corrected",
-      "digest": "298fd9a8b4674661fc8847578f58abfec73edeaa54c40e2cd55fb25562d097f4",
-      "previous_digest": "7abcf09b06a5f8048d7ac930f61d50401c9e8e380406bca1fb11594532f080f1"
     },
     "Also back up the media files": {
       "status": "unchanged",
@@ -12765,10 +12755,6 @@
       "status": "unchanged",
       "digest": "535c4e11778bad1ea452239fbde026dc68799d6c1393bb7a34bb2b39fae3f16c"
     },
-    "Smart collection saved · ": {
-      "status": "unchanged",
-      "digest": "516c5a1dbbbd34941f6c4d5c8a672dc96ff12d811287da9a76b638f2401fe785"
-    },
     "Smart collection “{0}” saved": {
       "status": "unchanged",
       "digest": "3179e8043f4e014c0934cd3aff7b6f50398bcbb79084e545c98b6098961c612f"
@@ -14881,6 +14867,51 @@
     "Welcome back": {
       "status": "unchanged",
       "digest": "3ecd29527e39d9f0801df68b7293737ccd198be216bf1d3215b230dc3f069b35"
+    },
+    "Also copy the external image, video and audio files into the backup?\n\nWith media: catalog, stored artwork, previews and available media.\nWithout media: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read.": {
+      "status": "corrected",
+      "digest": "89f4be9d4e3e7e3c9e2298912c42a88645edcf8619237f0c15e0377f2198eb48",
+      "previous_digest": "d9ea77913c083d64ddc28e3c78109b674f9ddf61cde50472ca9d4622613d70af"
+    },
+    "Discard": {
+      "status": "corrected",
+      "digest": "c3b8584c2df1c7966d9b8f4e48761f614a1790f065a5ca59a5c9287a32a1f4be",
+      "previous_digest": "186e1895446f0f4ff6409517ce704b9dbac605e92f99a121a071f3823efd336f"
+    },
+    "Reload": {
+      "status": "corrected",
+      "digest": "18f65fc6218e4afa0c36a1be99c740c8df92700e320d3b312092bf5a4991a0ea",
+      "previous_digest": "4d94886a1ebfcef3d9a412802ab4e65480d019dcb2c0975242acecf3ba15702e"
+    },
+    "Replace": {
+      "status": "corrected",
+      "digest": "546e4310037e614e92bf3f89e12fe88777a2a969c76617faf239ee5ed60fc45f",
+      "previous_digest": "e2c8f00938cc494efa5b195644c44809a609d213ba06393cef3bfb86641ab7b6"
+    },
+    "Restart now": {
+      "status": "corrected",
+      "digest": "f4b975c212847c8830ae6f79ac1333dc2e4b2d513cfc1186b66b02872b32b204",
+      "previous_digest": "e7c876f1bc11348efb2da6b7b5bf045d2f193d13bb11dac05bfbcf0a1dfdeda7"
+    },
+    "Start import": {
+      "status": "corrected",
+      "digest": "44f13d404b8ee779f05097390f6a353873838cae8ebe3025ffb85013296625cd",
+      "previous_digest": "ece77d5f3c373047e1c8f317ad0c546cc58c7165e4ab931084dbd105bdd541de"
+    },
+    "With media": {
+      "status": "corrected",
+      "digest": "1c8a40e9342154c304c96f7b1cb85d6f6d6f687f9a5b8c503e09611713f8ba2a",
+      "previous_digest": "4821817d80e2f0cc7daf84a78a29a40cb85cc9dec5b4837e1eff9cb76fb14444"
+    },
+    "Without media": {
+      "status": "corrected",
+      "digest": "d044830485f0867a545be1e64591cd7fb63c5fc78efc327bd116226d3cbe6558",
+      "previous_digest": "579cbcfe2fe03afe27b0400a29bad7ae942ff36abd79c809629a237f4fac6ff3"
+    },
+    "Write": {
+      "status": "corrected",
+      "digest": "79bb8b99b9a7f323692156d61ce1d698ac0be4d4c8708d1dc55d9def993d1a33",
+      "previous_digest": "fb87b9e659ecc2b8f7adfb14cfb858bf395a69ffcf3bace6d5fa71789b1ad8b9"
     }
   }
 }

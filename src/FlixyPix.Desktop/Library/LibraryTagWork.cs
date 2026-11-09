@@ -24,7 +24,7 @@ public partial class MainWindow
 
     private static Border KeyCap(string key)
     {
-        var cap = new Border { CornerRadius = new CornerRadius(3), BorderThickness = new Thickness(1), Padding = new Thickness(4, 0, 4, 0), Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+        var cap = new Border { CornerRadius = new CornerRadius(4), BorderThickness = new Thickness(1), Padding = new Thickness(4, 0, 4, 0), Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
         cap.SetResourceReference(Border.BorderBrushProperty, "Muted");
         var text = new TextBlock { Text = key, FontSize = 11 };
         text.SetResourceReference(TextBlock.ForegroundProperty, "Muted");

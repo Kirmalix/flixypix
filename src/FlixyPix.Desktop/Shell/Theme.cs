@@ -51,7 +51,7 @@ internal static class Theme
   ("Brand", "#FF6B8E", "#C8194D"),
   ("OnBrand", "#101621", "#FFFFFF"),
   ("ItemHighlight", "#55284A", "#FCE4EB"),
-  ("ItemSelected", "#45233D", "#F8D0DC"),
+  ("ItemSelected", "#3E2238", "#FBDDE5"),
   ("ScrollThumb", "#3A4A63", "#C0C9D6"),
   ("ScrollThumbHover", "#5B7195", "#97A5BA"),
   ("SwitchKnob", "#C9D3E6", "#5B677D"),
@@ -86,6 +86,7 @@ internal static class Theme
   ("Subtle", "Field", 4.5), ("Subtle", "CardBackground", 4.5), ("OnAccent", "Accent", 4.5), ("OnBrand", "Brand", 3),
   ("Gold", "CardBackground", 3), ("Error", "ChromeBackground", 4.5), ("Good", "ChromeBackground", 3), ("TagIncluded", "SidebarBackground", 4.5),
   ("TagExcluded", "SidebarBackground", 4.5), ("Text", "ChipFull", 4.5), ("Text", "ChipApplied", 4.5), ("Text", "ChipExcluded", 4.5), ("Text", "ChipSuggestion", 4.5), ("OnBadge", "Badge", 4.5),
+  ("Brand", "ChromeBackground", 4.5), ("Brand", "DetailsBackground", 4.5), ("Brand", "CardBackground", 4.5),
  ];
 
  private sealed class ColorSlot : INotifyPropertyChanged
@@ -116,6 +117,9 @@ internal static class Theme
    slots[key] = slot; brushes[key] = brush; application.Resources[key] = brush;
   }
   application.Resources[SystemColors.ControlBrushKey] = brushes["WindowBackground"];
+  // Items without a template of their own select like every other list, not in the blue of the system.
+  application.Resources[SystemColors.HighlightBrushKey] = application.Resources[SystemColors.InactiveSelectionHighlightBrushKey] = brushes["SelectionBackground"];
+  application.Resources[SystemColors.HighlightTextBrushKey] = application.Resources[SystemColors.InactiveSelectionHighlightTextBrushKey] = brushes["Text"];
   EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, _) => ApplyTitleBar((Window)sender)));
   // Loaded only reaches windows with Loaded handlers of their own; the first size change reaches every window.
   EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler((sender, _) =>

@@ -42,8 +42,8 @@ public partial class MainWindow
    Dialog(()=>Click(_setActions["Delete"]),dialog=>
    {
     Require(dialog is MessageWindow,"Set delete did not ask confirmation.");var message=(MessageWindow)dialog;
-    Require(Equals(message.Choices.Single(b=>b.IsDefault).Content,T("No")),"Set deletion default is not No.");
-    Click(message.Choices.Single(b=>Equals(b.Content,T(confirm?"Yes":"No"))));
+    Require(Equals(message.Choices.Single(b=>b.IsDefault).Content,T("Cancel")),"Set deletion default is not to cancel.");
+    Click(message.Choices.Single(b=>Equals(b.Content,T(confirm?"Delete":"Cancel"))));
    });
   }
   var before=CaptureViewState();var oldWidth=Width;var images=new List<MediaItem>();Guid? created=null;

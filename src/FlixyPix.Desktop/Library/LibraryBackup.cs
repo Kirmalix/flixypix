@@ -11,7 +11,7 @@ public partial class MainWindow
     {
         var picker = new SaveFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Create complete backup package"), Filter = T("FlixyPix backup|*.flixypixbackup"), FileName = $"FlixyPix-{DateTime.Now:yyyyMMdd-HHmmss}.flixypixbackup" };
         if (picker.ShowDialog(this) != true) return;
-        var choice = Message.Show(this, T("Also copy the external image, video and audio files into the backup?\n\nYes: catalog, stored artwork, previews and available media.\nNo: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read."), T("Back up media too"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        var choice = Message.Show(this, T("Also copy the external image, video and audio files into the backup?\n\nWith media: catalog, stored artwork, previews and available media.\nWithout media: catalog, stored artwork and available previews; media remain external references.\n\nThe source files are only read."), T("Back up media too"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question, yes: T("With media"), no: T("Without media"));
         if (choice == MessageBoxResult.Cancel) return;
         await RunOperation(T("Create backup"), async token =>
         {
@@ -48,7 +48,7 @@ public partial class MainWindow
         if (restored == null || _closing) return;
         // The restored library joins the list of this computer and can be opened at once.
         SaveLibraries(LibraryCatalogs.Rename(LibraryCatalogs.Remember(_settings.Libraries, restored, DateTimeOffset.Now), restored, folder), _settings.AskForLibraryAtStart);
-        if (Message.Show(this, T("Open the restored library “{0}” now?", folder), T("Restore completed"), MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+        if (Message.Show(this, T("Open the restored library “{0}” now?", folder), T("Restore completed"), MessageBoxButton.YesNo, MessageBoxImage.Question, yes: T("Open"), no: T("Later")) == MessageBoxResult.Yes)
             await SwitchLibraryAsync(restored);
     }
 }

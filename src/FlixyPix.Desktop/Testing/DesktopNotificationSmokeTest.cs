@@ -18,6 +18,10 @@ public partial class MainWindow
   Require(question.Choices.Select(b => (string)b.Content).SequenceEqual([T("Yes"), T("No"), T("Cancel")]), "Message choices are not in German or out of order.");
   Require(question.Choices.Single(b => b.IsDefault).Content as string == T("No") && question.Choices.Single(b => b.IsCancel).Content as string == T("Cancel"), "Default or cancelling choice is wrong.");
   Capture((FrameworkElement)question.Content, Path.Combine(directory, "message-window.png"));
+  // A confirming question names what happens; the way out stays "Cancel" and stays the default where it was asked to be.
+  var verbs = new MessageWindow(this, "Löschen?", "Löschen", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, T("Delete"));
+  Require(verbs.Choices.Select(b => (string)b.Content).SequenceEqual([T("Delete"), T("Cancel")]) && verbs.Choices.Single(b => b.IsDefault).Content as string == T("Cancel") && verbs.Choices.Single(b => b.IsCancel).Content as string == T("Cancel"), "A question does not speak in verbs.");
+  verbs.Close();
   question.Close();
 
   foreach (var (text, kind) in new[] { ("Vorschaubilder anpassen · abgeschlossen", MessageBoxImage.Information), ("Medien importieren · abgebrochen", MessageBoxImage.Warning),

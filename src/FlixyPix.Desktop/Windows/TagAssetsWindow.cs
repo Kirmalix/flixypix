@@ -71,7 +71,7 @@ internal sealed class TagAssetsWindow:Window
    var summary=T("{0} unambiguously assigned images\n{1} ambiguous images\n{2} images without a known assignment\n\n", mapped, ambiguous, plan.Files.Count(value=>value.Tags.Count==0))+
     string.Join('\n',plan.Files.Select(value=>Path.GetFileName(value.Path)+" → "+(value.IsUnambiguous?value.Tags[0].Category+" / "+value.Tags[0].Value:T("no unambiguous match"))))+
     T("\n\nImport unambiguous matches only? The source files are kept.");
-   if(Message.Show(this,summary,T("Review tag image import"),MessageBoxButton.OKCancel,MessageBoxImage.Information)!=MessageBoxResult.OK)return;
+   if(Message.Show(this,summary,T("Review tag image import"),MessageBoxButton.OKCancel,MessageBoxImage.Information, yes: T("Start import"))!=MessageBoxResult.OK)return;
    await Task.Run(()=>repository.ImportLegacyTagImages(plan));page=0;Refresh();
   }
   catch(Exception error){Message.Show(this,error.Message,Title,MessageBoxButton.OK,MessageBoxImage.Warning);}

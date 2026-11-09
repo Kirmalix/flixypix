@@ -27,6 +27,13 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Notices rise into place and leave to the side; the arrows of folding groups turn, and a new favorite answers
   with a short pop.
 
+**A more consistent look**
+
+- Questions answer with what will happen, such as "Delete" or "Discard", instead of Yes and No.
+- Selected entries look the same everywhere, and corners and text sizes follow fixed steps.
+- A notice now says what happened, such as which item became a favorite, and the status line no longer repeats it.
+- "Undo" and other coloured text are easier to read on dark surfaces.
+
 **Lock**
 
 - A PIN is now also asked for at program start, before libraries can be seen; this can be switched off under
