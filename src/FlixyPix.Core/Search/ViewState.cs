@@ -179,6 +179,7 @@ public sealed partial class CatalogRepository
                 ("$id", ViewStateKey), ("$json", JsonSerializer.Serialize(state with { SavedAt = DateTimeOffset.UtcNow }, Json))))
                 command.ExecuteNonQuery();
             CarryCachesAcross(before, []);
+            if (asideReadStamp == before) asideReadStamp = ChangeStamp();
         }
     }
 

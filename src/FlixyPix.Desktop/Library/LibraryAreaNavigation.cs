@@ -24,6 +24,7 @@ public partial class MainWindow
         };
         _browse.Invalidate();
         var origin = _browse.CaptureRequest(SelectedMedia.Select(i => i.Id));
+        ExpectLoading(origin);
         state = await Task.Run(() => _repository.Sanitize(state, out _), token);
         if (_closing || !_browse.IsCurrentSelection(origin, SelectedMedia.Select(i => i.Id))) return;
         if (!ApplyViewState(state)) return;

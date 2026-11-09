@@ -8,7 +8,8 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 **A calmer start**
 
 - A large library starts in seconds, also right after booting: the window is ready first, and folders, filters
-  and tag lists follow while you can already work.
+  and tag lists follow while you can already work. Changing the area does not wait for them, and a view that takes
+  a moment says that it is loading.
 - The window stands at once and shows its outline while the library opens, with the logo for a moment above it.
   The change to the finished window is a soft fade. Cancelling is offered when a start takes longer than usual.
 - An encrypted library asks for its password first; the logo follows the answer. With a neutral title the start

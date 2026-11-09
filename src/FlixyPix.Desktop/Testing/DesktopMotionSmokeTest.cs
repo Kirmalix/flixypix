@@ -130,10 +130,14 @@ public partial class MainWindow
    }
    MediaList.SelectedItems.Clear(); await Task.Delay(500);
 
-   // A page that was left without a new one comes back by itself.
-   Motion.LeavePage(MediaPane); await Task.Delay(300);
-   if (smooth) Check(MediaPane.Opacity < .5, "The page did not step back.");
-   await Task.Delay(1700);
+   // A view that takes long keeps the old page back and says that it loads; if none follows, both end by themselves.
+   _pageChanging = true; Motion.LeavePage(MediaPane); ExpectLoading(_browse.CaptureRequest(SelectedMedia.Select(i => i.Id)));
+   await Task.Delay(2200);
+   if (smooth) Check(MediaPane.Opacity < .5, "The page came back while the next one was still loading.");
+   Check(LoadingHint.Visibility == Visibility.Visible, "A view that takes long did not say that it loads.");
+   Capture(RootContent, Path.Combine(directory, "motion-loading.png"));
+   _browse.Invalidate(); await Task.Delay(1500);
+   Check(LoadingHint.Visibility != Visibility.Visible, "The loading hint stayed although nothing was loading.");
    Check(MediaPane.Opacity == 1, "A page stayed dimmed although no other followed.");
 
    await NavigateAreaAsync("all"); await _lastRefresh; await Task.Delay(300);

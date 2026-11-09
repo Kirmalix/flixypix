@@ -76,6 +76,24 @@ public sealed class CatalogAsideReadTests : IDisposable
     }
 
     [Fact]
+    public void SavingTheViewMeanwhileKeepsWhatWasRead()
+    {
+        Assert.True(repository.LoadBrowsingAside(default, () => repository.SaveViewState(new ViewState { View = "Video" })));
+        var kept = repository.QuickFacets();
+        Assert.Equal(4, kept.MediaCount);
+        Assert.NotEmpty(kept.Folders);
+        Assert.Equal("Video", repository.GetViewState()?.View);
+    }
+
+    [Fact]
+    public void AChangeWhileReadingBesideIsNotKept()
+    {
+        Assert.False(repository.LoadBrowsingAside(default, () => repository.Upsert(new MediaItem { Path = Path.Combine(directory, "three", "n.jpg"), Title = "n", Kind = MediaKind.Image, Tags = ["Neu"] })));
+        Assert.Equal(5, repository.GetFacets().MediaCount);
+        Assert.Contains(repository.GetTagUsage(), usage => usage.Tag == "Neu");
+    }
+
+    [Fact]
     public void TagUsageIsTheSameWithAndWithoutTheStatistics()
     {
         var alone = repository.GetTagUsage();
