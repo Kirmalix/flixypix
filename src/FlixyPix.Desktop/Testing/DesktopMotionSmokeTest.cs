@@ -85,9 +85,24 @@ public partial class MainWindow
 
    // Pages arrive whole and upright.
    var watch = Stopwatch.StartNew();
+   var lowest = 1.0; var deepest = 0.0; var moving = true;
+   async Task Follow()
+   {
+    while (moving)
+    {
+     lowest = Math.Min(lowest, MediaPane.Opacity);
+     if (MediaPane.RenderTransform is TranslateTransform place) deepest = Math.Max(deepest, place.Y);
+     await Task.Delay(5);
+    }
+   }
+   var following = Follow();
    var navigation = NavigateAreaAsync("Image"); var frames = Watch(500); await navigation; await _lastRefresh;
    measured["pageReadyMilliseconds"] = watch.ElapsedMilliseconds;
    measured["page"] = await frames;
+   moving = false; await following;
+   measured["pageLowestOpacity"] = Math.Round(lowest, 3); measured["pageDeepestRise"] = Math.Round(deepest, 2);
+   // A fast page must still be seen to arrive; a quick load is the normal case.
+   if (smooth) Check(lowest < .1 && deepest > 2, $"The page change did not show: lowest opacity {lowest:0.###}, rise {deepest:0.##}, ready after {measured["pageReadyMilliseconds"]} ms.");
    Check(MediaPane.Opacity == 1 && MediaPane.RenderTransform is not TranslateTransform { Y: not 0 }, "The page did not settle.");
 
    // A page that was left without a new one comes back by itself.
