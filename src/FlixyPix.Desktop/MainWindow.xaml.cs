@@ -77,8 +77,9 @@ public partial class MainWindow : Window
         _startup.Token.ThrowIfCancellationRequested();
         // The longest step without steps of its own: the line moves on slowly and arrives when the window is ready.
         SetStartupPhase(T("Loading view"), .9, 4);
-        var startupData = await Task.Run(() => (Preferences: _repository.GetPreferences(), Drafts: _repository.GetMetadataDrafts()), _startup.Token);
-        StartupMark("settings and drafts read");
+        var startupData = await Task.Run(() => (Preferences: _repository.GetPreferences(), Drafts: _repository.GetMetadataDrafts(), Lists: _repository.LoadBrowsingLists()), _startup.Token);
+        _listsKept = startupData.Lists;
+        StartupMark(_listsKept ? "settings and drafts read, lists kept" : "settings and drafts read");
         try
         {
             InitializeBrowsing(startupData.Preferences);
@@ -196,7 +197,10 @@ public partial class MainWindow : Window
             }
         });
     }
-    private bool _pageChanging, _resultsChanged;
+    private bool _pageChanging, _resultsChanged, _listsKept;
+    /// <summary>From this many media the lists are read beside the shared connection after a change; below it they are there
+    /// before the tiles, in the time of a click.</summary>
+    private const int ListsBesideFrom = 20_000;
     private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard)
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
@@ -233,11 +237,14 @@ public partial class MainWindow : Window
             var anchor = _anchor; var visibleFirst = _visibleFirst; var visibleLast = _visibleLast;
             // The first view of a start shows tiles; the lists and the folder tree follow right after. A view that names a tag needs them now.
             var namesTag = state.Tag != null || state.TagCategory != null;
-            if (!_startupReady && !namesTag) _browsingFilled ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (!_startupReady && !namesTag && !_listsKept) _browsingFilled ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
             // While they are still being read beside the connection, a change of view does not read them a second time.
             var listsFollow = !namesTag && _browsingFilled is { Task.IsCompleted: false };
+            var fillLists = false;
             var read = await Task.Run(() =>
             {
+                // New media in a large library: reading the lists takes seconds and would hold the catalog. The tiles need none of it.
+                if (!namesTag && _startupReady && !listsFollow && !_repository.BrowsingKnown && _repository.QuickFacets(token).MediaCount >= ListsBesideFrom) listsFollow = fillLists = true;
                 MediaPage page;
                 if (playlist == null)
                 {
@@ -260,7 +267,7 @@ public partial class MainWindow : Window
                 var navigationCounts = listsFollow ? new NavigationCounts(0, 0, 0, 0) : _repository.GetNavigationCounts(); StartupMark("navigation counts");
                 var playlists = _repository.GetPlaylists(); var searches = _repository.GetSavedSearches(); var sets = _repository.GetCollectionSets(); var target = _repository.FindTargetCollection(); StartupMark("collections");
                 var finished = FinishedMedia(matches, kept); StartupMark("finished media");
-                return (Preferences: preferences, Page: page, Browse: BrowsingFor(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
+                return (Preferences: preferences, Page: page, Browse: listsFollow && _startupReady ? null : BrowsingFor(facets, preferences, tagUsage, navigationCounts), Playlists: playlists, Searches: searches,
         Sets: sets, Target: target, CatalogEmpty: facets.MediaCount == 0, Finished: finished);
             });
             if (!_browse.IsCurrent(request) || _closing) return;
@@ -286,7 +293,7 @@ public partial class MainWindow : Window
                 _refreshing = true;
                 _offWindowSelection = [];
                 // Empty lists only for the first view: read beside the start, the real ones may already be in place.
-                if (!listsFollow || !_startupReady) ApplyBrowsing(snapshot.Browse);
+                if (snapshot.Browse is { } browse) ApplyBrowsing(browse);
                 VirtualizingTilePanel.SetTotalCount(MediaList, _total); VirtualizingTilePanel.SetWindowStart(MediaList, _windowStart);
                 // Other filters, a search or another order show new results; an edit or a scroll keeps them in place.
                 if (_startupReady && _shownView is { } shown && !shown.SameView(state)) _resultsChanged = true;
@@ -316,6 +323,7 @@ public partial class MainWindow : Window
                 CollectionActions.Visibility = _playlist != null ? Visibility.Visible : Visibility.Collapsed;
                 UpdateHome(snapshot.CatalogEmpty, snapshot.Page.TotalCount);
             })) return;
+            if (fillLists && _browsingFilled is not { Task.IsCompleted: false }) { _browsingFilled = new(TaskCreationOptions.RunContinuationsAsynchronously); FillBrowsingAfterStart(); }
         }
         catch (Exception ex) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; throw; }
         finally { _refreshing = false; }

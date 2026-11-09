@@ -122,14 +122,17 @@ public partial class MainWindow
         {
             try
             {
-                await Task.Run(() => _repository.LoadBrowsingAside(token), token);
+                // Changes during the reading make it useless. A few tries, then the usual way, so the lists are right in the end.
+                for (var attempt = 0; attempt < 3 && !await Task.Run(() => _repository.LoadBrowsingAside(token), token); attempt++) { }
                 var browse = await Task.Run(() => PrepareBrowsing(_repository.GetFacets(token), _repository.GetPreferences(), _repository.GetTagUsage(), _repository.GetNavigationCounts()), token);
                 if (_closing || token.IsCancellationRequested) return;
                 var refreshing = _refreshing; _refreshing = true;
                 try { ApplyBrowsing(browse); } finally { _refreshing = refreshing; }
                 UpdateNavigation(); RenderTagFilterChips(); RecordStartupPhase("Lists filled");
+                await Task.Run(_repository.SaveBrowsingLists, token); // The next start finds them.
             }
             catch (Exception error) when (error is OperationCanceledException or ObjectDisposedException) { }
+            catch (Microsoft.Data.Sqlite.SqliteException error) { ErrorLog.Write("Keeping the lists", error); }
             finally { filled.TrySetResult(); }
         });
     }

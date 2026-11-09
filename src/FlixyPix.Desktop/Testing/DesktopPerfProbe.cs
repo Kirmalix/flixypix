@@ -105,6 +105,11 @@ public partial class MainWindow
    }
   }
   }
+  // A new medium: the tiles must not wait for the lists, however long reading those takes.
+  MediaItem? probe = null;
+  await Step("new-medium", () => { probe = _repository.Upsert(new MediaItem { Path = Path.Combine(directory, "flixypix-probe.jpg"), Title = "flixypix-probe", Kind = MediaKind.Image }); return RefreshAsync(); });
+  if (_browsingFilled is { } follow) await follow.Task;
+  _repository.Delete(probe!.Id); await RefreshAsync(); if (_browsingFilled is { } again) await again.Task;
   heartbeat.Stop();
   int Nodes(IEnumerable<BrowseNode> nodes) => nodes.Sum(n => 1 + Nodes(n.Children));
   var result = new

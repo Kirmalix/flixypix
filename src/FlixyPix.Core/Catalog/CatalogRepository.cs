@@ -27,7 +27,7 @@ public sealed partial class CatalogRepository : IDisposable
     internal static readonly JsonSerializerOptions MediaJson = new(Json) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     /// <summary>18 adds indexed scene-wall projections; later versions add tables that are created when missing.</summary>
-    internal const long SchemaVersion = 26;
+    internal const long SchemaVersion = 27;
     /// <summary>The schema of 0.5.0, the first public release. Older catalogs only came from test versions before it; their
     /// conversion steps are gone, so they are refused instead of being converted halfway.</summary>
     internal const long OldestUpgradableSchema = 17;
@@ -105,6 +105,7 @@ public sealed partial class CatalogRepository : IDisposable
                 InitializeStashProvenance(transaction);
                 InitializeStashBindings(transaction);
                 InitializeQuerySchema(transaction, schemaVersion == 0);
+                InitializeBrowsingLists(transaction);
                 wallQueries.InitializeSchema(transaction, schemaVersion < 18);
                 using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
                     // A checked result belongs to one thumbnail; with another thumbnail it says nothing any more.
