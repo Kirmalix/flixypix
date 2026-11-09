@@ -189,7 +189,7 @@ internal sealed class RatingPicker : StackPanel
   for (var index = 0; index < 5; index++)
   {
    var star = new Grid { Width = size, Height = size };
-   star.Children.Add(new TextBlock { Text = "★", FontSize = size * 20 / 24, Foreground = SettingsUi.FieldBorder, HorizontalAlignment = HorizontalAlignment.Center });
+   star.Children.Add(new TextBlock { Text = "★", FontSize = size * 20 / 24, Foreground = Theme.Brush("StarEmpty"), HorizontalAlignment = HorizontalAlignment.Center });
    var fill = new Border { HorizontalAlignment = HorizontalAlignment.Left, ClipToBounds = true, Width = 0, Child = new TextBlock { Text = "★", FontSize = size * 20 / 24, Foreground = SettingsUi.Gold, Width = size, TextAlignment = TextAlignment.Center } };
    star.Children.Add(fill); fills.Add(fill);
    var position = index;

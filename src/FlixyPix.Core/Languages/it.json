@@ -168,6 +168,7 @@
   ": please enter a color like #14171C.": ": inserisci un colore come #14171C.",
   "A backup size or entry is missing.": "Manca la dimensione o una voce del backup.",
   "A category may appear only once.": "Una categoria può apparire solo una volta.",
+  "A contrast theme of Windows is on, so FlixyPix uses its colours. This choice applies again once it is off.": "È attivo un tema a contrasto di Windows, quindi FlixyPix ne usa i colori. Questa scelta tornerà valida quando sarà disattivato.",
   "A custom jump needs a key and a distance other than 0 (at most 10 hours or 100 %).": "Un salto personalizzato richiede un tasto e un'ampiezza diversa da 0 (massimo 10 ore o 100 %).",
   "A different record (register as new)": "Un altro record (registralo come nuovo)",
   "A file appears twice among the versions: {0}": "Un file compare due volte tra le versioni: {0}",

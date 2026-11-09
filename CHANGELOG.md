@@ -33,6 +33,7 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Selected entries look the same everywhere, and corners and text sizes follow fixed steps.
 - A notice now says what happened, such as which item became a favorite, and the status line no longer repeats it.
 - "Undo" and other coloured text are easier to read on dark surfaces.
+- With a contrast theme of Windows, FlixyPix uses its colours, and follows when the theme changes.
 
 **Lock**
 

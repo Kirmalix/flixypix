@@ -827,6 +827,23 @@ public partial class MainWindow
                 Require(ratio >= minimum, $"{(dark ? "Dark" : "Light")} scheme: {foreground} on {background} has contrast {ratio:0.00}, needs {minimum}.");
             }
         var text = (SolidColorBrush)Theme.Brush("Text");
+        // Any contrast theme of Windows gives a readable palette, and the shared brushes follow it and come back.
+        foreach (var sample in Theme.ContrastSamples)
+        {
+            var palette = Theme.ContrastPalette(sample);
+            foreach (var (foreground, background, minimum) in Theme.ContrastPairs)
+            {
+                var ratio = Theme.Contrast(palette[foreground], palette[background]);
+                Require(ratio >= minimum, $"Contrast theme {sample.Window}/{sample.Text}: {foreground} on {background} has contrast {ratio:0.00}, needs {minimum}.");
+            }
+            Require(palette["ButtonBackground"] != palette["WindowBackground"] && palette["CardHover"] != palette["WindowBackground"], $"Contrast theme {sample.Window}/{sample.Text}: buttons or hover do not stand out.");
+            Require(Theme.Contrast(palette["Gold"], palette["StarEmpty"]) >= 2, $"Contrast theme {sample.Window}/{sample.Text}: given and empty stars look alike.");
+        }
+        var schemeBefore = Theme.Mode;
+        Theme.ContrastForTest = Theme.ContrastSamples[5]; Theme.Apply(ColorScheme.Dark);
+        Require(!Theme.IsDark && text.Color == Colors.Black && Theme.Current("Accent") == Theme.ContrastSamples[5].Highlight, "A contrast theme did not recolour the shared brushes.");
+        Theme.ContrastForTest = null; Theme.Apply(schemeBefore);
+        Require(text.Color == Theme.Color("Text", Theme.IsDark), "The colours did not come back after a contrast theme.");
         Theme.Apply(ColorScheme.Light); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(Theme.ReplacedKeys.Count == 0, "Theme brushes were frozen by a style or template and had to be replaced: " + string.Join(", ", Theme.ReplacedKeys));
         Require(!Theme.IsDark && ReferenceEquals(text, Theme.Brush("Text")) && text.Color == Theme.Color("Text", false), "Light scheme did not recolour the shared brushes in place.");

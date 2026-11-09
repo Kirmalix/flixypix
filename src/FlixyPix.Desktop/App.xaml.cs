@@ -56,7 +56,13 @@ public partial class App : Application
         DesktopSettings? saved = null;
         if (arguments.Length == 0) { try { saved = DesktopSettings.Load(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { } }
         if (arguments.Length == 0) { Theme.Apply(saved == null ? ColorScheme.System : Theme.ParseMode(saved.Theme)); InterfaceScaling.Apply(saved?.InterfaceScale ?? 1); }
-        else Theme.Apply(Environment.GetEnvironmentVariable("FLIXYPIX_TEST_THEME") == "light" ? ColorScheme.Light : ColorScheme.Dark);
+        else
+        {
+            var testTheme = Environment.GetEnvironmentVariable("FLIXYPIX_TEST_THEME");
+            // For looking at a contrast theme only: tests that compare the fixed palette fail under it.
+            if (testTheme == "contrast") Theme.ContrastForTest = Theme.ContrastSamples[3];
+            Theme.Apply(testTheme == "light" ? ColorScheme.Light : ColorScheme.Dark);
+        }
         // Test modes run hidden: a dialog there would pump messages, repeat the failure and overflow the stack.
         string? testDirectory = arguments.Length >= 2 && arguments[0].StartsWith("--", StringComparison.Ordinal) ? Path.GetFullPath(arguments[^1]) : null;
         // Test runs keep their log beside their results instead of the user's profile.
