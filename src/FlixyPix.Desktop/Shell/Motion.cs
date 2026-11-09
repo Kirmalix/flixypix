@@ -127,19 +127,21 @@ public static class Motion
   page.BeginAnimation(UIElement.OpacityProperty, dim);
  }
 
- /// <summary>The new page is in place: it settles from below once its first frame has been laid out, so the costly first
- /// layout does not eat the start of the motion.</summary>
+ /// <summary>The new page is in place: it fades in from nothing and settles from below, however fast it loaded (usually
+ /// before the old page has stepped back far, which would leave nothing to see). The motion starts once the first frame has
+ /// been laid out, so the costly first layout does not eat its start; a hold that nothing follows ends by itself.</summary>
  internal static void EnterPage(FrameworkElement page)
  {
   if (!Smooth) { page.BeginAnimation(UIElement.OpacityProperty, null); if (page.RenderTransform is TranslateTransform still) { still.BeginAnimation(TranslateTransform.YProperty, null); still.Y = 0; } return; }
   var motion = ++_pageMotion;
   var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = PageRise;
+  page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 0, TimeSpan.FromSeconds(1)) { FillBehavior = FillBehavior.Stop });
   page.Dispatcher.BeginInvoke(() =>
   {
-   if (motion != _pageMotion) return;
+   if (motion != _pageMotion) { shift.Y = 0; return; }
    shift.Y = 0;
    shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(PageRise, 0, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
-   page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+   page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
   }, System.Windows.Threading.DispatcherPriority.Loaded);
  }
 
