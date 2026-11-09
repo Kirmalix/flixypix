@@ -96,7 +96,7 @@ public partial class MainWindow
     }
    }
    var following = Follow();
-   var navigation = NavigateAreaAsync("Image"); var frames = Watch(500); await navigation; await _lastRefresh;
+   var navigation = NavigateAreaAsync("Image"); var frames = Watch(900); await navigation; await _lastRefresh;
    measured["pageReadyMilliseconds"] = watch.ElapsedMilliseconds;
    measured["page"] = await frames;
    moving = false; await following;
@@ -104,6 +104,16 @@ public partial class MainWindow
    // A fast page must still be seen to arrive; a quick load is the normal case.
    if (smooth) Check(lowest < .1 && deepest > 2, $"The page change did not show: lowest opacity {lowest:0.###}, rise {deepest:0.##}, ready after {measured["pageReadyMilliseconds"]} ms.");
    Check(MediaPane.Opacity == 1 && MediaPane.RenderTransform is not TranslateTransform { Y: not 0 }, "The page did not settle.");
+
+   // Another order shows new results, and they are seen to arrive; the page around them stays.
+   var results = 1.0; var sorting = true;
+   async Task FollowResults() { while (sorting) { results = Math.Min(results, MediaArea.Opacity); await Task.Delay(5); } }
+   var followingResults = FollowResults(); var sortBefore = SortChoice.SelectedIndex;
+   SortChoice.SelectedIndex = sortBefore == 1 ? 0 : 1; await _lastRefresh; await Task.Delay(900); sorting = false; await followingResults;
+   measured["resultsLowestOpacity"] = Math.Round(results, 3);
+   if (smooth) Check(results < .1, $"New results did not show their arrival: lowest opacity {results:0.###}.");
+   Check(MediaArea.Opacity == 1 && MediaPane.Opacity == 1 && MediaArea.CacheMode == null, "The results did not settle.");
+   SortChoice.SelectedIndex = sortBefore; await _lastRefresh; await Task.Delay(900);
 
    // A page that was left without a new one comes back by itself.
    Motion.LeavePage(MediaPane); await Task.Delay(300);

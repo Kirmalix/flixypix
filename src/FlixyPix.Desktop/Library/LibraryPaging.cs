@@ -30,7 +30,10 @@ public partial class MainWindow
  {
   if (_total == 0) return;
   page = Math.Clamp(page, 1, PageCount);
+  var from = CurrentPage;
+  if (page != from) Motion.LeaveTiles(MediaArea);
   await ScrollToAsync((page - 1) * PageSize);
+  if (page != from) Motion.EnterTiles(MediaArea, page > from);
   UpdatePager();
  }
 
