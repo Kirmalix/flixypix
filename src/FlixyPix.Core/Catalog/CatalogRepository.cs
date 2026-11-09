@@ -68,7 +68,7 @@ public sealed partial class CatalogRepository : IDisposable
         {
             assets = new AssetStore(DatabasePath, this.key, progress, token);
             connection.Open();
-            RegisterQueryFunctions();
+            RegisterQueryFunctions(connection);
             database.Run(token, () =>
             {
                 using (var schemaCommand = Command("PRAGMA user_version", null)) schemaVersion = Convert.ToInt64(schemaCommand.ExecuteScalar());

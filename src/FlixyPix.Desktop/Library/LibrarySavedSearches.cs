@@ -18,10 +18,13 @@ public partial class MainWindow
     private static readonly (string Glyph, string Label)[] SmartGlyphs =
      [("", T("Magnifier")), ("", T("Star")), ("", T("Heart")), ("", T("Person")), ("", "Video"), ("", "Bild"), ("", "Tag"), ("", T("Calendar")), ("", T("Flag"))];
 
+    private List<CollectionNode>? _searchCountsWaiting;
     /// <summary>Counts the hits (and new media) of the smart collections in the background.</summary>
     private void CountSmartCollections(IEnumerable<CollectionNode> nodes)
     {
         var rows = nodes.Where(n => n.Search != null).ToList();
+        // A start does not wait for numbers in the sidebar; they follow with the lists.
+        if (!_startupReady) { _searchCountsWaiting = rows; return; }
         _searchCounts?.Cancel(); var cancel = _searchCounts = CancellationTokenSource.CreateLinkedTokenSource(_libraryTasks.Token);
         _ = _libraryTasks.Run(_ => Task.Run(async () =>
         {

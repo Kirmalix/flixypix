@@ -192,9 +192,9 @@ public sealed partial class CatalogRepository
         {
             ThrowIfDisposed();
             result = result with { ReviewStates = (state.ReviewStates ?? []).Where(value => Enum.IsDefined(value)).Distinct().ToList() };
-            var facets = GetFacets();
-            var preferences = ReadPreferences();
-            var tags = new HashSet<string>(facets.Tags.Concat(preferences.TagVocabulary.Select(t => t.Tag)), StringComparer.OrdinalIgnoreCase);
+            // The facets read every path, which takes seconds on a cold disk; most stored views name nothing they could confirm.
+            var facets = new Lazy<CatalogFacets>(() => GetFacets());
+            var tags = new Lazy<HashSet<string>>(() => new HashSet<string>(facets.Value.Tags.Concat(ReadPreferences().TagVocabulary.Select(t => t.Tag)), StringComparer.OrdinalIgnoreCase));
             if (!ViewState.Views.Contains(state.View)) { removed.Add(T("View {0}", state.View)); result = result with { View = "all" }; }
             if (state.View == "detail" && (state.DetailId is not { } detail || GetMedia(detail) is null)) result = result with { View = "all", DetailId = null };
             if (state.ImageSetId is { } setId && GetImageSet(setId) is null)
@@ -205,24 +205,24 @@ public sealed partial class CatalogRepository
             { removed.Add(T("Collection")); result = result with { PlaylistId = null }; }
             if (state.SavedSearchId is { } search && ReadDocuments<SavedSearch>("saved_searches").All(s => s.Id != search))
             { removed.Add(T("saved search")); result = result with { SavedSearchId = null }; }
-            if (state.Tag is { } tag && !tags.Contains(tag)) { removed.Add(T("Tag “{0}”", tag)); result = result with { Tag = null }; }
-            if (state.TagCategory is { } group && !facets.TagCategories.Contains(group, StringComparer.OrdinalIgnoreCase))
+            if (state.Tag is { } tag && !tags.Value.Contains(tag)) { removed.Add(T("Tag “{0}”", tag)); result = result with { Tag = null }; }
+            if (state.TagCategory is { } group && !facets.Value.TagCategories.Contains(group, StringComparer.OrdinalIgnoreCase))
             { removed.Add(T("Tag category “{0}”", group)); result = result with { TagCategory = null }; }
-            if (state.Category is { } category && !facets.Categories.Contains(category, StringComparer.OrdinalIgnoreCase))
+            if (state.Category is { } category && !facets.Value.Categories.Contains(category, StringComparer.OrdinalIgnoreCase))
             { removed.Add(T("Category “{0}”", category)); result = result with { Category = null }; }
-            if (state.Folder is { } folder && !facets.Folders.Any(f => f.Equals(folder, StringComparison.OrdinalIgnoreCase) ||
+            if (state.Folder is { } folder && !facets.Value.Folders.Any(f => f.Equals(folder, StringComparison.OrdinalIgnoreCase) ||
                 f.StartsWith(folder.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
             { removed.Add(T("Folder “{0}”", folder)); result = result with { Folder = null }; }
             List<string> Known(List<string> list)
             {
-                var kept = list.Where(tags.Contains).ToList();
+                var kept = list.Where(t => tags.Value.Contains(t)).ToList();
                 removed.AddRange(list.Except(kept, StringComparer.OrdinalIgnoreCase).Select(t => T("Tag “{0}”", t)));
                 return kept;
             }
             result = result with { RequiredTags = Known(state.RequiredTags), ExcludedTags = Known(state.ExcludedTags) };
             List<TagFacet> KnownFacets(List<TagFacet> list)
             {
-                var kept = list.Where(f => tags.Contains(f.Tag)).ToList();
+                var kept = list.Where(f => tags.Value.Contains(f.Tag)).ToList();
                 removed.AddRange(list.Except(kept).Select(f => T("“{0}”", f.Tag)));
                 return kept;
             }

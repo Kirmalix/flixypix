@@ -34,6 +34,20 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
 
     });
 
+    /// <summary>How many media match, without reading any of them; with a large catalog on a slow disk this is far cheaper than a page.</summary>
+    internal long Count(MediaQuery query, CancellationToken cancellationToken = default)
+     => database.Run(cancellationToken, () =>
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        database.ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
+        using var transaction = database.Connection.BeginTransaction();
+        var (where, parameters) = compile(query, transaction);
+        using var command = database.Command("SELECT count(*) FROM media_query q " + where, transaction, parameters);
+        var count = Convert.ToInt64(command.ExecuteScalar());
+        commit(transaction);
+        return count;
+    });
+
     internal IReadOnlyList<MediaItem> ReadItems(MediaQuery query, SqliteTransaction? transaction, CancellationToken cancellationToken,
         string? where = null, (string Name, object Value)[]? parameters = null)
     {

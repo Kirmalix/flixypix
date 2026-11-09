@@ -82,20 +82,23 @@ public partial class MainWindow
     {
         var general = _repository.GetPreferences().General;
         var stored = general.RestoreLastView ? _repository.GetViewState() : null;
+        StartupMark("last view read");
         if (!general.RestoreLastView) { Refresh(); await _lastRefresh; RecordView(); return; }
         if (stored is null)
         {
             ApplyViewState(new ViewState { View = "all", SortOrder = _settings.SortOrder, ViewMode = _settings.ViewMode, TileWidth = _settings.TileWidth });
             await _lastRefresh; RecordView(); return;
         }
-        var restored = await Task.Run(() => { var sanitized = _repository.Sanitize(stored, out var removed); return (State: sanitized.Restricted(general.RestoreScope), Dropped: removed); });
+        var restored = await Task.Run(() => { var sanitized = _repository.Sanitize(stored, out var removed); StartupMark("last view checked"); return (State: sanitized.Restricted(general.RestoreScope), Dropped: removed); });
         if (_closing) return;
         var state = restored.State; var dropped = restored.Dropped;
         ApplyViewState(state, state.SavedSearchId is { } search ? _repository.GetSavedSearches().FirstOrDefault(s => s.Id == search)?.Name : null);
         await _lastRefresh;
+        StartupMark("last view shown");
         if (general.RestoreScope == RestoreScope.All)
         {
             await RestorePlaceAsync(state);
+            StartupMark("place restored");
             if (dropped.Count > 0) ShowToast(T("No longer present: ") + string.Join(", ", dropped), MessageBoxImage.Warning);
         }
         _lastPlayedId = stored.LastPlayedId;
