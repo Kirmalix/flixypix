@@ -32,6 +32,6 @@ public partial class MainWindow
   catch (Exception error) when (error is System.IO.IOException or Microsoft.Data.Sqlite.SqliteException)
   { Status.Text = error.Message; }
  }
- private void ApplyImmediate(IReadOnlyCollection<Guid> ids, ImmediateEditFields fields, Func<MediaItem, MediaItem> change) =>
-  RememberImmediateUndo(_repository.ApplyImmediateEdit(ids, fields, change), T("Saved"));
+ private void ApplyImmediate(IReadOnlyCollection<Guid> ids, ImmediateEditFields fields, Func<MediaItem, MediaItem> change, string? message = null) =>
+  RememberImmediateUndo(_repository.ApplyImmediateEdit(ids, fields, change), message ?? T("Saved"));
 }

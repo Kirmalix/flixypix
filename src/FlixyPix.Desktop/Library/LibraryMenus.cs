@@ -98,7 +98,7 @@ public partial class MainWindow
   // Into the recycle bin as in the original ("deletetorecyclebin"), or for good; asking stays in both cases.
   var recycle = _repository.GetPreferences().General.DeleteToRecycleBin;
   var question = recycle ? T("Move the file to the Recycle Bin?\n\n{0}", item.Path) : T("Permanently delete the file from the disk?\n\n{0}\n\nThis action cannot be undone.", item.Path);
-  if (Message.Show(owner ?? this, question, recycle ? T("Delete file") : T("Permanently delete file"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return false;
+  if (Message.Show(owner ?? this, question, recycle ? T("Delete file") : T("Permanently delete file"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return false;
   DeleteConfirmed(item); return true;
  }
  /// <summary>Removes the file (recycle bin or for good, as the library says) and its catalog entry, after the question.</summary>

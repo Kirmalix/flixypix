@@ -94,7 +94,7 @@ internal sealed class MediaArtworkWindow : Window
  private void Remove()
  {
   if (Selected is not { } asset) return;
-  if (Message.Show(this,T("Remove this stored media artwork? The original media file is kept."),T("Remove media artwork"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (Message.Show(this,T("Remove this stored media artwork? The original media file is kept."),T("Remove media artwork"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No, yes: T("Remove")) != MessageBoxResult.Yes) return;
   repository.DeleteMediaAsset(asset.Id); Reload();
  }
 }

@@ -429,7 +429,7 @@ internal sealed class DatabaseWindow : Window
  {
   if (Selected is not { } library || IsOpen(library)) return;
   if (!confirmed && Message.Show(this, T("Move “{0}” and its catalog, thumbnails and caches to the Recycle Bin?\n\n{1}\n\nThe media files themselves stay where they are.", LibraryCatalogs.DisplayName(library), library.Directory),
-   T("Delete library"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+   T("Delete library"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
   SetBusy(true);
   try
   {

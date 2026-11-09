@@ -48,7 +48,7 @@ public partial class MainWindow
         if (input == null || string.IsNullOrWhiteSpace(input[0])) return;
         var order = (_repository.GetSavedSearches().Select(s => s.Order).DefaultIfEmpty(0).Max()) + 1;
         _repository.UpsertSavedSearch(new SavedSearch { Name = input[0].Trim(), State = state, Order = order, LastOpenedAt = DateTimeOffset.Now, ParentId = parent });
-        Status.Text = T("Smart collection saved · ") + input[0].Trim();
+        // The notice says so.
         ShowToast(T("Smart collection “{0}” saved", input[0].Trim()));
     }
 
@@ -72,7 +72,7 @@ public partial class MainWindow
         yield return MenuSpec.Command(T("Rename …"), () => RenameCollectionNode(node), "", "F2");
         yield return MenuSpec.Command(T("Overwrite with current view"), () =>
         {
-            if (Message.Show(this, T("Replace “{0}” with the current view and its filters?", search.Name), T("Overwrite smart collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            if (Message.Show(this, T("Replace “{0}” with the current view and its filters?", search.Name), T("Overwrite smart collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Replace")) != MessageBoxResult.Yes) return;
             Save(search with { State = CaptureViewState() with { Position = 0, AnchorId = null, Selection = [] }, Expression = null, Text = null, Tag = null, TagCategory = null, Category = null, MinimumRating = 0, IsFavorite = null, WatchLater = null });
         }, "");
         yield return MenuSpec.Command(T("Duplicate"), () => Save(search with { Id = Guid.NewGuid(), Name = T("{0} (copy)", search.Name), Order = search.Order + 1 }), "");

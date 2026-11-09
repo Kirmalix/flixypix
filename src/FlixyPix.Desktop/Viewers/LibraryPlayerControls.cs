@@ -38,7 +38,7 @@ internal sealed partial class VideoPlayerWindow
   var remove=new Button { Content=T("Remove") }; remove.Click+=(_,_)=>
   {
    if(list.SelectedItem is not TransformChoice choice)return;
-   if(Message.Show(dialog,T("Remove this view time?"),T("Remove view"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No)!=MessageBoxResult.Yes)return;
+   if(Message.Show(dialog,T("Remove this view time?"),T("Remove view"),MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No, yes: T("Remove"))!=MessageBoxResult.Yes)return;
    timeline=repository.SavePlayerTransforms(media.Id,timeline with { Steps=timeline.Steps.Where(s=>s.PositionSeconds!=choice.Transform.PositionSeconds).ToList() }); manualTransform=null; ApplyTransform();
    list.ItemsSource=timeline.Steps.Select(step=>new TransformChoice(step,T("{0:0.###} s · X {1:0.###}, Y {2:0.###} · {3:0.###} × {4:0.###}", step.PositionSeconds, step.X, step.Y, step.Width, step.Height))).ToArray();
   }; actions.Children.Add(remove);

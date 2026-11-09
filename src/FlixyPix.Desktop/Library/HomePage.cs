@@ -135,7 +135,7 @@ internal sealed class HomePage : Grid
   var header = new DockPanel { Margin = new Thickness(2, 0, 4, 10) };
   if (ShowAll != null && row.Kind is not (HomeRowKind.FavoritePerformers or HomeRowKind.Studios or HomeRowKind.ContinueWatching or HomeRowKind.RandomOfTheDay or HomeRowKind.RecentlyWatched or HomeRowKind.RecentlyTagged))
   {
-   var all = new Button { Content = T("Show all ›"), Style = (Style)Application.Current.Resources["Quiet"], FontSize = 13 };
+   var all = new Button { Content = T("Show all ›"), Style = (Style)Application.Current.Resources["Quiet"], FontSize = 12 };
    all.Click += (_, _) => ShowAll?.Invoke(row);
    DockPanel.SetDock(all, Dock.Right); header.Children.Add(all);
   }

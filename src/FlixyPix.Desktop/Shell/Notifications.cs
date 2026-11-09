@@ -13,13 +13,15 @@ namespace FlixyPix.Desktop;
 /// the text can be selected and copied, Enter takes the default and Esc the cancelling choice.</summary>
 internal static class Message
 {
+ /// <param name="yes">What the confirming button does, as a verb ("Delete"), so the answer can be chosen without rereading the question.</param>
+ /// <param name="no">The other answer. Without it, a question that only confirms offers "Cancel".</param>
  internal static MessageBoxResult Show(Window? owner, string text, string caption = "FlixyPix", MessageBoxButton button = MessageBoxButton.OK,
-  MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None)
-  => new MessageWindow(owner, text, caption, button, icon, defaultResult).Ask();
+  MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None, string? yes = null, string? no = null)
+  => new MessageWindow(owner, text, caption, button, icon, defaultResult, yes, no).Ask();
 
  internal static MessageBoxResult Show(string text, string caption = "FlixyPix", MessageBoxButton button = MessageBoxButton.OK,
-  MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None)
-  => Show(Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive), text, caption, button, icon, defaultResult);
+  MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None, string? yes = null, string? no = null)
+  => Show(Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive), text, caption, button, icon, defaultResult, yes, no);
 
  /// <summary>Glyph and colour for a message kind, shared with the notifications.</summary>
  internal static (string Glyph, Brush Brush) Look(MessageBoxImage icon) => icon switch
@@ -38,7 +40,7 @@ internal sealed class MessageWindow : Window
  private readonly MessageBoxResult _cancel;
  internal IReadOnlyList<Button> Choices { get; }
 
- internal MessageWindow(Window? owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult)
+ internal MessageWindow(Window? owner, string text, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, string? yes = null, string? no = null)
  {
   if (owner is { IsLoaded: true }) { Owner = owner; WindowStartupLocation = WindowStartupLocation.CenterOwner; ShowInTaskbar = false; }
   else { WindowStartupLocation = WindowStartupLocation.CenterScreen; ShowInTaskbar = true; } // A message without window must stay findable.
@@ -46,9 +48,9 @@ internal sealed class MessageWindow : Window
   Background = Theme.Brush("WindowBackground");
   (string Label, MessageBoxResult Result)[] choices = button switch
   {
-   MessageBoxButton.OKCancel => [("OK", MessageBoxResult.OK), (T("Cancel"), MessageBoxResult.Cancel)],
-   MessageBoxButton.YesNo => [(T("Yes"), MessageBoxResult.Yes), (T("No"), MessageBoxResult.No)],
-   MessageBoxButton.YesNoCancel => [(T("Yes"), MessageBoxResult.Yes), (T("No"), MessageBoxResult.No), (T("Cancel"), MessageBoxResult.Cancel)],
+   MessageBoxButton.OKCancel => [(yes ?? "OK", MessageBoxResult.OK), (T("Cancel"), MessageBoxResult.Cancel)],
+   MessageBoxButton.YesNo => [(yes ?? T("Yes"), MessageBoxResult.Yes), (no ?? (yes != null ? T("Cancel") : T("No")), MessageBoxResult.No)],
+   MessageBoxButton.YesNoCancel => [(yes ?? T("Yes"), MessageBoxResult.Yes), (no ?? T("No"), MessageBoxResult.No), (T("Cancel"), MessageBoxResult.Cancel)],
    _ => [("OK", MessageBoxResult.OK)],
   };
   _cancel = choices.Any(c => c.Result == MessageBoxResult.Cancel) ? MessageBoxResult.Cancel : choices.Any(c => c.Result == MessageBoxResult.No) ? MessageBoxResult.No : choices[0].Result;
@@ -127,7 +129,7 @@ public partial class MainWindow
   void Remove() => Motion.NoteOut(toast, () => _toasts.Children.Remove(toast));
   if (action != null && onAction != null)
   {
-   var act = new Button { Content = action, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(0, 4, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Foreground = Theme.Brush("Accent") };
+   var act = new Button { Content = action, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(0, 4, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Foreground = Theme.Brush("Brand") };
    act.Click += (_, _) => { Remove(); onAction(); };
    content.Children.Add(act);
   }

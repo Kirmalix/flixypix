@@ -109,7 +109,7 @@ internal sealed partial class SettingsWindow
   var clear = SettingsUi.SmallButton(T("Delete history …"), T("Deletes all entries; play counts, O counters and the last playback stay."));
   clear.Click += (_, _) =>
   {
-   if (Message.Show(this, T("Delete the entire playback history of this library? Play counts, O counters and the last playback stay."), T("Delete history"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+   if (Message.Show(this, T("Delete the entire playback history of this library? Play counts, O counters and the last playback stay."), T("Delete history"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
    var removed = repository.ClearHistory(); UpdateHistorySummary(); note.Text = Tn(removed, "1 history entry deleted", "{0:N0} history entries deleted");
   };
   UpdateHistorySummary();
@@ -199,8 +199,8 @@ internal sealed partial class SettingsWindow
   foreach (var (folder, label, hint, clearable) in Caches)
   {
    var size = new TextBlock { Width = 90, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Text = "…" };
-   var bar = new Border { Background = SettingsUi.Accent, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
-   var track = new Border { Width = 140, Height = 6, CornerRadius = new CornerRadius(3), Background = SettingsUi.FieldBorder, Margin = new Thickness(14, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center, Child = bar };
+   var bar = new Border { Background = SettingsUi.Accent, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+   var track = new Border { Width = 140, Height = 6, CornerRadius = new CornerRadius(4), Background = SettingsUi.FieldBorder, Margin = new Thickness(14, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center, Child = bar };
    var clear = SettingsUi.SmallButton(T("Clear")); clear.Margin = new Thickness(14, 0, 0, 0); clear.Click += (_, _) => ClearCache(folder, label);
    if (!clearable) clear.Visibility = Visibility.Hidden;
    var controls = SettingsUi.Buttons(track, size, clear);

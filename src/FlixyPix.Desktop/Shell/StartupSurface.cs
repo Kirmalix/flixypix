@@ -164,7 +164,7 @@ internal sealed class StartupSurface : Grid
         RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
         AutomationProperties.SetName(logo, ProductIdentity.Name);
         mark.Children.Add(fanLeft); mark.Children.Add(fanRight); mark.Children.Add(logo);
-        word = new TextBlock { Text = ProductIdentity.Name, FontSize = 26, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0), RenderTransform = new TranslateTransform() };
+        word = new TextBlock { Text = ProductIdentity.Name, FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0), RenderTransform = new TranslateTransform() };
         word.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         stack.Children.Add(mark); stack.Children.Add(word);

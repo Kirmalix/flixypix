@@ -59,7 +59,7 @@ public partial class MainWindow
  private void ReloadDetails(object sender, RoutedEventArgs e)
  {
   if (Message.Show(this, T("Reloading discards this draft and shows the saved values."), T("Reload saved values"),
-   MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel) == MessageBoxResult.OK)
+   MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel, yes: T("Reload")) == MessageBoxResult.OK)
    DiscardDetails(sender, e);
  }
  private void ApplyDetailsRecovery(IReadOnlyCollection<Guid> restoreIds)
@@ -116,7 +116,7 @@ public partial class MainWindow
   RememberDetailsDraft();
 
   if (_detailsDrafts.Count == 0) return true;
-  var answer = decision ?? Message.Show(this, T("Save changes"), T("Unsaved changes"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
+  var answer = decision ?? Message.Show(this, T("Save changes"), T("Unsaved changes"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel, yes: T("Save"), no: T("Discard"));
   if (answer == MessageBoxResult.Cancel) return false;
   if (answer == MessageBoxResult.No) { _repository.SaveMetadataDrafts([]); _detailsDrafts.Clear(); return true; }
   // Validate every draft before saving any of them. Immediate tag/rating changes stay current.

@@ -154,7 +154,7 @@ internal sealed class SegmentedChoice : Border
 
  internal SegmentedChoice(IEnumerable<(int Value, string Label)> values)
  {
-  BorderBrush = SettingsUi.FieldBorder; BorderThickness = new Thickness(1); CornerRadius = new CornerRadius(5); ClipToBounds = true; HorizontalAlignment = HorizontalAlignment.Left;
+  BorderBrush = SettingsUi.FieldBorder; BorderThickness = new Thickness(1); CornerRadius = new CornerRadius(6); ClipToBounds = true; HorizontalAlignment = HorizontalAlignment.Left;
   var group = Guid.NewGuid().ToString("N"); var panel = new StackPanel { Orientation = Orientation.Horizontal };
   foreach (var (value, label) in values)
   {

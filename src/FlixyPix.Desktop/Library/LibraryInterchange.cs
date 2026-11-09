@@ -91,7 +91,7 @@ public partial class MainWindow
    if (chosen.Count == 0) await foreach (var item in StreamCatalog(new MediaQuery { Kind = MediaKind.Video }, token)) chosen.Add(item);
    if (chosen.Count == 0) { Status.Text = T("No videos in the library"); return; }
    if (Message.Show(this, T("Write NFO files for {0} next to the videos?\n\nExisting NFO files stay unchanged. The videos themselves are not changed.", scope),
-    T("Write NFO files"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    T("Write NFO files"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Write")) != MessageBoxResult.Yes) return;
    var preferences = _repository.GetPreferences(); Func<string, TagRole> roles = category => TagRoles.Of(preferences, category);
    var (written, kept, problems) = await Task.Run(() =>
    {

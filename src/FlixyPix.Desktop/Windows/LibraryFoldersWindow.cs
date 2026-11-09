@@ -111,7 +111,7 @@ internal sealed class LibraryFoldersWindow : Window
             {
                 var missing = _changes.SelectedItems.Cast<ChangeRow>().Where(r => r.Change.Kind == FolderChangeKind.Missing).Select(r => r.Change).ToList();
                 if (missing.Count == 0) return;
-                if (Message.Show(this, T("Remove selected missing files from the catalog? Personal details of removed items will be lost."), T("Remove from catalog"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+                if (Message.Show(this, T("Remove selected missing files from the catalog? Personal details of removed items will be lost."), T("Remove from catalog"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Remove")) != MessageBoxResult.Yes) return;
                 foreach (var change in missing)
                 {
                     var item = _repository.GetMedia(change.MediaId!.Value);
@@ -250,7 +250,7 @@ internal sealed class LibraryFoldersWindow : Window
         if (Message.Show(this, Tn(suggestions.Count, "Import 1 content folder from EazyFlixPix 4?\n\n{1}{2}\n\n", "Import {0} content folders from EazyFlixPix 4?\n\n{1}{2}\n\n", string.Join("\n", suggestions.Select(f => f.Path).Take(12)), (suggestions.Count > 12 ? "\n…" : "")) +
          Tn(watched, "EazyFlixPix 4 updated 1 of them automatically; it is monitored. FlixyPix checks the others only on request.",
           "EazyFlixPix 4 updated {0} of them automatically; they are monitored. FlixyPix checks the others only on request."),
-          T("Import content folders"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+          T("Import content folders"), MessageBoxButton.YesNo, MessageBoxImage.Question, yes: T("Start import")) != MessageBoxResult.Yes) return;
         Update(folders => [.. folders, .. suggestions]);
         await CheckAsync();
     }

@@ -245,7 +245,7 @@ internal sealed class SimilarMediaWindow : Window
   foreach (var line in details) stack.Children.Add(new TextBlock { Text = line, FontSize = 12, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap });
   stack.Children.Add(new TextBlock { Text = item.Path, FontSize = 11, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
   if (!File.Exists(item.Path)) stack.Children.Add(new TextBlock { Text = T("File is currently unavailable"), FontSize = 11, Foreground = Theme.Brush("Error") });
-  return new Border { Width = 250, Margin = new Thickness(0, 0, 12, 12), Padding = new Thickness(12), CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1),
+  return new Border { Width = 250, Margin = new Thickness(0, 0, 12, 12), Padding = new Thickness(12), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
    Background = SettingsUi.CardBackground, BorderBrush = SettingsUi.CardBorder, Child = stack };
  }
 
@@ -262,7 +262,7 @@ internal sealed class SimilarMediaWindow : Window
      : Tn(others.Count, "Permanently delete 1 file and remove it from the catalog? This cannot be undone.", "Permanently delete {0:N0} files and remove them from the catalog? This cannot be undone."))
     : Tn(others.Count, "Remove 1 item from the catalog? The file stays on the disk.", "Remove {0:N0} items from the catalog? The files stay on the disk.");
    if (Message.Show(this, question + "\n\n" + string.Join("\n", others.Select(o => o.Path)), T("Similar items"), MessageBoxButton.YesNo,
-    deleteFiles ? MessageBoxImage.Warning : MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    deleteFiles ? MessageBoxImage.Warning : MessageBoxImage.Question, MessageBoxResult.No, yes: deleteFiles ? T("Delete") : T("Remove")) != MessageBoxResult.Yes) return;
   }
   try
   {

@@ -278,13 +278,13 @@ public partial class MainWindow
   switch (node.Kind)
   {
    case CollectionNodeKind.Set:
-    if (Message.Show(this, T("Delete the set “{0}”? What it holds moves up one level.", node.Name), T("Delete set"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    if (Message.Show(this, T("Delete the set “{0}”? What it holds moves up one level.", node.Name), T("Delete set"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
     _repository.DeleteCollectionSet(node.Id); break;
    case CollectionNodeKind.Smart:
-    if (Message.Show(this, T("Delete the smart collection “{0}”? The items stay in the catalog.", node.Name), T("Delete smart collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    if (Message.Show(this, T("Delete the smart collection “{0}”? The items stay in the catalog.", node.Name), T("Delete smart collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
     _repository.DeleteSavedSearch(node.Id); break;
    case CollectionNodeKind.Collection:
-    if (Message.Show(this, T("Delete the collection “{0}”? The items stay in the catalog.", node.Name), T("Delete collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+    if (Message.Show(this, T("Delete the collection “{0}”? The items stay in the catalog.", node.Name), T("Delete collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
     _repository.DeletePlaylist(node.Id);
     if (_playlist?.Id == node.Id) { _playlist = null; ViewTitle.Text = T("All items"); }
     break;
@@ -328,7 +328,7 @@ public partial class MainWindow
   var quick = _repository.GetQuickCollection();
   if (Dialogs.Fields(this, T("Save quick collection"), ("Name", "")) is not [var name] || name.Length == 0) return;
   var saved = _repository.UpsertPlaylist(quick with { Id = Guid.NewGuid(), Name = name, Kind = PlaylistKind.Playlist, ParentId = null, Order = 0 });
-  if (Message.Show(this, T("Saved as “{0}”. Clear the quick collection now?", name), T("Save quick collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+  if (Message.Show(this, T("Saved as “{0}”. Clear the quick collection now?", name), T("Save quick collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes, yes: T("Clear"), no: T("Later")) == MessageBoxResult.Yes)
    _repository.UpsertPlaylist(quick with { MediaIds = [], Entries = [] });
   OpenCollection(saved);
  }
@@ -407,13 +407,13 @@ public partial class MainWindow
   var ids = items.Select(m => m.Id).ToList();
   if (view == "favorites")
   {
-   ApplyImmediate(ids, ImmediateEditFields.Favorite, current => current with { IsFavorite = true });
-   Status.Text = Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorites");
+   ApplyImmediate(ids, ImmediateEditFields.Favorite, current => current with { IsFavorite = true },
+    Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorites"));
   }
   else
   {
-   ApplyImmediate(ids, ImmediateEditFields.WatchLater, current => current with { WatchLater = true });
-   Status.Text = Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later");
+   ApplyImmediate(ids, ImmediateEditFields.WatchLater, current => current with { WatchLater = true },
+    Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later"));
   }
   Refresh();
  }

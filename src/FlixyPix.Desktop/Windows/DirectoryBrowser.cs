@@ -37,7 +37,7 @@ internal sealed partial class DirectoryBrowser : UserControl
  internal bool ConfirmLeave()
  {
   if (resetting || !HasUnsavedProfile) return true;
-  var answer = LeaveDecision?.Invoke() ?? Message.Show(dialogOwner, T("Save changes"), T("Unsaved changes"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
+  var answer = LeaveDecision?.Invoke() ?? Message.Show(dialogOwner, T("Save changes"), T("Unsaved changes"), MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel, yes: T("Save"), no: T("Discard"));
   if (answer == MessageBoxResult.Cancel || answer == MessageBoxResult.None) return false;
   if (answer == MessageBoxResult.Yes) return Save();
   savedForm = FormState(); return true;
@@ -103,7 +103,7 @@ internal sealed partial class DirectoryBrowser : UserControl
  private TagRole? filter;
  // Profile: picture, media of the entry, and the undo of the last merge or deletion.
  private readonly Rectangle portrait = new() { Width = 88, Height = 88 }, portraitBack = new() { Width = 88, Height = 88 };
- private readonly TextBlock portraitInitials = new() { FontSize = 28, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+ private readonly TextBlock portraitInitials = new() { FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
  private readonly WrapPanel mediaTiles = new() { Margin = new Thickness(0, 0, 0, 4) };
  private readonly TextBlock mediaCount = new() { Foreground = SettingsUi.Muted, FontSize = 12, Margin = new Thickness(0, 0, 0, 4) };
  private readonly Border undoBar;
@@ -310,7 +310,7 @@ internal sealed partial class DirectoryBrowser : UserControl
   var stack = new StackPanel(); stack.Children.Add(single); stack.Children.Add(several);
   stack.Children.Add(new Border { Height = 1, Background = SettingsUi.CardBorder, Margin = new Thickness(0, 14, 0, 12) });
   stack.Children.Add(SettingsUi.Buttons(merge, delete));
-  return new Border { Background = SettingsUi.CardBackground, BorderBrush = SettingsUi.CardBorder, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(16), Margin = new Thickness(0, 8, 0, 0),
+  return new Border { Background = SettingsUi.CardBackground, BorderBrush = SettingsUi.CardBorder, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(16), Margin = new Thickness(0, 8, 0, 0),
    Child = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
  }
 
@@ -410,7 +410,7 @@ internal sealed partial class DirectoryBrowser : UserControl
   if (edited.Tag.Length == 0) { frame.Status.Text = T("The name must not be empty."); name.Focus(); return false; }
   var merging = !string.Equals(entry.Tag, edited.Tag, StringComparison.OrdinalIgnoreCase) && entries.Any(e => string.Equals(e.Tag, edited.Tag, StringComparison.OrdinalIgnoreCase));
   if (merging && Message.Show(dialogOwner, T("“{0}” already exists. Merge “{1}” into it? The old name is kept as an alias.", edited.Tag, entry.Tag), T("Merge"),
-   MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return false;
+   MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Merge")) != MessageBoxResult.Yes) return false;
   try
   {
    var role = (TagRole)Array.FindIndex(roles, r => r.IsChecked == true);
@@ -437,7 +437,7 @@ internal sealed partial class DirectoryBrowser : UserControl
   var sources = selected.Select(e => e.Tag).Where(t => !string.Equals(t, target, StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
   if (sources.Count == 0) return;
   if (Message.Show(dialogOwner, T("Merge {0} into “{1}”? The old names are kept as aliases.", string.Join(", ", sources.Select(s => T("“{0}”", s))), target), T("Merge"),
-   MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+   MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Merge")) != MessageBoxResult.Yes) return;
   var result = repository.MergeTags(sources, target);
   Changed = true; frame.Status.Text = Tn(result.MediaChanged, "Merged · 1 item changed", "Merged · {0:N0} items changed"); Reload(target);
   ShowUndo(result.Undo, T("“{0}” merged into “{1}”", string.Join(T("”, “"), sources), target));
@@ -452,7 +452,7 @@ internal sealed partial class DirectoryBrowser : UserControl
   var text = (tags.Count == 1 ? T("Delete “{0}”?", tags[0]) : Tn(tags.Count, "Delete 1 tag?", "Delete {0:N0} tags?"))
    + "\n\n" + (tags.Count == 1 ? Tn(media, "Removed from 1 item", "Removed from {0:N0} items") : Tn(media, "Removed from 1 item (assignments)", "Removed from {0:N0} items (assignments)")) +
    (searches > 0 ? Tn(searches, ", changes 1 saved search", ", changes {0:N0} saved searches") : "") + (rules > 0 ? Tn(rules, ", turns off 1 rule", ", turns off {0:N0} rules") : "") + T(". Afterwards it can be undone here.");
-  if (Message.Show(dialogOwner, text, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (Message.Show(dialogOwner, text, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
   DeleteWithoutAsking(tags);
  }
 

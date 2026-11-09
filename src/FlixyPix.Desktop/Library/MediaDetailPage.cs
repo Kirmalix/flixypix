@@ -92,10 +92,10 @@ internal sealed class MediaDetailPage : ScrollViewer
     private Grid Timeline(MediaItem item, double duration, IReadOnlyList<(double Seconds, string Title, bool Scene)> marks)
     {
         var host = new Grid { Height = 16, Margin = new Thickness(0, 0, 0, 10) };
-        var track = new Border { Height = 6, CornerRadius = new CornerRadius(3), VerticalAlignment = VerticalAlignment.Center };
+        var track = new Border { Height = 6, CornerRadius = new CornerRadius(4), VerticalAlignment = VerticalAlignment.Center };
         track.SetResourceReference(Border.BackgroundProperty, "TimelineTrack");
         host.Children.Add(track);
-        var played = new Border { Height = 6, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+        var played = new Border { Height = 6, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
         played.SetResourceReference(Border.BackgroundProperty, "Accent");
         host.Children.Add(played);
         var canvas = new Canvas(); host.Children.Add(canvas);

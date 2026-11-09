@@ -41,7 +41,7 @@ public partial class MainWindow
             Add(TKey("Add"), ChoosePublicationMembers); Add(TKey("Open"), () => _publicationOpenTask = OpenPublicationMemberAsync());
             Add(TKey("Move up"), () => MovePublicationMember(-1)); Add(TKey("Move down"), () => MovePublicationMember(1));
             Add(TKey("Remove"), () => { if (CurrentPublicationGroup() is { } group && _publicationMembers.SelectedItem is PublicationMemberRow row) { _repository.UpsertPublicationGroup(group with { Members = group.Members.Where(m => m != row.Member).ToList() }); RefreshPublicationGroups(); } });
-            Add(TKey("Delete"), () => { if (CurrentPublicationGroup() is { } group && Message.Show(this, group.Name, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes) { _repository.DeletePublicationGroup(group.Id); RefreshPublicationGroups(); } });
+            Add(TKey("Delete"), () => { if (CurrentPublicationGroup() is { } group && Message.Show(this, group.Name, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) == MessageBoxResult.Yes) { _repository.DeletePublicationGroup(group.Id); RefreshPublicationGroups(); } });
             _publicationPage = new Grid(); _publicationPage.SetResourceReference(BackgroundProperty, "WindowBackground"); _publicationPage.Children.Add(frame); Grid.SetRow(_publicationPage, 1); Grid.SetRowSpan(_publicationPage, 4); Panel.SetZIndex(_publicationPage, 20); MediaPane.Children.Add(_publicationPage);
         }
         foreach (UIElement element in MediaPane.Children) if (element != _publicationPage && Grid.GetRow(element) >= 1) { _publicationCovered.TryAdd(element, element.Visibility); element.Visibility = Visibility.Collapsed; }

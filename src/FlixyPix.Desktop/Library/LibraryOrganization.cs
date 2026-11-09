@@ -53,7 +53,7 @@ public partial class MainWindow
     private async void DeleteGlobalTag(string? initial)
     {
         var
-     input = Dialogs.Fields(this, T("Remove tag everywhere"), (T("Tag"), initial ?? "")); if (input == null || Message.Show(this, T("Remove the tag from all items? Affected tag rules are deactivated; historical raw data is kept."), T("Remove tag"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return; await
+     input = Dialogs.Fields(this, T("Remove tag everywhere"), (T("Tag"), initial ?? "")); if (input == null || Message.Show(this, T("Remove the tag from all items? Affected tag rules are deactivated; historical raw data is kept."), T("Remove tag"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Remove")) != MessageBoxResult.Yes) return; await
      RunOperation(T("Remove tag"), async token => await Task.Run(() => _repository.ChangeTag(input[0], null, token), token));
     }
     private async void MoveGlobalTagCategory()

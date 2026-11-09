@@ -194,8 +194,8 @@ public partial class MainWindow
  internal void RateMedia(IReadOnlyList<MediaItem> items, int stars)
  {
   if (items.Count == 0) return;
-  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Rating, current => current with { Rating = stars * 2 });
-  Status.Text = (stars == 0 ? T("Rating removed") : Tn(stars, "1 star", "{0} stars")) + (items.Count > 1 ? Tn(items.Count, " · 1 item", " · {0:N0} items") : ""); Refresh();
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Rating, current => current with { Rating = stars * 2 },
+   (stars == 0 ? T("Rating removed") : Tn(stars, "1 star", "{0} stars")) + (items.Count > 1 ? Tn(items.Count, " · 1 item", " · {0:N0} items") : "")); Refresh();
  
  }
 
@@ -204,9 +204,9 @@ public partial class MainWindow
  {
   if (items.Count == 0) return;
   var pin = !items.All(i => (_repository.GetMedia(i.Id) ?? i).IsFavorite);
-  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Favorite, current => current with { IsFavorite = pin });
-  Status.Text = items.Count == 1 ? (pin ? T("“{0}” pinned as favorite", items[0].Title) : T("“{0}” no longer pinned as favorite", items[0].Title))
-   : pin ? Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorite") : Tn(items.Count, "1 item no longer pinned as favorite", "{0:N0} items no longer pinned as favorite");
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.Favorite, current => current with { IsFavorite = pin },
+   items.Count == 1 ? (pin ? T("“{0}” pinned as favorite", items[0].Title) : T("“{0}” no longer pinned as favorite", items[0].Title))
+   : pin ? Tn(items.Count, "1 item pinned as favorite", "{0:N0} items pinned as favorite") : Tn(items.Count, "1 item no longer pinned as favorite", "{0:N0} items no longer pinned as favorite"));
   Refresh();
  }
 
@@ -215,9 +215,9 @@ public partial class MainWindow
  {
   if (items.Count == 0) return;
   var mark = !items.All(i => (_repository.GetMedia(i.Id) ?? i).WatchLater);
-  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.WatchLater, current => current with { WatchLater = mark });
-  Status.Text = items.Count == 1 ? (mark ? T("“{0}” marked for later", items[0].Title) : T("“{0}” removed from Watch later", items[0].Title))
-   : mark ? Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later") : Tn(items.Count, "1 item removed from Watch later", "{0:N0} items removed from Watch later");
+  ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.WatchLater, current => current with { WatchLater = mark },
+   items.Count == 1 ? (mark ? T("“{0}” marked for later", items[0].Title) : T("“{0}” removed from Watch later", items[0].Title))
+   : mark ? Tn(items.Count, "1 item marked for later", "{0:N0} items marked for later") : Tn(items.Count, "1 item removed from Watch later", "{0:N0} items removed from Watch later"));
   Refresh();
  }
 
@@ -235,7 +235,7 @@ public partial class MainWindow
   // Asking can be switched off like the original's "Never prompt when deleting media"; deleting the file itself always asks.
   var question = items.Count == 1 ? T("Remove “{0}” from the catalog?\n\nThe media file stays on the disk.", items[0].Title)
    : Tn(items.Count, "Remove 1 item from the catalog?\n\nThe media files stay on the disk.", "Remove {0:N0} items from the catalog?\n\nThe media files stay on the disk.");
-  if (_repository.GetPreferences().General.ConfirmRemove && Message.Show(this, question, T("Remove from catalog"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (_repository.GetPreferences().General.ConfirmRemove && Message.Show(this, question, T("Remove from catalog"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Remove")) != MessageBoxResult.Yes) return;
   foreach (var item in items) { _repository.Delete(item.Id); ForgetInLibraryFolders(item.Path); }
   Refresh();
   Status.Text = items.Count == 1 ? T("“{0}” removed from the catalog", items[0].Title) : Tn(items.Count, "1 item removed from the catalog", "{0:N0} items removed from the catalog");
@@ -250,7 +250,7 @@ public partial class MainWindow
   var recycle = _repository.GetPreferences().General.DeleteToRecycleBin;
   var question = recycle ? Tn(items.Count, "Move 1 file to the Recycle Bin?", "Move {0:N0} files to the Recycle Bin?")
    : Tn(items.Count, "Permanently delete 1 file from the disk?\n\nThis action cannot be undone.", "Permanently delete {0:N0} files from the disk?\n\nThis action cannot be undone.");
-  if (Message.Show(this, question, recycle ? T("Delete file") : T("Permanently delete file"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (Message.Show(this, question, recycle ? T("Delete file") : T("Permanently delete file"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Delete")) != MessageBoxResult.Yes) return;
   var failed = new List<string>();
   foreach (var item in items)
   {

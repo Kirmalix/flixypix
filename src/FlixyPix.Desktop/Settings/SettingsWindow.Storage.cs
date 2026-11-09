@@ -51,7 +51,7 @@ internal sealed partial class SettingsWindow
  {
   var folder = Path.Combine(libraryDirectory, name);
   if (!Directory.Exists(folder)) return;
-  if (Message.Show(this, T("Clear the {0}? It is recreated when needed.", label), T("Cache"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+  if (Message.Show(this, T("Clear the {0}? It is recreated when needed.", label), T("Cache"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Clear")) != MessageBoxResult.Yes) return;
   try
   {
    FileAccessPolicy.Current.EnsureWritable(folder);

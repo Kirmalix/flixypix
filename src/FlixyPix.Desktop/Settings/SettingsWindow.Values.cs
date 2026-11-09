@@ -97,7 +97,7 @@ internal sealed partial class SettingsWindow
   dirty = true; error.Text = ""; note.Text = T("Unsaved changes");
  }
  private bool ConfirmDiscard() => !dirty || Result != null
-  || Message.Show(this, T("The changes have not been saved yet. Discard them?"), "Einstellungen", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+  || Message.Show(this, T("The changes have not been saved yet. Discard them?"), T("Settings"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Discard")) == MessageBoxResult.Yes;
  /// <summary>Closes without asking about unsaved changes (smoke tests: a failed check must not wait on a prompt).</summary>
  internal void CloseDiscarding() { dirty = false; Close(); }
  protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

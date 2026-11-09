@@ -38,7 +38,7 @@ public partial class MainWindow
    Dialog(()=>Click(_publicationActions["Delete"]),window=>
    {
     Require(window is MessageWindow,"Group deletion did not ask.");var message=(MessageWindow)window;
-    Require(Equals(message.Choices.Single(b=>b.IsDefault).Content,T("No")),"Group deletion default is not No.");Click(message.Choices.Single(b=>Equals(b.Content,T(confirm?"Yes":"No"))));
+    Require(Equals(message.Choices.Single(b=>b.IsDefault).Content,T("Cancel")),"Group deletion default is not to cancel.");Click(message.Choices.Single(b=>Equals(b.Content,T(confirm?"Delete":"Cancel"))));
    });
   }
   async Task AddSet()

@@ -79,15 +79,15 @@ public partial class MainWindow
  private void TileToggleWatchLater(object sender, RoutedEventArgs e)
  {
   if (CardOf(sender) is not { } card) return; e.Handled = true;
-  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.WatchLater, current => current with { WatchLater = !current.WatchLater });
-  Status.Text = item.WatchLater ? T("“{0}” removed from Watch later", card.Title) : T("“{0}” marked for later", card.Title); Refresh();
+  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.WatchLater, current => current with { WatchLater = !current.WatchLater },
+   item.WatchLater ? T("“{0}” removed from Watch later", card.Title) : T("“{0}” marked for later", card.Title)); Refresh();
  }
  private void TileToggleFavorite(object sender, RoutedEventArgs e)
  {
   if (CardOf(sender) is not { } card) return; e.Handled = true;
   if (sender is FrameworkElement heart) Motion.Pop(heart);
-  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite });
-  Status.Text = item.IsFavorite ? T("“{0}” no longer pinned as favorite", card.Title) : T("“{0}” pinned as favorite", card.Title); Refresh();
+  var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite },
+   item.IsFavorite ? T("“{0}” no longer pinned as favorite", card.Title) : T("“{0}” pinned as favorite", card.Title)); Refresh();
  }
 
  /// <summary>Saves one field of the selected medium at once while unsaved title and description edits stay in the boxes.</summary>
@@ -95,7 +95,7 @@ public partial class MainWindow
  {
   if (Selected is not { } selected || SelectedMedia.Count > 1) return;
   var item = _repository.GetMedia(selected.Id) ?? selected;
-  ApplyImmediate([item.Id], ImmediateEditFields.Rating | ImmediateEditFields.Favorite | ImmediateEditFields.WatchLater, change); Status.Text = message; Refresh(item.Id);
+  ApplyImmediate([item.Id], ImmediateEditFields.Rating | ImmediateEditFields.Favorite | ImmediateEditFields.WatchLater, change, message); Refresh(item.Id);
  }
  private void FavoriteClicked(object sender, RoutedEventArgs e) => QuickSave(item => item with { IsFavorite = EditFavorite.IsChecked == true }, EditFavorite.IsChecked == true ? T("Pinned as favorite") : T("Favorite unpinned"));
  private void WatchLaterClicked(object sender, RoutedEventArgs e) => QuickSave(item => item with { WatchLater = EditWatchLater.IsChecked == true }, EditWatchLater.IsChecked == true ? T("Marked for later") : T("No longer marked for later"));

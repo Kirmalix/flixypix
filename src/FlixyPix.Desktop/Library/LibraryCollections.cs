@@ -66,7 +66,7 @@ public partial class MainWindow
     private void DeleteCollection()
     {
         if (_playlist == null) return; if (Message.Show(this, T("Delete the collection “{0}”? The items stay in the catalog.",
-     _playlist.Name), T("Delete collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
+     _playlist.Name), T("Delete collection"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) == MessageBoxResult.Yes)
         {
             _repository.DeletePlaylist(_playlist.Id); _playlist = null; ViewTitle.Text = T("All items"); Refresh();
         }

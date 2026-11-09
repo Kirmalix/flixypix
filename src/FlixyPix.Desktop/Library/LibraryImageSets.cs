@@ -51,7 +51,7 @@ public partial class MainWindow
             Add(TKey("Move up"), () => MoveSetMember(-1)); Add(TKey("Move down"), () => MoveSetMember(1));
             Add(TKey("Set as cover"), () => { if (CurrentImageSet() is { } set && _setMembers.SelectedItem is MediaItem media) { _repository.UpsertImageSet(set with { CoverId = media.Id }); RefreshImageSets(); } });
             Add(TKey("Remove"), () => { if (CurrentImageSet() is { } set && _setMembers.SelectedItem is MediaItem media) { _repository.UpsertImageSet(set with { MediaIds = set.MediaIds.Where(id => id != media.Id).ToList(), CoverId = set.CoverId == media.Id ? null : set.CoverId }); RefreshImageSets(); } });
-            Add(TKey("Delete"), () => { if (CurrentImageSet() is { } set && Message.Show(this, set.Name, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes) { _repository.DeleteImageSet(set.Id); RefreshImageSets(); } });
+            Add(TKey("Delete"), () => { if (CurrentImageSet() is { } set && Message.Show(this, set.Name, T("Delete"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Delete")) == MessageBoxResult.Yes) { _repository.DeleteImageSet(set.Id); RefreshImageSets(); } });
             _setPage = new Grid(); _setPage.SetResourceReference(BackgroundProperty, "WindowBackground"); _setPage.Children.Add(frame); Grid.SetRow(_setPage, 1); Grid.SetRowSpan(_setPage, 4); Panel.SetZIndex(_setPage, 20); MediaPane.Children.Add(_setPage);
         }
         foreach (UIElement element in MediaPane.Children) if (element != _setPage && Grid.GetRow(element) >= 1) { _setCovered.TryAdd(element, element.Visibility); element.Visibility = Visibility.Collapsed; }

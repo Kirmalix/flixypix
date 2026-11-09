@@ -103,7 +103,7 @@ public partial class MainWindow
         var example = items[0];
         if (Message.Show(this, Tn(items.Count, "Replace the title of 1 item with its file name?\n\nExample: “{1}” becomes “{2}”.",
          "Replace the titles of {0:N0} items with their file names?\n\nExample: “{1}” becomes “{2}”.", example.Title, TitleFromFileName(example.Path)),
-         T("Title from file name"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+         T("Title from file name"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, yes: T("Replace")) != MessageBoxResult.Yes) return;
         Status.Text = Tn(ApplyTitlesFromFileNames(items), "1 title changed", "{0:N0} titles changed");
     }
 
