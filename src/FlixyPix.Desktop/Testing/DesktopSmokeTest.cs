@@ -627,6 +627,7 @@ public partial class MainWindow
          $"Page 3 did not start at {2 * PageSize} (first {_visibleFirst}, label {PageLabel.Text}).");
         await GoToPageAsync(PageCount);
         Require(CurrentPage == PageCount && _visibleLast == total - 1, "The last page did not show the end of the result.");
+        Require(RowsPerPage(160, 100) == 2 && RowsPerPage(150, 100) == 2 && RowsPerPage(140, 100) == 1 && RowsPerPage(30, 100) == 1 && RowsPerPage(300, 100) == 3, "A row at least half in view does not count for the page.");
         Require(PageNumbers(1, 1).SequenceEqual([1]) && PageNumbers(5, 9).SequenceEqual([1, 0, 4, 5, 6, 0, 9]) && PageNumbers(3, 9).SequenceEqual([1, 2, 3, 4, 0, 9]),
          "Page numbers are not abbreviated as expected.");
         await SelectIndexAsync(0);

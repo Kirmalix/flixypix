@@ -5,20 +5,23 @@ using System.Windows.Input;
 
 namespace FlixyPix.Desktop;
 
-/// <summary>Pages on top of endless scrolling: a page is one screenful (visible rows × columns), so going to a page puts
+/// <summary>Pages on top of endless scrolling: a page is what one sees (rows at least half in view × columns), so going to a page puts
 /// its first medium at the top. The bar under the tiles shows where one is and jumps to any page (click the number or Ctrl+G).</summary>
 public partial class MainWindow
 {
  private (int Page, int Pages, int Size) _pager = (-1, -1, -1);
 
- /// <summary>Media per page: whole rows that fit into the view, at least one row.</summary>
+ /// <summary>Rows of a page: a row at least half in view counts, as one sees it, and there is always at least one.</summary>
+ internal static int RowsPerPage(double viewport, double rowHeight) => Math.Max(1, (int)Math.Floor(viewport / Math.Max(1, rowHeight) + .5));
+
+ /// <summary>Media per page.</summary>
  internal int PageSize
  {
   get
   {
    if (Tiles is not { } panel || panel.ViewportHeight <= 0) return Math.Max(1, _visibleLast - _visibleFirst + 1);
    var rowHeight = panel.ExtentHeight > 0 && _total > 0 ? panel.ExtentHeight / Math.Ceiling(_total / (double)panel.Columns) : 1;
-   return Math.Max(1, (int)(panel.ViewportHeight / Math.Max(1, rowHeight))) * panel.Columns;
+   return RowsPerPage(panel.ViewportHeight, rowHeight) * panel.Columns;
   }
  }
 
