@@ -76,7 +76,9 @@ public sealed partial class CatalogRepository : IDisposable
                 if (schemaVersion is > 0 and < OldestUpgradableSchema) throw new NotSupportedException(TooOldSchemaMessage);
                 if (schemaVersion is > 0 and < SchemaVersion) CreateMigrationBackup(schemaVersion, progress, token);
                 progress?.Report(new(CatalogOpenPhase.CatalogInitialization, 0, 0));
-                using (var pragmas = Command("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;", null)) pragmas.ExecuteNonQuery();
+                // With a log, NORMAL keeps the file intact at any time; a power failure can only cost the last commits. A commit
+                // then does not wait for the disk, and the larger cache keeps a large catalog's index pages at hand.
+                using (var pragmas = Command("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA synchronous=NORMAL; PRAGMA cache_size=-65536;", null)) pragmas.ExecuteNonQuery();
                 using var transaction = connection.BeginTransaction();
                 using var command = Command("""
                 CREATE TABLE IF NOT EXISTS media(id TEXT PRIMARY KEY, path_key TEXT NOT NULL UNIQUE, document TEXT NOT NULL);

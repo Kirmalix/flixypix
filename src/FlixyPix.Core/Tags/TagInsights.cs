@@ -52,10 +52,14 @@ public sealed partial class CatalogRepository
         {
             ThrowIfDisposed();
             var stamp = ChangeStamp();
-            if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == stamp)
-                return statistics.Counts.Select(pair => new TagUsage(statistics.Display[pair.Key], pair.Value))
-                    .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
             if (cachedTagUsage is not null && cachedTagUsageStamp == stamp) return cachedTagUsage;
+            if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == stamp)
+            {
+                cachedTagUsage = statistics.Counts.Select(pair => new TagUsage(statistics.Display[pair.Key], pair.Value))
+                    .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
+                cachedTagUsageStamp = stamp;
+                return cachedTagUsage;
+            }
             // The usage alone comes from one table. The statistics also need every path, which on a cold disk takes seconds at each start.
             cachedTagUsage = ReadTagUsage(connection);
             cachedTagUsageStamp = stamp;
@@ -81,6 +85,19 @@ public sealed partial class CatalogRepository
         }
         return counts.Select(pair => new TagUsage(display[pair.Key], pair.Value))
             .OrderByDescending(usage => usage.MediaCount).ThenBy(usage => usage.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+    /// <summary>The usage after an edit of some media, without going through all tags of the library again.</summary>
+    private static IReadOnlyList<TagUsage> WithUsageChanges(IReadOnlyList<TagUsage> usage, IReadOnlyList<(MediaItem Old, MediaItem New)> changes)
+    {
+        var counts = usage.ToDictionary(entry => entry.Tag, entry => entry.MediaCount, StringComparer.OrdinalIgnoreCase);
+        foreach (var (old, updated) in changes)
+        {
+            var before = StatisticsTags(old); var now = StatisticsTags(updated);
+            foreach (var tag in now.Except(before, StringComparer.OrdinalIgnoreCase)) counts[tag] = counts.GetValueOrDefault(tag) + 1;
+            foreach (var tag in before.Except(now, StringComparer.OrdinalIgnoreCase))
+                if (counts.GetValueOrDefault(tag) <= 1) counts.Remove(tag); else counts[tag]--;
+        }
+        return counts.Select(pair => new TagUsage(pair.Key, pair.Value)).OrderByDescending(entry => entry.MediaCount).ThenBy(entry => entry.Tag, StringComparer.OrdinalIgnoreCase).ToArray();
     }
     private IReadOnlyList<TagUsage>? cachedTagUsage;
     private (long Changes, long DataVersion) cachedTagUsageStamp;
@@ -341,6 +358,16 @@ public sealed partial class CatalogRepository
         static IEnumerable<string> Raw(MediaItem item) => item.Tags.Concat(item.TagCategories.SelectMany(p => p.Value.Select(t => p.Key + "\0" + t)));
         var sameTags = changes.All(c => Raw(c.Old).Order(StringComparer.Ordinal).SequenceEqual(Raw(c.New).Order(StringComparer.Ordinal), StringComparer.Ordinal));
         facetsCache.CarryAcross(before, after, changes, samePaths, sameTags);
+        if (cachedTagUsage is { } usage && cachedTagUsageStamp == before)
+        {
+            cachedTagUsage = sameTags ? usage : WithUsageChanges(usage, changes);
+            cachedTagUsageStamp = after;
+        }
+        if (cachedNavigationCounts is { } navigation && cachedNavigationCountsStamp == before)
+        {
+            cachedNavigationCounts = changes.Aggregate(navigation, (counts, change) => counts.Moved(change.Old, change.New));
+            cachedNavigationCountsStamp = after;
+        }
         if (cachedTagStatistics is { } statistics && cachedTagStatisticsStamp == before && samePaths)
         {
             if (!sameTags)

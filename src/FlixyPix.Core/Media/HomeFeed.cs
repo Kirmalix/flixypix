@@ -105,6 +105,7 @@ public sealed partial class CatalogRepository
     {
         var preferences = GetPreferences();
         var rows = new List<HomeRow>();
+        IReadOnlyList<DirectoryEntry>? directory = null; // Performers and studios are rows of the same list.
         var timings = new Dictionary<string, double>(); var clock = System.Diagnostics.Stopwatch.StartNew();
         var recent = RecentlyPlayed(40, cancellationToken);
         timings["recent"] = clock.Elapsed.TotalMilliseconds;
@@ -188,7 +189,7 @@ public sealed partial class CatalogRepository
         }
         void AddEntities(HomeRowKind kind, TagRole role, CancellationToken token)
         {
-            var entries = GetDirectory(token).Where(e => e.Role == role && e.MediaCount > 0).ToList();
+            var entries = (directory ??= GetDirectory(token)).Where(e => e.Role == role && e.MediaCount > 0).ToList();
             // Favourites first; without favourites the most frequent ones stand in.
             var chosen = entries.Where(e => e.IsFavorite).OrderByDescending(e => e.MediaCount)
                 .Concat(entries.Where(e => !e.IsFavorite).OrderByDescending(e => e.MediaCount)).Take(16).ToList();

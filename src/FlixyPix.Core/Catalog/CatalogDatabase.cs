@@ -21,10 +21,10 @@ internal sealed class CatalogDatabase(SqliteConnection connection, object gate, 
     internal SqliteConnection Connection => connection;
     internal object Gate => gate;
     internal void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(isDisposed(), this);
-    internal (long Changes, long DataVersion) ChangeStamp()
+    internal (long Changes, long DataVersion) ChangeStamp(SqliteTransaction? transaction = null)
     {
-        using var changes = Command("SELECT total_changes()", null);
-        using var version = Command("PRAGMA data_version", null);
+        using var changes = Command("SELECT total_changes()", transaction);
+        using var version = Command("PRAGMA data_version", transaction);
         return (Convert.ToInt64(changes.ExecuteScalar()), Convert.ToInt64(version.ExecuteScalar()));
     }
     internal SqliteCommand Command(string sql, SqliteTransaction? transaction, params (string Name, object Value)[] parameters)

@@ -64,7 +64,7 @@ public partial class MainWindow
             var general = _repository.GetPreferences().General;
             var loaded = await Task.Run(() =>
             {
-                if (window.Playlist == null) return (_repository.QueryPage(window.Query with { Offset = start }, token).Items, Offset: start);
+                if (window.Playlist == null) return (Items: _repository.QueryItems(window.Query with { Offset = start }, token), Offset: start);
                 var result = _repository.QueryPlaylistPage(window.Playlist, window.Query with { Offset = start }, window.CollectionOrder, null, token);
                 return (result.Page.Items, Offset: result.Offset);
             });

@@ -33,8 +33,9 @@ public sealed partial class CatalogRepository
      }
      var categorized = counts.Keys.Where(k => k.Category.Length > 0).Select(k => k.Tag).ToHashSet(StringComparer.OrdinalIgnoreCase);
      var entries = new Dictionary<(string Tag, string Category), DirectoryEntry>(PairComparer);
+     var inVocabulary = preferences.TagVocabulary.Select(v => v.Tag).ToHashSet(StringComparer.OrdinalIgnoreCase);
      foreach (var ((tag, category), count) in counts)
-         if (category.Length > 0 || !categorized.Contains(tag) && !preferences.TagVocabulary.Any(v => Same(v.Tag, tag)))
+         if (category.Length > 0 || !categorized.Contains(tag) && !inVocabulary.Contains(tag))
              entries[(tag, category)] = new(tag, category, category.Length == 0 ? TagRole.Tag : TagRoles.Of(preferences, category), count);
      foreach (var entry in preferences.TagVocabulary)
      {

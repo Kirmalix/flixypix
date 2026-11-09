@@ -125,6 +125,17 @@ public partial class MainWindow
     private sealed record BrowseSnapshot(IReadOnlyList<CategoryOption> Categories, TagListEntry[] Tags, string TagListFingerprint, string FolderFingerprint, Func<BrowseNode[]> FolderTree, string TagFingerprint, BrowseNode[] CategorizedTags,
      IReadOnlyDictionary<string, TagRole> CategoryRoles, RoleName[] RoleNames, IReadOnlyDictionary<string, long> FolderCounts, IReadOnlyDictionary<string, long> TagCategoryCounts,
      NavigationCounts Navigation, ReviewInboxMode ReviewInbox);
+    /// <summary>The prepared lists, built anew only when what they are made of changed; most refreshes change neither.</summary>
+    private BrowseSnapshot BrowsingFor(CatalogFacets facets, CatalogPreferences preferences, IReadOnlyList<TagUsage> usage, NavigationCounts navigation)
+    {
+        if (_preparedBrowsing is { } known && ReferenceEquals(known.Facets, facets) && ReferenceEquals(known.Preferences, preferences)
+            && ReferenceEquals(known.Usage, usage) && ReferenceEquals(known.Navigation, navigation)) return known.Browse;
+        var browse = PrepareBrowsing(facets, preferences, usage, navigation);
+        _preparedBrowsing = (facets, preferences, usage, navigation, browse);
+        return browse;
+    }
+    private (CatalogFacets Facets, CatalogPreferences Preferences, IReadOnlyList<TagUsage> Usage, NavigationCounts Navigation, BrowseSnapshot Browse)? _preparedBrowsing;
+
     // Runs off the UI thread: large catalogs carry thousands of vocabulary tags and folders.
     private static BrowseSnapshot PrepareBrowsing(CatalogFacets facets, CatalogPreferences preferences, IReadOnlyList<TagUsage> usage, NavigationCounts navigation)
     {
