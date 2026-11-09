@@ -148,6 +148,7 @@
   ": please enter a color like #14171C.": ": geef een kleur op, zoals #14171C.",
   "A backup size or entry is missing.": "Back-upgrootte of een onderdeel ontbreekt.",
   "A category may appear only once.": "Een categorie kan slechts één keer verschijnen.",
+  "A contrast theme of Windows is on, so FlixyPix uses its colours. This choice applies again once it is off.": "Er is een contrastthema van Windows actief, dus gebruikt FlixyPix de kleuren daarvan. Deze keuze geldt weer zodra het is uitgeschakeld.",
   "A custom jump needs a key and a distance other than 0 (at most 10 hours or 100 %).": "Een eigen sprong vereist een toets en een afstand ongelijk aan 0 (maximaal 10 uur of 100%).",
   "A different record (register as new)": "Een ander record (als nieuw vastleggen)",
   "A file appears twice among the versions: {0}": "Een bestand komt twee keer voor tussen de versies: {0}",

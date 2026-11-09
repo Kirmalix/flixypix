@@ -57,6 +57,7 @@ internal static class Theme
   ("SwitchKnob", "#C9D3E6", "#5B677D"),
   ("SwitchBorder", "#6E7F9C", "#8792A6"),
   ("Gold", "#F3C76B", "#A86F00"),
+  ("StarEmpty", "#34435B", "#C3CCD9"),
   ("Error", "#FF8A80", "#B3261E"),
   ("Good", "#7ED39A", "#2B7A4B"),
   ("Chip", "#3E2238", "#FBDDE5"),
@@ -88,6 +89,63 @@ internal static class Theme
   ("TagExcluded", "SidebarBackground", 4.5), ("Text", "ChipFull", 4.5), ("Text", "ChipApplied", 4.5), ("Text", "ChipExcluded", 4.5), ("Text", "ChipSuggestion", 4.5), ("OnBadge", "Badge", 4.5),
   ("Brand", "ChromeBackground", 4.5), ("Brand", "DetailsBackground", 4.5), ("Brand", "CardBackground", 4.5),
  ];
+
+ /// <summary>The colours a contrast theme of Windows prescribes.</summary>
+ internal readonly record struct SystemTheme(Color Window, Color Text, Color Highlight, Color OnHighlight);
+
+ /// <summary>Combinations of the kind Windows ships, for checking the derived palette.</summary>
+ internal static readonly SystemTheme[] ContrastSamples =
+ [
+  new(Parse("#202020"), Parse("#FFFFFF"), Parse("#8EE3F0"), Parse("#263B50")),
+  new(Parse("#FFFAEF"), Parse("#3D3D3D"), Parse("#903909"), Parse("#FFF5E3")),
+  new(Parse("#2D3236"), Parse("#B6F6F0"), Parse("#ABCFF2"), Parse("#2D3236")),
+  new(Parse("#000000"), Parse("#FFFFFF"), Parse("#D6B4FD"), Parse("#2B2B2B")),
+  new(Parse("#000000"), Parse("#FFFFFF"), Parse("#1AEBFF"), Parse("#000000")),
+  new(Parse("#FFFFFF"), Parse("#000000"), Parse("#37006E"), Parse("#FFFFFF")),
+ ];
+
+ /// <summary>The palette under a contrast theme: only its own colours, with a few tints where something must stand out from
+ /// the window, such as buttons, hover and selection. Tints give way until the text on them stays readable.</summary>
+ internal static Dictionary<string, Color> ContrastPalette(SystemTheme system)
+ {
+  var (window, text, highlight, onHighlight) = system;
+  static Color Mix(Color from, Color to, double share)
+  {
+   byte Part(byte a, byte b) => (byte)Math.Round(a + (b - a) * share);
+   return System.Windows.Media.Color.FromRgb(Part(from.R, to.R), Part(from.G, to.G), Part(from.B, to.B));
+  }
+  Color Tint(Color towards, double share)
+  {
+   while (share > 0 && Contrast(text, Mix(window, towards, share)) < 4.5) share -= .02;
+   return Mix(window, towards, Math.Max(0, share));
+  }
+  var raised = Tint(text, .18); var chosen = Tint(highlight, .35);
+  // Coloured text and marks need the window behind them; a highlight too close to it hands over to the text colour.
+  var mark = Contrast(highlight, window) >= 4.5 ? highlight : text;
+  var (accent, onAccent) = Contrast(onHighlight, highlight) >= 4.5 ? (highlight, onHighlight) : (text, window);
+  return Palette.ToDictionary(entry => entry.Key, entry => entry.Key switch
+  {
+   "WindowBackground" or "ChromeBackground" or "SidebarBackground" or "DetailsBackground" or "CardBackground" or "MediaBackground" or "PreviewBackground" or "Field" or "PopupBackground" or "Badge" or "ChipPartial" or "ChipSuggestion" => window,
+   "ButtonBackground" or "Skeleton" or "ChipApplied" or "ChipExcluded" => raised,
+   "SelectionBackground" or "ItemSelected" or "Chip" or "ChipFull" or "CardHover" or "FieldHover" or "ButtonHover" or "ItemHighlight" or "SkeletonHighlight" => chosen,
+   "Accent" or "AccentHover" => accent,
+   "OnAccent" => onAccent,
+   "Brand" or "Focus" or "SelectionBorder" or "ScrollThumbHover" or "TimelineMark" or "SceneMark" or "Gold" => mark,
+   // A rating is information: given stars must differ from empty ones.
+   "StarEmpty" => Mix(window, text, .35),
+   "OnBrand" => window,
+   _ => text,
+  });
+ }
+
+ /// <summary>Under a contrast theme of Windows the system decides the colours, whatever scheme is chosen.</summary>
+ internal static bool ContrastMode => SystemParameters.HighContrast || ContrastForTest != null;
+ /// <summary>Tests cannot switch Windows; they hand in the colours instead.</summary>
+ internal static SystemTheme? ContrastForTest { get; set; }
+ private static SystemTheme CurrentSystemTheme() => ContrastForTest ?? new(SystemColors.WindowColor, SystemColors.WindowTextColor, SystemColors.HighlightColor, SystemColors.HighlightTextColor);
+
+ /// <summary>The colour on screen right now, also under a contrast theme.</summary>
+ internal static Color Current(string key) => slots[key].Color;
 
  private sealed class ColorSlot : INotifyPropertyChanged
  {
@@ -128,7 +186,11 @@ internal static class Theme
   }));
   SystemEvents.UserPreferenceChanged += (_, e) =>
   {
-   if (e.Category == UserPreferenceCategory.General && Mode == ColorScheme.System) application.Dispatcher.BeginInvoke(() => Apply(ColorScheme.System));
+   if (e.Category == UserPreferenceCategory.General && Mode == ColorScheme.System || e.Category == UserPreferenceCategory.Color && ContrastMode) application.Dispatcher.BeginInvoke(() => Apply(Mode));
+  };
+  SystemParameters.StaticPropertyChanged += (_, e) =>
+  {
+   if (e.PropertyName == nameof(SystemParameters.HighContrast)) application.Dispatcher.BeginInvoke(() => Apply(Mode));
   };
  }
 
@@ -137,10 +199,11 @@ internal static class Theme
 
  internal static void Apply(ColorScheme mode)
  {
-  Mode = mode; IsDark = mode switch { ColorScheme.Light => false, ColorScheme.Dark => true, _ => !SystemUsesLightTheme() };
+  var contrast = ContrastMode ? ContrastPalette(CurrentSystemTheme()) : null;
+  Mode = mode; IsDark = contrast != null ? contrast["WindowBackground"] is var ground && ground.R + ground.G + ground.B < 384 : mode switch { ColorScheme.Light => false, ColorScheme.Dark => true, _ => !SystemUsesLightTheme() };
   foreach (var (key, dark, light) in Palette)
   {
-   var color = Parse(IsDark ? dark : light);
+   var color = contrast?[key] ?? Parse(IsDark ? dark : light);
    if (!brushes[key].IsFrozen) { slots[key].Color = color; continue; }
    // Should not happen with bound brushes; replace it so DynamicResource users still follow.
    ReplacedKeys.Add(key);
@@ -182,7 +245,8 @@ internal static class Theme
   // Attribute 20 is DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1 and later); older systems ignore it.
   _ = DwmSetWindowAttribute(handle, 20, ref dark, sizeof(int));
   // Attributes 35 and 36 are the caption and its text (Windows 11); the bar then continues the window. Older systems ignore them.
-  var caption = Colorref(Color("ChromeBackground", IsDark)); var text = Colorref(Color("Text", IsDark));
+  // A contrast theme draws its own bar (-1 is DWMWA_COLOR_DEFAULT).
+  var caption = ContrastMode ? -1 : Colorref(Color("ChromeBackground", IsDark)); var text = ContrastMode ? -1 : Colorref(Color("Text", IsDark));
   _ = DwmSetWindowAttribute(handle, 35, ref caption, sizeof(int));
   _ = DwmSetWindowAttribute(handle, 36, ref text, sizeof(int));
  }

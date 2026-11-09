@@ -168,6 +168,7 @@
   ": please enter a color like #14171C.": ": укажите цвет в формате #14171C.",
   "A backup size or entry is missing.": "Не указан размер или отсутствует элемент резервной копии.",
   "A category may appear only once.": "Категория не должна повторяться.",
+  "A contrast theme of Windows is on, so FlixyPix uses its colours. This choice applies again once it is off.": "Включена контрастная тема Windows, поэтому FlixyPix использует её цвета. Этот выбор снова будет действовать после её отключения.",
   "A custom jump needs a key and a distance other than 0 (at most 10 hours or 100 %).": "Для пользовательского перехода нужны клавиша и ненулевой шаг (не более 10 часов или 100 %).",
   "A different record (register as new)": "Другая запись (зарегистрировать как новую)",
   "A file appears twice among the versions: {0}": "Файл встречается среди версий дважды: {0}",

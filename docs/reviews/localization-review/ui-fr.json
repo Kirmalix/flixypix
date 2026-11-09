@@ -14836,6 +14836,11 @@
       "status": "corrected",
       "digest": "94f76e83da0395fe5b34bee77a63958e22b15db300093d18f3fbfce48520e5cf",
       "previous_digest": "fb87b9e659ecc2b8f7adfb14cfb858bf395a69ffcf3bace6d5fa71789b1ad8b9"
+    },
+    "A contrast theme of Windows is on, so FlixyPix uses its colours. This choice applies again once it is off.": {
+      "status": "corrected",
+      "digest": "2694df78374cace91e38c681c869286c990b3d72568615f33eace854d3a0446a",
+      "previous_digest": "cd3975b0dded321d1b45a4e8d307af087ab68926b6c7d3e20e933ecb50453375"
     }
   }
 }

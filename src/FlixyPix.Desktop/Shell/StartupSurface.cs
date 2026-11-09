@@ -57,7 +57,7 @@ internal sealed class StartupSurface : Grid
         SetResourceReference(BackgroundProperty, "WindowBackground");
         phase.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         shimmer = new LinearGradientBrush { StartPoint = new Point(0, .5), EndPoint = new Point(1, .5), RelativeTransform = sweep };
-        var plain = Theme.Color("Skeleton", Theme.IsDark); var bright = Theme.Color("SkeletonHighlight", Theme.IsDark);
+        var plain = Theme.Current("Skeleton"); var bright = Theme.Current("SkeletonHighlight");
         shimmer.GradientStops.Add(new GradientStop(plain, .3)); shimmer.GradientStops.Add(new GradientStop(bright, .5)); shimmer.GradientStops.Add(new GradientStop(plain, .7));
         cancel.Click += (_, _) => cancelRequested();
         Children.Add(BuildSkeleton());
@@ -156,7 +156,7 @@ internal sealed class StartupSurface : Grid
 
     private Border BuildIntro()
     {
-        var accent = Theme.Color("Accent", Theme.IsDark); var ground = Theme.Color("WindowBackground", Theme.IsDark);
+        var accent = Theme.Current("Accent"); var ground = Theme.Current("WindowBackground");
         var glow = Color.FromRgb((byte)(ground.R + (accent.R - ground.R) * .26), (byte)(ground.G + (accent.G - ground.G) * .26), (byte)(ground.B + (accent.B - ground.B) * .26));
         var mark = new Grid { Width = 104, Height = 104, HorizontalAlignment = HorizontalAlignment.Center };
         fanLeft = FanCard("Brand"); fanRight = FanCard("Accent");

@@ -128,6 +128,7 @@
   ": please enter a color like #14171C.": "：#14171C のような形式で色を指定してください。",
   "A backup size or entry is missing.": "バックアップのサイズ情報または構成ファイルがありません。",
   "A category may appear only once.": "同じカテゴリを複数指定することはできません。",
+  "A contrast theme of Windows is on, so FlixyPix uses its colours. This choice applies again once it is off.": "Windows のコントラスト テーマが有効なため、FlixyPix はその色を使用します。この選択は、テーマをオフにすると再び適用されます。",
   "A custom jump needs a key and a distance other than 0 (at most 10 hours or 100 %).": "カスタムジャンプには、キーと 0 以外の移動量（最大 10 時間または 100 %）が必要です。",
   "A different record (register as new)": "別のレコード（新規として登録）",
   "A file appears twice among the versions: {0}": "バージョンの中に同じファイルが 2 回あります: {0}",
