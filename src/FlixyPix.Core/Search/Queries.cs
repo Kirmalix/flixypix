@@ -242,6 +242,7 @@ public sealed partial class CatalogRepository
     private CompiledMediaQuery BuildQuery(MediaQuery query, SqliteTransaction? transaction)
     {
         var conditions = new List<string>();
+        string? countSql = null;
         var parameters = new List<(string Name, object Value)>();
         string Parameter(object value) { var name = "$q" + parameters.Count; parameters.Add((name, value)); return name; }
         if (query.MinimumRating != 0) conditions.Add("q.rating >= " + Parameter(query.MinimumRating));
@@ -276,6 +277,7 @@ public sealed partial class CatalogRepository
         if (!string.IsNullOrWhiteSpace(query.Text))
         {
             // The trigram index answers terms of three or more characters when it is current; it finds the same hits.
+            var filters = conditions.Count;
             var terms = query.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             var vocabulary = ReadPreferences(transaction).TagVocabulary;
             var ordinary = new List<string>();
@@ -291,6 +293,9 @@ public sealed partial class CatalogRepository
             var indexed = ordinary.Where(UsesSearchIndex).ToList();
             if (SearchIndexCondition(indexed, transaction, Parameter) is { } condition) conditions.Add(condition); else indexed.Clear();
             foreach (var term in ordinary.Where(t => !indexed.Contains(t))) conditions.Add("efp_contains(q.search_text," + Parameter(term) + ")");
+            // Text alone, without tag names from the vocabulary: the index can count it by itself.
+            if (filters == 0 && ordinary.Count == terms.Length && query.Expression is null && query.KeepIds.Count == 0)
+                countSql = TextOnlyCountSql(ordinary, transaction, Parameter);
         }
         if (query.Expression is not null)
         {
@@ -300,7 +305,7 @@ public sealed partial class CatalogRepository
         if (conditions.Count == 0) return new("", parameters.ToArray());
         var where = string.Join(" AND ", conditions);
         if (query.KeepIds.Count > 0) where = $"({where}) OR q.id IN (SELECT value FROM json_each({Parameter(JsonSerializer.Serialize(query.KeepIds.Select(id => id.ToString())))}))";
-        return new("WHERE " + where, parameters.ToArray());
+        return new("WHERE " + where, parameters.ToArray(), countSql);
     }
 
     /// <summary>Those of the given media that exist and match the query; paging and <see cref="MediaQuery.KeepIds"/> do not count.</summary>

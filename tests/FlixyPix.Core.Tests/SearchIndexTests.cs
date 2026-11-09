@@ -59,6 +59,40 @@ public sealed class SearchIndexTests : IDisposable
     }
 
     [Fact]
+    public void ShortTermsCountWhatTheyFind()
+    {
+        using var catalog = new CatalogRepository(Database);
+        var items = Titles.Select(title => catalog.Upsert(new MediaItem { Path = Path.Combine(root, Guid.NewGuid().ToString("N") + ".jpg"), Title = title, Kind = MediaKind.Image })).ToList();
+        var kept = items.First(i => i.Title == "x").Id;
+        foreach (var term in new[] { "s", "S", "ſ", "ı", "I", "i", "İ", "k", "K", "ς", "σ", "Σ", "ö", "*", "?", "[", "😀", "𐐀", "ß", "ss", "K k", "s schloss", "1 img_" })
+        {
+            bool Matches(MediaItem item) => term.Split(' ').All(part => (item.Title + "\n" + item.Path).Contains(part, StringComparison.OrdinalIgnoreCase));
+            var expected = items.Count(Matches);
+            Assert.Equal(expected, catalog.QueryPage(new MediaQuery { Text = term, Limit = 100 }).TotalCount);
+            Assert.Equal(expected, catalog.CountMedia(new MediaQuery { Text = term }));
+            Assert.Equal(expected, catalog.QueryPage(new MediaQuery { Text = term, Kind = MediaKind.Image, Limit = 100 }).TotalCount);
+            Assert.Equal(0, catalog.QueryPage(new MediaQuery { Text = term, Kind = MediaKind.Video, Limit = 100 }).TotalCount);
+            var keeping = catalog.QueryPage(new MediaQuery { Text = term, KeepIds = [kept], Limit = 100 });
+            Assert.Equal(keeping.Items.Count, keeping.TotalCount);
+            Assert.Equal(expected + (Matches(items.Single(i => i.Id == kept)) ? 0 : 1), keeping.TotalCount);
+        }
+        // More rows waiting than a search indexes itself: the row-by-row comparison counts, and finds the new medium.
+        catalog.Upsert(new MediaItem { Path = Path.Combine(root, "neu.jpg"), Title = "ſ neu", Kind = MediaKind.Image });
+        using (var other = new SqliteConnection($"Data Source={Database};Pooling=False"))
+        {
+            other.Open();
+            using var insert = other.CreateCommand();
+            insert.CommandText = "DELETE FROM media_search; INSERT INTO media_search_queue SELECT rowid FROM media_query; WITH RECURSIVE n(i) AS (SELECT 1000000 UNION ALL SELECT i+1 FROM n WHERE i<1002500) INSERT INTO media_search_queue SELECT i FROM n";
+            insert.ExecuteNonQuery();
+        }
+        var withS = items.Count(i => (i.Title + "\n" + i.Path).Contains('s', StringComparison.OrdinalIgnoreCase)) + 1;
+        Assert.Equal(withS, catalog.QueryPage(new MediaQuery { Text = "S", Limit = 100 }).TotalCount);
+        Assert.NotEqual(0, catalog.PendingSearchIndexRows());
+        catalog.PrepareSearchIndex();
+        Assert.Equal(withS, catalog.QueryPage(new MediaQuery { Text = "S", Limit = 100 }).TotalCount);
+    }
+
+    [Fact]
     public void IndexFollowsChangesDeletionsTagsAndPaths()
     {
         using var catalog = new CatalogRepository(Database);

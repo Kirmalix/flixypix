@@ -3,7 +3,13 @@ using System.Text.Json;
 
 namespace FlixyPix.Core;
 
-internal sealed record CompiledMediaQuery(string Where, (string Name, object Value)[] Parameters);
+/// <param name="CountSql">Counts the same media as <paramref name="Where"/> matches, faster; only valid in the transaction the
+/// query was compiled in.</param>
+internal sealed record CompiledMediaQuery(string Where, (string Name, object Value)[] Parameters, string? CountSql = null)
+{
+    public void Deconstruct(out string where, out (string Name, object Value)[] parameters) { where = Where; parameters = Parameters; }
+    internal string Count => CountSql ?? "SELECT count(*) FROM media_query q " + Where;
+}
 
 /// <summary>Executes media projection queries; filter compilation remains shared with search and matching.</summary>
 internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, SqliteTransaction?, CompiledMediaQuery> compile, Action<SqliteTransaction> commit)
@@ -21,13 +27,11 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
 
         database.ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
         using var transaction = database.Connection.BeginTransaction();
-        var (where, parameters) = compile(query, transaction);
+        var compiled = compile(query, transaction);
+        var (where, parameters) = compiled;
         long count;
-        using (var command = database.Command("SELECT count(*) FROM media_query q " + where, transaction, parameters))
-        {
-
+        using (var command = database.Command(compiled.Count, transaction, parameters))
             count = Convert.ToInt64(command.ExecuteScalar());
-        }
         var items = ReadItems(query, transaction, cancellationToken, where, parameters);
         commit(transaction);
         return new MediaPage(items, count);
@@ -69,8 +73,8 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
         ArgumentNullException.ThrowIfNull(query);
         database.ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
         using var transaction = database.Connection.BeginTransaction();
-        var (where, parameters) = compile(query, transaction);
-        using var command = database.Command("SELECT count(*) FROM media_query q " + where, transaction, parameters);
+        var compiled = compile(query, transaction);
+        using var command = database.Command(compiled.Count, transaction, compiled.Parameters);
         var count = Convert.ToInt64(command.ExecuteScalar());
         commit(transaction);
         return count;

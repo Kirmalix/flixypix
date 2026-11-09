@@ -387,6 +387,17 @@ public sealed partial class CatalogRepository
         }
     }
 
+    /// <summary>After the settings were saved: counts, neighbours and folders stay, the names and roles from the vocabulary are
+    /// formed anew. Building it all again reads every path, seconds in a large library after each saved setting.</summary>
+    private void CarryStatisticsAcrossSettings((long Changes, long DataVersion) before)
+    {
+        if (cachedTagStatistics is not { } statistics || cachedTagStatisticsStamp != before) return;
+        var after = ChangeStamp();
+        if (after.DataVersion != before.DataVersion) return; // another connection committed meanwhile
+        BuildNameCandidates(statistics);
+        cachedTagStatisticsStamp = after;
+    }
+
     // Counts subsets of each medium's most frequent tags; tag ids are packed into one long per subset.
     private static IReadOnlyList<TagCombination> MineCombinations(TagStatistics statistics)
     {

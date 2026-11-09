@@ -68,17 +68,53 @@ public sealed class LargeLibraryTests : IDisposable
     }
 
     [Fact]
-    public void SavingSettingsKeepsTheListsButNotTheSuggestions()
+    public void IndexingForTheSearchKeepsTheLists()
+    {
+        var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
+        _ = repository.GetFacets(); _ = repository.GetTagUsage(); _ = repository.GetNavigationCounts();
+        repository.UpdateTags([one.Id], ["Berg"], []);
+        Assert.True(repository.BrowsingKnown);
+        Assert.NotEqual(0, repository.PendingSearchIndexRows());
+        repository.PrepareSearchIndex();
+        Assert.True(repository.BrowsingKnown);
+        repository.UpdateTags([one.Id], ["Wald"], []);
+        Assert.Equal(1, repository.QueryPage(new() { Text = "wald" }).TotalCount); // indexes in the search's own transaction
+        Assert.True(repository.BrowsingKnown);
+    }
+
+    [Fact]
+    public void SavingSettingsKeepsTheListsAndTheSuggestions()
     {
         var one = repository.Upsert(Item("one.jpg", tags: ["See"]));
         var facets = repository.GetFacets(); _ = repository.GetTagUsage(); _ = repository.GetNavigationCounts();
         repository.SavePreferences(repository.GetPreferences() with { ImageFavoriteMinimumRating = 3 });
         Assert.True(repository.BrowsingKnown);
         Assert.Same(facets, repository.GetFacets());
-        // A tag only the vocabulary knows is offered at once, because the suggestions were built anew.
+        var field = typeof(CatalogRepository).GetField("cachedTagStatistics", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         repository.PrepareTagSuggestions();
+        var statistics = field.GetValue(repository);
+        Assert.NotNull(statistics);
+        // A tag only the vocabulary knows is offered at once, with its role, and no longer once it is gone; no path is read for it.
         repository.SavePreferences(repository.GetPreferences() with { TagVocabulary = [new TagVocabularyEntry("one", "People")] });
-        Assert.Contains(repository.SuggestTags([one.Id], 10), suggestion => suggestion.Tag == "one");
+        var offered = Assert.Single(repository.SuggestTags([one.Id], 10), suggestion => suggestion.Tag == "one");
+        Assert.Equal(TagRoles.Of(repository.GetPreferences(), "People"), offered.Role);
+        repository.SavePreferences(repository.GetPreferences() with { TagVocabulary = [] });
+        Assert.DoesNotContain(repository.SuggestTags([one.Id], 10), suggestion => suggestion.Tag == "one");
+        Assert.Same(statistics, field.GetValue(repository));
+    }
+
+    [Fact]
+    public void SuggestionsKeptAcrossSettingsAnswerAsIfBuiltAnew()
+    {
+        var items = Enumerable.Range(0, 6).Select(i => repository.Upsert(Item($"Anna Berg {i}.jpg", tags: i % 2 == 0 ? ["See", "Berg"] : ["See"]))).ToArray();
+        repository.PrepareTagSuggestions();
+        var vocabulary = new[] { new TagVocabularyEntry("Anna", "People"), new TagVocabularyEntry("Wald", "Studio") with { Aliases = ["Berg"] } };
+        repository.SavePreferences(repository.GetPreferences() with { TagVocabulary = [.. vocabulary] });
+        var kept = items.Select(item => repository.SuggestTags([item.Id], 10)).ToArray();
+        using var fresh = new CatalogRepository(Database);
+        var built = items.Select(item => fresh.SuggestTags([item.Id], 10)).ToArray();
+        Assert.Equal(built.Length, kept.Length);
+        for (var i = 0; i < built.Length; i++) Assert.Equal(built[i], kept[i]);
     }
 
     [Fact]

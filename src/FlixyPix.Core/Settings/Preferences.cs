@@ -30,9 +30,10 @@ public sealed partial class CatalogRepository
             using var transaction = connection.BeginTransaction();
             SaveDocument("preferences", Guid.Empty, preferences, transaction);
             transaction.Commit();
-            // Folding a section of the sidebar must not make the lists of a large library read anew. The suggestions stay out:
-            // they use the vocabulary, which is part of the settings.
+            // Folding a section of the sidebar must not make the lists of a large library read anew, nor every path for the
+            // suggestions. What these take from the vocabulary, which is part of the settings, is formed anew from it.
             CarryListsAcross(before);
+            CarryStatisticsAcrossSettings(before);
             return preferences;
         }
     }

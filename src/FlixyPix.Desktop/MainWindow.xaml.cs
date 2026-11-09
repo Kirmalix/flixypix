@@ -182,12 +182,19 @@ public partial class MainWindow : Window
         var changesView = _pageChanging || _shownView is { } shown && !shown.SameView(requested);
         var request = _browse.BeginLoad(SelectedMedia.Select(i => i.Id));
         if (changesView || _loadingFor != null) ExpectLoading(request);
+        // A later request makes this one pointless: its reading stops, so the catalog is free for the newer one at once.
+        // Otherwise a search for one letter on a cold disk keeps the next letters waiting for seconds.
+        _refreshStop?.Cancel();
+        var stop = _refreshStop = CancellationTokenSource.CreateLinkedTokenSource(_libraryTasks.Token);
         return _libraryTasks.Track(async token =>
         {
-            try { await RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard); }
+            try { await RefreshCoreAsync(selectId, includePreviews, token, request, publicationGuard, stop.Token); }
+            catch (OperationCanceledException) when (stop.IsCancellationRequested && !token.IsCancellationRequested) { }
             // A later request brings its own page; this one no longer shows.
             finally
             {
+                if (ReferenceEquals(_refreshStop, stop)) _refreshStop = null;
+                stop.Dispose();
                 if (_browse.IsCurrent(request))
                 {
                     EndLoading();
@@ -198,10 +205,12 @@ public partial class MainWindow : Window
         });
     }
     private bool _pageChanging, _resultsChanged, _listsKept;
+    private CancellationTokenSource? _refreshStop;
     /// <summary>From this many media the lists are read beside the shared connection after a change; below it they are there
     /// before the tiles, in the time of a click.</summary>
     private const int ListsBesideFrom = 20_000;
-    private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard)
+    /// <param name="superseded">Cancelled when a newer request comes; only the reading of the media list stops with it.</param>
+    private async Task RefreshCoreAsync(Guid? selectId, bool includePreviews, CancellationToken token, BrowseRequest request, Func<bool>? publicationGuard, CancellationToken superseded)
     {
         if (_repository == null || _closing || !_browse.IsCurrent(request)) return;
         var state = request.State.ToViewState();
@@ -248,16 +257,16 @@ public partial class MainWindow : Window
                 MediaPage page;
                 if (playlist == null)
                 {
-                    if (selectId is { } requested && _repository.GetPosition(query, requested, token) is { } position && (position < visibleFirst || position > visibleLast))
+                    if (selectId is { } requested && _repository.GetPosition(query, requested, superseded) is { } position && (position < visibleFirst || position > visibleLast))
                     { anchor = position; query = query with { Offset = WindowStartFor(position) }; }
-                    page = _repository.QueryPage(query, token);
+                    page = _repository.QueryPage(query, superseded);
                     StartupMark("media page");
                     if (page.TotalCount > 0 && page.Items.Count == 0)
-                    { query = query with { Offset = (int)Math.Max(0, page.TotalCount - WindowSize) }; anchor = (int)page.TotalCount - 1; page = _repository.QueryPage(query, token); }
+                    { query = query with { Offset = (int)Math.Max(0, page.TotalCount - WindowSize) }; anchor = (int)page.TotalCount - 1; page = _repository.QueryPage(query, superseded); }
                 }
                 else
                 {
-                    var result = _repository.QueryPlaylistPage(playlist, query, sort == 5, selectId, token);
+                    var result = _repository.QueryPlaylistPage(playlist, query, sort == 5, selectId, superseded);
                     query = query with { Offset = result.Offset }; page = result.Page;
                 }
                 var facets = listsFollow ? _repository.QuickFacets(token) : _repository.GetFacets(token);
@@ -325,7 +334,7 @@ public partial class MainWindow : Window
             })) return;
             if (fillLists && _browsingFilled is not { Task.IsCompleted: false }) { _browsingFilled = new(TaskCreationOptions.RunContinuationsAsynchronously); FillBrowsingAfterStart(); }
         }
-        catch (Exception ex) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; throw; }
+        catch (Exception ex) when (ex is not OperationCanceledException || !superseded.IsCancellationRequested) { if (!_closing) Status.Text = T("The library could not be loaded: ") + ex.Message; throw; }
         finally { _refreshing = false; }
         StartupMark("view published");
         ShowDetails(includePreviews);
