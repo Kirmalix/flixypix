@@ -182,7 +182,7 @@ internal static class Theme
   // Loaded only reaches windows with Loaded handlers of their own; the first size change reaches every window.
   EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler((sender, _) =>
   {
-   if (sender is Window window && titled.TryAdd(window, true)) ApplyTitleBar(window);
+   if (sender is Window window && titled.TryAdd(window, true)) { ApplyTitleBar(window); Motion.WindowOpens(window); }
   }));
   SystemEvents.UserPreferenceChanged += (_, e) =>
   {

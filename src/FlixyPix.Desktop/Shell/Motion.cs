@@ -184,6 +184,57 @@ public static class Motion
  }
 
 
+ // ----- Windows -----
+
+ /// <summary>A dialog arrives softly the first time it has a size. Windows for watching and the screen lock stand at once.</summary>
+ internal static void WindowOpens(Window window)
+ {
+  if (window is MainWindow or VideoPlayerWindow or ImageViewerWindow or QuickLookWindow or LockWindow) return;
+  if (window.Content is FrameworkElement content) Enter(content, ResultsRise, ResultsTime);
+ }
+
+ // ----- Scrolling -----
+
+ /// <summary>How far the wheel moves per notch, and how quickly a glide closes in: about 95 % of the way in 200 ms at any
+ /// frame rate, without overshoot.</summary>
+ private const double WheelLine = 32, GlideTime = 65;
+ internal static double GlideShare(double milliseconds) => 1 - Math.Exp(-milliseconds / GlideTime);
+
+ private sealed class ScrollGlide { public double Target; public double Last; public System.Diagnostics.Stopwatch Clock = new(); public EventHandler? Step; }
+ private static readonly DependencyProperty ScrollGlideProperty = DependencyProperty.RegisterAttached("ScrollGlide", typeof(ScrollGlide), typeof(Motion));
+
+ /// <summary>The wheel glides in every page that scrolls by pixels. Lists that scroll by whole items and the tile grid, which
+ /// glides by itself, keep their way; where nothing can scroll, the wheel goes on as before.</summary>
+ internal static void InstallWheel() => EventManager.RegisterClassHandler(typeof(ScrollViewer), UIElement.MouseWheelEvent, new System.Windows.Input.MouseWheelEventHandler((sender, e) =>
+ {
+  if (e.Handled || !Smooth || sender is not ScrollViewer view || view.ScrollableHeight <= 0) return;
+  var byPixels = !view.CanContentScroll || view.TemplatedParent is ItemsControl list && VirtualizingPanel.GetScrollUnit(list) == ScrollUnit.Pixel;
+  if (!byPixels || VirtualizingTilePanel.FindPanel(view) != null) return;
+  var lines = SystemParameters.WheelScrollLines;
+  GlideBy(view, -e.Delta / 120d * (lines < 0 ? view.ViewportHeight : lines * WheelLine));
+  e.Handled = true;
+ }));
+
+ /// <summary>Moves the view by a distance; further turns extend the way, and any other scrolling ends the glide.</summary>
+ internal static void GlideBy(ScrollViewer view, double distance)
+ {
+  if (!Smooth) { view.ScrollToVerticalOffset(view.VerticalOffset + distance); return; }
+  if (view.GetValue(ScrollGlideProperty) is ScrollGlide running) { running.Target = Math.Clamp(running.Target + distance, 0, view.ScrollableHeight); return; }
+  var glide = new ScrollGlide { Target = Math.Clamp(view.VerticalOffset + distance, 0, view.ScrollableHeight), Last = view.VerticalOffset };
+  glide.Clock.Start();
+  void Stop() { CompositionTarget.Rendering -= glide.Step; view.ClearValue(ScrollGlideProperty); }
+  glide.Step = (_, _) =>
+  {
+   if (!view.IsLoaded || Math.Abs(view.VerticalOffset - glide.Last) > 2) { Stop(); return; }
+   var next = view.VerticalOffset + (glide.Target - view.VerticalOffset) * GlideShare(glide.Clock.Elapsed.TotalMilliseconds);
+   glide.Clock.Restart();
+   if (Math.Abs(glide.Target - next) < .5) { view.ScrollToVerticalOffset(glide.Target); Stop(); return; }
+   glide.Last = next; view.ScrollToVerticalOffset(next);
+  };
+  view.SetValue(ScrollGlideProperty, glide);
+  CompositionTarget.Rendering += glide.Step;
+ }
+
  // ----- Side bars -----
 
  private sealed class Glide(double target) { public double Target { get; } = target; public List<Action> Settled { get; } = []; }

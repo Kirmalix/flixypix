@@ -306,7 +306,7 @@ internal sealed partial class SettingsWindow : Window
   if (search.Text.Trim().Length > 0) return;
   // Leaving the search restores the rubric that was open before it.
   if (navigation.SelectedItem is not ListBoxItem { Tag: string name }) { navigation.SelectedItem = navigation.Items.OfType<ListBoxItem>().First(item => (string)item.Tag == lastPage); return; }
-  lastPage = name; page.Content = pages[name]; scroller.ScrollToTop();
+  lastPage = name; page.Content = pages[name]; scroller.ScrollToTop(); Motion.EnterResults(page);
   resetPage.IsEnabled = name is "Appearance" or "General" or "Videos" or "Video player" or "Thumbnails" or "Images" or "Privacy";
  }
  private static bool Matches((string Page, SettingRow Row) entry, string text) =>

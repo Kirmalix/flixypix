@@ -235,21 +235,23 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   MoveTo(offset);
  }
 
- /// <summary>The wheel glides to its target in a few frames (each frame covers a third of the way) unless Windows turns
- /// animations off; further turns extend the target. Any other scrolling stops the glide.</summary>
+ private readonly System.Diagnostics.Stopwatch _glideClock = new();
+ /// <summary>The wheel glides to its target at the same pace on any screen, unless Windows turns animations off; further
+ /// turns extend the target. Any other scrolling stops the glide.</summary>
  private void ScrollSmoothly(double delta)
  {
   if (!SystemParameters.ClientAreaAnimation) { SetVerticalOffset(_offset.Y + delta); return; }
   var limit = Math.Max(0, _extent.Height - _viewport.Height);
   var start = _scrollTarget is null;
   _scrollTarget = Math.Clamp((_scrollTarget ?? _offset.Y) + delta, 0, limit);
-  if (start) CompositionTarget.Rendering += GlideStep;
+  if (start) { _glideClock.Restart(); CompositionTarget.Rendering += GlideStep; }
  }
 
  private void GlideStep(object? sender, EventArgs e)
  {
   if (_scrollTarget is not { } target || !IsLoaded) { StopSmoothScroll(); return; }
-  var next = _offset.Y + (target - _offset.Y) / 3;
+  var next = _offset.Y + (target - _offset.Y) * Motion.GlideShare(_glideClock.Elapsed.TotalMilliseconds);
+  _glideClock.Restart();
   if (Math.Abs(target - next) < 1) { MoveTo(target); StopSmoothScroll(); return; }
   MoveTo(next);
  }

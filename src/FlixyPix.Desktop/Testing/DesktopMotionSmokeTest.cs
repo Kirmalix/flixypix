@@ -115,6 +115,21 @@ public partial class MainWindow
    Check(MediaArea.Opacity == 1 && MediaPane.Opacity == 1 && MediaArea.CacheMode == null, "The results did not settle.");
    SortChoice.SelectedIndex = sortBefore; await _lastRefresh; await Task.Delay(900);
 
+   // The wheel glides on a page that scrolls by pixels: it does not jump, further turns add up, and it ends exactly there.
+   MediaList.SelectedIndex = 0; await Task.Delay(1000);
+   if (smooth && DetailsScroll.ScrollableHeight > 200)
+   {
+    DetailsScroll.ScrollToTop(); await Task.Delay(200);
+    void Wheel(int delta) => DetailsScroll.RaiseEvent(new System.Windows.Input.MouseWheelEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, delta) { RoutedEvent = UIElement.MouseWheelEvent });
+    Wheel(-120); Wheel(-120);
+    var wanted = Math.Min(DetailsScroll.ScrollableHeight, 2 * SystemParameters.WheelScrollLines * 32d);
+    Check(DetailsScroll.VerticalOffset == 0, "The wheel jumped instead of gliding.");
+    await Task.Delay(900);
+    Check(Math.Abs(DetailsScroll.VerticalOffset - wanted) < 1, $"The wheel ended at {DetailsScroll.VerticalOffset}, not {wanted}.");
+    DetailsScroll.ScrollToTop();
+   }
+   MediaList.SelectedItems.Clear(); await Task.Delay(500);
+
    // A page that was left without a new one comes back by itself.
    Motion.LeavePage(MediaPane); await Task.Delay(300);
    if (smooth) Check(MediaPane.Opacity < .5, "The page did not step back.");

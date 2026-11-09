@@ -138,6 +138,7 @@ internal sealed class LibraryFoldersWindow : Window
         tabs.SetResourceReference(Control.ForegroundProperty, "Text");
         tabs.Resources = new ResourceDictionary { Source = new Uri("/FlixyPix;component/Windows/LibraryFolderTabs.xaml", UriKind.Relative) };
         tabs.Style = (Style)tabs.Resources["LibraryFolderTabs"];
+        tabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.OriginalSource, tabs) && tabs.IsLoaded && tabs.Template.FindName("PART_SelectedContentHost", tabs) is FrameworkElement shown) Motion.EnterResults(shown); };
         tabs.Items.Add(new TabItem { Header = T("Changes found"), Content = changesPanel });
         tabs.Items.Add(new TabItem { Header = T("Media folders"), Content = folderBody });
         var report = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 16, Margin = new Thickness(16) };

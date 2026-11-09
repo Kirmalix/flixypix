@@ -139,7 +139,7 @@ internal sealed class DatabaseWindow : Window
  {
   if (Section is not { } name) return;
   if (!_pages.TryGetValue(name, out var page)) _pages[name] = page = BuildPage(_sections[name]);
-  _page.Content = page;
+  _page.Content = page; Motion.EnterResults(_page);
  }
 
  private FrameworkElement BuildPage(DatabaseSection section)
