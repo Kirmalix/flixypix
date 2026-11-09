@@ -124,12 +124,7 @@ public partial class MainWindow
    Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 16, ShadowDepth = 2, Opacity = .35 },
   };
   AutomationProperties.SetName(toast, text); AutomationProperties.SetLiveSetting(toast, AutomationLiveSetting.Polite);
-  void Remove()
-  {
-   var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
-   fade.Completed += (_, _) => _toasts.Children.Remove(toast);
-   toast.BeginAnimation(OpacityProperty, fade);
-  }
+  void Remove() => Motion.NoteOut(toast, () => _toasts.Children.Remove(toast));
   if (action != null && onAction != null)
   {
    var act = new Button { Content = action, Style = (Style)Application.Current.Resources["Quiet"], Padding = new Thickness(0, 4, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Foreground = Theme.Brush("Accent") };
@@ -140,7 +135,7 @@ public partial class MainWindow
   close.Click += (_, _) => Remove();
   while (_toasts.Children.Count >= 3) _toasts.Children.RemoveAt(0);
   _toasts.Children.Add(toast);
-  toast.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(160)));
+  Motion.NoteIn(toast);
   var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(seconds) };
   // A notification under the pointer stays until the pointer leaves it.
   timer.Tick += (_, _) => { if (toast.IsMouseOver) return; timer.Stop(); Remove(); };

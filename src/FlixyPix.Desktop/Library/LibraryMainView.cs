@@ -85,6 +85,7 @@ public partial class MainWindow
  private void TileToggleFavorite(object sender, RoutedEventArgs e)
  {
   if (CardOf(sender) is not { } card) return; e.Handled = true;
+  if (sender is FrameworkElement heart) Motion.Pop(heart);
   var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite });
   Status.Text = item.IsFavorite ? T("“{0}” no longer pinned as favorite", card.Title) : T("“{0}” pinned as favorite", card.Title); Refresh();
  }

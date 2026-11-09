@@ -7,16 +7,213 @@ using System.Windows.Media.Effects;
 
 namespace FlixyPix.Desktop;
 
-/// <summary>Small motions of the interface: tiles lift with a shadow under the pointer, pictures fade in when they arrive.
-/// Short (120–200 ms) and eased out; off when Windows turns animations off ("Animationseffekte" in the settings).</summary>
+/// <summary>Small motions of the interface: controls answer the pointer softly, tiles lift with a shadow, pictures fade in
+/// when they arrive, pages settle into place and the side bars glide. Short (90–260 ms) and eased out, without overshoot;
+/// off when Windows turns animations off ("Animationseffekte" in the settings). No work ever waits for a motion: the state
+/// changes at once, only the picture follows.</summary>
 public static class Motion
 {
  internal static bool Enabled => SystemParameters.ClientAreaAnimation;
+ /// <summary>Tests that check places and widths right after a change switch off the motions of whole areas.</summary>
+ internal static bool Steady { get; set; }
+ /// <summary>Whole pages and side bars move only with graphics hardware; software rendering (remote sessions) shows them at once.</summary>
+ internal static bool Smooth => Enabled && !Steady && RenderCapability.Tier >> 16 >= 2;
  /// <summary>Tiles of the media grid lift under the pointer (library setting "Beim Überfahren anheben").</summary>
  internal static bool TilesLift { get; set; } = true;
  internal static readonly Duration Quick = TimeSpan.FromMilliseconds(140), Soft = TimeSpan.FromMilliseconds(200);
  private static readonly IEasingFunction EaseOut = Freeze(new CubicEase { EasingMode = EasingMode.EaseOut });
  private static IEasingFunction Freeze(CubicEase ease) { ease.Freeze(); return ease; }
+
+ // ----- Control states: triggers of a template set these instead of switching a colour or a shape abruptly. -----
+
+ /// <summary>The element fades to this opacity. A template lays a second surface with the hover colour over the normal one
+ /// and fades that, which also follows a change of the colour scheme.</summary>
+ public static readonly DependencyProperty FadeToProperty = DependencyProperty.RegisterAttached("FadeTo", typeof(double), typeof(Motion),
+  new PropertyMetadata(0.0, (d, e) => { if (d is FrameworkElement element) Settle(element, element, UIElement.OpacityProperty, (double)e.NewValue); }));
+ public static double GetFadeTo(DependencyObject d) => (double)d.GetValue(FadeToProperty);
+ public static void SetFadeTo(DependencyObject d, double value) => d.SetValue(FadeToProperty, value);
+
+ /// <summary>The element shrinks or grows to this scale around its centre (a pressed button gives way a little).</summary>
+ public static readonly DependencyProperty ScaleToProperty = DependencyProperty.RegisterAttached("ScaleTo", typeof(double), typeof(Motion),
+  new PropertyMetadata(1.0, (d, e) =>
+  {
+   if (d is not FrameworkElement element) return;
+   var scale = Scale(element); var value = (double)e.NewValue;
+   Settle(element, scale, ScaleTransform.ScaleXProperty, value); Settle(element, scale, ScaleTransform.ScaleYProperty, value);
+  }));
+ public static double GetScaleTo(DependencyObject d) => (double)d.GetValue(ScaleToProperty);
+ public static void SetScaleTo(DependencyObject d, double value) => d.SetValue(ScaleToProperty, value);
+
+ /// <summary>The element grows to this height share from its centre (the mark of the current navigation entry).</summary>
+ public static readonly DependencyProperty GrowToProperty = DependencyProperty.RegisterAttached("GrowTo", typeof(double), typeof(Motion),
+  new PropertyMetadata(0.0, (d, e) => { if (d is FrameworkElement element) Settle(element, Scale(element), ScaleTransform.ScaleYProperty, (double)e.NewValue); }));
+ public static double GetGrowTo(DependencyObject d) => (double)d.GetValue(GrowToProperty);
+ public static void SetGrowTo(DependencyObject d, double value) => d.SetValue(GrowToProperty, value);
+
+ /// <summary>The element turns to this angle around its centre (the arrow of something that folds).</summary>
+ public static readonly DependencyProperty TurnToProperty = DependencyProperty.RegisterAttached("TurnTo", typeof(double), typeof(Motion),
+  new PropertyMetadata(0.0, (d, e) =>
+  {
+   if (d is not FrameworkElement element) return;
+   if (element.RenderTransform is not RotateTransform { IsFrozen: false } turn) element.RenderTransform = turn = new RotateTransform();
+   Settle(element, turn, RotateTransform.AngleProperty, (double)e.NewValue);
+  }));
+ public static double GetTurnTo(DependencyObject d) => (double)d.GetValue(TurnToProperty);
+ public static void SetTurnTo(DependencyObject d, double value) => d.SetValue(TurnToProperty, value);
+
+ /// <summary>The element fades in whenever it becomes visible and goes at once (the actions over a tile).</summary>
+ public static readonly DependencyProperty AppearProperty = DependencyProperty.RegisterAttached("Appear", typeof(bool), typeof(Motion),
+  new PropertyMetadata(false, (d, e) =>
+  {
+   if (d is not UIElement element) return;
+   element.IsVisibleChanged -= Appeared;
+   if ((bool)e.NewValue) element.IsVisibleChanged += Appeared;
+  }));
+ public static bool GetAppear(DependencyObject d) => (bool)d.GetValue(AppearProperty);
+ public static void SetAppear(DependencyObject d, bool value) => d.SetValue(AppearProperty, value);
+ private static void Appeared(object sender, DependencyPropertyChangedEventArgs e)
+ {
+  if (sender is UIElement element && e.NewValue is true && Enabled) element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Quick) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+ }
+
+ /// <summary>Moves a value from where it is now to the new one. Before the element is loaded it simply takes the value, so a
+ /// window opens in its finished state.</summary>
+ private static void Settle(FrameworkElement owner, IAnimatable target, DependencyProperty property, double value)
+ {
+  var holder = (DependencyObject)target;
+  var from = (double)holder.GetValue(property);
+  target.BeginAnimation(property, null);
+  holder.SetValue(property, value);
+  if (!Enabled || !owner.IsLoaded || from == value) return;
+  target.BeginAnimation(property, new DoubleAnimation(from, value, Quick) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+ }
+
+ /// <summary>The element's own scale; one given by a template is frozen and is replaced by a copy.</summary>
+ private static ScaleTransform Scale(FrameworkElement element)
+ {
+  if (element.RenderTransform is ScaleTransform { IsFrozen: false } own) return own;
+  var scale = element.RenderTransform is ScaleTransform given ? new ScaleTransform(given.ScaleX, given.ScaleY) : new ScaleTransform();
+  element.RenderTransform = scale; element.RenderTransformOrigin = new Point(.5, .5);
+  return scale;
+ }
+
+ /// <summary>A short answer to a click that changes something for good, such as marking a favorite.</summary>
+ internal static void Pop(FrameworkElement element)
+ {
+  if (!Enabled) return;
+  var scale = Scale(element);
+  var pop = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(280), FillBehavior = FillBehavior.Stop };
+  pop.KeyFrames.Add(new EasingDoubleKeyFrame(1.28, KeyTime.FromPercent(.4), EaseOut));
+  pop.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(1), EaseOut));
+  scale.BeginAnimation(ScaleTransform.ScaleXProperty, pop); scale.BeginAnimation(ScaleTransform.ScaleYProperty, pop);
+ }
+
+ // ----- Pages -----
+
+ private const double PageDim = .3, PageRise = 8;
+ private static int _pageMotion;
+
+ /// <summary>The page steps back as soon as another is asked for, while that one loads. It never stays dimmed: if no new
+ /// page follows (a failed or abandoned load), it comes back by itself.</summary>
+ internal static void LeavePage(FrameworkElement page)
+ {
+  if (!Smooth) return;
+  _pageMotion++;
+  var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = 0;
+  var dim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(1700), FillBehavior = FillBehavior.Stop };
+  dim.KeyFrames.Add(new EasingDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(90)), EaseOut));
+  dim.KeyFrames.Add(new LinearDoubleKeyFrame(PageDim, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1500))));
+  dim.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1700)), EaseOut));
+  page.BeginAnimation(UIElement.OpacityProperty, dim);
+ }
+
+ /// <summary>The new page is in place: it settles from below once its first frame has been laid out, so the costly first
+ /// layout does not eat the start of the motion.</summary>
+ internal static void EnterPage(FrameworkElement page)
+ {
+  if (!Smooth) { page.BeginAnimation(UIElement.OpacityProperty, null); if (page.RenderTransform is TranslateTransform still) { still.BeginAnimation(TranslateTransform.YProperty, null); still.Y = 0; } return; }
+  var motion = ++_pageMotion;
+  var shift = Transform(page); shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = PageRise;
+  page.Dispatcher.BeginInvoke(() =>
+  {
+   if (motion != _pageMotion) return;
+   shift.Y = 0;
+   shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(PageRise, 0, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+   page.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+  }, System.Windows.Threading.DispatcherPriority.Loaded);
+ }
+
+ // ----- Side bars -----
+
+ private sealed class Glide(double target) { public double Target { get; } = target; public List<Action> Settled { get; } = []; }
+ private static readonly DependencyProperty GlideProperty = DependencyProperty.RegisterAttached("Glide", typeof(Glide), typeof(Motion));
+ private static readonly DependencyProperty GlideWidthProperty = DependencyProperty.RegisterAttached("GlideWidth", typeof(double), typeof(Motion),
+  new PropertyMetadata(0.0, (d, e) => ((ColumnDefinition)d).Width = new GridLength(Math.Max(0, (double)e.NewValue))));
+
+ /// <summary>The width the column has or is gliding to; what gets saved, never a value from the middle of a motion.</summary>
+ internal static double WidthOf(ColumnDefinition column) => column.GetValue(GlideProperty) is Glide glide ? glide.Target : column.Width.Value;
+ internal static bool IsGlidingTo(ColumnDefinition column, double width) => column.GetValue(GlideProperty) is Glide glide && glide.Target == width;
+ /// <summary>Runs once the column has its width: at once unless it is gliding. Dropped if the column gets another target.</summary>
+ internal static void WhenSettled(ColumnDefinition column, Action action)
+ {
+  if (column.GetValue(GlideProperty) is Glide glide) glide.Settled.Add(action); else action();
+ }
+
+ /// <summary>Gives the column its width, gliding there from where it is if asked to.</summary>
+ internal static void SetWidth(ColumnDefinition column, double width, bool glide)
+ {
+  if (IsGlidingTo(column, width)) return;
+  var from = column.Width.Value;
+  column.BeginAnimation(GlideWidthProperty, null); column.ClearValue(GlideProperty);
+  column.SetValue(GlideWidthProperty, width); column.Width = new GridLength(width);
+  if (!glide || !Smooth || from == width) return;
+  var current = new Glide(width); column.SetValue(GlideProperty, current);
+  var move = new DoubleAnimation(from, width, Soft) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop };
+  move.Completed += (_, _) =>
+  {
+   if (!ReferenceEquals(column.GetValue(GlideProperty), current)) return;
+   column.ClearValue(GlideProperty); column.Width = new GridLength(width);
+   foreach (var action in current.Settled) action();
+  };
+  column.BeginAnimation(GlideWidthProperty, move);
+  // The first tick comes later; a layout before it must not show the end.
+  column.Width = new GridLength(from);
+ }
+
+ /// <summary>A side bar in its column: while the column glides, the bar keeps its full width and is uncovered or covered,
+ /// so its content does not wrap anew in every frame. <paramref name="rail"/> is what takes its place when folded.</summary>
+ internal static void SlidePane(FrameworkElement pane, ColumnDefinition column, double width, bool open, bool glide, FrameworkElement? rail)
+ {
+  if (IsGlidingTo(column, width)) return;
+  void Rest() { pane.ClearValue(FrameworkElement.WidthProperty); pane.ClearValue(FrameworkElement.HorizontalAlignmentProperty); pane.Visibility = open ? Visibility.Visible : Visibility.Collapsed; }
+  if (!glide || !Smooth || WidthOf(column) == width) { Rest(); SetWidth(column, width, false); return; }
+  var full = open ? width : column.ActualWidth;
+  pane.Visibility = Visibility.Visible; pane.Width = full; pane.HorizontalAlignment = HorizontalAlignment.Left;
+  if (open) pane.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(.4, 1, Quick) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+  rail?.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Quick) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+  SetWidth(column, width, true);
+  WhenSettled(column, Rest);
+ }
+
+ // ----- Notes -----
+
+ /// <summary>A notice rises into place.</summary>
+ internal static void NoteIn(FrameworkElement note)
+ {
+  if (!Enabled) { note.Opacity = 1; return; }
+  note.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(220)) { EasingFunction = EaseOut });
+  Transform(note).BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = EaseOut, FillBehavior = FillBehavior.Stop });
+ }
+
+ /// <summary>A notice leaves to the side, then is removed.</summary>
+ internal static void NoteOut(FrameworkElement note, Action removed)
+ {
+  if (!Enabled) { removed(); return; }
+  var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(160));
+  fade.Completed += (_, _) => removed();
+  note.BeginAnimation(UIElement.OpacityProperty, fade);
+  Transform(note).BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 12, TimeSpan.FromMilliseconds(160)) { EasingFunction = EaseOut });
+ }
 
  /// <summary>The element rises a few pixels and casts a shadow while the pointer is over it. Rows of the list view stay flat.</summary>
  public static readonly DependencyProperty HoverLiftProperty = DependencyProperty.RegisterAttached("HoverLift", typeof(bool), typeof(Motion),

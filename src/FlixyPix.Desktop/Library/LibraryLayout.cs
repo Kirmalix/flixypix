@@ -23,44 +23,49 @@ public partial class MainWindow
 
  /// <summary>Pages of their own bring what they need, and the inspector has nothing to say without a selection.</summary>
  private bool DetailsNotNeeded => _view == "home" || IsRoleView || IsPageView && !IsDetailView || IsImageSetView || IsPublicationGroupView || SelectedMedia.Count == 0;
- internal bool SidebarExpanded => Sidebar.Visibility == Visibility.Visible;
- internal bool DetailsExpanded => DetailsPane.Visibility == Visibility.Visible;
+ internal bool SidebarExpanded => _sidebarOpen;
+ internal bool DetailsExpanded => _detailsOpen;
  internal string DetailsTab => _detailsTab;
+ /// <summary>What the bars are meant to be; while one glides shut, its panel is still on screen.</summary>
+ private bool _sidebarOpen = true, _detailsOpen = true;
 
  private void ToggleSidebarClicked(object sender, RoutedEventArgs e) => ToggleSidebar();
- internal void ToggleSidebar() { _sidebarAutoFolded = false; SetSidebar(!SidebarExpanded); SaveViewPreferences(); }
+ internal void ToggleSidebar() { _sidebarAutoFolded = false; SetSidebar(!SidebarExpanded, glide: true); SaveViewPreferences(); }
  private void ToggleDetailsClicked(object sender, RoutedEventArgs e) => ToggleDetails();
  internal void ToggleDetails()
  {
   if (DetailsNotNeeded) return;
-  _detailsAutoFolded = false; SetDetails(!DetailsExpanded); SaveViewPreferences();
+  _detailsAutoFolded = false; SetDetails(!DetailsExpanded, glide: true); SaveViewPreferences();
  }
 
- private void SetSidebar(bool expanded)
+ /// <summary>A bar glides when the user or a selection asks for it; a page change or a resized window shows the result at once.</summary>
+ private void SetSidebar(bool expanded, bool glide = false)
  {
-  Sidebar.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+  _sidebarOpen = expanded;
   SidebarRail.Visibility = expanded ? Visibility.Collapsed : Visibility.Visible;
-  SidebarResizer.Visibility = Sidebar.Visibility;
-  SidebarColumn.Width = new GridLength(expanded ? Math.Clamp(_settings.SidebarWidth, SidebarMinimum, SidebarMaximum) : RailWidth);
+  SidebarResizer.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+  Motion.SlidePane(Sidebar, SidebarColumn, expanded ? Math.Clamp(_settings.SidebarWidth, SidebarMinimum, SidebarMaximum) : RailWidth, expanded, glide, expanded ? null : SidebarRail);
   SidebarToggle.ToolTip = (expanded ? T("Fold the sidebar") : T("Unfold the sidebar")) + " (" + KeyLabel("Ctrl+B") + ")";
  }
 
- private void SetDetails(bool expanded)
+ private void SetDetails(bool expanded, bool glide = false)
  {
   if (DetailsNotNeeded)
   {
    // The media take their place.
-   DetailsPane.Visibility = DetailsRail.Visibility = DetailsResizer.Visibility = Visibility.Collapsed;
-   DetailsColumn.Width = new GridLength(0); return;
+   _detailsOpen = false;
+   DetailsRail.Visibility = DetailsResizer.Visibility = Visibility.Collapsed;
+   Motion.SlidePane(DetailsPane, DetailsColumn, 0, false, glide, null);
+   return;
   }
-  DetailsPane.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+  _detailsOpen = expanded;
   DetailsRail.Visibility = expanded ? Visibility.Collapsed : Visibility.Visible;
-  DetailsResizer.Visibility = DetailsPane.Visibility;
-  DetailsColumn.Width = new GridLength(expanded ? Math.Clamp(_settings.DetailsWidth, DetailsMinimum, DetailsMaximum) : RailWidth);
+  DetailsResizer.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+  Motion.SlidePane(DetailsPane, DetailsColumn, expanded ? Math.Clamp(_settings.DetailsWidth, DetailsMinimum, DetailsMaximum) : RailWidth, expanded, glide, expanded ? null : DetailsRail);
  }
 
  /// <summary>After each refresh and resize: the details show only when needed; narrow windows fold the bars by themselves.</summary>
- private void AdaptToWidth()
+ private void AdaptToWidth(bool glideDetails = false)
  {
   // Both limits were chosen at 100 %; a larger interface has less room in the same window.
   var roomWidth = ActualWidth / InterfaceScaling.Current;
@@ -68,10 +73,10 @@ public partial class MainWindow
   if (sidebarNarrow && !_sidebarAutoFolded && SidebarExpanded) { _sidebarAutoFolded = true; SetSidebar(false); }
   else if (!sidebarNarrow && _sidebarAutoFolded) { _sidebarAutoFolded = false; SetSidebar(!_settings.SidebarCollapsed); }
   var detailsNarrow = roomWidth < DetailsFoldWidth;
-  if (DetailsNotNeeded) SetDetails(false);
-  else if (detailsNarrow && !_detailsAutoFolded && !_settings.DetailsCollapsed) { _detailsAutoFolded = true; SetDetails(false); }
-  else if (!detailsNarrow && _detailsAutoFolded) { _detailsAutoFolded = false; SetDetails(!_settings.DetailsCollapsed); }
-  else SetDetails(_detailsAutoFolded ? false : !_settings.DetailsCollapsed);
+  if (DetailsNotNeeded) SetDetails(false, glideDetails);
+  else if (detailsNarrow && !_detailsAutoFolded && !_settings.DetailsCollapsed) { _detailsAutoFolded = true; SetDetails(false, glideDetails); }
+  else if (!detailsNarrow && _detailsAutoFolded) { _detailsAutoFolded = false; SetDetails(!_settings.DetailsCollapsed, glideDetails); }
+  else SetDetails(_detailsAutoFolded ? false : !_settings.DetailsCollapsed, glideDetails);
  }
 
  private bool _detailsWanted;
@@ -96,12 +101,16 @@ public partial class MainWindow
  private void ShowDetailsNeed(bool clicked)
  {
   var first = _visibleFirst;
-  AdaptToWidth();
-  // The columns changed: a clicked tile stays in sight, otherwise the view keeps its place.
-  if (clicked) { if (MediaList.SelectedItem is { } card) Dispatcher.BeginInvoke(() => { if (!_closing && MediaList.SelectedItem == card) MediaList.ScrollIntoView(card); }, DispatcherPriority.Loaded); return; }
+  AdaptToWidth(glideDetails: true);
+  // The columns changed: a clicked tile stays in sight, otherwise the view keeps its place. Both wait for the final width.
+  if (clicked) { if (MediaList.SelectedItem is { } card) Motion.WhenSettled(DetailsColumn, () => Dispatcher.BeginInvoke(() => { if (!_closing && MediaList.SelectedItem == card) MediaList.ScrollIntoView(card); }, DispatcherPriority.Loaded)); return; }
   if (first <= 0 || _view == "home" || !MediaList.IsVisible) return;
-  MediaList.UpdateLayout();
-  Tiles?.ScrollToIndex(first);
+  Motion.WhenSettled(DetailsColumn, () =>
+  {
+   if (_closing || !MediaList.IsVisible) return;
+   MediaList.UpdateLayout();
+   Tiles?.ScrollToIndex(first);
+  });
  }
 
  // ----- Widths -----
@@ -113,8 +122,8 @@ public partial class MainWindow
  private void PaneResized(object sender, DragCompletedEventArgs e) => SaveViewPreferences();
  /// <summary>Widths as the user dragged them; a folded bar keeps its last width.</summary>
  private (int Sidebar, int Details) PaneWidths() => (
-  SidebarExpanded ? (int)Math.Round(SidebarColumn.Width.Value) : _settings.SidebarWidth,
-  DetailsExpanded ? (int)Math.Round(DetailsColumn.Width.Value) : _settings.DetailsWidth);
+  SidebarExpanded ? (int)Math.Round(Motion.WidthOf(SidebarColumn)) : _settings.SidebarWidth,
+  DetailsExpanded ? (int)Math.Round(Motion.WidthOf(DetailsColumn)) : _settings.DetailsWidth);
 
  // ----- Rails -----
 
@@ -126,7 +135,7 @@ public partial class MainWindow
  }
  internal void OpenSidebarAt(string section)
  {
-  _sidebarAutoFolded = false; SetSidebar(true); SaveViewPreferences();
+  _sidebarAutoFolded = false; SetSidebar(true, glide: true); SaveViewPreferences();
   if(_sidebarSections.TryGetValue(section,out var expander))expander.IsExpanded=true;
   FrameworkElement target = section switch
   {
@@ -140,7 +149,7 @@ public partial class MainWindow
  internal void OpenDetailsAt(string part)
  {
   if (DetailsNotNeeded) return;
-  if (!DetailsExpanded) { _detailsAutoFolded = false; SetDetails(true); SaveViewPreferences(); }
+  if (!DetailsExpanded) { _detailsAutoFolded = false; SetDetails(true, glide: true); SaveViewPreferences(); }
   if (_settings.DetailsTabs) { ShowDetailsTab(part); return; }
   FrameworkElement target = part switch { "tags" => DetailsTagsPart, "scenes" => DetailsScenesPart, _ => DetailsFieldsPart };
   Dispatcher.BeginInvoke(() => { if (target.IsVisible) target.BringIntoView(new Rect(0, 0, target.ActualWidth, 120)); }, DispatcherPriority.Loaded);
