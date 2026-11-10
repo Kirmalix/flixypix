@@ -21,6 +21,10 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   files and shows why a file was skipped. New and changed media get their previews right away, videos first, while
   you go on working; the summary follows the progress.
 - Missing files can be ticked like the other changes; "Remove from catalog" removes the ticked ones.
+- Images open many times faster in the image viewer: JPEG, PNG, BMP, TIFF and still GIF images are read by the
+  Windows image decoder, a 48-megapixel photo in about a quarter of a second instead of several seconds, also at
+  full size. The next and the previous image are read ahead, so turning the page shows them at once. Animations,
+  multi-page files, CMYK images and other formats are read as before.
 
 ## 0.7.0
 

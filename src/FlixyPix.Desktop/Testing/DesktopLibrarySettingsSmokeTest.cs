@@ -68,7 +68,9 @@ public partial class MainWindow
    for (var wait = 0; _viewer is not ImageViewerWindow && wait < 40; wait++) await Task.Delay(50);
    Require(_viewer is ImageViewerWindow, "A click on the picture did not open the medium (" + armed + ").");
    var viewer = (ImageViewerWindow)_viewer!; await viewer.ReadyTask;
+   Require(viewer.HasImage && viewer.WindowsDecoded, "A plain image did not open through the Windows decoder.");
    viewer.Navigate(1); await viewer.ReadyTask;
+   Require(viewer.HasImage, "The next image did not show.");
    Require(viewer.FadeOnChange && viewer.LastChangeFaded, "The viewer did not cross-fade to the next image.");
    StopSlideshow();
 

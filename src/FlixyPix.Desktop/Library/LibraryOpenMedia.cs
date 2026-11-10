@@ -96,7 +96,9 @@ public partial class MainWindow
         {
             var page = await Task.Run(() => imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page);
             return page.Items.FirstOrDefault() is { } image ? await EnsureArchiveImageAsync(image, token) : null;
-        }), imageCount, initial.Value) : new ImageViewerWindow(this, images, item.Id);
+        }), imageCount, initial.Value, index => _libraryTasks.Run<MediaItem?>(async token =>
+            (await Task.Run(() => imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page, token)).Items.FirstOrDefault()))
+         : new ImageViewerWindow(this, images, item.Id);
         var viewer = (ImageViewerWindow)_viewer; var preferences = _repository.GetPreferences();
         viewer.DeleteMedium = image => DeleteWithQuestion(image, viewer); viewer.ToggleFavorite = ToggleFavorite;
         viewer.UseAsTagPicture = image => ChooseTagPicture(image, viewer); viewer.UseAsThumbnail = image => ChooseThumbnailTarget(image, viewer);
