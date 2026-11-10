@@ -19,10 +19,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     if ($BuildOnly) { return }
     if (!$SkipTests) {
-        foreach ($project in (Get-ChildItem -Path tests -Filter '*.csproj' -Recurse)) {
-            & $dotnet test $project.FullName --configuration Release --no-build --nologo --filter 'Category!=Slow'
-            if ($LASTEXITCODE -ne 0) { throw "Tests failed: $($project.BaseName)" }
-        }
+        # One run over the solution: the test projects run side by side (about 25 s instead of 40 s one after another).
+        & $dotnet test FlixyPix.slnx --configuration Release --no-build --nologo --filter 'Category!=Slow'
+        if ($LASTEXITCODE -ne 0) { throw 'Tests failed (the summary above names the project).' }
         # Slow tests have time budgets, so they run after the others and one after another: beside the parallel tests they
         # would measure the load of those.
         if ($FullTests) {
