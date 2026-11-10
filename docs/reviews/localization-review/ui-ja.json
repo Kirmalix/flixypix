@@ -9167,10 +9167,6 @@
       "status": "unchanged",
       "digest": "09e7ff9928508485782ffbcdf569faee1ceda7a060a004acbdf1504af3c74409"
     },
-    "before ": {
-      "status": "unchanged",
-      "digest": "4d1feef1e16e4e8fbc237ec00067bb700f4746811acc9433e675b0dde03322dc"
-    },
     "FlixyPix first saves a copy of the catalog in the backup folder.": {
       "status": "unchanged",
       "digest": "61bd87803fbb61e61e66f1333730a3ad3f1dbf31065ada2bde43a97823c94097"
@@ -14840,6 +14836,50 @@
     "Wide": {
       "status": "unchanged",
       "digest": "7567038443651cfc002a0cda01434cc3a69b46077bc73f5dd30be45a54e5af99"
+    },
+    "Apply selected ({0:N0})": {
+      "status": "unchanged",
+      "digest": "2f0e4df2f05b8487ca9e1e4e54bd0fd3bf6c4e984c6254553a1fa40aca1254a4"
+    },
+    "Date unchanged": {
+      "status": "unchanged",
+      "digest": "e8853490d9e244ac6f85b89f228394bd37dda3a707c87931104392a0143e8b19"
+    },
+    "Date {0} → {1}": {
+      "status": "unchanged",
+      "digest": "4183c8401917aaaa73e00b1f53f1bfdd11edc97df06d3d3e87594bd57e81cd79"
+    },
+    "Last known: {0}": {
+      "status": "unchanged",
+      "digest": "7bd1e516050126493c853bccf64dac175978f73a777dd2bc58cfae2adb497157"
+    },
+    "Previously: {0}": {
+      "status": "unchanged",
+      "digest": "727c90c2c3a400c80a2400188b8572f5cff0af9903676afa9bb9076f1d782d52"
+    },
+    "Same size, newer date: often another program wrote details such as tags into the file.": {
+      "status": "unchanged",
+      "digest": "87c72950b908d1d5af7647da4cac007462c1dfbdf0273c3c3d869f6bbb033fc5"
+    },
+    "Same size, older date: perhaps restored from a backup.": {
+      "status": "unchanged",
+      "digest": "cc55aaedd5d2e19bfc45ff804a926476aa30303a02478d57d27dcb4f4c9c9b3f"
+    },
+    "Select shown": {
+      "status": "unchanged",
+      "digest": "44d06405e3c93ba020b5e852601a0f897357f525de785853f112fcdee7016c12"
+    },
+    "Size unchanged": {
+      "status": "unchanged",
+      "digest": "ce607b04102ac3b2e0103b78fe36314fe0c7d5b93f71655e2dbcc083b4118541"
+    },
+    "Size {0} → {1} ({2})": {
+      "status": "unchanged",
+      "digest": "3dad306e87344934c904cb7fabd2fcc02a218ebf8d61b61da49147ef0814ebe9"
+    },
+    "Video": {
+      "status": "unchanged",
+      "digest": "9b5825a40fe3d4fec3a5930673e6489705c990769b94436e1900d6053772202d"
     }
   }
 }

@@ -121,7 +121,27 @@ public partial class MainWindow
    window.ShowPlan(originalPlan with { Changes = [], Unreachable = [new LibraryFolder { Path = Path.Combine(directory,"offline-drive") }] }); window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory,"folder-offline.png"));
    window.SetBusy(true); window.ReportProgress(new FolderSyncProgress("Checking folders …",128,null,watched)); window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory,"folder-checking.png"));
    window.ReportProgress(new FolderSyncProgress("Apply selected",1,3,arrived)); window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory,"folder-applying.png"));
-   window.SetBusy(false); window.ShowPlan(originalPlan);
+   window.SetBusy(false);
+   // Every kind of change says what changed; both filters work together and count what the other leaves.
+   var now = DateTimeOffset.UtcNow; var folderId = originalPlan.Folders[0].Id;
+   FolderChange Changed(string name, MediaKind kind, long size, long before, TimeSpan age) { var at = Path.Combine(watched, name); return new(FolderChangeKind.Modified, at, kind, size, folderId, Guid.NewGuid(), at, now, before, now - age); }
+   window.ShowPlan(originalPlan with { Changes = [
+    new(FolderChangeKind.New, Path.Combine(watched, "New arrival.mp4"), MediaKind.Video, 734_003_200, folderId, ModifiedAtUtc: now),
+    Changed("Grown.mp4", MediaKind.Video, 1_288_490_189, 1_181_116_006, TimeSpan.FromDays(40)),
+    Changed("Tagged.jpg", MediaKind.Image, 2_400_000, 2_400_000, TimeSpan.FromDays(3)),
+    Changed("Restored.jpg", MediaKind.Image, 3_100_000, 3_100_000, TimeSpan.FromDays(-2)),
+    new(FolderChangeKind.Moved, Path.Combine(watched, "Sorted", "Clip.mp4"), MediaKind.Video, 50_000_000, folderId, Guid.NewGuid(), Path.Combine(watched, "Clip.mp4"), now, 50_000_000, now),
+    new(FolderChangeKind.Renamed, Path.Combine(watched, "New name.mp3"), MediaKind.Audio, 8_000_000, folderId, Guid.NewGuid(), Path.Combine(watched, "Old name.mp3"), now, 8_000_000, now),
+    new(FolderChangeKind.Missing, Path.Combine(watched, "Gone.mp4"), MediaKind.Video, 400_000_000, folderId, Guid.NewGuid(), PreviousSize: 400_000_000, PreviousModifiedAtUtc: now.AddDays(-100))] });
+   window.Width = 980; window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-change-kinds.png"));
+   Require(window.Rows.Single(r => r.Name == "Restored.jpg").Hint.Length > 0 && window.Rows.Single(r => r.Name == "Tagged.jpg").Hint.Length > 0 && window.Rows.Single(r => r.Name == "Grown.mp4").Hint.Length == 0,
+    "Only a changed file of the same size needs a hint.");
+   Require(window.Rows.All(r => r.Detail.Length > 0), "A change did not say what changed.");
+   window.ShowOnly(FolderChangeKind.Modified, MediaKind.Image); window.UpdateLayout();
+   Require(window.ShownRows.Count == 2 && window.ShownRows.All(r => r.Change.MediaKind == MediaKind.Image), "The kind and media filters did not work together.");
+   Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-change-filtered.png"));
+   window.ShowOnly(null, MediaKind.Video); Require(window.ShownRows.Count == 4, "The media filter did not show every video change.");
+   window.ShowOnly(null, null); window.ShowPlan(originalPlan);
    window.Close();
    _repository.Delete(item.Id); ForgetInLibraryFolders(item.Path);
    await CheckLibraryFoldersAsync();

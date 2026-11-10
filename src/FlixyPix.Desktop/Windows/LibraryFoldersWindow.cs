@@ -1,9 +1,8 @@
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Media;
 using FlixyPix.Core;
 using Microsoft.Win32;
@@ -20,12 +19,17 @@ internal sealed class LibraryFoldersWindow : Window
     private readonly Func<FolderSyncPlan, IReadOnlyList<FolderChange>, bool, Task<FolderSyncResult>> _apply;
     private readonly StackPanel _folders = new();
     private readonly TextBlock _summary = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 8) };
-    private readonly ListView _changes = new() { Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+    private readonly ListView _changes = new() { Background = Brushes.Transparent, BorderThickness = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch };
     private readonly CheckBox _ignoreDeclined = new() { Content = T("Don't offer deselected new files again"), VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _applyButton = new() { Content = T("Apply selected"), IsEnabled = false };
     private readonly Button _check = new() { Content = T("Check now") };
     private readonly Button _adopt = new() { Visibility = Visibility.Collapsed };
     private IReadOnlyList<ChangeRow> _rows = [];
+    private readonly StackPanel _kindBar = new() { Orientation = Orientation.Horizontal }, _mediaBar = new() { Orientation = Orientation.Horizontal };
+    private readonly List<Action> _filterLabels = [];
+    private FolderChangeKind? _kindFilter;
+    private MediaKind? _mediaFilter;
+    private bool _choosing;
     private readonly ProgressBar _progress = new() { Height = 4, Margin = new Thickness(0, 8, 0, 12), Visibility = Visibility.Collapsed };
     private Button? _cancel, _removeMissing;
     internal TabControl? ReviewTabs { get; private set; }
@@ -34,15 +38,58 @@ internal sealed class LibraryFoldersWindow : Window
     internal FolderSyncPlan? Plan => _plan;
     internal IReadOnlyList<ChangeRow> Rows => _rows;
 
-    internal sealed class ChangeRow(FolderChange change)
+    internal sealed class ChangeRow(FolderChange change) : INotifyPropertyChanged
     {
+        private bool _chosen = change.Kind != FolderChangeKind.Missing;
+        public event PropertyChangedEventHandler? PropertyChanged;
+        internal event Action? ChosenChanged;
         public FolderChange Change { get; } = change;
-        public bool Chosen { get; set; } = change.Kind != FolderChangeKind.Missing;
+        public bool Chosen
+        {
+            get => _chosen;
+            set { if (_chosen == value) return; _chosen = value; PropertyChanged?.Invoke(this, new(nameof(Chosen))); ChosenChanged?.Invoke(); }
+        }
         public bool CanChoose => Change.Kind != FolderChangeKind.Missing;
-        public string Type => Change.Kind switch { FolderChangeKind.Moved => T("Moved"), FolderChangeKind.Renamed => T("Renamed"), FolderChangeKind.New => T("New"), FolderChangeKind.Modified => T("Changed"), _ => T("Missing") };
+        public string Type => KindName(Change.Kind);
+        /// <summary>Kind for the colour mark of the row template.</summary>
+        public string Kind => Change.Kind.ToString();
+        public string MediaType => Change.MediaKind switch { MediaKind.Image => T("Image"), MediaKind.Video => T("Video"), _ => T("Audio") };
         public string Name => Path.GetFileName(Change.Path);
-        public string Where => Change.Kind is FolderChangeKind.Moved or FolderChangeKind.Renamed ? T("before ") + Change.PreviousPath + "\n" + T("Path") + ": " + Change.Path : Change.Path;
+        public string Folder => Path.GetDirectoryName(Change.Path) ?? Change.Path;
+        /// <summary>What the check saw: size and date before and now, or the former place.</summary>
+        public string Detail => Change.Kind switch
+        {
+            FolderChangeKind.Modified => string.Join(" · ", ModifiedParts()),
+            FolderChangeKind.New => State(Change.Size, Change.ModifiedAtUtc),
+            FolderChangeKind.Moved => T("Previously: {0}", Path.GetDirectoryName(Change.PreviousPath) ?? ""),
+            FolderChangeKind.Renamed => T("Previously: {0}", string.Equals(Path.GetDirectoryName(Change.PreviousPath), Folder, StringComparison.OrdinalIgnoreCase) ? Path.GetFileName(Change.PreviousPath) ?? "" : Change.PreviousPath ?? ""),
+            _ => State(Change.PreviousSize ?? Change.Size, Change.PreviousModifiedAtUtc) is { Length: > 0 } known ? T("Last known: {0}", known) : "",
+        };
+        /// <summary>Why a changed file may well have the same content, so the user can decide before taking it over.</summary>
+        public string Hint
+        {
+            get
+            {
+                if (Change.Kind != FolderChangeKind.Modified || Change.PreviousSize != Change.Size || Change.PreviousModifiedAtUtc is not { } before || Change.ModifiedAtUtc is not { } now) return "";
+                return now < before ? T("Same size, older date: perhaps restored from a backup.") : T("Same size, newer date: often another program wrote details such as tags into the file.");
+            }
+        }
+        public Visibility HintVisibility => Hint.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        private IEnumerable<string> ModifiedParts()
+        {
+            if (Change.PreviousSize is { } before && Change.Size is { } now)
+                yield return before == now ? T("Size unchanged") : T("Size {0} → {1} ({2})", MediaCard.SizeText(before), MediaCard.SizeText(now), (now > before ? "+" : "−") + MediaCard.SizeText(Math.Abs(now - before)));
+            else if (Change.Size is { } size) yield return MediaCard.SizeText(size);
+            if (Change.PreviousModifiedAtUtc is { } earlier && Change.ModifiedAtUtc is { } later)
+                yield return earlier == later ? T("Date unchanged") : T("Date {0} → {1}", Stamp(earlier), Stamp(later));
+            else if (Change.ModifiedAtUtc is { } date) yield return Stamp(date);
+        }
+        private static string Stamp(DateTimeOffset date) => date.ToLocalTime().ToString("G");
+        private static string State(long? size, DateTimeOffset? date) => string.Join(" · ", new[] { size is { } bytes ? MediaCard.SizeText(bytes) : null, date is { } at ? Stamp(at) : null }.OfType<string>());
     }
+
+    internal static string KindName(FolderChangeKind kind) => kind switch { FolderChangeKind.Moved => T("Moved"), FolderChangeKind.Renamed => T("Renamed"), FolderChangeKind.New => T("New"), FolderChangeKind.Modified => T("Changed"), _ => T("Missing") };
 
     internal LibraryFoldersWindow(Window owner, CatalogRepository repository, FolderSyncPlan? plan, Action foldersChanged,
      Func<FolderSyncPlan, IReadOnlyList<FolderChange>, bool, Task<FolderSyncResult>> apply, LibraryTaskScope tasks)
@@ -71,25 +118,18 @@ internal sealed class LibraryFoldersWindow : Window
 
         changesHeader.Children.Add(_summary); changesHeader.Children.Add(_progress);
         DockPanel.SetDock(changesHeader, Dock.Top); changesPanel.Children.Add(changesHeader);
-        var check = new FrameworkElementFactory(typeof(CheckBox));
-        check.SetBinding(ToggleButton.IsCheckedProperty, new Binding(nameof(ChangeRow.Chosen)) { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
-        check.SetBinding(IsEnabledProperty, new Binding(nameof(ChangeRow.CanChoose)));
-        check.SetValue(AutomationProperties.NameProperty, T("Apply"));
-        var row = new FrameworkElementFactory(typeof(DockPanel)); row.SetValue(FrameworkElement.MarginProperty, new Thickness(12, 10, 12, 10));
-        check.SetValue(DockPanel.DockProperty, Dock.Left); check.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 14, 0)); row.AppendChild(check);
-        var words = new FrameworkElementFactory(typeof(StackPanel));
-        var name = new FrameworkElementFactory(typeof(TextBlock)); name.SetBinding(TextBlock.TextProperty, new Binding(nameof(ChangeRow.Name))); name.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold); words.AppendChild(name);
-        var type = new FrameworkElementFactory(typeof(TextBlock)); type.SetBinding(TextBlock.TextProperty, new Binding(nameof(ChangeRow.Type))); type.SetValue(TextBlock.ForegroundProperty, SettingsUi.Accent); type.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 3, 0, 3)); words.AppendChild(type);
-        var path = new FrameworkElementFactory(typeof(TextBlock)); path.SetBinding(TextBlock.TextProperty, new Binding(nameof(ChangeRow.Where))); path.SetValue(TextBlock.ForegroundProperty, SettingsUi.Muted); path.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap); words.AppendChild(path);
-        row.AppendChild(words); _changes.ItemTemplate = new DataTemplate { VisualTree = row };
         VirtualizingPanel.SetIsVirtualizing(_changes, true); VirtualizingPanel.SetVirtualizationMode(_changes, VirtualizationMode.Recycling);
-        var filters = new WrapPanel { Margin = new Thickness(0, 8, 0, 12) };
-        foreach (FolderChangeKind? kind in new FolderChangeKind?[] { null, FolderChangeKind.New, FolderChangeKind.Modified, FolderChangeKind.Moved, FolderChangeKind.Renamed, FolderChangeKind.Missing })
-        {
-            var filter = new Button { Content = kind == null ? T("All items") : new ChangeRow(new(kind.Value, "", MediaKind.Image, null, Guid.Empty)).Type, Style = (Style)Application.Current.Resources["Quiet"] };
-            filter.Click += (_, _) => _changes.ItemsSource = kind == null ? _rows : _rows.Where(r => r.Change.Kind == kind).ToList(); filters.Children.Add(filter);
-        }
+        ScrollViewer.SetHorizontalScrollBarVisibility(_changes, ScrollBarVisibility.Disabled);
+        // Two filters side by side: what happened, and to which kind of media. Each counts what the other one leaves.
+        var filters = new WrapPanel { Margin = new Thickness(0, 4, 0, 10) };
+        filters.Children.Add(FilterBar(_kindBar)); filters.Children.Add(FilterBar(_mediaBar));
+        var selectShown = new Button { Content = T("Select shown"), Style = (Style)Application.Current.Resources["Quiet"], Margin = new Thickness(0, 0, 6, 8) };
+        var selectNone = new Button { Content = T("Select none"), Style = (Style)Application.Current.Resources["Quiet"], Margin = new Thickness(0, 0, 0, 8) };
+        selectShown.Click += (_, _) => Choose(true); selectNone.Click += (_, _) => Choose(false);
+        var choosing = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top };
+        choosing.Children.Add(selectShown); choosing.Children.Add(selectNone); filters.Children.Add(choosing);
         changesHeader.Children.Add(filters);
+        _ignoreDeclined.Margin = new Thickness(0, 10, 0, 0); DockPanel.SetDock(_ignoreDeclined, Dock.Bottom); changesPanel.Children.Add(_ignoreDeclined);
         changesPanel.Children.Add(_changes);
 
 
@@ -131,13 +171,14 @@ internal sealed class LibraryFoldersWindow : Window
         };
         buttons.Children.Add(cancel); buttons.Children.Add(removeMissing); buttons.Children.Add(_check); buttons.Children.Add(_applyButton); buttons.Children.Add(close);
         buttons.HorizontalAlignment = HorizontalAlignment.Right;
-        DockPanel.SetDock(buttons, Dock.Right); footer.Children.Add(buttons); changesHeader.Children.Add(_ignoreDeclined);
+        DockPanel.SetDock(buttons, Dock.Right); footer.Children.Add(buttons);
         var tabs = new TabControl { Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
         var folderBody = new DockPanel(); DockPanel.SetDock(header, Dock.Top); folderBody.Children.Add(header); folderBody.Children.Add(folderScroll);
         ReviewTabs = tabs;
         tabs.SetResourceReference(Control.ForegroundProperty, "Text");
         tabs.Resources = new ResourceDictionary { Source = new Uri("/FlixyPix;component/Windows/LibraryFolderTabs.xaml", UriKind.Relative) };
         tabs.Style = (Style)tabs.Resources["LibraryFolderTabs"];
+        _changes.ItemTemplate = (DataTemplate)tabs.Resources["FolderChangeRow"];
         tabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.OriginalSource, tabs) && tabs.IsLoaded && tabs.Template.FindName("PART_SelectedContentHost", tabs) is FrameworkElement shown) Motion.EnterResults(shown); };
         tabs.Items.Add(new TabItem { Header = T("Changes found"), Content = changesPanel });
         tabs.Items.Add(new TabItem { Header = T("Media folders"), Content = folderBody });
@@ -146,7 +187,7 @@ internal sealed class LibraryFoldersWindow : Window
         var reportPanel = new StackPanel();
         reportPanel.Children.Add(new Border { Background = SettingsUi.CardBackground, CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 12, 0, 12), Child = report });
         reportPanel.Children.Add(new Expander { Header = T("Details"), Foreground = Theme.Brush("Text"), Content = reportDetails });
-        void LoadReport() { var last = _repository.GetFolderSyncReport(); report.Text = last == null ? T("Not checked yet.") : last.At.ToLocalTime().ToString("g") + "\n\n" + (last.Applied ? Result(last.Result) : Describe(new FolderSyncPlan([], last.Changes, last.Unreachable, last.Errors))); reportDetails.Text = last == null ? "" : string.Join("\n", last.Result.Skipped.Concat(last.Errors).Concat(last.Unreachable.Select(f => f.Path)).Concat(last.Changes.Select(c => new ChangeRow(c).Type + " · " + c.Path))); }
+        void LoadReport() { var last = _repository.GetFolderSyncReport(); report.Text = last == null ? T("Not checked yet.") : last.At.ToLocalTime().ToString("g") + "\n\n" + (last.Applied ? Result(last.Result) : Describe(new FolderSyncPlan([], last.Changes, last.Unreachable, last.Errors))); reportDetails.Text = last == null ? "" : ReportDetails(last); }
         tabs.Items.Add(new TabItem { Header = T("Report"), Content = new ScrollViewer { Content = reportPanel } });
         tabs.SelectionChanged += (_, _) => { LoadReport(); _applyButton.Visibility = tabs.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed; if (_removeMissing != null) _removeMissing.Visibility = _applyButton.Visibility; _check.Visibility = tabs.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible; }; LoadReport();
         var body = new DockPanel(); DockPanel.SetDock(footer, Dock.Bottom); body.Children.Add(footer); body.Children.Add(tabs);
@@ -280,10 +321,96 @@ internal sealed class LibraryFoldersWindow : Window
     {
         _plan = plan;
         _rows = plan?.Changes.Select(c => new ChangeRow(c)).ToList() ?? [];
-        _changes.ItemsSource = _rows;
-        _applyButton.IsEnabled = plan?.Actionable.Count > 0;
+        foreach (var row in _rows) row.ChosenChanged += ShowChosenCount;
+        // A filter stays after a new check as long as something still matches it.
+        if (_kindFilter is { } kind && !_rows.Any(r => r.Change.Kind == kind)) _kindFilter = null;
+        if (_mediaFilter is { } media && !_rows.Any(r => r.Change.MediaKind == media)) _mediaFilter = null;
+        BuildFilters();
+        ShowRows();
         _ignoreDeclined.Visibility = plan?.Count(FolderChangeKind.New) > 0 ? Visibility.Visible : Visibility.Collapsed;
         _summary.Text = plan == null ? T("Not checked yet.") : Describe(plan);
+    }
+
+    /// <summary>Rows the two filters leave, still sorted by kind and path.</summary>
+    internal IReadOnlyList<ChangeRow> ShownRows => _rows.Where(r => (_kindFilter is null || r.Change.Kind == _kindFilter) && (_mediaFilter is null || r.Change.MediaKind == _mediaFilter)).ToList();
+
+    internal void ShowOnly(FolderChangeKind? kind, MediaKind? media)
+    {
+        (_kindFilter, _mediaFilter) = (kind, media);
+        BuildFilters(); ShowRows();
+    }
+
+    private void ShowRows()
+    {
+        _changes.ItemsSource = ShownRows;
+        foreach (var label in _filterLabels) label();
+        ShowChosenCount();
+    }
+
+    private static Border FilterBar(Panel segments) => new()
+    {
+        Child = segments, BorderBrush = SettingsUi.FieldBorder, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4), ClipToBounds = true,
+        Margin = new Thickness(0, 0, 12, 8), VerticalAlignment = VerticalAlignment.Top
+    };
+
+    private void BuildFilters()
+    {
+        _kindBar.Children.Clear(); _mediaBar.Children.Clear(); _filterLabels.Clear();
+        ((FrameworkElement)_kindBar.Parent!).Visibility = ((FrameworkElement)_mediaBar.Parent!).Visibility = _rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var kinds = new FolderChangeKind?[] { null, FolderChangeKind.New, FolderChangeKind.Modified, FolderChangeKind.Moved, FolderChangeKind.Renamed, FolderChangeKind.Missing };
+        foreach (var kind in kinds)
+            Segment(_kindBar, "kinds", kind == null ? T("All") : KindName(kind.Value), () => _kindFilter == kind, () => _kindFilter = kind,
+                () => _rows.Count(r => (kind is null || r.Change.Kind == kind) && (_mediaFilter is null || r.Change.MediaKind == _mediaFilter)));
+        foreach (var media in new MediaKind?[] { null, MediaKind.Video, MediaKind.Image, MediaKind.Audio })
+            Segment(_mediaBar, "media", media switch { null => T("All items"), MediaKind.Video => T("Videos"), MediaKind.Image => T("Images"), _ => T("Audio") }, () => _mediaFilter == media, () => _mediaFilter = media,
+                () => _rows.Count(r => (media is null || r.Change.MediaKind == media) && (_kindFilter is null || r.Change.Kind == _kindFilter)));
+    }
+
+    /// <summary>One filter choice with the number of rows it shows; choices without rows are hidden unless chosen.</summary>
+    private void Segment(Panel bar, string group, string label, Func<bool> chosen, Action choose, Func<int> count)
+    {
+        var option = new RadioButton { Style = (Style)Application.Current.Resources["Segment"], GroupName = group + GetHashCode(), Padding = new Thickness(12, 6, 12, 6), IsChecked = chosen() };
+        option.Checked += (_, _) => { if (chosen()) return; choose(); ShowRows(); };
+        void Label()
+        {
+            var shown = count();
+            option.Content = label + " · " + shown.ToString("N0");
+            option.Visibility = shown > 0 || chosen() || bar.Children.IndexOf(option) == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        _filterLabels.Add(Label); Label();
+        bar.Children.Add(option);
+    }
+
+    /// <summary>Ticks or clears the rows in view; rows hidden by a filter keep their choice.</summary>
+    private void Choose(bool chosen)
+    {
+        // Counted once at the end: a large check has a hundred thousand rows.
+        _choosing = true;
+        try { foreach (var row in ShownRows.Where(r => r.CanChoose)) row.Chosen = chosen; }
+        finally { _choosing = false; }
+        ShowChosenCount();
+    }
+
+    private void ShowChosenCount()
+    {
+        if (_choosing) return;
+        var count = _rows.Count(r => r.CanChoose && r.Chosen);
+        _applyButton.Content = count > 0 ? T("Apply selected ({0:N0})", count) : T("Apply selected");
+        _applyButton.IsEnabled = count > 0 && _progress.Visibility != Visibility.Visible;
+    }
+
+    /// <summary>Notes first, then the changes by kind. A large check lists a few hundred files per kind, not every one of them.</summary>
+    internal static string ReportDetails(FolderSyncReport report, int perKind = 200)
+    {
+        var lines = report.Result.Skipped.Concat(report.Errors).Concat(report.Unreachable.Select(f => f.Path)).ToList();
+        foreach (var group in report.Changes.GroupBy(c => c.Kind).OrderBy(g => g.Key))
+        {
+            if (lines.Count > 0) lines.Add("");
+            lines.Add(KindName(group.Key) + " · " + group.Count().ToString("N0"));
+            foreach (var row in group.Take(perKind).Select(c => new ChangeRow(c))) lines.Add("   " + row.Change.Path + (row.Detail.Length > 0 ? "  —  " + row.Detail : ""));
+            if (group.Count() > perKind) lines.Add("   " + T("… and {0:N0} more", group.Count() - perKind));
+        }
+        return string.Join("\n", lines);
     }
 
     internal static string Describe(FolderSyncPlan plan)
@@ -331,7 +458,7 @@ internal sealed class LibraryFoldersWindow : Window
         _changes.IsEnabled = _folders.IsEnabled = !busy;
         if (_removeMissing != null) _removeMissing.IsEnabled = !busy && _changes.SelectedItems.Cast<ChangeRow>().Any(r => r.Change.Kind == FolderChangeKind.Missing);
         _check.IsEnabled = !busy && _repository.GetLibraryFolders().Count > 0;
-        _applyButton.IsEnabled = !busy && _plan?.Actionable.Count > 0;
+        ShowChosenCount();
     }
 
     internal void ReportProgress(FolderSyncProgress step)
