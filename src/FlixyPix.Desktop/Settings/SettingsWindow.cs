@@ -89,7 +89,7 @@ internal sealed partial class SettingsWindow : Window
  private readonly CheckBox hardwareDecoding = SettingsUi.Switch(), skipCustom = SettingsUi.Switch(), autoPreviews = SettingsUi.Switch(), fingerprintsOnImport = SettingsUi.Switch();
  private readonly CheckBox hoverEnabled = SettingsUi.Switch(), hoverDelay = SettingsUi.Switch(), hoverTimestamp = SettingsUi.Switch();
  internal readonly CheckBox IncludeHidden = SettingsUi.Switch(), ConfirmRemove = SettingsUi.Switch(), ShowExtension = SettingsUi.Switch(), MarkMissing = SettingsUi.Switch(),
-  AlwaysReport = SettingsUi.Switch(), PreventSleep = SettingsUi.Switch(), MediaKeys = SettingsUi.Switch(),
+  AlwaysReport = SettingsUi.Switch(), ReadMetadata = SettingsUi.Switch(), PreventSleep = SettingsUi.Switch(), MediaKeys = SettingsUi.Switch(),
   FolderCounts = SettingsUi.Switch(), CategoryCounts = SettingsUi.Switch(), TagCategoryCounts = SettingsUi.Switch();
  /// <summary>Restore on start: 0 off, 1 the view only, 2 everything.</summary>
  internal readonly SegmentedChoice RestoreChoice = new([(0, T("Home page")), (1, T("All items")), (2, T("View only")), (3, T("Everything"))]);
@@ -194,7 +194,7 @@ internal sealed partial class SettingsWindow : Window
   // The scheme applies at once as a preview; closing without saving restores the previous one.
   themePicker.Changed += () => { if (loading) return; Theme.Apply(themePicker.Value); Touch(); };
   foreach (var check in new[] { AlwaysFullscreen, PlayBestVersion, hardwareDecoding, skipCustom, autoPreviews, fingerprintsOnImport, clipsOnImport, hoverEnabled, hoverDelay, hoverTimestamp, IncludeHidden,
-   ConfirmRemove, ShowExtension, MarkMissing, FolderCounts, CategoryCounts, TagCategoryCounts, AlwaysReport, PreventSleep, MediaKeys, SlideFade, SlidePan, SlideInfo, NfoTitle, NfoTags,
+   ConfirmRemove, ShowExtension, MarkMissing, FolderCounts, CategoryCounts, TagCategoryCounts, AlwaysReport, ReadMetadata, PreventSleep, MediaKeys, SlideFade, SlidePan, SlideInfo, NfoTitle, NfoTags,
    NfoDescription, NfoSubfolders, NfoThumbnail, NfoFanart, HistoryEnabled, ShowOCounter }.Concat(HomeRows.Values)) { check.Checked += (_, _) => Touch();
    check.Unchecked += (_, _) => Touch(); }
   foreach (var choice in new[] { columns, rows, processes, hoverSpeed, hoverMode, ImageWheel, SlideOrder, slideSpeed, RestoreChoice, ReviewInboxChoice }) choice.Changed += Touch;

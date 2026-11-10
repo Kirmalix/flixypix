@@ -13,6 +13,9 @@ public sealed record MetadataChange(Guid MediaId, string MediaPath, string Sourc
 }
 public sealed record MetadataPlan(IReadOnlyList<MetadataChange> Changes, int Checked, int WithoutMetadata, IReadOnlyList<string> Problems);
 
+/// <summary>What new media took over from their files: media changed, media looked at, and the files that could not be read.</summary>
+public sealed record MetadataAdoption(int Applied, int Checked, IReadOnlyList<string> Problems);
+
 /// <summary>Result of writing XMP sidecars: written, already up to date, and the files that could not be written.</summary>
 public sealed record SidecarExport(int Written, int Unchanged, IReadOnlyList<string> Problems);
 
@@ -61,6 +64,25 @@ public sealed partial class CatalogRepository
             changes.Add(new(item.Id, item.Path, source, item.Title, title, description, rating, takenAt, tags, Hash(document)));
         }
         return new(changes, checkedCount, without, problems);
+    }
+
+    /// <summary>What an import does by itself (library setting "Read metadata from files"): the media take over what their
+    /// files and XMP sidecars say, by the rules of <see cref="PlanMetadataImport"/> and without a preview. Files are read
+    /// side by side on half the cores and saved in small groups, so a cancelled run keeps what it has done.</summary>
+    /// <param name="progress">The number of media looked at so far.</param>
+    public MetadataAdoption AdoptFileMetadata(IReadOnlyCollection<Guid> mediaIds, IFileMetadataReader? embedded, IProgress<int>? progress = null, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(mediaIds);
+        var ids = mediaIds.Distinct().ToArray(); int applied = 0, done = 0;
+        var problems = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        Parallel.ForEach(ids.Chunk(24), new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2), CancellationToken = token }, group =>
+        {
+            var plan = PlanMetadataImport(group, embedded, token);
+            if (plan.Changes.Count > 0) Interlocked.Add(ref applied, ApplyMetadataImport(plan.Changes));
+            foreach (var problem in plan.Problems) problems.Enqueue(problem);
+            progress?.Report(Interlocked.Add(ref done, group.Length));
+        });
+        return new(applied, ids.Length, problems.ToArray());
     }
 
     /// <summary>Applies the chosen changes in one transaction; a medium edited since the preview is skipped. Returns the number changed.</summary>

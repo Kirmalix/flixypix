@@ -172,6 +172,40 @@ public sealed class FileMetadataTests : IDisposable
         Assert.Single(catalog.PlanMetadataImport([item.Id], null).Problems);
     }
 
+    [Fact]
+    public async Task AnImportNamesItsNewMediaAndTheyTakeOverWhatTheirFilesSay()
+    {
+        // More files than one group holds, so the groups read side by side.
+        var folder = PathFor("neu"); Directory.CreateDirectory(folder);
+        for (var number = 0; number < 60; number++) File.WriteAllBytes(Path.Combine(folder, $"foto{number:00}.jpg"), [1, 2, 3]);
+        File.WriteAllText(Path.Combine(folder, "foto07.jpg.xmp"), Lightroom);
+        File.WriteAllText(Path.Combine(folder, "foto08.jpg.xmp"), "kein XML");
+        using var catalog = new CatalogRepository(PathFor("catalog.db"));
+        var known = catalog.Upsert(new MediaItem { Path = Path.Combine(folder, "foto00.jpg"), Title = "foto00", Kind = MediaKind.Image });
+
+        var result = await new MediaScanner(catalog).ScanAsync([folder]);
+        Assert.Equal(59, result.Imported); Assert.Equal(59, result.ImportedIds.Distinct().Count()); Assert.DoesNotContain(known.Id, result.ImportedIds);
+
+        var steps = new List<int>();
+        var adoption = catalog.AdoptFileMetadata(result.ImportedIds, new NamingReader(), new Collect(steps));
+        Assert.Equal((59, 59), (adoption.Applied, adoption.Checked)); Assert.Single(adoption.Problems); Assert.Equal(59, steps.Max());
+        var withSidecar = catalog.GetMediaByPath(Path.Combine(folder, "foto07.jpg"))!;
+        Assert.Equal("Evening by the sea", withSidecar.Title); Assert.Equal(8, withSidecar.Rating);
+        Assert.Contains("Strand", withSidecar.Tags); Assert.Contains("foto07", withSidecar.Tags);
+        var plain = catalog.GetMediaByPath(Path.Combine(folder, "foto31.jpg"))!;
+        Assert.Equal(new[] { "foto31" }, plain.Tags); Assert.Equal(6, plain.Rating);
+        // A medium that was there before keeps what it has.
+        Assert.Empty(catalog.GetMedia(known.Id)!.Tags);
+        Assert.Equal(0, catalog.AdoptFileMetadata(result.ImportedIds, new NamingReader()).Applied);
+    }
+
+    private sealed class Collect(List<int> steps) : IProgress<int> { public void Report(int value) { lock (steps) steps.Add(value); } }
+    /// <summary>Every file carries its own name as keyword and three stars.</summary>
+    private sealed class NamingReader : IFileMetadataReader
+    {
+        public FileMetadata? Read(string path, MediaKind kind) => new() { Keywords = [Path.GetFileNameWithoutExtension(path)], Stars = 3 };
+    }
+
     private sealed class FixedReader(FileMetadata metadata) : IFileMetadataReader
     {
         public FileMetadata? Read(string path, MediaKind kind) => metadata;

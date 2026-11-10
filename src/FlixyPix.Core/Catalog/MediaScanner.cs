@@ -28,7 +28,7 @@ public sealed class MediaScanner(CatalogRepository repository)
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var errors = new List<string>();
         var warnings = new List<string>();
-        var imported = 0;
+        var imported = 0; var importedIds = new List<Guid>();
         var skipped = 0;
         var processed = 0;
         while (pending.TryPop(out var candidate))
@@ -69,7 +69,7 @@ public sealed class MediaScanner(CatalogRepository repository)
                 {
                     var info = new FileInfo(path);
                     var item = new MediaItem { Path = path, Title = preferences.General.ImportTitle(path), Kind = kind.Value, FileSize = info.Length, FileModifiedAtUtc = new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), FileCreatedAt = FileDate(info) };
-                    if (repository.AddScannedItem(item)) imported++; else skipped++;
+                    if (repository.AddScannedItem(item)) { imported++; importedIds.Add(item.Id); } else skipped++;
                 }
                 progress?.Report(new ScanProgress(path, processed, imported));
             }
@@ -79,7 +79,7 @@ public sealed class MediaScanner(CatalogRepository repository)
                 skipped++;
             }
         }
-        return new ImportResult { Imported = imported, Skipped = skipped, Errors = errors, Warnings = warnings };
+        return new ImportResult { Imported = imported, ImportedIds = importedIds, Skipped = skipped, Errors = errors, Warnings = warnings };
     }
 
     /// <summary>Date of a medium's file: the original stored the creation time ("filedate"). A copy gets a new creation time

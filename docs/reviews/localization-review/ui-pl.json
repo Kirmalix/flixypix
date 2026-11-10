@@ -14964,6 +14964,10 @@
     "{0}: the file changed since the check.": {
       "status": "unchanged",
       "digest": "6fadeccbbb04ad2a634ea2ec57759d19b8e59f9041d67f9be277be69fb3086cf"
+    },
+    "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": {
+      "status": "unchanged",
+      "digest": "0acaf6f799017c0dfd552ae04d8bc617c000398993dcf403cef086f156805e66"
     }
   }
 }

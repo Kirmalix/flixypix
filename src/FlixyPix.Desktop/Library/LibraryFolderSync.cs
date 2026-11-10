@@ -154,16 +154,25 @@ public partial class MainWindow
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(libraryToken);
         if (!beside) { _operation = cancellation; Progress.Visibility = CancelButton.Visibility = Visibility.Visible; }
         var progress = new Progress<FolderSyncProgress>(p => { _foldersWindow?.ReportProgress(p); if (beside) return; Progress.IsIndeterminate = p.Total == null; Progress.Maximum = Math.Max(1, p.Total ?? 1); Progress.Value = p.Done; Status.Text = T(p.Phase) + " · " + p.Done + (p.Total is { } total ? " / " + total : "") + " · " + Path.GetFileName(p.Path); });
-        FolderSyncResult result;
-        try { result = await Task.Run(() => _repository.ApplyFolderSync(plan, chosen, ignoreDeclined, cancellation.Token, progress), cancellation.Token); }
+        FolderSyncResult result; var arrived = new List<MediaItem>(); var adopted = 0;
+        try
+        {
+            result = await Task.Run(() => _repository.ApplyFolderSync(plan, chosen, ignoreDeclined, cancellation.Token, progress), cancellation.Token);
+            if (result.Imported > 0 || result.Updated > 0)
+            {
+                arrived = chosen.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>().ToList();
+                // What was taken over stays, also when reading the files' own metadata is cancelled.
+                try { adopted = await AdoptFileMetadataAsync(arrived.Select(i => i.Id).ToList(), cancellation.Token, (done, total) => ((IProgress<FolderSyncProgress>)progress).Report(new("Read metadata", done, total, ""))); }
+                catch (OperationCanceledException) { }
+            }
+        }
         finally { if (!beside) { CompleteLibraryOperation(); Progress.IsIndeterminate = true; Progress.Visibility = CancelButton.Visibility = Visibility.Collapsed; } }
 
         _repository.SaveFolderSyncReport(plan with { Changes = chosen }, result);
-        Status.Text = T("Media folders · ") + LibraryFoldersWindow.Result(result);
+        Status.Text = T("Media folders · ") + LibraryFoldersWindow.Result(result) + (adopted > 0 ? " · " + Tn(adopted, "Metadata imported for 1 item", "Metadata imported for {0:N0} items") : "");
         await RefreshAsync();
         // New and changed media get previews and their analysis right away, one queue for all of them.
-        if (result.Imported > 0 || result.Updated > 0)
-            QueueMediaPreparation(chosen.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>());
+        if (arrived.Count > 0) QueueMediaPreparation(arrived);
         return result;
     });
 
