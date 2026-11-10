@@ -11,7 +11,7 @@ namespace FlixyPix.Desktop;
 internal sealed class PlayerDisplaySettings
 {
  internal event Action? Changed;
- internal readonly CheckBox Messages = SettingsUi.Switch(), AutoHide = SettingsUi.Switch(), Shortcuts = SettingsUi.Switch(), Marks = SettingsUi.Switch(), NameBookmarks = SettingsUi.Switch(), Numbering = SettingsUi.Switch();
+ internal readonly CheckBox Messages = SettingsUi.Switch(), AutoHide = SettingsUi.Switch(), Shortcuts = SettingsUi.Switch(), Marks = SettingsUi.Switch(), NameBookmarks = SettingsUi.Switch(), Numbering = SettingsUi.Switch(), Subfolders = SettingsUi.Switch(), AddToLibrary = SettingsUi.Switch();
  internal readonly PathPicker Folder = new(true, null, DescribeFolder);
  internal readonly TextBox Prefix = new() { Width = 220, HorizontalAlignment = HorizontalAlignment.Left, MaxLength = 80 };
  internal readonly SegmentedChoice Format = new([((int)ScreenshotFormat.Png, "PNG"), ((int)ScreenshotFormat.Jpg, "JPG")]);
@@ -20,7 +20,7 @@ internal sealed class PlayerDisplaySettings
  internal PlayerDisplaySettings()
  {
   AutomationProperties.SetName(Prefix, T("Screenshot name prefix"));
-  foreach (var check in new[] { Messages, AutoHide, Shortcuts, Marks, NameBookmarks, Numbering }) { check.Checked += (_, _) => Changed?.Invoke(); check.Unchecked += (_, _) => Changed?.Invoke(); }
+  foreach (var check in new[] { Messages, AutoHide, Shortcuts, Marks, NameBookmarks, Numbering, Subfolders, AddToLibrary }) { check.Checked += (_, _) => Changed?.Invoke(); check.Unchecked += (_, _) => Changed?.Invoke(); }
   Folder.Changed += () => Changed?.Invoke(); Prefix.TextChanged += (_, _) => Changed?.Invoke(); Format.Changed += () => Changed?.Invoke();
  }
 
@@ -40,6 +40,8 @@ internal sealed class PlayerDisplaySettings
    new SettingRow(T("Name new bookmarks right away"), T("After “Set bookmark” a name field opens in the jump mark list. Enter keeps the name, Esc the time as name."), NameBookmarks)),
   SettingsUi.Card(T("Screenshots"), T("Applies to the key “Save screenshot” and the mouse action of the same name. Screenshots have the full resolution of the video."),
    new SettingRow(T("Folder"), null, Folder, wide: true),
+   new SettingRow(T("One subfolder per video"), T("The pictures of a video go into a folder named after it; a range saved as pictures gets a folder of its own below it."), Subfolders),
+   new SettingRow(T("Add pictures to the library"), T("Saved pictures appear among the images at once and remember their video and the time in it."), AddToLibrary),
    new SettingRow(T("Name prefix"), T("Empty: title of the video."), Prefix),
    new SettingRow(T("Format"), T("PNG is lossless, JPG much smaller."), Format),
    new SettingRow(T("Number consecutively"), T("“Name 0001.png”, “Name 0002.png” … instead of the position in the video."), Numbering)),
@@ -49,6 +51,7 @@ internal sealed class PlayerDisplaySettings
  {
   Messages.IsChecked = playback.ShowMessages; AutoHide.IsChecked = playback.AutoHideControls; Shortcuts.IsChecked = playback.KeyboardShortcuts; Marks.IsChecked = playback.ShowMarks; NameBookmarks.IsChecked = playback.NameNewBookmarks;
   Folder.Text = playback.Screenshots.Folder ?? ""; Prefix.Text = playback.Screenshots.Prefix; Format.Value = (int)playback.Screenshots.Format; Numbering.IsChecked = playback.Screenshots.Numbering;
+  Subfolders.IsChecked = playback.Screenshots.Subfolders; AddToLibrary.IsChecked = playback.Screenshots.AddToLibrary;
  }
 
  internal (FrameworkElement Field, string Message)? FirstInvalid() =>
@@ -60,6 +63,7 @@ internal sealed class PlayerDisplaySettings
   Screenshots = new ScreenshotPreferences
   {
    Folder = Folder.Text.Length == 0 ? null : Folder.Text, Prefix = Prefix.Text.Trim(), Format = (ScreenshotFormat)Format.Value, Numbering = Numbering.IsChecked == true,
+   Subfolders = Subfolders.IsChecked == true, AddToLibrary = AddToLibrary.IsChecked == true,
   },
  };
 }

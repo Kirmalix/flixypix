@@ -71,6 +71,34 @@ public sealed class MpvPlayer : IAsyncDisposable
     /// <summary>Saves the current video frame (without subtitles or on-screen display) as an image file.</summary>
     public async Task ScreenshotAsync(string path) => _ = await SendAsync("screenshot-to-file", path, "video");
     public async Task FrameStepAsync(bool forward) => _ = await SendAsync(forward ? "frame-step" : "frame-back-step");
+    /// <summary>Steps exactly this many frames forward (or back, when negative) by seeking; playback stays paused.</summary>
+    public async Task FrameStepAsync(int frames)
+    {
+        if (frames == 0 || Math.Abs(frames) > 100000) throw new ArgumentOutOfRangeException(nameof(frames));
+        _ = await SendAsync("frame-step", frames, "seek");
+    }
+    /// <summary>Waits until a seek or frame step has arrived, so the position read next is that of the picture shown.</summary>
+    public async Task WaitForSeekAsync(CancellationToken cancellationToken = default)
+    {
+        for (var attempt = 0; attempt < 400; attempt++)
+        {
+            if (!await IsSeekingAsync()) return;
+            await Task.Delay(10, cancellationToken);
+        }
+    }
+    /// <summary>Number of the frame shown (counted from 0) and the frame rate of the video; null where mpv cannot tell.</summary>
+    public async Task<(long? Frame, double? Rate)> GetFrameAsync()
+    {
+        async Task<JsonElement?> Read(string name) { try { return await SendAsync("get_property", name); } catch (InvalidOperationException) { return null; } }
+        var frame = await Read("estimated-frame-number"); var rate = await Read("container-fps");
+        return (frame is { ValueKind: JsonValueKind.Number } f && f.TryGetInt64(out var number) ? number : null,
+            rate is { ValueKind: JsonValueKind.Number } r && r.TryGetDouble(out var value) && value > 0 ? value : null);
+    }
+    /// <summary>Plays backward or forward again. Backward playback decodes whole groups of pictures and may stutter.</summary>
+    public async Task SetPlayDirectionAsync(bool backward) => _ = await SendAsync("set_property", "play-direction", backward ? "backward" : "forward");
+    /// <summary>A seek or frame step is still on its way. mpv 0.40 stays in this state when backward playback starts inside
+    /// the last group of pictures of a file, so in short clips always.</summary>
+    public async Task<bool> IsSeekingAsync() => (await SendAsync("get_property", "seeking")).ValueKind == JsonValueKind.True;
     internal async Task WaitUntilLoadedAsync(CancellationToken token)
     {
         while (!process.HasExited)

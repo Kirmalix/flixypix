@@ -111,6 +111,7 @@ public partial class MainWindow
                 var bookmarksBefore = _repository.GetBookmarks(imported.Id).Count;
                 await _videoWindow.SeekToAsync(.6); _videoWindow.ToggleBookmarkHere(); Require(_repository.GetBookmarks(imported.Id).Count == bookmarksBefore + 1, "Toggling did not set a bookmark.");
                 _videoWindow.ToggleBookmarkHere(); Require(_repository.GetBookmarks(imported.Id).Count == bookmarksBefore, "Toggling again did not remove the bookmark.");
+                await RunStillsSmokeTestAsync(directory, imported);
                 _videoWindow.ScreenshotFolder = Path.Combine(directory, "screenshots");
                 var shot = await _videoWindow.SaveScreenshotAsync(); Require(File.Exists(shot) && new FileInfo(shot).Length > 0, "The screenshot was not saved.");
                 _videoWindow.ToggleSlowMotion(); Require(_videoWindow.SlowMotion, "Slow motion did not switch on."); _videoWindow.ToggleSlowMotion(); Require(!_videoWindow.SlowMotion, "Slow motion did not switch off.");
@@ -263,7 +264,7 @@ public partial class MainWindow
                         ShowMarks = false,
                         KeyboardShortcuts = false,
                         CustomJumps = [new("D9", 90, JumpUnit.Percent)],
-                        Screenshots = new() { Folder = shots, Prefix = "Probe", Format = ScreenshotFormat.Jpg, Numbering = true }
+                        Screenshots = new() { Folder = shots, Prefix = "Probe", Format = ScreenshotFormat.Jpg, Numbering = true, Subfolders = false, AddToLibrary = false }
                     });
                     await Play(imported, 0); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                     Require(!_videoWindow!.MarkPanelVisible && _videoWindow.Marks.Count > 0, "The mark list opened although it should not open by itself.");

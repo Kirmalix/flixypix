@@ -15079,6 +15079,134 @@
     "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": {
       "status": "unchanged",
       "digest": "f649c78007cb6cbf165a46532c42a7da5ad615355b6ffe7cca31b311e741b00f"
+    },
+    "About {0:N0} pictures in full resolution": {
+      "status": "unchanged",
+      "digest": "d69239686ee0260cf71e5afebe06191300fe11a9a7cc6001fb8d2fbeb5526a8a"
+    },
+    "Add pictures to the library": {
+      "status": "unchanged",
+      "digest": "893f21615d6e8727ea0f0681c8ca5c2044e771f7217c30213402da27fe9761b0"
+    },
+    "End stills mode": {
+      "status": "unchanged",
+      "digest": "1116bcdc9648458508c218e7e197b7f32b548794253c24363bb231d0edf6ea7d"
+    },
+    "Every frame": {
+      "status": "unchanged",
+      "digest": "3f1cc6a2a13990b6ca296c79fe9811cd4d1d7911a0b89210f37324f5eb0cbe0f"
+    },
+    "Every n-th frame, n =": {
+      "status": "unchanged",
+      "digest": "ded42aa7ca54a93ffe2479682f915d81774c46d7e9900e9ea5c920d62faf96ed"
+    },
+    "No pictures of this video have been saved yet.": {
+      "status": "unchanged",
+      "digest": "0444b17bcb4b851cacbe80d9da701ddf61ea2de4b0bb3a768ea26635ddeb82c6"
+    },
+    "One picture every so many seconds:": {
+      "status": "unchanged",
+      "digest": "811c77f3fddde9a4d52bed8782982c2d59d0e6af73a213ea8eac6f33a3ee9056"
+    },
+    "One subfolder per video": {
+      "status": "unchanged",
+      "digest": "88fdb0f0123d03b2a9cb6c6c8612da007686a65605274ed7142198a0be0af3ad"
+    },
+    "Open the folder with the pictures of this video": {
+      "status": "unchanged",
+      "digest": "32017fe1919a6659b0f8b433a5fa59893eaa84cecbbb3710c6ce5b3ad9333da4"
+    },
+    "Please enter a number. At most {0:N0} pictures are saved in one go.": {
+      "status": "unchanged",
+      "digest": "f627383eeed78923fd53b4f7bdab501a0e73326f06ac93bd7ce01619eb208458"
+    },
+    "Save picture": {
+      "status": "unchanged",
+      "digest": "c55014e0eec9663e80dc9fcb2249267be570140dcdfff12907674cd615399481"
+    },
+    "Save pictures": {
+      "status": "unchanged",
+      "digest": "482c445b4fb1d4d23498c491c20717576b8b52ca58df03097abcd1f022c70c36"
+    },
+    "Save pictures from the video": {
+      "status": "unchanged",
+      "digest": "45e1d80966eedc57ecb76f7c892fa090d745d4cb87bfba2ef6d42251f25c5249"
+    },
+    "Save range as pictures": {
+      "status": "unchanged",
+      "digest": "0da8cbef494da2e2a480827483d07005866ce58ca5651fe4ccf0d9e52fce0b68"
+    },
+    "Save range as pictures …": {
+      "status": "unchanged",
+      "digest": "96ef4ff4d4507420d3744f94b01eb178ba233469438ca28274913ca75cbdee59"
+    },
+    "Save the frame shown in full resolution": {
+      "status": "unchanged",
+      "digest": "18fcf3639843fb3f818f8a757b8a00bf3f6132d246ddb16b8b594a7e81eb4616"
+    },
+    "Save the frames between the start and the end mark as pictures": {
+      "status": "unchanged",
+      "digest": "16c72220f79e40f23408713355c5d261adc690f576945ec60c12243445225e95"
+    },
+    "Saved pictures appear among the images at once and remember their video and the time in it.": {
+      "status": "unchanged",
+      "digest": "1a4c946355019c07bf9c55c67d72a4a257d95981f26fd860aa80434f5ec22be7"
+    },
+    "Saving pictures …": {
+      "status": "unchanged",
+      "digest": "96f08709d824d74e6ba138b071fcd721c677cac106e5132f144bca3c4d6b6f1c"
+    },
+    "Show this moment in the video": {
+      "status": "unchanged",
+      "digest": "b99077e659b19f5b8e2a023f19c93614fba94d1ccce0d7a4664fa25ec9cf834e"
+    },
+    "Stills mode": {
+      "status": "unchanged",
+      "digest": "cd31168c9ceb81a63f21f7814308136d8769550b5f8d5ca94f5498be0fdcfa0e"
+    },
+    "Stills mode on/off": {
+      "status": "unchanged",
+      "digest": "6f8e0b9f1fe52e0b3e8a8b0f7d6a2d765f07496445f31c2293d91b58ef2bbc6d"
+    },
+    "Stills mode · ← →: one frame · {0}: 10 frames · {1}: 1 second · I / O: range · {2}: save picture": {
+      "status": "unchanged",
+      "digest": "123eeee81ab947b7bcd609e33b2787d2c93f3139aaa350dbf18ec8137bc9b887"
+    },
+    "Stills mode: step frame by frame and save pictures": {
+      "status": "unchanged",
+      "digest": "2663305af2684cad80914ae2416b1c2e7153f30644076cce47e2ceb2d9ee7ff5"
+    },
+    "That would be more than {0:N0} pictures. Choose a shorter range or a larger spacing.": {
+      "status": "unchanged",
+      "digest": "bc102266c8c4ab47d906f2c5d7d0edad7bd7cb8b5c013d34678ccccc190197aa"
+    },
+    "The pictures of a video go into a folder named after it; a range saved as pictures gets a folder of its own below it.": {
+      "status": "unchanged",
+      "digest": "99d3ecd5ecf8afdb15401c1a0380ea50c92571baa910f33b45db07fef753abd5"
+    },
+    "{0:N0} pictures saved · ": {
+      "status": "unchanged",
+      "digest": "0e5aea98f89679b865307f0ad4ae1c418a4434f5d55143cf96aee448dce70f0d"
+    },
+    "{0} frames back": {
+      "status": "unchanged",
+      "digest": "998def0d78cfecce337b9e481db11ff867ca03fa825b3bf25da9c831c08d1b65"
+    },
+    "{0} frames forward": {
+      "status": "unchanged",
+      "digest": "269e653ef58d93b8f1ea0cf678e894d7766ab77c37cfa7774a97c5d47ab15a0f"
+    },
+    "{0} · frame {1:N0}": {
+      "status": "unchanged",
+      "digest": "04275d0ea2afa133df535738cf53921aee66e840871ee3f601a65cb96cf8aceb"
+    },
+    "E in the player starts the stills mode. The arrow keys step by single frames, with Shift by ten and with Ctrl by one second; J, K and L play backward, stop and play forward. I and O mark a range. Enter saves the frame shown in full resolution, and a marked range can be saved as a series of pictures. The pictures go into the screenshot folder, one folder per video, and appear among the images, from where they lead back to their moment in the video.": {
+      "status": "unchanged",
+      "digest": "9bd366e20de296c899b1a7ea1b271d370868fc4d8e96b2f9370e7c8ef7a4c24c"
+    },
+    "Pictures from videos": {
+      "status": "unchanged",
+      "digest": "4bb479118c77687b8fe24780d452001aa1c22269ebe2651dfd97a8ed160a0434"
     }
   }
 }

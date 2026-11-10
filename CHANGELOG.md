@@ -25,6 +25,23 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   Windows image decoder, a 48-megapixel photo in about a quarter of a second instead of several seconds, also at
   full size. The next and the previous image are read ahead, so turning the page shows them at once. Animations,
   multi-page files, CMYK images and other formats are read as before.
+- Tiles stay sharp when they lift under the pointer; the shadow no longer blurs pictures and text.
+- Rate in the grid: every tile and every row of the list view shows five stars beside the file size, also for unrated
+  items. A click sets whole stars, the same star again removes the rating; on a tile inside a selection of several it
+  rates all of them. The pointer over any tile shows the file name with size, technical data, dates, tags and folder.
+  A double click unfolds the details when they are folded.
+- An import and a folder sync read what the files say about themselves: keywords become tags, and title, description,
+  rating and date taken are taken over from images, from the Windows properties of videos and from XMP sidecars, such
+  as ratings and keywords Lightroom wrote into the files. Only missing information is filled in. "Read metadata from
+  files" under General, Import switches this off.
+- Stills mode in the player (key E or the camera symbol) takes pictures out of a video: the arrow keys step by single
+  frames, with Shift by ten and with Ctrl by a second, J, K and L play backward, stop and play forward, and the bar
+  shows the time to the thousandth with the number of the frame. Enter saves the frame shown in full resolution. With
+  a start and an end mark (I and O), "Save range as pictures" saves every frame, every n-th frame or one picture every
+  so many seconds; the pictures are the frames the player showed.
+- Pictures saved from a video go into a folder of their own per video below the screenshot folder, a range into one
+  more below that, and they join the library at once as images that lead back to their moment in the video. Both can
+  be switched off under Player, Screenshots.
 
 ## 0.7.0
 

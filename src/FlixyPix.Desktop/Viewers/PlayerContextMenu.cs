@@ -30,6 +30,7 @@ internal sealed partial class VideoPlayerWindow
    MenuSpec.Separator,
    MenuSpec.Submenu(T("Range"), RangeEntries()),
    Act(T("Save screenshot"), PlayerActions.Screenshot, ""),
+   StillsEntry(),
    Act(T("O counter +1"), PlayerActions.AddO),
    new MenuCommand(T("Full screen"), ToggleFullscreen) { Icon = "", Shortcut = Shortcut(PlayerActions.Fullscreen), Checked = IsFullscreen },
    MenuSpec.Separator,
