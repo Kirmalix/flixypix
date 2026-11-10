@@ -19,6 +19,8 @@ internal sealed partial class ImageViewerWindow : Window
  private const int StripRadius = 7;
  private readonly List<MediaItem> _items;
  private readonly Func<int,Task<MediaItem?>>? _itemAt;
+ /// <summary>The item at a position without side effects: unlike <see cref="_itemAt"/> it never extracts an archive image.</summary>
+ private readonly Func<int,Task<MediaItem?>>? _peekAt;
  private int _itemCount;
  private MediaItem? _currentItem;
  private readonly Image _image = new() { Stretch=Stretch.None, RenderTransformOrigin=new Point(.5,.5) };
@@ -38,6 +40,12 @@ internal sealed partial class ImageViewerWindow : Window
  private readonly Random _random = new();
  private CancellationTokenSource? _load, _stripLoad;
  private ImageInfo? _info;
+ /// <summary>The current image came through the Windows decoder; another size of it is decoded the same way.</summary>
+ private bool _windowsDecoded;
+ /// <summary>The next and the previous image, decoded beside the window so turning the page shows them at once.</summary>
+ private readonly Dictionary<(string Path, int Bound), (Task<FastImageDecoder.Result?> Work, long Length, DateTime Modified)> _prefetched = new();
+ private readonly CancellationTokenSource _prefetching = new();
+ internal bool WindowsDecoded => _windowsDecoded;
  private int _index, _rotation, _frame, _runInOrder;
  private uint _animationLoops;
  private double _zoom=1;
@@ -64,9 +72,9 @@ internal sealed partial class ImageViewerWindow : Window
  internal bool MediaKeys { get; set; } = true;
  internal SlideshowPreferences Slideshow { get; set; } = new();
 
- internal ImageViewerWindow(Window owner, IReadOnlyList<MediaItem> items, Guid selectedId, Func<int,Task<MediaItem?>>? itemAt=null, int? itemCount=null, int? initialIndex=null)
+ internal ImageViewerWindow(Window owner, IReadOnlyList<MediaItem> items, Guid selectedId, Func<int,Task<MediaItem?>>? itemAt=null, int? itemCount=null, int? initialIndex=null, Func<int,Task<MediaItem?>>? peekAt=null)
  {
-  Owner=owner; _items=[.. items]; _itemAt=itemAt; _itemCount=itemCount??items.Count; _index=initialIndex??Math.Max(0,items.ToList().FindIndex(i=>i.Id==selectedId));
+  Owner=owner; _items=[.. items]; _itemAt=itemAt; _peekAt=peekAt; _itemCount=itemCount??items.Count; _index=initialIndex??Math.Max(0,items.ToList().FindIndex(i=>i.Id==selectedId));
   FontSize=14; Width=1150; Height=800; MinWidth=600; MinHeight=400; WindowStartupLocation=WindowStartupLocation.CenterOwner;
   var toolbar=new DockPanel { Margin=new Thickness(8,6,8,6), LastChildFill=false };
   var left=new StackPanel { Orientation=Orientation.Horizontal };
@@ -94,7 +102,7 @@ internal sealed partial class ImageViewerWindow : Window
   _scroll.SizeChanged+=(_,_)=>{ if(_fit) Fit(); };
   _scroll.MouseRightButtonUp+=(_,e)=>{ e.Handled=true; ShowActions(null); };
   Loaded+=(_,_)=>{ SetInfo(Slideshow.ShowInfo); ReadyTask=LoadCurrentAsync(); };
-  Closed+=(_,_)=>{ _closed=true; _animation.Stop(); _slideTimer.Stop(); _load?.Cancel(); _load?.Dispose(); _stripLoad?.Cancel(); };
+  Closed+=(_,_)=>{ _closed=true; _animation.Stop(); _slideTimer.Stop(); _load?.Cancel(); _load?.Dispose(); _stripLoad?.Cancel(); _prefetching.Cancel(); _prefetched.Clear(); };
   _animation.Tick+=async (_,_)=>
   {
    _animation.Stop(); if(!_playing || _info?.IsAnimated!=true) return;
@@ -168,7 +176,7 @@ internal sealed partial class ImageViewerWindow : Window
  private async Task LoadCurrentAsync()
  {
   _animation.Stop(); _load?.Cancel(); _load?.Dispose(); _load=new(); var token=_load.Token;
-  _info=null; _frame=0; _animationLoops=0; _label.Text=T("Reading image …");
+  _info=null; _windowsDecoded=false; _frame=0; _animationLoops=0; _label.Text=T("Reading image …");
   if(!(SlideshowRunning && Slideshow.Fade) && !_fadeNext) _image.Source=null;
   if(_itemCount==0)return;
   try
@@ -177,6 +185,9 @@ internal sealed partial class ImageViewerWindow : Window
    _currentItem=item??throw new IOException(T("The image is no longer in the catalog."));
    Title=item.Title+T(" · Image viewer");
    if(_stripPanel.Visibility==Visibility.Visible) StripTask=LoadStripAsync();
+   // Common still images come through the Windows decoder in a fraction of the time; everything else through ImageMagick.
+   var fast=await DecodeFastAsync(item.Path,Bound(),token); if(token.IsCancellationRequested)return;
+   if(fast!=null) { _windowsDecoded=true; _info=fast.Info; Present(fast.Bitmap); Prefetch(); return; }
    _info=await DesktopImaging.Service.GetInfoAsync(item.Path,token); if(token.IsCancellationRequested)return; await ShowFrameAsync(token);
   }
   catch(OperationCanceledException) { }
@@ -188,21 +199,65 @@ internal sealed partial class ImageViewerWindow : Window
  {
   try
   {
-   if(_currentItem==null)return; var frame=_frame; var path=_currentItem.Path;
-   var bound=_fit?Math.Max(1600,(int)Math.Max(_scroll.ActualWidth,_scroll.ActualHeight)*2):0;
-   var decoded=await DesktopImaging.Service.DecodeAsync(path,frame,bound,bound,token);
+   if(_currentItem==null)return; var frame=_frame; var path=_currentItem.Path; var bound=Bound();
+   BitmapSource bitmap;
+   if(_windowsDecoded && frame==0 && await DecodeFastAsync(path,bound,token) is { } fast) bitmap=fast.Bitmap;
+   else bitmap=DesktopImaging.Bitmap((await DesktopImaging.Service.DecodeAsync(path,frame,bound,bound,token)).PngBytes);
    if(_closed || token.IsCancellationRequested || path!=_currentItem?.Path || frame!=_frame)return;
-   var bitmap=DesktopImaging.Bitmap(decoded.PngBytes); _image.Source=bitmap; _image.Width=bitmap.PixelWidth; _image.Height=bitmap.PixelHeight;
-   if(_fit)Fit(); else Apply();
-   _frameButtons.Visibility=_info?.FrameCount>1?Visibility.Visible:Visibility.Collapsed; _play.Visibility=_info?.IsAnimated==true?Visibility.Visible:Visibility.Collapsed; UpdatePlayButton();
-   UpdateInfo(); ScheduleFrame();
-   if(SlideshowRunning) Transition();
-   else if(_fadeNext) { _fadeNext=false; LastChangeFaded=true; _image.BeginAnimation(OpacityProperty,new DoubleAnimation(.15,1,TimeSpan.FromMilliseconds(280))); }
-   else LastChangeFaded=false;
+   Present(bitmap);
   }
   catch(OperationCanceledException) { }
   catch(Exception error) when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException) { if(!token.IsCancellationRequested) { _playing=false; _label.Text=T("The image cannot be shown: ")+error.Message; } }
  }
+ /// <summary>Longest side to decode: twice the window when fitting, so zooming in a little stays sharp; full size otherwise.</summary>
+ private int Bound()=>_fit?Math.Max(1600,(int)Math.Max(_scroll.ActualWidth,_scroll.ActualHeight)*2):0;
+
+ private void Present(BitmapSource bitmap)
+ {
+  _image.Source=bitmap; _image.Width=bitmap.PixelWidth; _image.Height=bitmap.PixelHeight;
+  if(_fit)Fit(); else Apply();
+  _frameButtons.Visibility=_info?.FrameCount>1?Visibility.Visible:Visibility.Collapsed; _play.Visibility=_info?.IsAnimated==true?Visibility.Visible:Visibility.Collapsed; UpdatePlayButton();
+  UpdateInfo(); ScheduleFrame();
+  if(SlideshowRunning) Transition();
+  else if(_fadeNext) { _fadeNext=false; LastChangeFaded=true; _image.BeginAnimation(OpacityProperty,new DoubleAnimation(.15,1,TimeSpan.FromMilliseconds(280))); }
+  else LastChangeFaded=false;
+ }
+
+ /// <summary>A prefetched image is used when the file is still the same; otherwise the Windows decoder reads it now.</summary>
+ private async Task<FastImageDecoder.Result?> DecodeFastAsync(string path,int bound,CancellationToken token)
+ {
+  if(_prefetched.Remove((path,bound),out var ready))
+  {
+   var file=new FileInfo(path);
+   if(file.Exists && file.Length==ready.Length && file.LastWriteTimeUtc==ready.Modified)
+    try { if(await ready.Work.WaitAsync(token) is { } done) return done; }
+    catch(OperationCanceledException) when(!token.IsCancellationRequested) { }
+  }
+  return await FastImageDecoder.DecodeAsync(path,bound,token);
+ }
+
+ private void Prefetch()
+ {
+  if(_closed || _itemCount<2 || !_fit) return;
+  var bound=Bound();
+  foreach(var index in new[] { _index+1, _index-1 }.Select(i=>((i%_itemCount)+_itemCount)%_itemCount).Distinct().Where(i=>i!=_index))
+   _ = PrefetchAsync(index,bound);
+ }
+ private async Task PrefetchAsync(int index,int bound)
+ {
+  try
+  {
+   // Only a look: an image still inside an archive is not extracted for a page the user may never turn.
+   var peeked=_peekAt!=null ? await _peekAt(index) : _itemAt==null || _items.Count==_itemCount ? (index<_items.Count ? _items[index] : null) : null;
+   if(peeked is not { Kind: MediaKind.Image } item || _closed || !FastImageDecoder.Handles(item.Path) || _prefetched.ContainsKey((item.Path,bound))) return;
+   var file=new FileInfo(item.Path); if(!file.Exists) return;
+   // Two neighbours are enough; a large image costs tens of megabytes.
+   while(_prefetched.Count>=2) _prefetched.Remove(_prefetched.Keys.First());
+   _prefetched[(item.Path,bound)]=(FastImageDecoder.DecodeAsync(item.Path,bound,_prefetching.Token),file.Length,file.LastWriteTimeUtc);
+  }
+  catch(Exception error) when(error is OperationCanceledException or IOException or UnauthorizedAccessException or InvalidOperationException) { }
+ }
+
  private void ScheduleFrame()
  {
   if(!_closed && _playing && _info?.IsAnimated==true) { _animation.Interval=_info.FrameDurations[_frame]; _animation.Start(); }
@@ -268,7 +323,7 @@ internal sealed partial class ImageViewerWindow : Window
   {
    if(await ItemAtAsync(index) is not { } item || token.IsCancellationRequested) return;
    var source=item.ThumbnailPath is { } thumbnail && File.Exists(thumbnail) ? thumbnail : item.Path;
-   var bitmap=await DesktopImaging.LoadBitmapAsync(source,160,token);
+   var bitmap=await FastImageDecoder.DecodeAsync(source,160,token) is { } fast ? fast.Bitmap : await DesktopImaging.LoadBitmapAsync(source,160,token);
    if(!token.IsCancellationRequested) image.Source=bitmap;
   }
   catch(Exception error) when(error is OperationCanceledException or IOException or InvalidDataException or InvalidOperationException or ArgumentException or NotSupportedException or UnauthorizedAccessException) { }
