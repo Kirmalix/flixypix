@@ -112,7 +112,9 @@ internal sealed partial class VideoPlayerWindow
    tools.Loop.ToolTip = name; AutomationProperties.SetName(tools.Loop, name);
   }
   panelRangeResult.Visibility = RangeStart.HasValue ? Visibility.Visible : Visibility.Collapsed;
-  rangeStrip.Visibility = RangeStart.HasValue && !MarkPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+  // Stills mode has the marks in its own row.
+  rangeStrip.Visibility = RangeStart.HasValue && !MarkPanelVisible && !stillsMode ? Visibility.Visible : Visibility.Collapsed;
+  if (exportRangeButton != null) exportRangeButton.IsEnabled = RangeComplete && StillsExportRequested != null;
   RenderRange();
   if (overlay.IsOpen) ShowOverlay();
  }

@@ -11,7 +11,8 @@ internal sealed class HelpWindow : Window
  (T("Tags"),T("Select media before assigning tags. T starts the tag mode: 1–9 set your pinned tags. In the filter panel, Enter filters by the focused tag; Ctrl+Enter excludes it.")),
  (T("Collections"),T("B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.")),
  (T("Thumbnails"),T("Fit whole image preserves the complete thumbnail. Fill and crop fills the frame. High-resolution home artwork is generated only for the visible featured video.")),
- (T("Video player"),T("Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings."))];
+ (T("Video player"),T("Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings.")),
+ (T("Pictures from videos"),T("E in the player starts the stills mode. The arrow keys step by single frames, with Shift by ten and with Ctrl by one second; J, K and L play backward, stop and play forward. I and O mark a range. Enter saves the frame shown in full resolution, and a marked range can be saved as a series of pictures. The pictures go into the screenshot folder, one folder per video, and appear among the images, from where they lead back to their moment in the video."))];
  internal HelpWindow(Window owner,string title,IEnumerable<(string Title,string Body)> sections)
  {
   Owner=owner;Title=title;Width=820;Height=650;ShowInTaskbar=false;WindowStartupLocation=WindowStartupLocation.CenterOwner;

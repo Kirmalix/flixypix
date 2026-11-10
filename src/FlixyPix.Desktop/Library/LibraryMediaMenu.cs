@@ -31,6 +31,7 @@ public partial class MainWindow
   entries.Add(MenuSpec.Command(T("Open"), () => OpenFromMenu(first), "", single ? KeyLabel("Enter") : null));
   entries.Add(MenuSpec.Submenu(T("Open with"), OpenWithEntries(items), ""));
   if (outside) entries.Add(MenuSpec.Command(T("Show in library"), () => ShowInLibrary(first), ""));
+  if (single && StillSource(first) is { } origin) entries.Add(MenuSpec.Command(T("Show this moment in the video"), () => _ = Play(origin.Video, origin.Seconds), ""));
   entries.Add(MenuSpec.Separator);
   entries.Add(MenuSpec.Submenu(T("Review status"), Enum.GetValues<ReviewState>().Select(state => MenuSpec.Command(ReviewLabel(state), () => { ApplyImmediate(items.Select(i => i.Id).ToArray(), ImmediateEditFields.ReviewState, m => m with { ReviewState = state }); Refresh(); })), "\uE73E"));
   entries.Add(MenuSpec.Submenu(T("Rate"), RatingEntries(items, keys: !outside), ""));

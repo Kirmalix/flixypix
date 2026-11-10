@@ -34,6 +34,7 @@ public partial class MainWindow
             window.RandomRequested = () => PlayNeighborAsync(item, 1, shuffle: true, wrap: true);
         }
         if (ToolExists(_settings.Ffmpeg, "ffmpeg")) window.ConfigureSeekPreview(_tools);
+        ConnectStills(window, item);
     }
 
     /// <summary>Plays the previous or next video of the current view; with shuffle a random one.</summary>

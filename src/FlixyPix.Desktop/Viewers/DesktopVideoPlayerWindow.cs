@@ -92,6 +92,8 @@ internal sealed partial class VideoPlayerWindow : Window
    if(e.Key==Key.Escape&&Keyboard.FocusedElement is ComboBox {IsDropDownOpen:true})return;
    if(e.Key==Key.Escape&&Keyboard.FocusedElement is ComboBox {IsDropDownOpen:false}) {e.Handled=true;if(WindowStyle==WindowStyle.None)ToggleFullscreen();else Close();return;}
    if(MainWindow.TextEntry(e.OriginalSource))return;
+   // In stills mode the arrow keys step by frames wherever the focus is.
+   if(stillsMode && StillsKey(e.Key==Key.System?e.SystemKey:e.Key,Keyboard.Modifiers) is { } stillsAction) { e.Handled=true; await Command(stillsAction); return; }
    if(Keyboard.FocusedElement is Slider or ButtonBase or CheckBox && e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown or Key.Enter or Key.Space)return;
    if(markList.IsKeyboardFocusWithin && e.Key is Key.Up or Key.Down or Key.Left or Key.Right)return;
    if(markList.IsKeyboardFocusWithin && e.Key==Key.Enter && markList.SelectedItem is MarkRow markRow) {e.Handled=true;await SeekToMarkAsync(markRow.Mark);return;}
@@ -225,7 +227,8 @@ internal sealed partial class VideoPlayerWindow : Window
    case PlayerActions.ClipStart: SetRangeStart(); break;
    case PlayerActions.ClipEnd: SetRangeEnd(); break;
    case PlayerActions.ClipCreate: CreateSceneFromMarks(); break;
-   case PlayerActions.Screenshot: await SaveScreenshotAsync(); break;
+   case PlayerActions.Screenshot: if(stillsMode)await SaveStillAsync(); else await SaveScreenshotAsync(); break;
+   case PlayerActions.StillsMode: await ToggleStillsModeAsync(); break;
    case PlayerActions.SlowMotion: ToggleSlowMotion(); break;
    case PlayerActions.SwitchWheel: SwitchWheel(); break;
    case PlayerActions.AddO: ChangeO(add: true); break;
@@ -250,13 +253,18 @@ internal sealed partial class VideoPlayerWindow : Window
   RefreshMarks();
  }
  internal string ScreenshotFolder { get; set; }=FlixyPix.Core.AppStorage.Current.Screenshots;
- /// <summary>Saves the current frame in the folder, format and naming of the settings (original "Save screenshot", "videoscreenshots-*").</summary>
- internal async Task<string> SaveScreenshotAsync()
+ /// <summary>Saves the current frame in the folder, format and naming of the settings (original "Save screenshot", "videoscreenshots-*");
+ /// the library takes the picture in.</summary>
+ /// <param name="precise">The name tells the time to the thousandth (stills mode).</param>
+ internal async Task<string> SaveScreenshotAsync(bool precise)
  {
-  var folder=ScreenshotFolder; Directory.CreateDirectory(folder);
-  var path=playback.Screenshots.NextPath(folder,media.Title,LastPositionSeconds);
-  await RequirePlayer().ScreenshotAsync(path); Notify(T("Screenshot saved · ")+path); return path;
+  var folder=StillsFolder; FileAccessPolicy.Current.EnsureWritable(folder); Directory.CreateDirectory(folder);
+  var seconds=LastPositionSeconds; var path=playback.Screenshots.NextPath(folder,media.Title,seconds,precise);
+  await RequirePlayer().ScreenshotAsync(path); Notify(T("Screenshot saved · ")+path);
+  if(StillSaved!=null && File.Exists(path))await StillSaved(new(path,seconds));
+  return path;
  }
+ internal Task<string> SaveScreenshotAsync()=>SaveScreenshotAsync(false);
  private void Notify(string text) { if(playback.ShowMessages)ShowMessage(text); }
  private double speedBeforeSlowMotion=1;
  internal bool SlowMotion=>speed.SelectedItem is double value && value<=.25;

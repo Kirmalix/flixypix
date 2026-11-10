@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FlixyPix.Core;
 using FlixyPix.MediaTools;
 using Xunit;
 
@@ -133,6 +134,34 @@ public sealed class ClipToolTests : IDisposable
         Assert.Equal(MediaJobKind.ExtractAudio, queue.Jobs[0].Kind); Assert.True(queue.Jobs.Single(job => job.Id == muted.Id).MuteAudio);
         Assert.Equal(2, queue.Jobs.Single(job => job.Id == audio.Id).StartSeconds);
     }
+
+    [Fact]
+    public async Task ARangeBecomesItsFramesAsPicturesInFullSize()
+    {
+        // Two seconds at 15 frames per second; the range runs from frame 3 to frame 9.
+        var source = await Video("bilder ü.mp4", 2, audio: false); var before = File.ReadAllBytes(source);
+        var folder = Path.Combine(scratch, "stills"); var range = new StillRange(3 / 15d, 9 / 15d);
+        var steps = new List<int>();
+        var all = await service.ExportStillsAsync(source, folder, "Film", range, 15, ".png", new Collect(steps));
+        Assert.Equal(7, all.Count); Assert.Equal(7, steps.Last());
+        Assert.Equal("Film 00-00-00-200.png", Path.GetFileName(all[0].Path)); Assert.Equal("Film 00-00-00-600.png", Path.GetFileName(all[^1].Path));
+        Assert.Equal(.4, all[3].Seconds, 6);
+        var probe = await service.ProbeAsync(all[0].Path);
+        Assert.Equal((160, 90), (probe.Width, probe.Height));
+        // Every third frame: the frames 3, 6 and 9. Names already taken get a number.
+        var third = await service.ExportStillsAsync(source, folder, "Film", range with { Spacing = StillSpacing.EveryNthFrame, Amount = 3 }, 15, ".png");
+        Assert.Equal(new[] { "Film 00-00-00-200 (2).png", "Film 00-00-00-400 (2).png", "Film 00-00-00-600 (2).png" }, third.Select(still => Path.GetFileName(still.Path)));
+        Assert.Equal(File.ReadAllBytes(all[3].Path), File.ReadAllBytes(third[1].Path));
+        var timed = await service.ExportStillsAsync(source, Path.Combine(folder, "jpg"), "Film", range with { Spacing = StillSpacing.EverySeconds, Amount = .2 }, 15, ".jpg");
+        Assert.Equal(3, timed.Count); Assert.All(timed, still => Assert.EndsWith(".jpg", still.Path));
+        // Nothing but the pictures stays, and the video is untouched.
+        Assert.Equal(new[] { Path.Combine(folder, "jpg") }, Directory.GetDirectories(folder)); Assert.Empty(Directory.GetDirectories(Path.Combine(folder, "jpg")));
+        Assert.Equal(before, File.ReadAllBytes(source));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ExportStillsAsync(source, folder, "Film", new StillRange(1, .5), 15, ".png"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.ExportStillsAsync(source, folder, "Film", range, 15, ".gif"));
+    }
+
+    private sealed class Collect(List<int> steps) : IProgress<int> { public void Report(int value) { lock (steps) steps.Add(value); } }
 
     private async Task<string> Video(string name, double seconds, bool audio, string size = "160x90")
     {

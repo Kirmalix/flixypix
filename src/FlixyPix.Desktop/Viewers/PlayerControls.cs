@@ -97,7 +97,7 @@ internal sealed partial class VideoPlayerWindow
   {
    case PlayerMouseAction.Nothing: return;
    case PlayerMouseAction.PlayRandom: if (RandomRequested != null) await Command(RandomRequested); return;
-   case PlayerMouseAction.Screenshot: await Command(SaveScreenshotAsync); return;
+   case PlayerMouseAction.Screenshot: await Command(() => stillsMode ? SaveStillAsync() : SaveScreenshotAsync()); return;
    case PlayerMouseAction.SwitchWheel: SwitchWheel(); return;
    case PlayerMouseAction.Mute: ToggleMute(); return;
    case PlayerMouseAction.ContextMenu: ShowPlayerMenu(); return;
@@ -257,9 +257,11 @@ internal sealed partial class VideoPlayerWindow
   row.Add(tracks, RowZone.Right, 8, () => [MenuSpec.Submenu(T("Tracks"), TrackEntries(), tracks.Content as string)]);
   row.Add(marks, RowZone.Right, 6, MarkEntries);
   row.Add(view, RowZone.Right, 2, () => [MenuSpec.Submenu(Tc("player", "View"), ViewEntries())]);
+  row.Add(stillsToggle, RowZone.Right, 3, () => [StillsEntry()]);
   row.AddMore(more);
   row.Add(fullscreenButton, RowZone.Right);
   controlRow = row; controlBar.Children.Add(row);
+  controlBar.Children.Add(BuildStillsStrip());
   controlBar.Children.Add(BuildRangeStrip());
   status.Margin = new Thickness(0); status.MaxWidth = 640; status.FontSize = 12; status.Foreground = Brushes.White;
   messagePopup.Child = new Border { Background = new SolidColorBrush(Color.FromArgb(200, 10, 12, 16)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 5, 10, 5), Child = status };
@@ -301,6 +303,7 @@ internal sealed partial class VideoPlayerWindow
  {
   clock.Text = Time(seconds); clockTotal.Text = durationSeconds is double duration ? Time(duration) : "–"; clock.ToolTip = Source?.Path;
   previousButton.Visibility = nextButton.Visibility = StepRequested != null ? Visibility.Visible : Visibility.Collapsed;
+  UpdateFrameLabel(seconds);
   KeepOverlayFresh();
  }
  private static string Time(double seconds) { var time = TimeSpan.FromSeconds(Math.Max(0, seconds)); return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss") : time.ToString(@"m\:ss"); }

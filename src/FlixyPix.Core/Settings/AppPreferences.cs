@@ -13,7 +13,7 @@ public static class PlayerActions
         NextBookmark = "NextBookmark", PreviousBookmark = "PreviousBookmark",
         NextVideo = "NextVideo", PreviousVideo = "PreviousVideo", ClipStart = "ClipStart", ClipEnd = "ClipEnd", ClipCreate = "ClipCreate",
         ToggleBookmark = "ToggleBookmark", Screenshot = "Screenshot", SlowMotion = "SlowMotion", SwitchWheel = "SwitchWheel",
-        AddO = "AddO", UndoO = "UndoO", Mute = "Mute", ToggleMarks = "ToggleMarks";
+        AddO = "AddO", UndoO = "UndoO", Mute = "Mute", ToggleMarks = "ToggleMarks", StillsMode = "StillsMode";
 
     public static IReadOnlyList<(string Action, string Label, string LegacyKey)> All { get; } =
     [
@@ -32,6 +32,7 @@ public static class PlayerActions
         (SwitchWheel, T("Mouse wheel: seek or volume"), "hotkeyswitchmousewheel"),
         (AddO, T("O counter +1"), ""), (UndoO, T("Take back the last O"), ""),
         (Mute, T("Sound off / on"), ""), (ToggleMarks, T("Show or hide the jump mark list"), ""),
+        (StillsMode, T("Stills mode on/off"), ""),
     ];
 
     public static Dictionary<string, string> Defaults() => new(StringComparer.Ordinal)
@@ -41,7 +42,7 @@ public static class PlayerActions
         [FrameForward] = "", [FrameBackward] = "", [CreateBookmark] = "B", [NextBookmark] = "PageDown", [PreviousBookmark] = "PageUp",
         [ToggleBookmark] = "", [NextVideo] = "N", [PreviousVideo] = "P", [ClipStart] = "I", [ClipEnd] = "O", [ClipCreate] = "Ctrl+I",
         [Screenshot] = "S", [SlowMotion] = "Z", [SwitchWheel] = "", [AddO] = "Ctrl+O", [UndoO] = "Ctrl+Shift+O",
-        [Mute] = "M", [ToggleMarks] = "L",
+        [Mute] = "M", [ToggleMarks] = "L", [StillsMode] = "E",
     };
 
     /// <summary>Saved shortcuts plus the defaults of actions added later; a default whose key the user already gave to
@@ -136,14 +137,41 @@ public sealed record ScreenshotPreferences
     public ScreenshotFormat Format { get; init; } = ScreenshotFormat.Png;
     /// <summary>Numbered names ("Prefix 0001.png") instead of the time in the video.</summary>
     public bool Numbering { get; init; }
+    /// <summary>Every video gets its own folder below <see cref="Folder"/>, named after its title; the stills of a range
+    /// get one more below that.</summary>
+    public bool Subfolders { get; init; } = true;
+    /// <summary>Saved pictures join the library as images that remember their video and the time in it.</summary>
+    public bool AddToLibrary { get; init; } = true;
 
     public string Extension => Format == ScreenshotFormat.Jpg ? ".jpg" : ".png";
 
-    /// <summary>A free file name in <paramref name="folder"/> for a picture of <paramref name="title"/> at <paramref name="seconds"/>.</summary>
-    public string NextPath(string folder, string title, double seconds)
+    /// <summary>Where the pictures of a video go: its own folder below <paramref name="baseFolder"/>, or that folder itself.</summary>
+    public string FolderFor(string baseFolder, string title) => Subfolders && FolderName(title) is { Length: > 0 } name ? Path.Combine(baseFolder, name) : baseFolder;
+
+    /// <summary>A folder name from a title: no characters Windows refuses, no dot or blank at the end, not endlessly long.</summary>
+    public static string FolderName(string title)
+    {
+        var name = Clean(title);
+        if (name.Length > 100) name = name[..100];
+        return name.TrimEnd('.', ' ');
+    }
+
+    /// <summary>The start of a picture's file name: the prefix, otherwise the title of the video.</summary>
+    public string NameFor(string title)
     {
         var start = Clean(Prefix.Length > 0 ? Prefix : title);
-        if (start.Length == 0) start = T("Image");
+        return start.Length == 0 ? T("Image") : start;
+    }
+
+    /// <summary>The time in a file name, with thousandths where single frames count ("00-01-23-480").</summary>
+    public static string Stamp(double seconds, bool precise = false) =>
+        TimeSpan.FromSeconds(Math.Max(0, seconds)).ToString(precise ? @"hh\-mm\-ss\-fff" : @"hh\-mm\-ss", CultureInfo.InvariantCulture);
+
+    /// <summary>A free file name in <paramref name="folder"/> for a picture of <paramref name="title"/> at <paramref name="seconds"/>.</summary>
+    /// <param name="precise">The name tells the time to the thousandth, so neighbouring frames sort in their order.</param>
+    public string NextPath(string folder, string title, double seconds, bool precise = false)
+    {
+        var start = NameFor(title);
         if (Numbering)
         {
             // Continues after the highest number already there, so deleted pictures leave no gaps to fill.
@@ -152,7 +180,7 @@ public sealed record ScreenshotPreferences
                 .Select(m => int.TryParse(m.Groups[1].Value, out var n) ? n : 0).DefaultIfEmpty(0).Max() : 0;
             return Path.Combine(folder, $"{start} {highest + 1:0000}{Extension}");
         }
-        var stamp = TimeSpan.FromSeconds(Math.Max(0, seconds)).ToString(@"hh\-mm\-ss", CultureInfo.InvariantCulture);
+        var stamp = Stamp(seconds, precise);
         var path = Path.Combine(folder, $"{start} {stamp}{Extension}");
         for (var n = 2; File.Exists(path); n++) path = Path.Combine(folder, $"{start} {stamp} ({n}){Extension}");
         return path;
