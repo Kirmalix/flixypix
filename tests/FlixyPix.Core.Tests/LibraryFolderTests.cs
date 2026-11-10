@@ -248,7 +248,7 @@ public sealed class LibraryFolderTests : IDisposable
         var main = Fixture("primary.mp4"); var other = Fixture("version.mp4", (int)CatalogRepository.RenameMinimumBytes);
         using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
         var item = catalog.Upsert(new MediaItem { Path = main, Kind = MediaKind.Video, Files = [new MediaFile { Path = other, FileSize = CatalogRepository.RenameMinimumBytes }] });
-        catalog.InitializeFolderReferences(catalog.GetLibraryFolders());
+        Assert.Empty(catalog.PlanFolderSync().Changes);
         File.SetLastWriteTimeUtc(other, File.GetLastWriteTimeUtc(other).AddHours(1));
         var changed = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(changed.Changes).Kind);
         Assert.Equal(1, ApplyAll(catalog, changed).Updated);
@@ -262,8 +262,34 @@ public sealed class LibraryFolderTests : IDisposable
     {
         var path = Fixture("baseline.jpg"); using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
         catalog.Upsert(new MediaItem { Path = path, Kind = MediaKind.Image, FileSize = 1 });
-        catalog.InitializeFolderReferences(catalog.GetLibraryFolders());
         Assert.Equal(FolderChangeKind.Modified,Assert.Single(catalog.PlanFolderSync().Changes).Kind);
+        Assert.Equal(FolderChangeKind.Modified,Assert.Single(catalog.PlanFolderSync().Changes).Kind);
+    }
+    [Fact]
+    public void FirstSeenStateOfAnEntryWithoutDateRevealsALaterChangeWithoutRewritingTheEntry()
+    {
+        var path = Fixture("taken-over.jpg"); var outside = Path.Combine(root, "elsewhere.jpg"); File.WriteAllBytes(outside, [1, 2, 3]);
+        using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
+        var item = catalog.Upsert(new MediaItem { Path = path, Kind = MediaKind.Image, FileSize = 32, Tags = ["Keep"] });
+        catalog.Upsert(new MediaItem { Path = outside, Kind = MediaKind.Image });
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+        Assert.Null(catalog.GetMedia(item.Id)!.FileModifiedAtUtc);
+        Assert.Null(catalog.GetMediaByPath(outside)!.FileModifiedAtUtc);
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+        // Same size, newer date: only the noted state can tell.
+        File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(5));
+        var plan = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(plan.Changes).Kind);
+        Assert.Equal(1, ApplyAll(catalog, plan).Updated);
+        Assert.NotNull(catalog.GetMedia(item.Id)!.FileModifiedAtUtc); Assert.Equal(["Keep"], catalog.GetMedia(item.Id)!.Tags);
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+        // The noted state survives reopening.
+        File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(5));
+        var other = Fixture("later.jpg"); var second = catalog.Upsert(new MediaItem { Path = other, Kind = MediaKind.Image, FileSize = 32 });
+        Assert.Equal("taken-over.jpg", Names(catalog.PlanFolderSync().Changes, FolderChangeKind.Modified));
+        catalog.Dispose();
+        File.SetLastWriteTimeUtc(other, File.GetLastWriteTimeUtc(other).AddMinutes(5));
+        using var reopened = Open();
+        Assert.Equal("later.jpg,taken-over.jpg", Names(reopened.PlanFolderSync().Changes, FolderChangeKind.Modified));
     }
     [Fact]
     public void BusyFileIsDeferredAndOfflineRemovalDoesNothing()
@@ -283,9 +309,13 @@ public sealed class LibraryFolderTests : IDisposable
         for(int n = 0; n < 1024; n++) Fixture($"bulk/{n}.jpg");
         using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
         using var cancel = new CancellationTokenSource(); int observed = 0;
-        var progress = new SyncProgress(step => { observed = step.Done; if(step.Done >= 128) cancel.Cancel(); });
+        var progress = new SyncProgress(step => { observed = step.Done; cancel.Cancel(); });
         Assert.Throws<OperationCanceledException>(() => catalog.PlanFolderSync(cancellationToken:cancel.Token, progress:progress));
-        Assert.True(observed >= 128); Assert.Empty(catalog.Search());
+        Assert.True(observed >= 1); Assert.Empty(catalog.Search());
+        // Reports come at intervals, not once per file: each one costs the window a turn before it can draw.
+        int reports = 0; var counted = new SyncProgress(step => { reports++; Assert.Equal("Checking folders …", step.Phase); });
+        Assert.Equal(1024, catalog.PlanFolderSync(progress: counted).Count(FolderChangeKind.New));
+        Assert.InRange(reports, 1, 100);
     }
 
 }

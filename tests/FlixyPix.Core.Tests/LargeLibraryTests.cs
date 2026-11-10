@@ -326,7 +326,7 @@ public sealed class LargeLibraryTests : IDisposable
     }
 
     [Fact]
-    public void FolderReferencesReachOnlyMediaInTheFolders()
+    public void FolderCheckNotesFirstStatesOnlyInTheFoldersAndLeavesMediaAlone()
     {
         var inside = Path.Combine(directory, "watched"); var outside = Path.Combine(directory, "other");
         Directory.CreateDirectory(inside); Directory.CreateDirectory(outside);
@@ -334,15 +334,15 @@ public sealed class LargeLibraryTests : IDisposable
         File.WriteAllBytes(file, [1, 2, 3]); File.WriteAllBytes(elsewhere, [1, 2, 3]);
         repository.Upsert(new MediaItem { Path = file, Title = "a", Kind = MediaKind.Image });
         repository.Upsert(new MediaItem { Path = elsewhere, Title = "b", Kind = MediaKind.Image });
-        repository.InitializeFolderReferences([new LibraryFolder { Path = inside }]);
-        Assert.NotNull(repository.GetMediaByPath(file)!.FileModifiedAtUtc);
-        Assert.Equal(3, repository.GetMediaByPath(file)!.FileSize);
-        Assert.Null(repository.GetMediaByPath(elsewhere)!.FileModifiedAtUtc);
-        // Without folders nothing happens, and a second pass changes nothing.
-        repository.InitializeFolderReferences([]);
-        var stamp = repository.GetMediaByPath(file)!.FileModifiedAtUtc;
-        repository.InitializeFolderReferences([new LibraryFolder { Path = inside }]);
-        Assert.Equal(stamp, repository.GetMediaByPath(file)!.FileModifiedAtUtc);
+        Assert.Empty(repository.PlanFolderSync([new LibraryFolder { Path = inside }]).Changes);
+        // The entries themselves stay as they were: rewriting them would also queue them for the search index again.
+        Assert.Null(repository.GetMediaByPath(file)!.FileModifiedAtUtc);
+        Assert.Null(repository.GetMediaByPath(file)!.FileSize);
+        File.SetLastWriteTimeUtc(file, File.GetLastWriteTimeUtc(file).AddMinutes(1));
+        File.SetLastWriteTimeUtc(elsewhere, File.GetLastWriteTimeUtc(elsewhere).AddMinutes(1));
+        Assert.Equal(file, Assert.Single(repository.PlanFolderSync([new LibraryFolder { Path = inside }]).Changes).Path);
+        // A folder checked for the first time takes what it finds as its starting point.
+        Assert.Empty(repository.PlanFolderSync([new LibraryFolder { Path = outside }]).Changes);
     }
 
     [Fact]

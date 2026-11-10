@@ -3,6 +3,13 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
+## Unreleased
+
+- Checking media folders is quick again in large libraries taken over from EazyFlixPix 4: the first check took up to
+  a quarter of an hour without showing progress, because it wrote a file date into every older entry and queued
+  each one for the search index again. The check now notes what it saw beside the catalog, takes seconds, and its
+  progress moves while it runs. A check you start no longer waits behind one running in the background.
+
 ## 0.7.0
 
 **Upgrading from 0.6.0:** the catalog format changes. FlixyPix asks before converting a library and
