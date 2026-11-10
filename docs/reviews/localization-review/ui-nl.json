@@ -9255,11 +9255,6 @@
       "digest": "824e3129c734ecb7ae5ae756e59a9217c8d2670ab617853cf0dda95a9e8f72b6",
       "previous_digest": "539dfd6a8d6c04aa904d3b7231bf95b2c4bca0aa0aee32151f190674bda94998"
     },
-    "before ": {
-      "status": "corrected",
-      "digest": "2697ac1ae38b97711e69eee5eaa257adf90514bba6ec303ecb2fbccef8338ca8",
-      "previous_digest": "c0172adedca93ac86efc90ba1f26cdc6d2fdcbd4753bc5c83218e2d21f3d7e85"
-    },
     "FlixyPix first saves a copy of the catalog in the backup folder.": {
       "status": "unchanged",
       "digest": "9f62ccba2bbc02b8ba7004a0b9581e7cda3c8db98049f59fd2812c060b51a527"
@@ -14924,6 +14919,50 @@
     "Wide": {
       "status": "unchanged",
       "digest": "fa8dd009ce6fa710e0b87d663979cd9f1376f20ebbe395dfffd7ef3e5ccb02d6"
+    },
+    "Apply selected ({0:N0})": {
+      "status": "unchanged",
+      "digest": "19b2f477af828a394bef9ca432a76869c8e06244ef9b6e0ab1cecfef92cefa1d"
+    },
+    "Date unchanged": {
+      "status": "unchanged",
+      "digest": "40c66008c0c1f37813710b003899b82783f51c2bd09bdcb413b84c6b0080b181"
+    },
+    "Date {0} → {1}": {
+      "status": "unchanged",
+      "digest": "4495010aeb861733b4ceedf8d49db5fe8573c354f64b51159990ef435cc1d4b4"
+    },
+    "Last known: {0}": {
+      "status": "unchanged",
+      "digest": "b83105bbabbb75840407948dbb74586fdbb73e9ee0f88f8841254afd261d28b2"
+    },
+    "Previously: {0}": {
+      "status": "unchanged",
+      "digest": "a503ea439e9d1973eb596c831dad2fc36facf2caf8128791abdd2787a8ad529b"
+    },
+    "Same size, newer date: often another program wrote details such as tags into the file.": {
+      "status": "unchanged",
+      "digest": "e9b75fdc89f3dffc6dd6526e60e63bc3527c2d4bcd7d3a894cd289051188032b"
+    },
+    "Same size, older date: perhaps restored from a backup.": {
+      "status": "unchanged",
+      "digest": "31ad67674c971a07419551b12d2fd0330b7753c11ad5e8b6719f38a803ee3125"
+    },
+    "Select shown": {
+      "status": "unchanged",
+      "digest": "c36c136df1ec1c2951efacc8790a8f93232b4505ac56e0b37486b74260ce16df"
+    },
+    "Size unchanged": {
+      "status": "unchanged",
+      "digest": "1cd76dafd9820206ec6a5acc9400db8c36996c2a82631f11d438eb8ac1aece66"
+    },
+    "Size {0} → {1} ({2})": {
+      "status": "unchanged",
+      "digest": "94b6ed61957bdf2d665743b0456fdb5ad647c5c9cbf288730fb18d44b11756d9"
+    },
+    "Video": {
+      "status": "unchanged",
+      "digest": "a75e86b236be45c0247b7a21de0655b349bb5d1f3bc88b3a5f6f8569cf6a5796"
     }
   }
 }

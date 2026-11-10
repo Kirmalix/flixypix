@@ -10447,11 +10447,6 @@
       "digest": "26134c2bfdddf7ff476b7d1ca1b5a37ea0dfb7c463ee1193e00486d4858f9ffd",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "before ": {
-      "status": "unchanged",
-      "digest": "aaee46c65312b816c2bbbd28007413743ed22e6138bdad5ba5f08fecbb999c9e",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Media folders · FlixyPix": {
       "status": "unchanged",
       "digest": "35db8ea9f2441829887da66821339e6ceb02270d8eb401bcf950182057a684d9",
@@ -15735,6 +15730,50 @@
     "Wide": {
       "status": "unchanged",
       "digest": "216990a345f9359da0c6f39648fc09fa199dc75dad722914796fecf451576b4c"
+    },
+    "Apply selected ({0:N0})": {
+      "status": "unchanged",
+      "digest": "598778e8a19f906f89e0d795e4b699c20afab4e3015e4ccb76593846679a69ed"
+    },
+    "Date unchanged": {
+      "status": "unchanged",
+      "digest": "86e33fcbed642c811c2788eb61266f98c28e0693ed58df5df59d80ed6fdbb9f0"
+    },
+    "Date {0} → {1}": {
+      "status": "unchanged",
+      "digest": "4495010aeb861733b4ceedf8d49db5fe8573c354f64b51159990ef435cc1d4b4"
+    },
+    "Last known: {0}": {
+      "status": "unchanged",
+      "digest": "672b00c5b76877ca80f2972c03ba5f786427b92569ec3641b327342eab9d289a"
+    },
+    "Previously: {0}": {
+      "status": "unchanged",
+      "digest": "d849baba79fc2e2f9c4cba42f141fcb0b68180c475d5ce5045218aacbb7a1dfd"
+    },
+    "Same size, newer date: often another program wrote details such as tags into the file.": {
+      "status": "unchanged",
+      "digest": "6861f3468d41246b1747da92f5eddac8c981aefd932f42b48d6c900ee9c1a7fe"
+    },
+    "Same size, older date: perhaps restored from a backup.": {
+      "status": "unchanged",
+      "digest": "750fc0a0e7cb57c268431fb3c23eaecd695ab08a1f31090809e7067b9dab4988"
+    },
+    "Select shown": {
+      "status": "unchanged",
+      "digest": "5d647f664fb419f3a788872f545e690eea599ad483901abf72a9e4542b27b676"
+    },
+    "Size unchanged": {
+      "status": "unchanged",
+      "digest": "e94b206c357a94e5ef42e549504cc6d57a43926c5d95cc01c8df4e251428c74b"
+    },
+    "Size {0} → {1} ({2})": {
+      "status": "unchanged",
+      "digest": "8e27c8cbb16ac6ce6fa4561ecc02bcf62327b1a38de6f6dd32a7af39c34776e4"
+    },
+    "Video": {
+      "status": "unchanged",
+      "digest": "a75e86b236be45c0247b7a21de0655b349bb5d1f3bc88b3a5f6f8569cf6a5796"
     }
   }
 }

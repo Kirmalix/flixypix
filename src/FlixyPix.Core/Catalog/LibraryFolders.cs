@@ -24,8 +24,10 @@ public sealed record LibraryFolder
 public enum FolderChangeKind { Moved, Renamed, New, Missing, Modified }
 
 /// <param name="PreviousPath">Catalog path before a move or rename.</param>
+/// <param name="PreviousSize">Size the catalog knew, so the window can say what changed.</param>
+/// <param name="PreviousModifiedAtUtc">File date the catalog knew, or the one a check first saw for an entry without a date.</param>
 public sealed record FolderChange(FolderChangeKind Kind, string Path, MediaKind MediaKind, long? Size, Guid FolderId,
-    Guid? MediaId = null, string? PreviousPath = null, DateTimeOffset? ModifiedAtUtc = null);
+    Guid? MediaId = null, string? PreviousPath = null, DateTimeOffset? ModifiedAtUtc = null, long? PreviousSize = null, DateTimeOffset? PreviousModifiedAtUtc = null);
 
 /// <param name="Unreachable">Folders whose root does not exist (drive offline, share disconnected); their media are not reported missing.</param>
 public sealed record FolderSyncPlan(IReadOnlyList<LibraryFolder> Folders, IReadOnlyList<FolderChange> Changes,
@@ -199,8 +201,9 @@ public sealed partial class CatalogRepository
                 if (baselines.TryGetValue(entry.Key, out var first)) (size, previous) = (first.Size, first.Modified);
                 else if (size is null || size == entry.Value.Size) { noted.Add((entry.Key, entry.Value.Size, stamp)); continue; }
             }
-            if (size is { } bytes && bytes != entry.Value.Size || previous is { } date && date != stamp)
-                changes.Add(new(FolderChangeKind.Modified, entry.Value.Path, entry.Value.Kind, entry.Value.Size, entry.Value.Folder.Id, old.Id, old.Path, stamp));
+            // Same size and a date moved by whole hours is a clock change on a FAT drive or memory card, not new content.
+            if (size is { } bytes && bytes != entry.Value.Size || previous is { } date && date != stamp && !(size == entry.Value.Size && IsClockShift(date, stamp)))
+                changes.Add(new(FolderChangeKind.Modified, entry.Value.Path, entry.Value.Kind, entry.Value.Size, entry.Value.Folder.Id, old.Id, old.Path, stamp, size, previous));
         }
         // A noted state is no longer needed once the entry has a date of its own or left the catalog.
         var stale = baselines.Keys.Where(key => !cataloged.TryGetValue(key, out var item) || item.Modified != null).ToList();
@@ -213,7 +216,7 @@ public sealed partial class CatalogRepository
             {
                 if (!targets.TryGetValue(group.Key!, out var target)) continue;
                 var source = group.Single();
-                changes.Add(new(kind, target.Path, target.Kind, target.Size, target.Folder.Id, source.Id, source.Path, target.Modified));
+                changes.Add(new(kind, target.Path, target.Kind, target.Size, target.Folder.Id, source.Id, source.Path, target.Modified, source.Size, source.Modified));
                 added.Remove(target); missing.Remove(source);
             }
         }
@@ -221,7 +224,7 @@ public sealed partial class CatalogRepository
         Pair(FolderChangeKind.Moved, (path, size, kind) => size is { } bytes ? $"{kind}|{System.IO.Path.GetFileName(path).ToUpperInvariant()}|{bytes}" : null);
         Pair(FolderChangeKind.Renamed, (path, size, kind) => size is >= RenameMinimumBytes ? $"{kind}|{System.IO.Path.GetExtension(path).ToUpperInvariant()}|{size}" : null);
         changes.AddRange(added.Select(a => new FolderChange(FolderChangeKind.New, a.Path, a.Kind, a.Size, a.Folder.Id, ModifiedAtUtc: a.Modified)));
-        changes.AddRange(missing.Select(m => new FolderChange(FolderChangeKind.Missing, m.Path, m.Kind, m.Size, m.Folder.Id, m.Id)));
+        changes.AddRange(missing.Select(m => new FolderChange(FolderChangeKind.Missing, m.Path, m.Kind, m.Size, m.Folder.Id, m.Id, PreviousSize: m.Size, PreviousModifiedAtUtc: m.Modified)));
         return new(chosen, changes.OrderBy(c => c.Kind).ThenBy(c => c.Path, StringComparer.OrdinalIgnoreCase).ToList(), unreachable, errors);
     }
 
@@ -318,6 +321,13 @@ public sealed partial class CatalogRepository
             count++;
         }
         return count;
+    }
+
+    /// <summary>FAT keeps local time, so after a clock or time zone change the same file reads whole hours apart.</summary>
+    internal static bool IsClockShift(DateTimeOffset before, DateTimeOffset now)
+    {
+        var apart = (now - before).Duration();
+        return apart.Ticks % TimeSpan.TicksPerHour == 0 && apart.TotalHours is >= 1 and <= 14;
     }
 
     private static bool IsInside(string key, string folderKey) => key.StartsWith(folderKey + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal);

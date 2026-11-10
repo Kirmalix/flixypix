@@ -9,6 +9,12 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   a quarter of an hour without showing progress, because it wrote a file date into every older entry and queued
   each one for the search index again. The check now notes what it saw beside the catalog, takes seconds, and its
   progress moves while it runs. A check you start no longer waits behind one running in the background.
+- The changes a media folder check found are easier to go through: filter them by kind and by media type, each
+  with its count, and select or clear the ones shown. Each file says what changed, such as size and date before and
+  now or where it was before, and a changed file of the same size gets a hint why its content may well be the same
+  (another program writing tags, a copy restored from a backup). The report lists the changes by kind.
+- A file whose date moved by whole hours at the same size no longer counts as changed: that is a clock change on
+  memory cards and FAT drives, not new content.
 
 ## 0.7.0
 

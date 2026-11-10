@@ -209,11 +209,32 @@ public sealed class LibraryFolderTests : IDisposable
         var path = Fixture("change.jpg"); using var catalog = Open();
         Watch(catalog, new LibraryFolder { Path = Media }); ApplyAll(catalog, catalog.PlanFolderSync());
         var item = catalog.GetMediaByPath(path)!; catalog.Upsert(item with { Tags = ["Keep"], Rating = 8 });
-        File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(1));
-        var plan = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(plan.Changes).Kind);
+        var before = File.GetLastWriteTimeUtc(path);
+        File.SetLastWriteTimeUtc(path, before.AddMinutes(1));
+        var plan = catalog.PlanFolderSync(); var change = Assert.Single(plan.Changes); Assert.Equal(FolderChangeKind.Modified, change.Kind);
+        // The window says what changed: here only the date, the size stayed.
+        Assert.Equal((item.FileSize, before, before.AddMinutes(1)), (change.PreviousSize, change.PreviousModifiedAtUtc!.Value.UtcDateTime, change.ModifiedAtUtc!.Value.UtcDateTime));
+        Assert.Equal(change.Size, change.PreviousSize);
         Assert.Equal(1, ApplyAll(catalog, plan).Updated);
         Assert.Equal(["Keep"], catalog.GetMedia(item.Id)!.Tags); Assert.Equal(8, catalog.GetMedia(item.Id)!.Rating);
         Assert.Empty(catalog.PlanFolderSync().Changes);
+    }
+    [Fact]
+    public void ClockChangeOnTheSameSizeIsNoChange()
+    {
+        var path = Fixture("clock.jpg"); using var catalog = Open();
+        Watch(catalog, new LibraryFolder { Path = Media }); ApplyAll(catalog, catalog.PlanFolderSync());
+        var before = File.GetLastWriteTimeUtc(path);
+        // A FAT drive after the change to winter time, or a time zone eight hours away.
+        foreach (var hours in new[] { -1, 1, 8 })
+        {
+            File.SetLastWriteTimeUtc(path, before.AddHours(hours));
+            Assert.Empty(catalog.PlanFolderSync().Changes);
+        }
+        File.SetLastWriteTimeUtc(path, before.AddHours(1).AddSeconds(2));
+        Assert.Equal(FolderChangeKind.Modified, Assert.Single(catalog.PlanFolderSync().Changes).Kind);
+        File.SetLastWriteTimeUtc(path, before.AddHours(1)); File.AppendAllText(path, "x");
+        Assert.Equal(FolderChangeKind.Modified, Assert.Single(catalog.PlanFolderSync().Changes).Kind);
     }
     [Fact]
     public void ChangedAfterPlanningIsSkippedAndReportSurvivesReopen()
@@ -249,7 +270,7 @@ public sealed class LibraryFolderTests : IDisposable
         using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
         var item = catalog.Upsert(new MediaItem { Path = main, Kind = MediaKind.Video, Files = [new MediaFile { Path = other, FileSize = CatalogRepository.RenameMinimumBytes }] });
         Assert.Empty(catalog.PlanFolderSync().Changes);
-        File.SetLastWriteTimeUtc(other, File.GetLastWriteTimeUtc(other).AddHours(1));
+        File.SetLastWriteTimeUtc(other, File.GetLastWriteTimeUtc(other).AddMinutes(90));
         var changed = catalog.PlanFolderSync(); Assert.Equal(FolderChangeKind.Modified, Assert.Single(changed.Changes).Kind);
         Assert.Equal(1, ApplyAll(catalog, changed).Updated);
         Assert.Empty(catalog.PlanFolderSync().Changes);
@@ -262,7 +283,8 @@ public sealed class LibraryFolderTests : IDisposable
     {
         var path = Fixture("baseline.jpg"); using var catalog = Open(); Watch(catalog,new LibraryFolder { Path = Media });
         catalog.Upsert(new MediaItem { Path = path, Kind = MediaKind.Image, FileSize = 1 });
-        Assert.Equal(FolderChangeKind.Modified,Assert.Single(catalog.PlanFolderSync().Changes).Kind);
+        var change = Assert.Single(catalog.PlanFolderSync().Changes);
+        Assert.Equal((FolderChangeKind.Modified, 1L, (DateTimeOffset?)null), (change.Kind, change.PreviousSize!.Value, change.PreviousModifiedAtUtc));
         Assert.Equal(FolderChangeKind.Modified,Assert.Single(catalog.PlanFolderSync().Changes).Kind);
     }
     [Fact]
