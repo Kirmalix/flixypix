@@ -103,7 +103,7 @@ public partial class MainWindow
         {
             var folders = _repository.GetLibraryFolders().Where(f => !background || f.Watch).ToList();
             var plan = await BuildFolderPlanAsync(cancellation.Token, background: background);
-            if (background && _operation == null && _foldersWindow == null)
+            if (background && (_operation == null || _preparingMedia) && _foldersWindow == null)
             {
                 var automatic = plan.Actionable.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified && folders.Any(f => f.Id == c.FolderId && f.AutoApply)).ToList();
                 if (automatic.Count > 0) { await ApplyFolderSyncAsync(plan, automatic, false); plan = await Task.Run(() => _repository.PlanFolderSync(folders, cancellation.Token), cancellation.Token); }
@@ -125,10 +125,11 @@ public partial class MainWindow
     internal Task<int> RemoveMissingFolderFilesAsync(FolderSyncPlan plan, IReadOnlyList<FolderChange> chosen)
      => _libraryTasks.Run<int>(async libraryToken =>
     {
-        if (_operation != null) throw new InvalidOperationException(T("An operation is already running. You can cancel it below."));
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(libraryToken); _operation = cancellation;
+        var beside = _preparingMedia;
+        if (_operation != null && !beside) throw new InvalidOperationException(T("An operation is already running. You can cancel it below."));
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(libraryToken); if (!beside) _operation = cancellation;
         try { return await Task.Run(() => _repository.RemoveMissingFolderFiles(plan, chosen, cancellation.Token), cancellation.Token); }
-        finally { CompleteLibraryOperation(); }
+        finally { if (!beside) CompleteLibraryOperation(); }
     });
     internal void CancelFolderSync() { _operation?.Cancel(); _folderCheck?.Cancel(); }
     private void HideFolderBanner() { FolderBanner.Visibility = Visibility.Collapsed; }
@@ -147,52 +148,102 @@ public partial class MainWindow
      => _libraryTasks.Run<FolderSyncResult>(async libraryToken =>
     {
         HideFolderBanner();
-        if (_operation != null) throw new InvalidOperationException(T("An operation is already running. You can cancel it below."));
+        // Preparing earlier media keeps the operation slot; taking over beside it is safe, it is one short transaction.
+        var beside = _preparingMedia;
+        if (_operation != null && !beside) throw new InvalidOperationException(T("An operation is already running. You can cancel it below."));
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(libraryToken);
-        _operation = cancellation;
-        Progress.Visibility = CancelButton.Visibility = Visibility.Visible;
-        var progress = new Progress<FolderSyncProgress>(p => { _foldersWindow?.ReportProgress(p); Progress.IsIndeterminate = p.Total == null; Progress.Maximum = Math.Max(1, p.Total ?? 1); Progress.Value = p.Done; Status.Text = T(p.Phase) + " · " + p.Done + (p.Total is { } total ? " / " + total : "") + " · " + Path.GetFileName(p.Path); });
+        if (!beside) { _operation = cancellation; Progress.Visibility = CancelButton.Visibility = Visibility.Visible; }
+        var progress = new Progress<FolderSyncProgress>(p => { _foldersWindow?.ReportProgress(p); if (beside) return; Progress.IsIndeterminate = p.Total == null; Progress.Maximum = Math.Max(1, p.Total ?? 1); Progress.Value = p.Done; Status.Text = T(p.Phase) + " · " + p.Done + (p.Total is { } total ? " / " + total : "") + " · " + Path.GetFileName(p.Path); });
         FolderSyncResult result;
         try { result = await Task.Run(() => _repository.ApplyFolderSync(plan, chosen, ignoreDeclined, cancellation.Token, progress), cancellation.Token); }
-        finally { CompleteLibraryOperation(); Progress.IsIndeterminate = true; Progress.Visibility = CancelButton.Visibility = Visibility.Collapsed; }
+        finally { if (!beside) { CompleteLibraryOperation(); Progress.IsIndeterminate = true; Progress.Visibility = CancelButton.Visibility = Visibility.Collapsed; } }
 
-        Status.Text = T("Media folders · ") + LibraryFoldersWindow.Result(result);
-        if ((result.Imported > 0 || result.Updated > 0) && _operation == null) await RunOperation(T("Prepare new media"), async token =>
-        {
-            try
-            {
-                var items = chosen.Where(c => c.Kind == FolderChangeKind.New || c.Kind == FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>().DistinctBy(i => i.Id).ToList();
-                if (ToolExists(_settings.Ffprobe, "ffprobe"))
-                {
-                    var (_, errors) = await ReadTechnicalDataAsync(items.Where(i => i.Kind != MediaKind.Image).ToList(), token);
-                    result = result with { Skipped = result.Skipped.Concat(errors).ToList() };
-                }
-                foreach (var image in items.Where(i => i.Kind == MediaKind.Image))
-                {
-                    try
-                    {
-                        var info = await DesktopImaging.Service.GetInfoAsync(image.Path, token);
-                        if (_repository.GetMedia(image.Id) is { } current && current.FileModifiedAtUtc == image.FileModifiedAtUtc)
-                            _repository.Upsert(current with { Width = info.Width, Height = info.Height });
-                    }
-                    catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { result = result with { Skipped = result.Skipped.Append(image.Path + ": " + error.Message).ToList() }; }
-                }
-                if (_settings.AutoGeneratePreviews) await PrepareMediaAsync(token, items, errors => result = result with { Skipped = result.Skipped.Concat(errors).ToList() });
-                if (_repository.GetPreferences().Previews.FingerprintsOnImport)
-                {
-                    var run = new FingerprintRun(_repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null);
-                    await run.ComputeAsync(run.Missing(null, token, items), token);
-                }
-                if (_repository.GetPreferences().Previews.ClipsOnImport && ToolExists(_settings.Ffmpeg, "ffmpeg")) await CreatePreviewClipsAsync(items.Where(i => i.Kind == MediaKind.Video).ToList(), token);
-            }
-            catch (OperationCanceledException) { result = result with { Skipped = result.Skipped.Append(T("Operation cancelled")).ToList() }; }
-            catch (Exception error) { ErrorLog.Write("Folder sync preparation", error); result = result with { Skipped = result.Skipped.Append(error.Message).ToList() }; }
-        });
-        else await RefreshAsync();
         _repository.SaveFolderSyncReport(plan with { Changes = chosen }, result);
         Status.Text = T("Media folders · ") + LibraryFoldersWindow.Result(result);
+        await RefreshAsync();
+        // New and changed media get previews and their analysis right away, one queue for all of them.
+        if (result.Imported > 0 || result.Updated > 0)
+            QueueMediaPreparation(chosen.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>());
         return result;
     });
+
+    private readonly List<Guid> _preparationQueue = [];
+    private readonly List<string> _preparationErrors = [];
+    private bool _preparingMedia;
+    internal bool IsPreparingMedia => _preparingMedia;
+    private int _preparationDone, _preparationTotal;
+    /// <summary>Raised on the window thread whenever the preparation of new media moves on.</summary>
+    internal event Action? MediaPreparationChanged;
+    internal (int Done, int Total, bool Running, IReadOnlyList<string> Errors) MediaPreparation
+    {
+        get { lock (_preparationErrors) return (_preparationDone, _preparationTotal, _preparingMedia || _preparationQueue.Count > 0, _preparationErrors.ToList()); }
+    }
+
+    /// <summary>Adds media to the preparation queue and works on it unless another operation runs; that one starts the
+    /// queue when it ends.</summary>
+    internal void QueueMediaPreparation(IEnumerable<MediaItem> items)
+    {
+        if (!_preparingMedia && _preparationQueue.Count == 0) { _preparationDone = _preparationTotal = 0; lock (_preparationErrors) _preparationErrors.Clear(); }
+        foreach (var item in items)
+            if (!_preparationQueue.Contains(item.Id)) { _preparationQueue.Add(item.Id); _preparationTotal++; }
+        MediaPreparationChanged?.Invoke();
+        _ = PrepareQueuedMediaAsync();
+    }
+
+    private async Task PrepareQueuedMediaAsync()
+    {
+        if (_preparingMedia || _operation != null || _closing || _preparationQueue.Count == 0) return;
+        _preparingMedia = true;
+        try
+        {
+            await RunOperation(T("Prepare new media"), async token =>
+            {
+                try
+                {
+                    while (_preparationQueue.Count > 0)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        var batch = _preparationQueue.ToList(); _preparationQueue.Clear();
+                        // Videos first: they wait longest for a preview and are what one looks for after an import.
+                        var items = batch.Select(_repository.GetMedia).OfType<MediaItem>().OrderBy(i => i.Kind != MediaKind.Video).ToList();
+                        Interlocked.Add(ref _preparationDone, batch.Count - items.Count);
+                        void Report(IEnumerable<string> errors) { lock (_preparationErrors) _preparationErrors.AddRange(errors); }
+                        void Done() { Interlocked.Increment(ref _preparationDone); _ = Dispatcher.InvokeAsync(() => MediaPreparationChanged?.Invoke()); }
+                        if (_settings.AutoGeneratePreviews) await PrepareMediaAsync(token, items, Report, Done);
+                        else
+                            foreach (var image in items)
+                            {
+                                try
+                                {
+                                    if (image.Kind != MediaKind.Image) continue;
+                                    var info = await DesktopImaging.Service.GetInfoAsync(image.Path, token);
+                                    if (_repository.GetMedia(image.Id) is { } current && current.FileModifiedAtUtc == image.FileModifiedAtUtc)
+                                        _repository.Upsert(current with { Width = info.Width, Height = info.Height });
+                                }
+                                catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { Report([image.Path + ": " + error.Message]); }
+                                finally { Done(); }
+                            }
+                        MediaPreparationChanged?.Invoke();
+                        // Codecs and other technical details, fingerprints and clips follow the previews.
+                        if (ToolExists(_settings.Ffprobe, "ffprobe")) Report((await ReadTechnicalDataAsync(items.Where(i => i.Kind != MediaKind.Image).ToList(), token)).Errors);
+                        if (_repository.GetPreferences().Previews.FingerprintsOnImport)
+                        {
+                            var run = new FingerprintRun(_repository, ToolExists(_settings.Ffmpeg, "ffmpeg") ? _tools : null);
+                            await run.ComputeAsync(run.Missing(null, token, items), token);
+                        }
+                        if (_repository.GetPreferences().Previews.ClipsOnImport && ToolExists(_settings.Ffmpeg, "ffmpeg")) await CreatePreviewClipsAsync(items.Where(i => i.Kind == MediaKind.Video).ToList(), token);
+                    }
+                }
+                catch (OperationCanceledException) { _preparationQueue.Clear(); throw; }
+                catch (Exception error) { ErrorLog.Write("Folder sync preparation", error); lock (_preparationErrors) _preparationErrors.Add(error.Message); }
+            });
+        }
+        finally { _preparingMedia = false; MediaPreparationChanged?.Invoke(); }
+        if (_preparationQueue.Count > 0) _ = PrepareQueuedMediaAsync();
+        // Without the folder window nobody sees the list, so the files that failed are named once.
+        else if (MediaPreparation.Errors.Count is > 0 and var failed && _foldersWindow == null)
+            ShowToast(Tn(failed, "1 file could not be prepared.", "{0:N0} files could not be prepared."), MessageBoxImage.Warning);
+    }
 
     private async void FolderBannerApply(object sender, RoutedEventArgs e)
     {

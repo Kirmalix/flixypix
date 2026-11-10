@@ -254,16 +254,19 @@ public sealed partial class CatalogRepository
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException) { skipped.Add(change.Path + ": " + error.Message); continue; }
                 var file = new FileInfo(change.Path);
                 if (file.Length != change.Size || change.ModifiedAtUtc is { } expected && expected.UtcDateTime != file.LastWriteTimeUtc)
-                { skipped.Add(change.Path + ": changed since the check"); continue; }
+                { skipped.Add(T("{0}: the file changed since the check.", change.Path)); continue; }
                 if (change.Kind == FolderChangeKind.Modified)
                 {
                     using var lookup = Command("SELECT document FROM media WHERE id=$id", transaction, ("$id", change.MediaId.ToString()!));
                     var current = lookup.ExecuteScalar() is string data ? JsonSerializer.Deserialize<MediaItem>(data, Json) : null;
-                    if (current == null) { skipped.Add(change.Path); continue; }
-                    if (current.Path != change.Path)
+                    // The catalog may spell the path differently from the file system (entries taken over from EazyFlixPix 4);
+                    // the check matched them by path key, so taking over does too.
+                    var key = PathKey(change.Path);
+                    if (current == null) { skipped.Add(T("{0}: the catalog entry changed since the check.", change.Path)); continue; }
+                    if (PathKey(current.Path) != key)
                     {
-                        if (!current.Files.Any(v => v.Path == change.Path)) { skipped.Add(change.Path); continue; }
-                        UpsertCore(current with { Files = current.Files.Select(v => v.Path == change.Path ? v with { FileSize = file.Length, FileModifiedAtUtc = change.ModifiedAtUtc, Width = null, Height = null, DurationSeconds = null, Technical = null } : v).ToList() }, transaction);
+                        if (!current.Files.Any(v => PathKey(v.Path) == key)) { skipped.Add(T("{0}: the catalog entry changed since the check.", change.Path)); continue; }
+                        UpsertCore(current with { Files = current.Files.Select(v => PathKey(v.Path) == key ? v with { FileSize = file.Length, FileModifiedAtUtc = change.ModifiedAtUtc, Width = null, Height = null, DurationSeconds = null, Technical = null } : v).ToList() }, transaction);
                         updated++; continue;
                     }
                     UpsertCore(current with { FileSize = file.Length, FileModifiedAtUtc = change.ModifiedAtUtc,
@@ -284,7 +287,7 @@ public sealed partial class CatalogRepository
                 var item = read.ExecuteScalar() is string json ? JsonSerializer.Deserialize<MediaItem>(json, Json) : null;
                 if (item != null && item.Path != change.PreviousPath && item.Files.Any(v => v.Path == change.PreviousPath))
                 {
-                    if (File.Exists(change.PreviousPath)) { skipped.Add(change.Path); continue; }
+                    if (File.Exists(change.PreviousPath)) { skipped.Add(T("{0}: the file is back in its old place.", change.PreviousPath)); continue; }
                     UpsertCore(item with { Files = item.Files.Select(v => v.Path == change.PreviousPath ? v with { Path = change.Path, FileSize = change.Size, FileModifiedAtUtc = change.ModifiedAtUtc } : v).ToList() }, transaction);
                     relinked++; continue;
                 }

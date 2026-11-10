@@ -485,6 +485,7 @@
   "Changed": "Geändert",
   "changed in Stash": "in Stash geändert",
   "changed in Stash and locally": "in Stash und lokal geändert",
+  "Changes applied": "Änderungen übernommen",
   "Changes found": "Gefundene Änderungen",
   "Changing images or the preview clip. A missing clip is made the first time.": "Wechselnde Bilder oder der Vorschauclip. Ein fehlender Clip wird beim ersten Mal erzeugt.",
   "Characters dropped from titles": "Zeichen, die aus Titeln entfallen",
@@ -1138,6 +1139,7 @@
   "Height relative to the playback area (1 = full height)": "Höhe relativ zur Wiedergabefläche (1 = volle Höhe)",
   "Help": "Hilfe",
   "Hidden, the counter keeps its values and its row on the home page disappears.": "Ausgeblendet behält der Zähler seine Werte, und seine Zeile auf der Startseite entfällt.",
+  "Hide": "Ausblenden",
   "Hide completely": "Ganz verstecken",
   "Hide the control bar in full screen": "Steuerleiste im Vollbild ausblenden",
   "Hide the filter panel": "Filterfeld ausblenden",
@@ -1812,6 +1814,7 @@
   "Nothing found.": "Nichts gefunden.",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "Nichts passt zu Suche und Filtern in dieser Ansicht.\nLockere die Filter oder entferne sie.",
   "Nothing to count yet.": "Noch nichts zu zählen.",
+  "Nothing was changed.": "Es wurde nichts geändert.",
   "Nothing was imported. {0}": "Es wurde nichts importiert. {0}",
   "Notification area": "Infobereich",
   "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": "Infobereich: Zum Wiederanzeigen auf das Symbol klicken. Ganz verstecken: Die separate Tastenkombination zum Wiederanzeigen verwenden.",
@@ -2110,7 +2113,10 @@
   "Preview of the tag template": "Vorschau der Tagvorlage",
   "Preview setting saved": "Vorschau-Einstellung gespeichert",
   "Preview · {0} · {1}": "Vorschau · {0} · {1}",
+  "Previews and details are ready.": "Vorschauen und Details sind fertig.",
   "Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings.": "Vorschau oder Medienanalyse ist eingeschränkt: FFmpeg/ffprobe fehlen. Pfade lassen sich unter Einstellungen auswählen.",
+  "Previews wait until the running operation ends.": "Vorschauen warten, bis der laufende Vorgang endet.",
+  "Previews: {0:N0} of {1:N0} …": "Vorschauen: {0:N0} von {1:N0} …",
   "Previous": "Zurück",
   "Previous bookmark": "Vorheriges Lesezeichen",
   "Previous category": "Bisherige Kategorie",
@@ -2193,6 +2199,7 @@
   "Read technical data": "Technische Daten lesen",
   "Reading image …": "Bild wird gelesen …",
   "Reading item entries … {0:N0} of {1:N0}": "Medieneinträge werden gelesen … {0:N0} von {1:N0}",
+  "Reading technical details …": "Technische Details werden gelesen …",
   "Reading the export …": "Export wird gelesen …",
   "Reading the export … {0:N0} records": {
     "one": "Export wird gelesen … 1 Datensatz",
@@ -2258,6 +2265,7 @@
   "Remove folder filter": "Ordnerfilter entfernen",
   "Remove from all items …": "Aus allen Medien entfernen …",
   "Remove from catalog": "Aus Katalog entfernen",
+  "Remove from catalog ({0:N0})": "Aus Katalog entfernen ({0:N0})",
   "Remove from catalog …": "Aus Katalog entfernen …",
   "Remove from collection": "Aus Sammlung entfernen",
   "Remove from list": "Aus der Liste entfernen",
@@ -2625,6 +2633,7 @@
   "Smooth transition to the next image.": "Weicher Übergang zum nächsten Bild.",
   "So far in FlixyPix": "Bisher in FlixyPix",
   "Some files are still in use: {0}": "Einige Dateien sind noch in Benutzung: {0}",
+  "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": "Einige Ordner ließen sich nicht vollständig lesen, daher kann FlixyPix nicht sagen, ob diese Dateien wirklich fehlen. Prüfe erneut, sobald die Ordner lesbar sind.",
   "Sort tags by frequency or name": "Tags nach Häufigkeit oder Name sortieren",
   "Sorting": "Sortierung",
   "Sound off": "Ton aus",
@@ -2668,6 +2677,7 @@
   "Statistics": "Statistik",
   "Statistics not possible · ": "Statistik nicht möglich · ",
   "Statistics · FlixyPix": "Statistik · FlixyPix",
+  "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": "Bleibt mit allen Angaben im Katalog. Zum Entfernen anhaken und „Aus Katalog entfernen“ wählen.",
   "Step": "Schritt",
   "Step size for {0}": "Schrittweite für {0}",
   "Steps": "Schritte",
@@ -3357,9 +3367,33 @@
     "one": "1 Datei in einem Medium",
     "other": "{0:N0} Dateien in einem Medium zusammengeführt"
   },
+  "{0:N0} files could not be prepared.": {
+    "one": "1 Datei konnte nicht vorbereitet werden.",
+    "other": "{0:N0} Dateien konnten nicht vorbereitet werden."
+  },
   "{0:N0} files deleted": {
     "one": "1 Datei gelöscht",
     "other": "{0:N0} Dateien gelöscht"
+  },
+  "{0:N0} files imported": {
+    "one": "1 Datei importiert",
+    "other": "{0:N0} Dateien importiert"
+  },
+  "{0:N0} files no longer offered": {
+    "one": "1 Datei wird nicht mehr angeboten",
+    "other": "{0:N0} Dateien werden nicht mehr angeboten"
+  },
+  "{0:N0} files reassigned": {
+    "one": "1 Datei neu zugeordnet",
+    "other": "{0:N0} Dateien neu zugeordnet"
+  },
+  "{0:N0} files removed from the catalog": {
+    "one": "1 Datei aus dem Katalog entfernt",
+    "other": "{0:N0} Dateien aus dem Katalog entfernt"
+  },
+  "{0:N0} files updated": {
+    "one": "1 Datei aktualisiert",
+    "other": "{0:N0} Dateien aktualisiert"
   },
   "{0:N0} files · {1}": {
     "one": "1 Datei · {1}",
@@ -3532,6 +3566,10 @@
     "one": "1 Begleitdatei geschrieben",
     "other": "{0:N0} Begleitdateien geschrieben"
   },
+  "{0:N0} skipped: show why": {
+    "one": "1 übersprungen: Grund anzeigen",
+    "other": "{0:N0} übersprungen: Gründe anzeigen"
+  },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "{0:N0} Quellzeilen · {1:N0} Binärwerte ({2:N0} Bytes) · {3:N0} Konflikte\n",
   "{0:N0} tags": {
     "one": "1 Tag",
@@ -3688,6 +3726,7 @@
   "{0}: known": "{0}: bekannt",
   "{0}: please enter a value of {1}.": "{0}: bitte einen Wert von {1} eingeben.",
   "{0}: the catalog entry changed since the check.": "{0}: Der Katalogeintrag hat sich seit der Prüfung geändert.",
+  "{0}: the file changed since the check.": "{0}: Die Datei hat sich seit der Prüfung geändert.",
   "{0}: the file is back in its old place.": "{0}: Die Datei ist wieder an ihrem alten Ort.",
   "{0}: the file is now in the catalog.": "{0}: Die Datei ist inzwischen im Katalog.",
   "{0}: the file no longer exists.": "{0}: Die Datei ist nicht mehr vorhanden.",

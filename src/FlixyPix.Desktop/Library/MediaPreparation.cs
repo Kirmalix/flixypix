@@ -12,7 +12,8 @@ public partial class MainWindow
      ? Path.Combine(AppContext.BaseDirectory, "tools", name + ".exe") : configured);
 
     private Task PrepareMediaAsync(CancellationToken token) => PrepareMediaAsync(token, null);
-    private async Task PrepareMediaAsync(CancellationToken token, IReadOnlyList<MediaItem>? chosen, Action<IReadOnlyList<string>>? reportErrors = null)
+    /// <param name="itemDone">Called once per item, prepared or not, from a worker thread.</param>
+    private async Task PrepareMediaAsync(CancellationToken token, IReadOnlyList<MediaItem>? chosen, Action<IReadOnlyList<string>>? reportErrors = null, Action? itemDone = null)
     {
         var canProbe = ToolExists(_settings.Ffprobe, "ffprobe"); var canRender = ToolExists(_settings.Ffmpeg, "ffmpeg");
         var previews = _repository.GetPreferences().Previews;
@@ -22,6 +23,8 @@ public partial class MainWindow
         // Up to the configured number of preview processes run side by side, as in the original thumbnail generator.
         await Parallel.ForEachAsync(chosen == null ? StreamCatalogForImages(token) : ChosenItems(chosen, token), new ParallelOptions { MaxDegreeOfParallelism = previews.GeneratorProcesses, CancellationToken = token }, async (item, itemToken) =>
         {
+          try
+          {
             if (!File.Exists(item.Path) || !(item.Extra.ContainsKey("folders.previewStale") || item.Width == null || item.Kind != MediaKind.Image && item.DurationSeconds == null ||
          item.Kind != MediaKind.Audio && (string.IsNullOrEmpty(item.ThumbnailPath) || !File.Exists(item.ThumbnailPath)))) return;
             if (item.Kind != MediaKind.Image && (!canProbe || !canRender) && Interlocked.Exchange(ref toolsWarned, 1) == 0)
@@ -43,6 +46,8 @@ public partial class MainWindow
             catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or UnauthorizedAccessException)
             { lock (errors) errors.Add(Path.GetFileName(item.Path) + ": " + error.Message); }
             finally { if (!published && prepared?.ThumbnailPath != item.ThumbnailPath && IsGeneratedThumbnail(prepared?.ThumbnailPath)) File.Delete(prepared!.ThumbnailPath!); }
+          }
+          finally { itemDone?.Invoke(); }
         });
         if (errors.Count > 0 && reportErrors != null) reportErrors(errors);
         else if (errors.Count > 0) Dialogs.Text(this, T("Preview and analysis report"), string.Join(Environment.NewLine, errors.Take(30)) +

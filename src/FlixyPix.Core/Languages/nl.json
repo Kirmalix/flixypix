@@ -485,6 +485,7 @@
   "Changed": "Gewijzigd",
   "changed in Stash": "gewijzigd in Stash",
   "changed in Stash and locally": "gewijzigd in Stash en lokaal",
+  "Changes applied": "Wijzigingen toegepast",
   "Changes found": "Gevonden wijzigingen",
   "Changing images or the preview clip. A missing clip is made the first time.": "Wisselende afbeeldingen of de voorbeeldclip. Een ontbrekende clip wordt de eerste keer gemaakt.",
   "Characters dropped from titles": "Tekens die uit titels worden verwijderd",
@@ -1138,6 +1139,7 @@
   "Height relative to the playback area (1 = full height)": "Hoogte ten opzichte van het afspeelgebied (1 = volledige hoogte)",
   "Help": "Help",
   "Hidden, the counter keeps its values and its row on the home page disappears.": "Verborgen behoudt de teller zijn waarden en verdwijnt zijn rij van de startpagina.",
+  "Hide": "Verbergen",
   "Hide completely": "Volledig verbergen",
   "Hide the control bar in full screen": "Bedieningsbalk bij volledig scherm verbergen",
   "Hide the filter panel": "Filterpaneel verbergen",
@@ -1812,6 +1814,7 @@
   "Nothing found.": "Niets gevonden.",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "Niets komt overeen met de zoekopdracht en filters in deze weergave.\nVerruim de filters of verwijder ze.",
   "Nothing to count yet.": "Nog niets om te tellen.",
+  "Nothing was changed.": "Er is niets gewijzigd.",
   "Nothing was imported. {0}": "Er is niets geïmporteerd. {0}",
   "Notification area": "Systeemvak",
   "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": "Systeemvak: klik op het pictogram om terug te keren. Volledig verbergen: gebruik de aparte sneltoets om FlixyPix weer te tonen.",
@@ -2110,7 +2113,10 @@
   "Preview of the tag template": "Voorbeeld van het tagsjabloon",
   "Preview setting saved": "Voorbeeldinstelling opgeslagen",
   "Preview · {0} · {1}": "Voorbeeld · {0} · {1}",
+  "Previews and details are ready.": "Voorbeelden en details zijn klaar.",
   "Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings.": "Voorbeelden of media-analyse zijn beperkt: FFmpeg/ffprobe ontbreken. Je kunt de paden kiezen onder Instellingen.",
+  "Previews wait until the running operation ends.": "Voorbeelden wachten tot de lopende bewerking klaar is.",
+  "Previews: {0:N0} of {1:N0} …": "Voorbeelden: {0:N0} van {1:N0} …",
   "Previous": "Vorige",
   "Previous bookmark": "Vorige bladwijzer",
   "Previous category": "Vorige categorie",
@@ -2193,6 +2199,7 @@
   "Read technical data": "Technische gegevens lezen",
   "Reading image …": "Afbeelding wordt gelezen …",
   "Reading item entries … {0:N0} of {1:N0}": "Items worden gelezen … {0:N0} van {1:N0}",
+  "Reading technical details …": "Technische details worden gelezen …",
   "Reading the export …": "Export wordt gelezen…",
   "Reading the export … {0:N0} records": {
     "one": "Export wordt gelezen… 1 record",
@@ -2258,6 +2265,7 @@
   "Remove folder filter": "Mapfilter verwijderen",
   "Remove from all items …": "Verwijder van alle items…",
   "Remove from catalog": "Uit catalogus verwijderen",
+  "Remove from catalog ({0:N0})": "Uit catalogus verwijderen ({0:N0})",
   "Remove from catalog …": "Uit catalogus verwijderen …",
   "Remove from collection": "Uit collectie verwijderen",
   "Remove from list": "Uit de lijst verwijderen",
@@ -2625,6 +2633,7 @@
   "Smooth transition to the next image.": "Een zachte overgang naar het volgende beeld.",
   "So far in FlixyPix": "Tot nu toe in FlixyPix",
   "Some files are still in use: {0}": "Sommige bestanden zijn nog steeds in gebruik: {0}",
+  "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": "Sommige mappen konden niet volledig worden gelezen, dus FlixyPix kan niet zeggen of deze bestanden echt weg zijn. Controleer opnieuw zodra de mappen leesbaar zijn.",
   "Sort tags by frequency or name": "Tags op frequentie of naam sorteren",
   "Sorting": "Sortering",
   "Sound off": "Geluid uit",
@@ -2668,6 +2677,7 @@
   "Statistics": "Statistieken",
   "Statistics not possible · ": "Statistieken niet mogelijk · ",
   "Statistics · FlixyPix": "Statistieken · FlixyPix",
+  "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": "Blijft met alle gegevens in de catalogus. Vink het aan en kies ‘Uit catalogus verwijderen’ om het te verwijderen.",
   "Step": "Stap",
   "Step size for {0}": "Stapgrootte voor {0}",
   "Steps": "Stappen",
@@ -3357,9 +3367,33 @@
     "one": "1 bestand in één item",
     "other": "{0:N0} bestanden samengevoegd in één item"
   },
+  "{0:N0} files could not be prepared.": {
+    "one": "1 bestand kon niet worden voorbereid.",
+    "other": "{0:N0} bestanden konden niet worden voorbereid."
+  },
   "{0:N0} files deleted": {
     "one": "1 bestand verwijderd",
     "other": "{0:N0} bestanden verwijderd"
+  },
+  "{0:N0} files imported": {
+    "one": "1 bestand geïmporteerd",
+    "other": "{0:N0} bestanden geïmporteerd"
+  },
+  "{0:N0} files no longer offered": {
+    "one": "1 bestand wordt niet meer aangeboden",
+    "other": "{0:N0} bestanden worden niet meer aangeboden"
+  },
+  "{0:N0} files reassigned": {
+    "one": "1 bestand opnieuw toegewezen",
+    "other": "{0:N0} bestanden opnieuw toegewezen"
+  },
+  "{0:N0} files removed from the catalog": {
+    "one": "1 bestand uit de catalogus verwijderd",
+    "other": "{0:N0} bestanden uit de catalogus verwijderd"
+  },
+  "{0:N0} files updated": {
+    "one": "1 bestand bijgewerkt",
+    "other": "{0:N0} bestanden bijgewerkt"
   },
   "{0:N0} files · {1}": {
     "one": "Bestanden: {0:N0} · {1}",
@@ -3532,6 +3566,10 @@
     "one": "Geschreven sidecarbestanden: {0:N0}",
     "other": "Geschreven sidecarbestanden: {0:N0}"
   },
+  "{0:N0} skipped: show why": {
+    "one": "1 overgeslagen: reden tonen",
+    "other": "{0:N0} overgeslagen: redenen tonen"
+  },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "{0:N0} bronregels · {1:N0} binaire waarden ({2:N0} bytes) · {3:N0} conflicten\n",
   "{0:N0} tags": {
     "one": "1 tag",
@@ -3688,6 +3726,7 @@
   "{0}: known": "{0}: bekend",
   "{0}: please enter a value of {1}.": "{0}: voer een waarde van {1} in.",
   "{0}: the catalog entry changed since the check.": "{0}: het catalogusitem is sinds de controle gewijzigd.",
+  "{0}: the file changed since the check.": "{0}: het bestand is sinds de controle gewijzigd.",
   "{0}: the file is back in its old place.": "{0}: het bestand staat weer op de oude locatie.",
   "{0}: the file is now in the catalog.": "{0}: het bestand staat nu in de catalogus.",
   "{0}: the file no longer exists.": "{0}: het bestand bestaat niet meer.",
