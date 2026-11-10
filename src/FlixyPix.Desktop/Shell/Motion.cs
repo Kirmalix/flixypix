@@ -307,7 +307,8 @@ public static class Motion
   Transform(note).BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 12, TimeSpan.FromMilliseconds(160)) { EasingFunction = EaseOut });
  }
 
- /// <summary>The element rises a few pixels and casts a shadow while the pointer is over it. Rows of the list view stay flat.</summary>
+ /// <summary>The element rises a few pixels while the pointer is over it, and casts a shadow if its template has a part
+ /// named "shade". Rows of the list view stay flat.</summary>
  public static readonly DependencyProperty HoverLiftProperty = DependencyProperty.RegisterAttached("HoverLift", typeof(bool), typeof(Motion),
   new PropertyMetadata(false, (d, e) =>
   {
@@ -333,31 +334,49 @@ public static class Motion
 
  /// <summary>Lifts in px; the shadow is stronger on the dark scheme, where a light shadow would vanish.</summary>
  internal const double LiftHeight = 3;
- internal static bool IsLifted(FrameworkElement element) => element.RenderTransform is TranslateTransform { Y: < 0 } || element.Effect is DropShadowEffect;
+ internal static bool IsLifted(FrameworkElement element) => element.RenderTransform is TranslateTransform { Y: < 0 } || Shade(element) is { Visibility: Visibility.Visible };
+
+ /// <summary>How far this element lifts: <see cref="LiftHeight"/> rounded to whole screen pixels, so pictures and text
+ /// stay as sharp lifted as they are at rest, whatever the display and interface scaling.</summary>
+ internal static double LiftFor(Visual element)
+ {
+  var device = (PresentationSource.FromVisual(element)?.CompositionTarget?.TransformToDevice.M22 ?? 1) * InterfaceScaling.Current;
+  return device > 0 ? Math.Max(1, Math.Round(LiftHeight * device)) / device : LiftHeight;
+ }
+
+ /// <summary>The part of the template that casts the shadow, lying under the content. The shadow is an effect, and an effect
+ /// draws its element through a picture of it: on the whole tile that blurred pictures and text. An element without this
+ /// part lifts without a shadow.</summary>
+ internal static FrameworkElement? Shade(FrameworkElement element) => element is Control { Template: { } template } ? template.FindName("shade", element) as FrameworkElement : null;
 
  private static void Lift(object sender, System.Windows.Input.MouseEventArgs e)
  {
   var element = (FrameworkElement)sender;
   if (VisualTreeHelper.GetParent(element) is VirtualizingTilePanel panel && (panel.SingleColumn || !TilesLift)) return;
-  var shift = Transform(element);
-  if (element.Effect is not DropShadowEffect shadow)
-   element.Effect = shadow = new DropShadowEffect { BlurRadius = 22, ShadowDepth = 6, Direction = 270, Color = Colors.Black, Opacity = 0, RenderingBias = RenderingBias.Performance };
-  var strength = Theme.IsDark ? .55 : .22;
-  if (!Enabled) { shift.Y = -LiftHeight; shadow.Opacity = strength; return; }
-  shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-LiftHeight, Quick) { EasingFunction = EaseOut });
-  shadow.BeginAnimation(DropShadowEffect.OpacityProperty, new DoubleAnimation(strength, Quick) { EasingFunction = EaseOut });
+  var shift = Transform(element); var height = LiftFor(element); var shade = Shade(element);
+  if (shade != null)
+  {
+   shade.Effect = new DropShadowEffect { BlurRadius = 22, ShadowDepth = 6, Direction = 270, Color = Colors.Black, Opacity = Theme.IsDark ? .55 : .22, RenderingBias = RenderingBias.Performance };
+   shade.Visibility = Visibility.Visible;
+  }
+  if (!Enabled) { shift.Y = -height; if (shade != null) { shade.BeginAnimation(UIElement.OpacityProperty, null); shade.Opacity = 1; } return; }
+  shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-height, Quick) { EasingFunction = EaseOut });
+  shade?.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, Quick) { EasingFunction = EaseOut });
  }
 
  private static void Drop(object sender, System.Windows.Input.MouseEventArgs e)
  {
   var element = (FrameworkElement)sender;
   if (element.RenderTransform is not TranslateTransform shift) return;
-  if (!Enabled || element.Effect is not DropShadowEffect shadow) { shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = 0; element.Effect = null; return; }
-  shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, Quick) { EasingFunction = EaseOut });
-  var fade = new DoubleAnimation(0, Quick) { EasingFunction = EaseOut };
+  var shade = Shade(element);
   // An effect costs a render pass even when invisible; resting tiles carry none.
-  fade.Completed += (_, _) => { if (!element.IsMouseOver && ReferenceEquals(element.Effect, shadow)) element.Effect = null; };
-  shadow.BeginAnimation(DropShadowEffect.OpacityProperty, fade);
+  void Rest() { if (shade == null) return; shade.BeginAnimation(UIElement.OpacityProperty, null); shade.Opacity = 0; shade.Effect = null; shade.Visibility = Visibility.Collapsed; }
+  if (!Enabled) { shift.BeginAnimation(TranslateTransform.YProperty, null); shift.Y = 0; Rest(); return; }
+  shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, Quick) { EasingFunction = EaseOut });
+  if (shade == null) return;
+  var fade = new DoubleAnimation(0, Quick) { EasingFunction = EaseOut };
+  fade.Completed += (_, _) => { if (!element.IsMouseOver) Rest(); };
+  shade.BeginAnimation(UIElement.OpacityProperty, fade);
  }
 
  /// <summary>An element of a new page settles into place, one shortly after the other. The element is whole again afterwards.</summary>

@@ -290,6 +290,8 @@ public partial class MainWindow
     private void MediaListMouseDown(object sender, MouseButtonEventArgs e)
     {
         _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null;
+        // The stars of a tile rate; they neither select nor drag it.
+        if (e.OriginalSource is TileRating) return;
         if (ItemsControl.ContainerFromElement(MediaList, (DependencyObject)e.OriginalSource) is not ListBoxItem item) return;
         _dragStart = e.GetPosition(MediaList);
         // "Klick auf das Bild spielt ab": a plain click on the picture (not on its buttons) plays once the button is released without dragging.
@@ -314,6 +316,13 @@ public partial class MainWindow
         if (play != null) { StopSlideshow(); _ = Play(play.Item); }
     }
     private MediaCard? _clickToPlay;
+    /// <summary>Whether the point lies on a button or on the stars of a tile, which answer clicks themselves.</summary>
+    private bool OnTileControl(DependencyObject? source)
+    {
+        for (var node = source; node != null && node != MediaList; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
+            if (node is ButtonBase or TileRating) return true;
+        return false;
+    }
     /// <summary>Whether the point lies on a tile's picture and not on one of its buttons.</summary>
     private static bool OnPicture(DependencyObject source, ListBoxItem item)
     {

@@ -19,6 +19,7 @@ public partial class MainWindow
   TileSpacing.SelectedIndex = Math.Clamp(_settings.TileSpacing, 0, 2); ApplyTileSpacing(TileSpacing.SelectedIndex);
   ViewPopup.Opened += (_, _) => SyncTileSlider();
   ViewPopup.Closed += (_, _) => SaveViewPreferences();
+  MediaList.AddHandler(TileRating.RatedEvent, new RoutedEventHandler(TileRated));
  }
 
  /// <summary>Opens a menu below <paramref name="sender"/> instead of at the mouse pointer.</summary>
@@ -161,6 +162,15 @@ public partial class MainWindow
   if (sender is FrameworkElement heart) Motion.Pop(heart);
   var item = _repository.GetMedia(card.Item.Id) ?? card.Item; ApplyImmediate([item.Id], ImmediateEditFields.Favorite, current => current with { IsFavorite = !current.IsFavorite },
    item.IsFavorite ? T("“{0}” no longer pinned as favorite", card.Title) : T("“{0}” pinned as favorite", card.Title)); Refresh();
+ }
+
+ /// <summary>The stars on a tile rate its medium; on a tile of a selection of several they rate all of them, as the digit keys do.</summary>
+ private void TileRated(object sender, RoutedEventArgs e)
+ {
+  if (e is not TileRatedEventArgs rated || CardOf(e.OriginalSource) is not { } card) return;
+  e.Handled = true;
+  var selection = SelectedMedia;
+  RateMedia(selection.Count > 1 && selection.Any(item => item.Id == card.Item.Id) ? selection : [card.Item], rated.Stars);
  }
 
  /// <summary>Saves one field of the selected medium at once while unsaved title and description edits stay in the boxes.</summary>

@@ -546,7 +546,18 @@ public partial class MainWindow : Window
     }
 
     private async void PlaySelected(object sender, RoutedEventArgs e) { if (Selected is { } item) { StopSlideshow(); await Play(item); } }
-    private void MediaDoubleClick(object sender, MouseButtonEventArgs e) { if (Selected is { } item) OpenDetail(item); }
+    /// <summary>A double click on a tile unfolds the details when they are folded to their rail; with the details in place it
+    /// opens the page of the medium. The buttons and stars of a tile keep their own clicks.</summary>
+    private void MediaDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (OnTileControl(e.OriginalSource as DependencyObject) || Selected is not { } item) return;
+        OpenFromDoubleClick(item);
+    }
+    internal void OpenFromDoubleClick(MediaItem item)
+    {
+        if (!DetailsExpanded && !DetailsNotNeeded && (_settings.DetailsCollapsed || _detailsAutoFolded)) { OpenDetailsAt(_detailsTab); return; }
+        OpenDetail(item);
+    }
     private void Settings(object sender, RoutedEventArgs e) => OpenSettings();
     /// <summary>Opens the settings, on <paramref name="page"/> (German rubric name) if given.</summary>
     private void OpenSettings(string? page = null)
