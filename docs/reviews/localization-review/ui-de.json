@@ -15774,6 +15774,78 @@
     "Video": {
       "status": "unchanged",
       "digest": "a75e86b236be45c0247b7a21de0655b349bb5d1f3bc88b3a5f6f8569cf6a5796"
+    },
+    "Changes applied": {
+      "status": "unchanged",
+      "digest": "66cc9b1f40e46fb781fdff5d63010ea3e6996c4310286359d1f047895a959bb2"
+    },
+    "Hide": {
+      "status": "unchanged",
+      "digest": "8ea7d78796acb80c9e1efcbdddb6d0832eea5234f2a73fb68ff7f1c5f2127321"
+    },
+    "Nothing was changed.": {
+      "status": "unchanged",
+      "digest": "98c6f178a95fced38f3ee53bc25229227f9ace0c52da41fec0065d3fe779d10d"
+    },
+    "Previews and details are ready.": {
+      "status": "unchanged",
+      "digest": "9ac0f77864458a411b2002c54e710d9ecd344bc60f823b8025c204218c06212d"
+    },
+    "Previews wait until the running operation ends.": {
+      "status": "unchanged",
+      "digest": "f6c86a2050c066ae4f8847d7636298dec98bc3864520f459b7fdc32a54eb2286"
+    },
+    "Previews: {0:N0} of {1:N0} …": {
+      "status": "unchanged",
+      "digest": "e485779209b40046d1f5cc9e07055e79910e9cc65e3d252119d95b5af101b503"
+    },
+    "Reading technical details …": {
+      "status": "unchanged",
+      "digest": "602762ac8bdddcb9a97698810a69236a5cb36e1d87a8dfe51b3742d7442a5279"
+    },
+    "Remove from catalog ({0:N0})": {
+      "status": "unchanged",
+      "digest": "abbb0b7f0a878b1f91cda5ed6535b860a69e15b40cfa7d01a6ef2264ec57f404"
+    },
+    "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": {
+      "status": "unchanged",
+      "digest": "ecbc6ca4ed8679aad434fc2c6455be955f31c26faa3817af4e0d4ac552bf31c3"
+    },
+    "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": {
+      "status": "unchanged",
+      "digest": "e4c03eae239127b346044d50c11f4368882dacf5aaa013bc9314abac0e9fc529"
+    },
+    "{0:N0} files could not be prepared.": {
+      "status": "unchanged",
+      "digest": "e36bb515ec61b7c3c217aa6d8fa3195aa10f48ed0cf5f6b54f2375a39af924c9"
+    },
+    "{0:N0} files imported": {
+      "status": "unchanged",
+      "digest": "8be5df2571b58082ad9aaa09b0c7c7e7111060433c94e62f2a8f6795d009a018"
+    },
+    "{0:N0} files no longer offered": {
+      "status": "unchanged",
+      "digest": "2517bf434ac44ab324b569aabca2dd4d7eb7e5459d4903d9deb0a20079a386b7"
+    },
+    "{0:N0} files reassigned": {
+      "status": "unchanged",
+      "digest": "a8b5f072f8bd02789296272030125df51e52d87a4c3e9ca050e732a41c993955"
+    },
+    "{0:N0} files removed from the catalog": {
+      "status": "unchanged",
+      "digest": "4141caff0e8f9aa1bb1333391dac5a6eebde434a60bcfaf978fc37f8f92c4a04"
+    },
+    "{0:N0} files updated": {
+      "status": "unchanged",
+      "digest": "bdff70ee9a7fe341730432a5670ccabfc0b4b6683e23de800868e38167a98efc"
+    },
+    "{0:N0} skipped: show why": {
+      "status": "unchanged",
+      "digest": "16f0337d4d5a3d8ae0c2e3f45c24c03ddee9948d029c3f3cf76bc23313ea8d65"
+    },
+    "{0}: the file changed since the check.": {
+      "status": "unchanged",
+      "digest": "5f2190555ef9f5e24dd4a54bfe0a4ec049e0b200e748143ed76384913ff54e9e"
     }
   }
 }

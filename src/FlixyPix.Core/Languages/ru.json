@@ -509,6 +509,7 @@
   "Changed": "Изменён",
   "changed in Stash": "изменено в Stash",
   "changed in Stash and locally": "изменено в Stash и локально",
+  "Changes applied": "Изменения применены",
   "Changes found": "Найденные изменения",
   "Changing images or the preview clip. A missing clip is made the first time.": "Сменяющиеся изображения или клип предпросмотра. Отсутствующий клип создаётся при первом показе.",
   "Characters dropped from titles": "Символы, удаляемые из названий",
@@ -1167,6 +1168,7 @@
   "Height relative to the playback area (1 = full height)": "Высота относительно площади воспроизведения (1 = полная высота)",
   "Help": "Справка",
   "Hidden, the counter keeps its values and its row on the home page disappears.": "Скрытый счётчик сохраняет значения, а его строка исчезает с главной страницы.",
+  "Hide": "Скрыть",
   "Hide completely": "Скрыть полностью",
   "Hide the control bar in full screen": "Скрывать панель управления в полноэкранном режиме",
   "Hide the filter panel": "Скрыть панель фильтров",
@@ -1851,6 +1853,7 @@
   "Nothing found.": "Ничего не найдено.",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "В этом представлении ничто не соответствует поиску и фильтрам.\nОслабьте условия фильтров или удалите их.",
   "Nothing to count yet.": "Пока нечего считать.",
+  "Nothing was changed.": "Ничего не изменено.",
   "Nothing was imported. {0}": "Ничего не импортировано. {0}",
   "Notification area": "Область уведомлений",
   "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": "Область уведомлений: нажмите значок, чтобы вернуться. Полное скрытие: используйте отдельное сочетание для повторного показа FlixyPix.",
@@ -2154,7 +2157,10 @@
   "Preview of the tag template": "Предпросмотр шаблона тегов",
   "Preview setting saved": "Настройка предпросмотра сохранена",
   "Preview · {0} · {1}": "Предпросмотр · {0} · {1}",
+  "Previews and details are ready.": "Превью и сведения готовы.",
   "Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings.": "Предпросмотр или анализ медиа ограничен: отсутствуют FFmpeg/ffprobe. Пути можно выбрать в настройках.",
+  "Previews wait until the running operation ends.": "Превью ждут окончания текущей операции.",
+  "Previews: {0:N0} of {1:N0} …": "Превью: {0:N0} из {1:N0} …",
   "Previous": "Назад",
   "Previous bookmark": "Предыдущая закладка",
   "Previous category": "Предыдущая категория",
@@ -2237,6 +2243,7 @@
   "Read technical data": "Прочитать технические данные",
   "Reading image …": "Чтение изображения…",
   "Reading item entries … {0:N0} of {1:N0}": "Чтение записей элементов… {0:N0} из {1:N0}",
+  "Reading technical details …": "Чтение технических сведений …",
   "Reading the export …": "Чтение экспорта…",
   "Reading the export … {0:N0} records": {
     "one": "Чтение экспорта… {0:N0} запись",
@@ -2303,6 +2310,7 @@
   "Remove folder filter": "Убрать фильтр по папке",
   "Remove from all items …": "Удалить из всех элементов…",
   "Remove from catalog": "Удалить из каталога",
+  "Remove from catalog ({0:N0})": "Удалить из каталога ({0:N0})",
   "Remove from catalog …": "Удалить из каталога…",
   "Remove from collection": "Удалить из коллекции",
   "Remove from list": "Убрать из списка",
@@ -2680,6 +2688,7 @@
   "Smooth transition to the next image.": "Плавный переход к следующему изображению.",
   "So far in FlixyPix": "Текущие значения в FlixyPix",
   "Some files are still in use: {0}": "Некоторые файлы все еще используются: {0}",
+  "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": "Некоторые папки не удалось прочитать полностью, поэтому FlixyPix не может определить, действительно ли эти файлы пропали. Проверьте снова, когда папки станут доступны.",
   "Sort tags by frequency or name": "Сортировать теги по частоте или названию",
   "Sorting": "Сортировка",
   "Sound off": "Звук выключен",
@@ -2723,6 +2732,7 @@
   "Statistics": "Статистика",
   "Statistics not possible · ": "Статистика недоступна · ",
   "Statistics · FlixyPix": "Статистика · FlixyPix",
+  "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": "Остаётся в каталоге со всеми данными. Отметьте его и выберите «Удалить из каталога», чтобы удалить.",
   "Step": "Шаг",
   "Step size for {0}": "Величина шага: {0}",
   "Steps": "Шаги",
@@ -3432,10 +3442,40 @@
     "few": "{0:N0} файла объединены в одном элементе",
     "many": "{0:N0} файлов объединены в одном элементе"
   },
+  "{0:N0} files could not be prepared.": {
+    "one": "{0:N0} файл не удалось подготовить.",
+    "few": "{0:N0} файла не удалось подготовить.",
+    "many": "{0:N0} файлов не удалось подготовить."
+  },
   "{0:N0} files deleted": {
     "one": "Удалён {0:N0} файл",
     "few": "Удалено {0:N0} файла",
     "many": "Удалено {0:N0} файлов"
+  },
+  "{0:N0} files imported": {
+    "one": "{0:N0} файл импортирован",
+    "few": "{0:N0} файла импортировано",
+    "many": "{0:N0} файлов импортировано"
+  },
+  "{0:N0} files no longer offered": {
+    "one": "{0:N0} файл больше не предлагается",
+    "few": "{0:N0} файла больше не предлагаются",
+    "many": "{0:N0} файлов больше не предлагаются"
+  },
+  "{0:N0} files reassigned": {
+    "one": "{0:N0} файл переназначен",
+    "few": "{0:N0} файла переназначено",
+    "many": "{0:N0} файлов переназначено"
+  },
+  "{0:N0} files removed from the catalog": {
+    "one": "{0:N0} файл удалён из каталога",
+    "few": "{0:N0} файла удалено из каталога",
+    "many": "{0:N0} файлов удалено из каталога"
+  },
+  "{0:N0} files updated": {
+    "one": "{0:N0} файл обновлён",
+    "few": "{0:N0} файла обновлено",
+    "many": "{0:N0} файлов обновлено"
   },
   "{0:N0} files · {1}": {
     "one": "Файлы: {0:N0} · {1}",
@@ -3648,6 +3688,11 @@
     "few": "Записанные сопроводительные файлы: {0:N0}",
     "many": "Записанные сопроводительные файлы: {0:N0}"
   },
+  "{0:N0} skipped: show why": {
+    "one": "{0:N0} пропущен: показать причину",
+    "few": "{0:N0} пропущено: показать причины",
+    "many": "{0:N0} пропущено: показать причины"
+  },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "Исходных строк: {0:N0} · двоичных значений: {1:N0} ({2:N0} байт) · конфликтов: {3:N0}\n",
   "{0:N0} tags": {
     "one": "{0:N0} тег",
@@ -3833,6 +3878,7 @@
   "{0}: known": "{0}: известно",
   "{0}: please enter a value of {1}.": "{0}: введите значение в пределах {1}.",
   "{0}: the catalog entry changed since the check.": "{0}: запись каталога изменилась после проверки.",
+  "{0}: the file changed since the check.": "{0}: файл изменился после проверки.",
   "{0}: the file is back in its old place.": "{0}: файл снова находится на прежнем месте.",
   "{0}: the file is now in the catalog.": "{0}: файл уже есть в каталоге.",
   "{0}: the file no longer exists.": "{0}: файл больше не существует.",

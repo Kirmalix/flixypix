@@ -220,6 +220,19 @@ public sealed class LibraryFolderTests : IDisposable
         Assert.Empty(catalog.PlanFolderSync().Changes);
     }
     [Fact]
+    public void ChangeOfAnEntryWhosePathDiffersInCaseIsTakenOver()
+    {
+        // Catalogs taken over from EazyFlixPix 4 often spell a path differently from the file system.
+        var path = Fixture("Case.mp4"); var version = Fixture("Case-version.mp4"); using var catalog = Open(); Watch(catalog, new LibraryFolder { Path = Media });
+        var item = catalog.Upsert(new MediaItem { Path = path.ToLowerInvariant(), Kind = MediaKind.Video, FileSize = 1, Files = [new MediaFile { Path = version.ToUpperInvariant(), FileSize = 1 }] });
+        var plan = catalog.PlanFolderSync();
+        Assert.Equal(2, plan.Count(FolderChangeKind.Modified));
+        var result = ApplyAll(catalog, plan);
+        Assert.Equal((2, 0), (result.Updated, result.Skipped.Count));
+        Assert.Empty(catalog.PlanFolderSync().Changes);
+        Assert.Equal(path.ToLowerInvariant(), catalog.GetMedia(item.Id)!.Path);
+    }
+    [Fact]
     public void ClockChangeOnTheSameSizeIsNoChange()
     {
         var path = Fixture("clock.jpg"); using var catalog = Open();

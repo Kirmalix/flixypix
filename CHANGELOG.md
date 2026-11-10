@@ -15,6 +15,12 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   (another program writing tags, a copy restored from a backup). The report lists the changes by kind.
 - A file whose date moved by whole hours at the same size no longer counts as changed: that is a clock change on
   memory cards and FAT drives, not new content.
+- Changed files whose path the catalog spells differently, such as in another case after a takeover from
+  EazyFlixPix 4, are taken over now; before, they were skipped without a word and listed as changed again.
+- Taking over folder changes says what it did: a summary above the list counts imported, updated and reassigned
+  files and shows why a file was skipped. New and changed media get their previews right away, videos first, while
+  you go on working; the summary follows the progress.
+- Missing files can be ticked like the other changes; "Remove from catalog" removes the ticked ones.
 
 ## 0.7.0
 

@@ -49,7 +49,9 @@ internal sealed class LibraryFoldersWindow : Window
             get => _chosen;
             set { if (_chosen == value) return; _chosen = value; PropertyChanged?.Invoke(this, new(nameof(Chosen))); ChosenChanged?.Invoke(); }
         }
-        public bool CanChoose => Change.Kind != FolderChangeKind.Missing;
+        /// <summary>Every row can be ticked: ticked changes are taken over, ticked missing files can be removed from the catalog.</summary>
+        public bool CanChoose => true;
+        public bool IsMissing => Change.Kind == FolderChangeKind.Missing;
         public string Type => KindName(Change.Kind);
         /// <summary>Kind for the colour mark of the row template.</summary>
         public string Kind => Change.Kind.ToString();
@@ -70,6 +72,7 @@ internal sealed class LibraryFoldersWindow : Window
         {
             get
             {
+                if (IsMissing) return T("Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.");
                 if (Change.Kind != FolderChangeKind.Modified || Change.PreviousSize != Change.Size || Change.PreviousModifiedAtUtc is not { } before || Change.ModifiedAtUtc is not { } now) return "";
                 return now < before ? T("Same size, older date: perhaps restored from a backup.") : T("Same size, newer date: often another program wrote details such as tags into the file.");
             }
@@ -103,7 +106,7 @@ internal sealed class LibraryFoldersWindow : Window
 
         var add = new Button { Content = T("＋ Add folder …"), Style = (Style)Application.Current.Resources["Primary"] };
         add.Click += (_, _) => AddFolders();
-        _check.Click += async (_, _) => await CheckAsync();
+        _check.Click += async (_, _) => { _resultCard.Visibility = Visibility.Collapsed; await CheckAsync(); };
         _adopt.Click += (_, _) => AdoptFromOriginal();
         var actions = new WrapPanel { Margin = new Thickness(0, 12, 0, 12) };
         foreach (var button in new[] { add, _adopt }) { button.Margin = new Thickness(0, 0, 8, 0); actions.Children.Add(button); }
@@ -116,7 +119,7 @@ internal sealed class LibraryFoldersWindow : Window
         var changesPanel = new DockPanel();
         var changesHeader = new StackPanel();
 
-        changesHeader.Children.Add(_summary); changesHeader.Children.Add(_progress);
+        changesHeader.Children.Add(_resultCard); changesHeader.Children.Add(_summary); changesHeader.Children.Add(_progress);
         DockPanel.SetDock(changesHeader, Dock.Top); changesPanel.Children.Add(changesHeader);
         VirtualizingPanel.SetIsVirtualizing(_changes, true); VirtualizingPanel.SetVirtualizationMode(_changes, VirtualizationMode.Recycling);
         ScrollViewer.SetHorizontalScrollBarVisibility(_changes, ScrollBarVisibility.Disabled);
@@ -141,15 +144,16 @@ internal sealed class LibraryFoldersWindow : Window
         _applyButton.Click += async (_, _) => await ApplyAsync();
 
         var cancel = new Button { Content = T("Cancel"), Style = (Style)Application.Current.Resources["Quiet"] }; _cancel = cancel; cancel.Visibility = Visibility.Collapsed; cancel.Click += (_, _) => { _checking?.Cancel(); if (Owner is MainWindow main) main.CancelFolderSync(); };
-        var removeMissing = new Button { Content = T("Remove from catalog"), Style = (Style)Application.Current.Resources["Quiet"] };
-        _removeMissing = removeMissing; _changes.SelectionMode = SelectionMode.Extended;
-        removeMissing.IsEnabled = false; _changes.SelectionChanged += (_, _) => removeMissing.IsEnabled = _changes.SelectedItems.Cast<ChangeRow>().Any(r => r.Change.Kind == FolderChangeKind.Missing);
+        var removeMissing = new Button { Content = T("Remove from catalog"), Style = (Style)Application.Current.Resources["Quiet"], Visibility = Visibility.Collapsed };
+        _removeMissing = removeMissing;
         removeMissing.Click += async (_, _) =>
         {
-            if (_plan == null || _plan.Errors.Count > 0) return;
+            if (_plan == null) return;
+            // A folder that could not be read completely may still hold the file; nothing is removed then.
+            if (_plan.Errors.Count > 0) { Message.Show(this, T("Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read."), T("Remove from catalog"), MessageBoxButton.OK, MessageBoxImage.Information); return; }
             try
             {
-                var missing = _changes.SelectedItems.Cast<ChangeRow>().Where(r => r.Change.Kind == FolderChangeKind.Missing).Select(r => r.Change).ToList();
+                var missing = _rows.Where(r => r.IsMissing && r.Chosen).Select(r => r.Change).ToList();
                 if (missing.Count == 0) return;
                 if (Message.Show(this, T("Remove selected missing files from the catalog? Personal details of removed items will be lost."), T("Remove from catalog"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, yes: T("Remove")) != MessageBoxResult.Yes) return;
                 foreach (var change in missing)
@@ -163,7 +167,9 @@ internal sealed class LibraryFoldersWindow : Window
                     }
                 }
                 SetBusy(true);
-                var removed = Owner is MainWindow main ? await main.RemoveMissingFolderFilesAsync(_plan, missing) : _repository.RemoveMissingFolderFiles(_plan, missing); _repository.SaveFolderSyncReport(_plan with { Changes = missing }, new FolderSyncResult(0, 0, 0, []) { Removed = removed }); await CheckAsync();
+                var removed = Owner is MainWindow main ? await main.RemoveMissingFolderFilesAsync(_plan, missing) : _repository.RemoveMissingFolderFiles(_plan, missing);
+                var outcome = new FolderSyncResult(0, 0, 0, []) { Removed = removed };
+                _repository.SaveFolderSyncReport(_plan with { Changes = missing }, outcome); await CheckAsync(); ShowResult(outcome);
             }
             catch (OperationCanceledException) { _summary.Text = T("Operation cancelled"); }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException) { _summary.Text = error.Message; }
@@ -189,12 +195,13 @@ internal sealed class LibraryFoldersWindow : Window
         reportPanel.Children.Add(new Expander { Header = T("Details"), Foreground = Theme.Brush("Text"), Content = reportDetails });
         void LoadReport() { var last = _repository.GetFolderSyncReport(); report.Text = last == null ? T("Not checked yet.") : last.At.ToLocalTime().ToString("g") + "\n\n" + (last.Applied ? Result(last.Result) : Describe(new FolderSyncPlan([], last.Changes, last.Unreachable, last.Errors))); reportDetails.Text = last == null ? "" : ReportDetails(last); }
         tabs.Items.Add(new TabItem { Header = T("Report"), Content = new ScrollViewer { Content = reportPanel } });
-        tabs.SelectionChanged += (_, _) => { LoadReport(); _applyButton.Visibility = tabs.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed; if (_removeMissing != null) _removeMissing.Visibility = _applyButton.Visibility; _check.Visibility = tabs.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible; }; LoadReport();
+        tabs.SelectionChanged += (_, _) => { LoadReport(); _applyButton.Visibility = tabs.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed; ShowChosenCount(); _check.Visibility = tabs.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible; }; LoadReport();
         var body = new DockPanel(); DockPanel.SetDock(footer, Dock.Bottom); body.Children.Add(footer); body.Children.Add(tabs);
         Content = new WindowFrame(T("Media folders"), T("New files, familiar places. Keep your library up to date."), body, "", scroll: false);
         if (plan == null) tabs.SelectedIndex = 1;
 
-        Closed += (_, _) => _checking?.Cancel();
+        Closed += (_, _) => { _checking?.Cancel(); if (Owner is MainWindow main) main.MediaPreparationChanged -= ShowPreparation; };
+        if (owner is MainWindow host) host.MediaPreparationChanged += ShowPreparation;
         ShowFolders();
         if (plan != null) ShowPlan(plan); else ShowPlan(null);
     }
@@ -386,7 +393,7 @@ internal sealed class LibraryFoldersWindow : Window
     {
         // Counted once at the end: a large check has a hundred thousand rows.
         _choosing = true;
-        try { foreach (var row in ShownRows.Where(r => r.CanChoose)) row.Chosen = chosen; }
+        try { foreach (var row in ShownRows.Where(r => !chosen || !r.IsMissing || _kindFilter == FolderChangeKind.Missing)) row.Chosen = chosen; }
         finally { _choosing = false; }
         ShowChosenCount();
     }
@@ -394,9 +401,17 @@ internal sealed class LibraryFoldersWindow : Window
     private void ShowChosenCount()
     {
         if (_choosing) return;
-        var count = _rows.Count(r => r.CanChoose && r.Chosen);
+        var count = _rows.Count(r => !r.IsMissing && r.Chosen);
+        var busy = _progress.Visibility == Visibility.Visible;
         _applyButton.Content = count > 0 ? T("Apply selected ({0:N0})", count) : T("Apply selected");
-        _applyButton.IsEnabled = count > 0 && _progress.Visibility != Visibility.Visible;
+        _applyButton.IsEnabled = count > 0 && !busy;
+        if (_removeMissing is { } remove)
+        {
+            var missing = _rows.Count(r => r.IsMissing && r.Chosen);
+            remove.Content = missing > 0 ? T("Remove from catalog ({0:N0})", missing) : T("Remove from catalog");
+            remove.IsEnabled = missing > 0 && !busy;
+            remove.Visibility = _rows.Any(r => r.IsMissing) && ReviewTabs?.SelectedIndex is null or 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     /// <summary>Notes first, then the changes by kind. A large check lists a few hundred files per kind, not every one of them.</summary>
@@ -431,7 +446,7 @@ internal sealed class LibraryFoldersWindow : Window
      => _tasks.Run(async libraryToken =>
     {
         if (_plan is not { } plan) return;
-        var chosen = Rows.Where(r => r.CanChoose && r.Chosen).Select(r => r.Change).ToList();
+        var chosen = Rows.Where(r => !r.IsMissing && r.Chosen).Select(r => r.Change).ToList();
         SetBusy(true);
         _applyButton.IsEnabled = _check.IsEnabled = false;
         try
@@ -439,8 +454,7 @@ internal sealed class LibraryFoldersWindow : Window
             var result = await _apply(plan, chosen, _ignoreDeclined.IsChecked == true);
             ShowFolders();
             await CheckAsync();
-            _repository.SaveFolderSyncReport(plan with { Changes = chosen }, result);
-            _summary.Text = Result(result) + " " + _summary.Text;
+            ShowResult(result);
         }
         catch (OperationCanceledException) { _summary.Text = T("Operation cancelled"); _check.IsEnabled = true; }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
@@ -451,12 +465,79 @@ internal sealed class LibraryFoldersWindow : Window
         finally { SetBusy(false); }
     });
 
+    private readonly Border _resultCard = new() { Visibility = Visibility.Collapsed, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Padding = new Thickness(16, 12, 12, 12), Margin = new Thickness(0, 0, 0, 12) };
+    private readonly TextBlock _preparation = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
+    private readonly ProgressBar _preparationBar = new() { Height = 3, Margin = new Thickness(0, 6, 0, 0), Maximum = 1 };
+    private readonly TextBlock _preparationErrors = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+    private readonly Expander _preparationDetails = new() { Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed };
+    internal FolderSyncResult? LastResult { get; private set; }
+
+    /// <summary>What taking over did, shown above the list until the next check: counts, skipped files with their reasons,
+    /// and the previews that follow in the background.</summary>
+    internal void ShowResult(FolderSyncResult result)
+    {
+        LastResult = result;
+        var facts = new List<string>();
+        if (result.Imported > 0) facts.Add(Tn(result.Imported, "1 file imported", "{0:N0} files imported"));
+        if (result.Updated > 0) facts.Add(Tn(result.Updated, "1 file updated", "{0:N0} files updated"));
+        if (result.Relinked > 0) facts.Add(Tn(result.Relinked, "1 file reassigned", "{0:N0} files reassigned"));
+        if (result.Removed > 0) facts.Add(Tn(result.Removed, "1 file removed from the catalog", "{0:N0} files removed from the catalog"));
+        if (result.Ignored > 0) facts.Add(Tn(result.Ignored, "1 file no longer offered", "{0:N0} files no longer offered"));
+        var skipped = result.Skipped.Count > 0;
+        var icon = new TextBlock { Text = skipped ? "\uE7BA" : "\uE73E", Style = (Style)Application.Current.Resources["Icon"], FontSize = 20, Margin = new Thickness(0, 1, 14, 0), VerticalAlignment = VerticalAlignment.Top };
+        icon.SetResourceReference(TextBlock.ForegroundProperty, skipped ? "Gold" : "Good");
+        var hide = new Button { Content = "\uE711", Style = (Style)Application.Current.Resources["IconButton"], VerticalAlignment = VerticalAlignment.Top, ToolTip = T("Hide") };
+        AutomationProperties.SetName(hide, T("Hide")); hide.Click += (_, _) => _resultCard.Visibility = Visibility.Collapsed;
+        var words = new StackPanel();
+        words.Children.Add(new TextBlock { Text = facts.Count > 0 ? T("Changes applied") : T("Nothing was changed."), FontSize = 16, FontWeight = FontWeights.SemiBold });
+        if (facts.Count > 0) words.Children.Add(new TextBlock { Text = string.Join(" · ", facts), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+        if (skipped)
+        {
+            var reasons = new TextBlock { Text = string.Join("\n", result.Skipped.Take(200)) + (result.Skipped.Count > 200 ? "\n" + T("… and {0:N0} more", result.Skipped.Count - 200) : ""), TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+            reasons.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+            words.Children.Add(new Expander { Header = Tn(result.Skipped.Count, "1 skipped: show why", "{0:N0} skipped: show why"), Margin = new Thickness(0, 6, 0, 0), Foreground = Theme.Brush("Text"),
+                Content = new ScrollViewer { Content = reasons, MaxHeight = 160, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } });
+        }
+        var layout = new DockPanel();
+        DockPanel.SetDock(icon, Dock.Left); DockPanel.SetDock(hide, Dock.Right);
+        layout.Children.Add(icon); layout.Children.Add(hide); layout.Children.Add(words);
+        foreach (var child in new FrameworkElement[] { _preparation, _preparationBar, _preparationDetails }) (child.Parent as Panel)?.Children.Remove(child);
+        words.Children.Add(_preparation); words.Children.Add(_preparationBar); words.Children.Add(_preparationDetails);
+        _resultCard.Child = layout;
+        _resultCard.SetResourceReference(Border.BackgroundProperty, "ChromeBackground"); _resultCard.SetResourceReference(Border.BorderBrushProperty, "Divider");
+        _resultCard.Visibility = Visibility.Visible;
+        ShowPreparation();
+    }
+
+    /// <summary>Progress of the previews and analysis that follow taking over new or changed media.</summary>
+    private void ShowPreparation()
+    {
+        var (done, total, running, errors) = Owner is MainWindow main ? main.MediaPreparation : (0, 0, false, []);
+        var shown = total > 0 && _resultCard.Visibility == Visibility.Visible;
+        _preparation.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        _preparationBar.Visibility = shown && running ? Visibility.Visible : Visibility.Collapsed;
+        _preparation.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+        if (!shown) { _preparationDetails.Visibility = Visibility.Collapsed; return; }
+        _preparation.Text = !running ? T("Previews and details are ready.")
+            : done == 0 && Owner is MainWindow { IsPreparingMedia: false } ? T("Previews wait until the running operation ends.")
+            : done < total ? T("Previews: {0:N0} of {1:N0} …", done, total) : T("Reading technical details …");
+        _preparationBar.Maximum = Math.Max(1, total); _preparationBar.Value = Math.Min(done, total);
+        _preparationDetails.Visibility = errors.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (errors.Count > 0)
+        {
+            _preparationDetails.Header = Tn(errors.Count, "1 file could not be prepared.", "{0:N0} files could not be prepared.");
+            _preparationDetails.Foreground = Theme.Brush("Text");
+            _preparationErrors.Text = string.Join("\n", errors.Take(200));
+            _preparationErrors.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+            _preparationDetails.Content ??= new ScrollViewer { Content = _preparationErrors, MaxHeight = 160, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        }
+    }
+
     internal void SetBusy(bool busy)
     {
         _progress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         if (_cancel != null) _cancel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         _changes.IsEnabled = _folders.IsEnabled = !busy;
-        if (_removeMissing != null) _removeMissing.IsEnabled = !busy && _changes.SelectedItems.Cast<ChangeRow>().Any(r => r.Change.Kind == FolderChangeKind.Missing);
         _check.IsEnabled = !busy && _repository.GetLibraryFolders().Count > 0;
         ShowChosenCount();
     }

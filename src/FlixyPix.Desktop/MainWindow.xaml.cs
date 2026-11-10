@@ -429,6 +429,8 @@ public partial class MainWindow : Window
     {
         _operation = null;
         if (_closeRequested) _ = Dispatcher.BeginInvoke(Close);
+        // New media that arrived while another operation ran are prepared now.
+        else if (!_preparingMedia && _preparationQueue.Count > 0) _ = Dispatcher.BeginInvoke(() => PrepareQueuedMediaAsync());
     }
 
     private async Task ImportPaths(IEnumerable<string> paths)

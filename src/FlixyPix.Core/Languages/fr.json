@@ -509,6 +509,7 @@
   "Changed": "Modifié",
   "changed in Stash": "modifié dans Stash",
   "changed in Stash and locally": "modifié dans Stash et localement",
+  "Changes applied": "Modifications appliquées",
   "Changes found": "Changements trouvés",
   "Changing images or the preview clip. A missing clip is made the first time.": "Images changeantes ou le clip d'aperçu. Un clip manquant est créé la première fois.",
   "Characters dropped from titles": "Caractères à retirer des titres",
@@ -1167,6 +1168,7 @@
   "Height relative to the playback area (1 = full height)": "Hauteur relative à la zone de lecture (1 = toute la hauteur)",
   "Help": "Aide",
   "Hidden, the counter keeps its values and its row on the home page disappears.": "Masqué, le compteur conserve ses valeurs et sa rangée disparaît de la page d’accueil.",
+  "Hide": "Masquer",
   "Hide completely": "Masquer entièrement",
   "Hide the control bar in full screen": "Masquer la barre de commandes en plein écran",
   "Hide the filter panel": "Masquer le panneau de filtres",
@@ -1851,6 +1853,7 @@
   "Nothing found.": "Rien n’a été trouvé.",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "Aucun média ne correspond à la recherche et aux filtres de cette vue.\nAssouplissez ou supprimez les filtres.",
   "Nothing to count yet.": "Rien à compter pour l’instant.",
+  "Nothing was changed.": "Rien n’a été modifié.",
   "Nothing was imported. {0}": "Rien n’a été importé. {0}",
   "Notification area": "Zone de notification",
   "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": "Zone de notification : cliquez sur son icône pour revenir. Masquer complètement : utilisez le raccourci distinct pour réafficher FlixyPix.",
@@ -2154,7 +2157,10 @@
   "Preview of the tag template": "Aperçu du modèle de tags",
   "Preview setting saved": "Paramètre d'aperçu enregistré",
   "Preview · {0} · {1}": "Aperçu · {0} · {1}",
+  "Previews and details are ready.": "Aperçus et détails prêts.",
   "Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings.": "Les aperçus ou l'analyse des médias sont limités : FFmpeg/ffprobe sont absents. Leurs chemins peuvent être choisis dans les paramètres.",
+  "Previews wait until the running operation ends.": "Les aperçus attendent la fin de l’opération en cours.",
+  "Previews: {0:N0} of {1:N0} …": "Aperçus : {0:N0} sur {1:N0} …",
   "Previous": "Précédent",
   "Previous bookmark": "Signet précédent",
   "Previous category": "Catégorie précédente",
@@ -2237,6 +2243,7 @@
   "Read technical data": "Lire les données techniques",
   "Reading image …": "Lecture de l'image…",
   "Reading item entries … {0:N0} of {1:N0}": "Lecture des entrées des médias… {0:N0} sur {1:N0}",
+  "Reading technical details …": "Lecture des détails techniques …",
   "Reading the export …": "Lecture de l’exportation…",
   "Reading the export … {0:N0} records": {
     "one": "Lecture de l’exportation… {0:N0} enregistrement",
@@ -2303,6 +2310,7 @@
   "Remove folder filter": "Retirer le filtre de dossier",
   "Remove from all items …": "Retirer de tous les médias…",
   "Remove from catalog": "Retirer du catalogue",
+  "Remove from catalog ({0:N0})": "Retirer du catalogue ({0:N0})",
   "Remove from catalog …": "Retirer du catalogue…",
   "Remove from collection": "Retirer de la collection",
   "Remove from list": "Retirer de la liste",
@@ -2680,6 +2688,7 @@
   "Smooth transition to the next image.": "Transition douce à l’image suivante.",
   "So far in FlixyPix": "Actuellement dans FlixyPix",
   "Some files are still in use: {0}": "Certains fichiers sont encore utilisés : {0}",
+  "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": "Certains dossiers n’ont pas pu être lus entièrement : FlixyPix ne peut donc pas savoir si ces fichiers ont vraiment disparu. Vérifiez à nouveau quand les dossiers seront lisibles.",
   "Sort tags by frequency or name": "Trier les tags par fréquence ou par nom",
   "Sorting": "Tri",
   "Sound off": "Son coupé",
@@ -2723,6 +2732,7 @@
   "Statistics": "Statistiques",
   "Statistics not possible · ": "Statistiques impossibles · ",
   "Statistics · FlixyPix": "Statistiques · FlixyPix",
+  "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": "Reste dans le catalogue avec toutes ses informations. Cochez-le et choisissez « Retirer du catalogue » pour le retirer.",
   "Step": "Pas",
   "Step size for {0}": "Pas pour : {0}",
   "Steps": "Étapes",
@@ -3432,10 +3442,40 @@
     "many": "{0:N0} de fichiers combinés dans un élément",
     "other": "{0:N0} fichiers combinés dans un élément"
   },
+  "{0:N0} files could not be prepared.": {
+    "one": "{0:N0} fichier n’a pas pu être préparé.",
+    "many": "{0:N0} fichiers n’ont pas pu être préparés.",
+    "other": "{0:N0} fichiers n’ont pas pu être préparés."
+  },
   "{0:N0} files deleted": {
     "one": "{0:N0} fichier supprimé",
     "many": "{0:N0} de fichiers supprimés",
     "other": "{0:N0} fichiers supprimés"
+  },
+  "{0:N0} files imported": {
+    "one": "{0:N0} fichier importé",
+    "many": "{0:N0} fichiers importés",
+    "other": "{0:N0} fichiers importés"
+  },
+  "{0:N0} files no longer offered": {
+    "one": "{0:N0} fichier n’est plus proposé",
+    "many": "{0:N0} fichiers ne sont plus proposés",
+    "other": "{0:N0} fichiers ne sont plus proposés"
+  },
+  "{0:N0} files reassigned": {
+    "one": "{0:N0} fichier réattribué",
+    "many": "{0:N0} fichiers réattribués",
+    "other": "{0:N0} fichiers réattribués"
+  },
+  "{0:N0} files removed from the catalog": {
+    "one": "{0:N0} fichier retiré du catalogue",
+    "many": "{0:N0} fichiers retirés du catalogue",
+    "other": "{0:N0} fichiers retirés du catalogue"
+  },
+  "{0:N0} files updated": {
+    "one": "{0:N0} fichier mis à jour",
+    "many": "{0:N0} fichiers mis à jour",
+    "other": "{0:N0} fichiers mis à jour"
   },
   "{0:N0} files · {1}": {
     "one": "Fichiers : {0:N0} · {1}",
@@ -3648,6 +3688,11 @@
     "many": "Fichiers annexes écrits : {0:N0}",
     "other": "Fichiers annexes écrits : {0:N0}"
   },
+  "{0:N0} skipped: show why": {
+    "one": "{0:N0} ignoré : voir pourquoi",
+    "many": "{0:N0} ignorés : voir pourquoi",
+    "other": "{0:N0} ignorés : voir pourquoi"
+  },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "{0:N0} lignes sources · {1:N0} valeurs binaires ({2:N0} octets) · {3:N0} conflits\n",
   "{0:N0} tags": {
     "one": "{0:N0} tag",
@@ -3833,6 +3878,7 @@
   "{0}: known": "{0} : connu",
   "{0}: please enter a value of {1}.": "{0}: veuillez entrer une valeur de {1}.",
   "{0}: the catalog entry changed since the check.": "{0} : l'entrée du catalogue a été modifiée depuis la vérification.",
+  "{0}: the file changed since the check.": "{0} : le fichier a changé depuis la vérification.",
   "{0}: the file is back in its old place.": "{0}: le fichier est de retour à son ancien endroit.",
   "{0}: the file is now in the catalog.": "{0}: le fichier est maintenant dans le catalogue.",
   "{0}: the file no longer exists.": "{0}: le fichier n'existe plus.",

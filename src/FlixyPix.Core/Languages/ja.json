@@ -461,6 +461,7 @@
   "Changed": "変更あり",
   "changed in Stash": "Stash で変更",
   "changed in Stash and locally": "Stash とローカルの両方で変更",
+  "Changes applied": "変更を適用しました",
   "Changes found": "検出した変更",
   "Changing images or the preview clip. A missing clip is made the first time.": "切り替わる画像、またはプレビュークリップ。クリップがない場合は初回に作成します。",
   "Characters dropped from titles": "タイトルから削除する文字",
@@ -1109,6 +1110,7 @@
   "Height relative to the playback area (1 = full height)": "再生領域に対する高さの比率（1 = 全高）",
   "Help": "ヘルプ",
   "Hidden, the counter keeps its values and its row on the home page disappears.": "非表示にしてもカウンターの値は保持され、ホーム画面の行は表示されなくなります。",
+  "Hide": "隠す",
   "Hide completely": "完全に隠す",
   "Hide the control bar in full screen": "全画面表示で操作バーを隠す",
   "Hide the filter panel": "フィルターパネルを隠す",
@@ -1773,6 +1775,7 @@
   "Nothing found.": "見つかりませんでした。",
   "Nothing matches the search and filters in this view.\nBroaden the filters or remove them.": "この表示の検索条件とフィルターに一致するメディアはありません。\n条件を緩めるか、フィルターを解除してください。",
   "Nothing to count yet.": "まだ集計するものがありません。",
+  "Nothing was changed.": "何も変更されませんでした。",
   "Nothing was imported. {0}": "何もインポートされませんでした。{0}",
   "Notification area": "通知領域",
   "Notification area: click its icon to return. Hide completely: use the separate shortcut to show FlixyPix again.": "通知領域：アイコンをクリックすると再表示します。完全に隠す：専用のショートカットでFlixyPixを再表示します。",
@@ -2066,7 +2069,10 @@
   "Preview of the tag template": "タグテンプレートのプレビュー",
   "Preview setting saved": "プレビューの設定を保存しました",
   "Preview · {0} · {1}": "プレビュー · {0} · {1}",
+  "Previews and details are ready.": "プレビューと詳細の準備ができました。",
   "Previews or media analysis are limited: FFmpeg/ffprobe are missing. The paths can be chosen in Settings.": "FFmpeg／ffprobe がないため、プレビューやメディア解析の機能が制限されています。「設定」でパスを指定できます。",
+  "Previews wait until the running operation ends.": "プレビューは実行中の処理が終わるまで待機します。",
+  "Previews: {0:N0} of {1:N0} …": "プレビュー: {0:N0} / {1:N0} …",
   "Previous": "前へ",
   "Previous bookmark": "前のブックマーク",
   "Previous category": "変更前のカテゴリ",
@@ -2149,6 +2155,7 @@
   "Read technical data": "技術データを読み取る",
   "Reading image …": "画像を読み込み中…",
   "Reading item entries … {0:N0} of {1:N0}": "メディアの項目を読み込んでいます… {0:N0} / {1:N0}",
+  "Reading technical details …": "技術情報を読み取っています …",
   "Reading the export …": "エクスポートを読み込み中…",
   "Reading the export … {0:N0} records": {
     "other": "エクスポートを読み込み中… {0:N0} 件"
@@ -2213,6 +2220,7 @@
   "Remove folder filter": "フォルダーフィルターを解除",
   "Remove from all items …": "すべてのメディアから取り除く…",
   "Remove from catalog": "カタログから削除",
+  "Remove from catalog ({0:N0})": "カタログから削除 ({0:N0})",
   "Remove from catalog …": "カタログから削除…",
   "Remove from collection": "コレクションから削除",
   "Remove from list": "一覧から外す",
@@ -2570,6 +2578,7 @@
   "Smooth transition to the next image.": "次の画像へ滑らかに切り替えます。",
   "So far in FlixyPix": "FlixyPix の現在の値",
   "Some files are still in use: {0}": "まだ使用中のファイルがあります：{0}",
+  "Some folders could not be read completely, so FlixyPix cannot tell whether these files are really gone. Check again once the folders can be read.": "一部のフォルダーを完全に読み取れなかったため、これらのファイルが本当に無くなったか FlixyPix には判断できません。フォルダーを読み取れるようになったら、もう一度確認してください。",
   "Sort tags by frequency or name": "タグを頻度または名前で並べ替え",
   "Sorting": "並べ替え",
   "Sound off": "消音",
@@ -2613,6 +2622,7 @@
   "Statistics": "統計",
   "Statistics not possible · ": "統計を作成できません · ",
   "Statistics · FlixyPix": "統計 · FlixyPix",
+  "Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.": "すべての情報とともにカタログに残ります。削除するにはチェックを入れて「カタログから削除」を選んでください。",
   "Step": "ステップ",
   "Step size for {0}": "{0}の移動量",
   "Steps": "ステップ",
@@ -3282,8 +3292,26 @@
   "{0:N0} files combined in one item": {
     "other": "{0:N0} 個のファイルを 1 つのアイテムに結合しました"
   },
+  "{0:N0} files could not be prepared.": {
+    "other": "{0:N0} 個のファイルを準備できませんでした。"
+  },
   "{0:N0} files deleted": {
     "other": "{0:N0} 個のファイルを削除しました"
+  },
+  "{0:N0} files imported": {
+    "other": "{0:N0} 個のファイルを取り込みました"
+  },
+  "{0:N0} files no longer offered": {
+    "other": "{0:N0} 個のファイルは今後表示されません"
+  },
+  "{0:N0} files reassigned": {
+    "other": "{0:N0} 個のファイルを再割り当てしました"
+  },
+  "{0:N0} files removed from the catalog": {
+    "other": "{0:N0} 個のファイルをカタログから削除しました"
+  },
+  "{0:N0} files updated": {
+    "other": "{0:N0} 個のファイルを更新しました"
   },
   "{0:N0} files · {1}": {
     "other": "ファイル：{0:N0} 件 · {1}"
@@ -3416,6 +3444,9 @@
   "{0:N0} sidecars written": {
     "other": "書き込んだサイドカー ファイル：{0:N0} 件"
   },
+  "{0:N0} skipped: show why": {
+    "other": "{0:N0} 件スキップ: 理由を表示"
+  },
   "{0:N0} source rows · {1:N0} binary values ({2:N0} bytes) · {3:N0} conflicts\n": "元データ {0:N0} 行 · バイナリ値 {1:N0} 件 ({2:N0} バイト) · 競合 {3:N0} 件\n",
   "{0:N0} tags": {
     "other": "タグ {0:N0} 個"
@@ -3543,6 +3574,7 @@
   "{0}: known": "{0}: 判明",
   "{0}: please enter a value of {1}.": "{0}：{1} の範囲の値を入力してください。",
   "{0}: the catalog entry changed since the check.": "{0}：確認後にカタログ項目が変更されています。",
+  "{0}: the file changed since the check.": "{0}: 確認の後にファイルが変更されました。",
   "{0}: the file is back in its old place.": "{0} : ファイルは古い場所に戻っています。",
   "{0}: the file is now in the catalog.": "{0} : ファイルは現在カタログにあります。",
   "{0}: the file no longer exists.": "{0} : ファイルはもはや存在しません。",

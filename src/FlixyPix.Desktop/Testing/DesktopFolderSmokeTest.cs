@@ -32,6 +32,39 @@ public partial class MainWindow
    if (!FolderBannerShown || _repository.GetMedia(imported.Id) == null || _folderPlan?.Count(FolderChangeKind.Missing) != 1) throw new InvalidOperationException("Missing-only changes need a banner and must retain the item.");
    if (await RemoveMissingFolderFilesAsync(_folderPlan,_folderPlan.Changes) != 1) throw new InvalidOperationException("Explicit removal failed.");
   } finally { _repository.SaveLibraryFolders([]); RestartFolderWatcher(); HideFolderBanner(); }
+  await RunFolderPreviewQueueSmokeAsync(directory);
+ }
+
+ /// <summary>A video taken over from a media folder gets its preview right away, through the preparation queue.</summary>
+ private async Task RunFolderPreviewQueueSmokeAsync(string directory)
+ {
+  if (!ToolExists(_settings.Ffmpeg, "ffmpeg") || !ToolExists(_settings.Ffprobe, "ffprobe")) return;
+  var videos = Path.Combine(directory, "queued-videos"); Directory.CreateDirectory(videos);
+  foreach (var name in new[] { "first.mp4", "second.mp4" })
+  {
+   var start = new System.Diagnostics.ProcessStartInfo(_settings.Ffmpeg ?? Path.Combine(AppContext.BaseDirectory, "tools", "ffmpeg.exe")) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
+   foreach (var argument in new[] { "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-f", "lavfi", "-i", "testsrc=size=160x90:rate=10", "-t", "3", "-c:v", "libx264", "-pix_fmt", "yuv420p", Path.Combine(videos, name) }) start.ArgumentList.Add(argument);
+   using var encoder = System.Diagnostics.Process.Start(start)!; var error = encoder.StandardError.ReadToEndAsync();
+   await encoder.WaitForExitAsync(); if (encoder.ExitCode != 0) throw new InvalidOperationException(await error);
+  }
+  var settings = _settings; _settings = _settings with { AutoGeneratePreviews = true };
+  try
+  {
+   _repository.SaveLibraryFolders([new LibraryFolder { Path = videos, Watch = false }]);
+   var plan = await BuildFolderPlanAsync(CancellationToken.None);
+   var result = await ApplyFolderSyncAsync(plan, plan.Actionable, false);
+   if (result.Imported != 2) throw new InvalidOperationException("The queued videos were not imported.");
+   // Taking over returns at once; the previews follow in the queue.
+   for (var waited = 0; MediaPreparation.Running && waited < 600; waited++) await Task.Delay(100);
+   if (MediaPreparation.Running) throw new InvalidOperationException("The preview queue did not finish.");
+   var (done, total, _, errors) = MediaPreparation;
+   if (done != 2 || total != 2 || errors.Count > 0) throw new InvalidOperationException($"The preview queue counted {done} of {total}: " + string.Join("; ", errors));
+   foreach (var name in new[] { "first.mp4", "second.mp4" })
+    if (_repository.GetMediaByPath(Path.Combine(videos, name)) is not { ThumbnailPath: { } thumbnail, DurationSeconds: > 0 } || !File.Exists(thumbnail))
+     throw new InvalidOperationException("A queued video got no preview: " + name);
+   File.WriteAllText(Path.Combine(directory, "preview-queue-result.txt"), "PASS: imported videos were prepared through the queue.");
+  }
+  finally { _settings = settings; _repository.SaveLibraryFolders([]); }
  }
  private static void CheckFolderTabLayout(LibraryFoldersWindow window)
  {
@@ -141,7 +174,16 @@ public partial class MainWindow
    Require(window.ShownRows.Count == 2 && window.ShownRows.All(r => r.Change.MediaKind == MediaKind.Image), "The kind and media filters did not work together.");
    Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-change-filtered.png"));
    window.ShowOnly(null, MediaKind.Video); Require(window.ShownRows.Count == 4, "The media filter did not show every video change.");
-   window.ShowOnly(null, null); window.ShowPlan(originalPlan);
+   window.ShowOnly(null, null);
+   // A missing file is not ticked by default, but can be ticked to remove it from the catalog.
+   var gone = window.Rows.Single(r => r.Name == "Gone.mp4");
+   Require(!gone.Chosen && gone.CanChoose && gone.Hint.Length > 0, "A missing file must be unticked, tickable and say how to remove it.");
+   gone.Chosen = true; window.UpdateLayout();
+   // Taking over says what it did, with the reasons for skipped files.
+   window.ShowResult(new FolderSyncResult(1, 1, 0, [Path.Combine(watched, "Busy.mp4") + ": " + T("{0}: the file changed since the check.", "Busy.mp4")]) { Updated = 2 });
+   window.UpdateLayout(); Capture((FrameworkElement)window.Content, Path.Combine(directory, "folder-result.png"));
+   Require(window.LastResult?.Updated == 2, "The result of taking over was not shown.");
+   window.ShowPlan(originalPlan);
    window.Close();
    _repository.Delete(item.Id); ForgetInLibraryFolders(item.Path);
    await CheckLibraryFoldersAsync();
