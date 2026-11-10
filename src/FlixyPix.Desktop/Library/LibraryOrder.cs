@@ -16,7 +16,7 @@ public partial class MainWindow
     private sealed record WorkQueue(string Key, string Label, string Hint, int Glyph, Func<ViewState>? List, bool TagMode, Action? Open = null);
 
     /// <summary>A queue is a list in the chosen media kind; the kind stays what the queues show until it is changed.</summary>
-    private ViewState QueueView(MediaFilter filter, IReadOnlyList<ReviewState>? review = null) => new() { View = QueueKindView, Filter = filter, ReviewStates = [.. review ?? []], SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) };
+    private ViewState QueueView(MediaFilter filter, IReadOnlyList<ReviewState>? review = null) => new() { View = QueueKindView, Filter = filter, ReviewStates = [.. review ?? []], SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting };
 
     private IReadOnlyList<WorkQueue> WorkQueues() =>
     [

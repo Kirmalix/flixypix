@@ -90,7 +90,7 @@ public partial class MainWindow
     internal SceneWallPage ShowSceneWall()
     {
         var page = WallPage();
-        if (_view != "wall") ApplyViewState(new ViewState { View = "wall", SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) });
+        if (_view != "wall") ApplyViewState(new ViewState { View = "wall", SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting });
         return page;
     }
 
@@ -106,7 +106,7 @@ public partial class MainWindow
             var inputs = _playlist?.MediaIds.Select(_repository.GetMedia).OfType<MediaItem>().Select(i => i.Path).ToList() ?? [];
             var source = Selected?.Path;
             JobsPage().UseContext(source, inputs);
-            if (_view != "jobs") ApplyViewState(new ViewState { View = "jobs", SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) });
+            if (_view != "jobs") ApplyViewState(new ViewState { View = "jobs", SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting });
         }
         catch (Exception ex) { Message.Show(this, ex.Message, T("Media jobs"), MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
@@ -117,7 +117,7 @@ public partial class MainWindow
     internal void OpenDetail(MediaItem item)
     {
         RecordView();
-        ApplyViewState(new ViewState { View = "detail", DetailId = item.Id, SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) }, item.Title);
+        ApplyViewState(new ViewState { View = "detail", DetailId = item.Id, SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting }, item.Title);
     }
 
     private MediaDetailPage DetailPageFor()

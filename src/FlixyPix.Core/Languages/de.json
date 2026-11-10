@@ -3583,6 +3583,10 @@
     "one": "1 Clip eingereiht. Start führt wartende Aufträge nacheinander aus.",
     "other": "{0} Clips eingereiht. Start führt wartende Aufträge nacheinander aus."
   },
+  "{0} columns": {
+    "one": "1 Spalte",
+    "other": "{0} Spalten"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "1 Konflikt, {1} ungültig. Übernommen wird nur ins Verzeichnis; Medien bleiben unverändert.",
     "other": "{0} Konflikte, {1} ungültig. Übernommen wird nur ins Verzeichnis; Medien bleiben unverändert."

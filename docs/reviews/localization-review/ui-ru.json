@@ -14917,6 +14917,10 @@
       "status": "corrected",
       "digest": "56835c362cee9ad18a3b1ce8278b222017b6157bb113242cc4192c70d3ebf6eb",
       "previous_digest": "cd3975b0dded321d1b45a4e8d307af087ab68926b6c7d3e20e933ecb50453375"
+    },
+    "{0} columns": {
+      "status": "unchanged",
+      "digest": "53695f2077ff1680c401b3bf7214f7dcba78ae07f057ee7d08c9d8de0c0152e3"
     }
   }
 }

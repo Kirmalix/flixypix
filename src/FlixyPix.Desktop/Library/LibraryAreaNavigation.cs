@@ -20,7 +20,7 @@ public partial class MainWindow
         var state = _browse.RecallArea(view) ?? new ViewState
         {
             View = view, SortOrder = Math.Max(0, SortChoice.SelectedIndex),
-            ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value)
+            ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting
         };
         _browse.Invalidate();
         var origin = _browse.CaptureRequest(SelectedMedia.Select(i => i.Id));

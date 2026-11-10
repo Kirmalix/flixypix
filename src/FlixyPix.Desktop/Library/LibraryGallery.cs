@@ -56,7 +56,7 @@ public partial class MainWindow
     {
         // A page of its own starts without the selection of the page before.
         _offWindowSelection = []; MediaList.SelectedItems.Clear();
-        ApplyViewState(new ViewState { View = "all", Tag = entry.Tag, TagCategory = entry.Category, SortOrder = 4, ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) }, entry.Tag);
+        ApplyViewState(new ViewState { View = "all", Tag = entry.Tag, TagCategory = entry.Category, SortOrder = 4, ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting }, entry.Tag);
     }
 
     private void OpenInDirectory(TagRole role, string category, string tag) =>

@@ -39,7 +39,7 @@ public partial class MainWindow
     }
 
     /// <summary>Opens the start page (sidebar "Start", Strg+Pos1).</summary>
-    internal void GoHome() => ApplyViewState(new ViewState { View = "home", SortOrder = Math.Max(SortChoice.SelectedIndex, 0), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) });
+    internal void GoHome() => ApplyViewState(new ViewState { View = "home", SortOrder = Math.Max(SortChoice.SelectedIndex, 0), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting });
 
     /// <summary>After each refresh: shows or hides the start page and rebuilds its rows off the UI thread.</summary>
     private void UpdateHome(bool catalogEmpty, long total)

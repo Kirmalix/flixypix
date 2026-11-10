@@ -113,7 +113,7 @@ public partial class MainWindow
         if (!InFolderView)
         {
             // Filters of the area left behind stay there; here they could hide what was asked for.
-            var state = _browse.RecallArea(FolderView) ?? new() { View = FolderView, SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = (int)Math.Round(TileSize.Value) };
+            var state = _browse.RecallArea(FolderView) ?? new() { View = FolderView, SortOrder = Math.Max(0, SortChoice.SelectedIndex), ViewMode = ViewChoice.SelectedIndex, TileWidth = TileWidthSetting };
             ApplyViewState(state with { Folder = path, SearchText = null, Position = 0, AnchorId = null, Selection = [] });
             return;
         }

@@ -3583,6 +3583,10 @@
     "one": "1 clip in de wachtrij gezet. Start voert wachtende taken na elkaar uit.",
     "other": "{0} clips in de wachtrij gezet. Start voert wachtende taken na elkaar uit."
   },
+  "{0} columns": {
+    "one": "1 kolom",
+    "other": "{0} kolommen"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "Conflicten: {0}, ongeldig: {1}. Alleen het register wordt bijgewerkt; items blijven ongewijzigd.",
     "other": "Conflicten: {0}, ongeldig: {1}. Alleen het register wordt bijgewerkt; items blijven ongewijzigd."

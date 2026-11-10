@@ -146,8 +146,8 @@ public partial class MainWindow
    // comparison, then the layout of one step of a glide, with as many tiles as a large window shows.
    measured["idle"] = await Watch(400);
    var fixture = ((IEnumerable<MediaCard>)MediaList.ItemsSource).First().Item;
-   var (windowWidth, windowHeight, windowState, tileWidth) = (Width, Height, WindowState, TileSize.Value);
-   WindowState = WindowState.Normal; Width = 1920; Height = 1080; TileSize.Value = 200;
+   var (windowWidth, windowHeight, windowState, tileWidth) = (Width, Height, WindowState, _tileWidth);
+   WindowState = WindowState.Normal; Width = 1920; Height = 1080; SetTileWidth(200);
    MediaList.ItemsSource = Enumerable.Range(0, 400).Select(_ => new MediaCard(fixture, false, context: _cardContext)).ToList();
    VirtualizingTilePanel.SetTotalCount(MediaList, 400); VirtualizingTilePanel.SetWindowStart(MediaList, 0);
    MediaList.UpdateLayout(); await Task.Delay(300);
@@ -162,7 +162,7 @@ public partial class MainWindow
    steps.Sort();
    measured["layoutStepMedianMilliseconds"] = Math.Round(steps[steps.Count / 2], 2);
    measured["layoutStepLongestMilliseconds"] = Math.Round(steps[^1], 2);
-   WindowState = windowState; Width = windowWidth; Height = windowHeight; TileSize.Value = tileWidth;
+   WindowState = windowState; Width = windowWidth; Height = windowHeight; SetTileWidth(tileWidth);
    await NavigateAreaAsync("all"); await _lastRefresh;
 
    File.WriteAllText(Path.Combine(directory, "motion.json"), JsonSerializer.Serialize(measured.ToDictionary(p => p.Key, p => p.Value is ValueTuple<int, double> t ? new { frames = t.Item1, longestMilliseconds = t.Item2 } : p.Value), new JsonSerializerOptions { WriteIndented = true }));

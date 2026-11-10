@@ -29,12 +29,12 @@ public partial class MainWindow
         MediaList.PreviewMouseWheel += ZoomTiles;
     }
 
-    /// <summary>Ctrl+wheel over the tiles changes their size, as in Explorer.</summary>
+    /// <summary>Ctrl+wheel over the tiles changes their size by one column, as in Explorer: up makes them larger.</summary>
     private void ZoomTiles(object sender, System.Windows.Input.MouseWheelEventArgs e)
     {
         if (System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.Control || ViewChoice.SelectedIndex == 1) return;
         e.Handled = true;
-        TileSize.Value = Math.Clamp(TileSize.Value + Math.Sign(e.Delta) * 20, TileSize.Minimum, TileSize.Maximum);
+        SetTileColumns(CurrentTileColumns - Math.Sign(e.Delta));
         SaveViewPreferences();
     }
 

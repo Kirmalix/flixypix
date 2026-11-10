@@ -102,7 +102,7 @@ public partial class MainWindow
         {
             ViewMode = ViewChoice.SelectedIndex,
             SortOrder = SortChoice.SelectedIndex,
-            TileWidth = (int)Math.Round(TileSize.Value),
+            TileWidth = TileWidthSetting,
             LastView = _view,
             SidebarCollapsed = _sidebarAutoFolded ? _settings.SidebarCollapsed : !SidebarExpanded,
             SidebarWidth = PaneWidths().Sidebar,

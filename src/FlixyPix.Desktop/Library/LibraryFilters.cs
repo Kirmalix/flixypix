@@ -45,7 +45,7 @@ public partial class MainWindow
         MinimumStars = _filter.UnratedOnly ? 0 : Math.Max(RatingFilter.SelectedIndex, 0),
         SortOrder = Math.Max(SortChoice.SelectedIndex, 0),
         ViewMode = ViewChoice.SelectedIndex,
-        TileWidth = (int)Math.Round(TileSize.Value),
+        TileWidth = TileWidthSetting,
         Position = Math.Max(0, _visibleFirst),
         AnchorId = _visibleFirst >= _windowStart && _visibleFirst - _windowStart < MediaList.Items.Count ? ((MediaCard)MediaList.Items[_visibleFirst - _windowStart]).Item.Id : null,
         Selection = SelectedMedia.Select(m => m.Id).ToList(),
@@ -89,7 +89,7 @@ public partial class MainWindow
             RatingFilter.SelectedIndex = Math.Clamp(state.MinimumStars, 0, 5);
             if (state.SortOrder >= 0 && state.SortOrder < SortChoice.Items.Count) SortChoice.SelectedIndex = state.SortOrder;
             if (state.ViewMode is >= 0 and <= 2) ViewChoice.SelectedIndex = state.ViewMode;
-            if (state.TileWidth > 0) TileSize.Value = Math.Clamp(state.TileWidth, TileSize.Minimum, TileSize.Maximum);
+            if (state.TileWidth > 0) SetTileWidth(state.TileWidth);
         }
         finally { _initializingBrowsing = initializing; _refreshing = refreshing; }
         ViewTitle.Text = title ?? (_playlist != null ? CollectionName(_playlist) : null) ?? (_requiredTags.Count > 0 ? string.Join(" + ", _requiredTags) : EntityRole != null ? _tag : _view == FolderView ? FolderTitle() : ViewName(_view));

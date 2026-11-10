@@ -15,8 +15,9 @@ public partial class MainWindow
  {
   EditRating.Describe = value => value == 0 ? T("Unrated") : T("{0:0.#} out of 5 stars", value / 2d);
   EditRating.Changed += () => { if (!_showingDetails) QuickSave(item => item with { Rating = EditRating.Value }, EditRating.Value == 0 ? T("Rating removed") : T("Rating saved")); };
-  TileSize.Value = Math.Clamp(_settings.TileWidth, (int)TileSize.Minimum, (int)TileSize.Maximum);
-  ApplyTileSize(TileSize.Value);
+  SetTileWidth(_settings.TileWidth);
+  ViewPopup.Opened += (_, _) => SyncTileSlider();
+  ViewPopup.Closed += (_, _) => SaveViewPreferences();
  }
 
  /// <summary>Opens a menu below <paramref name="sender"/> instead of at the mouse pointer.</summary>
@@ -65,14 +66,58 @@ public partial class MainWindow
   Motion.GlideBy(SidebarScroll, -e.Delta / 120d * distance);
  }
 
- private void TileSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => ApplyTileSize(e.NewValue);
- private void TileSizeCommitted(object sender, MouseEventArgs e) => SaveViewPreferences();
- private void ApplyTileSize(double width)
+ /// <summary>Narrowest and widest tile the size control allows.</summary>
+ private const int MinTileWidth = 140, MaxTileWidth = 480;
+ private double _tileWidth = 200;
+ private bool _syncingTileSlider;
+ /// <summary>The chosen smallest tile width, as saved with the view; the tiles stretch to fill the row.</summary>
+ private int TileWidthSetting => (int)Math.Round(_tileWidth);
+ /// <summary>Width the tiles share: the grid as laid out, or before that the list itself.</summary>
+ private double TileArea => Tiles is { ViewportWidth: > 0 } panel ? panel.ViewportWidth : MediaList is { ActualWidth: > 0 } list ? list.ActualWidth : 1200;
+ /// <summary>Fewest and most columns that keep the tiles between <see cref="MinTileWidth"/> and <see cref="MaxTileWidth"/>.</summary>
+ internal static (int Fewest, int Most) TileColumnRange(double area)
  {
-  // The slider sets the smallest tile; the panel fits as many columns as possible and stretches them to the full width.
-  // The slider reports its first value while the window is still being built, before the list exists.
-  if (MediaList != null) VirtualizingTilePanel.SetTargetTileWidth(MediaList, Math.Round(width));
+  var fewest = Math.Max(1, (int)(area / MaxTileWidth));
+  return (fewest, Math.Max(fewest, (int)(area / MinTileWidth)));
  }
+ /// <summary>Smallest tile width that gives exactly <paramref name="columns"/> columns in <paramref name="area"/>.</summary>
+ internal static double TileWidthForColumns(double area, int columns) => Math.Clamp(Math.Floor(area / Math.Max(1, columns)), MinTileWidth, MaxTileWidth);
+
+ private void SetTileWidth(double width)
+ {
+  _tileWidth = Math.Clamp(width, MinTileWidth, MaxTileWidth);
+  // The panel fits as many columns of at least this width as possible and stretches them to the full width.
+  if (MediaList != null) VirtualizingTilePanel.SetTargetTileWidth(MediaList, TileWidthSetting);
+  SyncTileSlider();
+ }
+
+ /// <summary>Changes the tiles by whole columns, so every step shows; more columns make smaller tiles.</summary>
+ private void SetTileColumns(int columns)
+ {
+  var area = TileArea; var (fewest, most) = TileColumnRange(area);
+  SetTileWidth(TileWidthForColumns(area, Math.Clamp(columns, fewest, most)));
+ }
+ private int CurrentTileColumns => Tiles is { Columns: > 0 } panel && !panel.SingleColumn ? panel.Columns : Math.Max(1, (int)(TileArea / Math.Max(40, _tileWidth)));
+
+ /// <summary>The slider has one step per possible column count for the current width; right means larger tiles.</summary>
+ private void SyncTileSlider()
+ {
+  if (TileSize == null) return;
+  var area = TileArea; var (fewest, most) = TileColumnRange(area);
+  var columns = Math.Clamp(Math.Max(1, (int)(area / Math.Max(40, _tileWidth))), fewest, most);
+  _syncingTileSlider = true;
+  try { TileSize.Minimum = 0; TileSize.Maximum = Math.Max(1, most - fewest); TileSize.Value = most - columns; TileSize.IsEnabled = most > fewest; }
+  finally { _syncingTileSlider = false; }
+  var label = Tn(columns, "1 column", "{0} columns");
+  TileColumnsLabel.Text = label; System.Windows.Automation.AutomationProperties.SetHelpText(TileSize, label);
+ }
+ private void TileSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+ {
+  // The slider reports its first value while the window is still being built, before the list exists.
+  if (_syncingTileSlider || MediaList == null) return;
+  SetTileColumns(TileColumnRange(TileArea).Most - (int)Math.Round(e.NewValue));
+ }
+ private void TileSizeCommitted(object sender, RoutedEventArgs e) => SaveViewPreferences();
 
  private static MediaCard? CardOf(object sender) => (sender as FrameworkElement)?.DataContext as MediaCard;
  private async void TilePlay(object sender, RoutedEventArgs e) { if (CardOf(sender) is { } card) { e.Handled = true; StopSlideshow(); await Play(card.Item); } }

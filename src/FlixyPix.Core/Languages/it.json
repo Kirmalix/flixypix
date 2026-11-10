@@ -3712,6 +3712,11 @@
     "many": "{0} di clip in coda. «Avvia» esegue le attività in attesa una dopo l’altra.",
     "other": "{0} clip in coda. «Avvia» esegue le attività in attesa una dopo l’altra."
   },
+  "{0} columns": {
+    "one": "{0} colonna",
+    "many": "{0} di colonne",
+    "other": "{0} colonne"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "Conflitti: {0}, non validi: {1}. Viene aggiornato solo l’elenco; gli elementi restano invariati.",
     "many": "Conflitti: {0}, non validi: {1}. Viene aggiornato solo l’elenco; gli elementi restano invariati.",

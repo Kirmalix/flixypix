@@ -616,11 +616,23 @@ public partial class MainWindow
         var panel = Tiles!; var targetWidth = VirtualizingTilePanel.GetTargetTileWidth(MediaList);
         Require(panel.TileWidth >= targetWidth && Math.Abs(panel.TileWidth * panel.Columns - panel.ViewportWidth) < 1 && panel.ViewportWidth / (panel.Columns + 1) < targetWidth,
          $"Tiles do not fill the row: {panel.Columns} × {panel.TileWidth:F1} for {panel.ViewportWidth:F1} (target {targetWidth}).");
-        // A wider target gives fewer, wider tiles and keeps the tile at the top in view.
-        await SelectIndexAsync(40); var topBefore = _visibleFirst; var columnsBefore = panel.Columns;
-        TileSize.Value = TileSize.Maximum; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-        Require(panel.Columns < columnsBefore && _visibleFirst <= topBefore && _visibleLast >= topBefore, $"Changing the tile size lost the place ({topBefore} → {_visibleFirst}–{_visibleLast}).");
-        TileSize.Value = 192; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        // Every step of the size slider is one column; right means fewer, larger tiles.
+        var (fewestColumns, mostColumns) = TileColumnRange(panel.ViewportWidth);
+        Require(TileColumnRange(1200) == (2, 8) && TileColumnRange(300) == (1, 2) && Enumerable.Range(1, 12).All(c => (int)(1920 / TileWidthForColumns(1920, c)) == Math.Clamp(c, 4, 13)),
+         "Tile widths do not map to whole columns.");
+        SyncTileSlider();
+        Require(TileSize.Maximum == mostColumns - fewestColumns && TileSize.Value == mostColumns - panel.Columns, $"The size slider does not count columns ({TileSize.Value} of {TileSize.Maximum} for {panel.Columns}).");
+        var sliderStart = TileSize.Value; var stepColumns = panel.Columns;
+        TileSize.Value = sliderStart > 0 ? sliderStart - 1 : sliderStart + 1; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Require(Math.Abs(panel.Columns - stepColumns) == 1, $"One slider step did not change the columns by one ({stepColumns} → {panel.Columns}).");
+        SetTileWidth(192); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        // Larger tiles keep the selected tile in view, and going back over the same steps returns to the same place.
+        await SelectIndexAsync(40); var topBefore = _visibleFirst; var columnsBefore = panel.Columns; var offsetBefore = panel.VerticalOffset;
+        for (var step = 0; step < 3; step++) { SetTileColumns(panel.Columns - 1); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); }
+        Require(panel.Columns < columnsBefore && _visibleFirst <= 40 && _visibleLast >= 40, $"Changing the tile size lost the selected tile (40 → {_visibleFirst}–{_visibleLast}).");
+        while (panel.Columns < columnsBefore) { SetTileColumns(panel.Columns + 1); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); }
+        Require(_visibleFirst == topBefore && Math.Abs(panel.VerticalOffset - offsetBefore) < 1, $"Zooming out and in again drifted ({topBefore} → {_visibleFirst}).");
+        SetTileWidth(192); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         // Pages: jumping to a page puts its first medium at the top, the bar shows the page.
         await GoToPageAsync(3);
         Require(_visibleFirst == 2 * PageSize && CurrentPage == 3 && PagerBar.Visibility == Visibility.Visible && PageLabel.Text == T("{0:N0}–{1:N0} of {2:N0}", 2 * PageSize + 1, Math.Min(3 * PageSize, _total), _total),

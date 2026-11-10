@@ -3712,6 +3712,11 @@
     "many": "{0} de clips ajoutés à la file. « Démarrer » exécute les tâches en attente l’une après l’autre.",
     "other": "{0} clips ajoutés à la file. « Démarrer » exécute les tâches en attente l’une après l’autre."
   },
+  "{0} columns": {
+    "one": "{0} colonne",
+    "many": "{0} de colonnes",
+    "other": "{0} colonnes"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "Conflits : {0}, invalides : {1}. Seul l’annuaire est modifié ; les médias restent inchangés.",
     "many": "Conflits : {0}, invalides : {1}. Seul l’annuaire est modifié ; les médias restent inchangés.",

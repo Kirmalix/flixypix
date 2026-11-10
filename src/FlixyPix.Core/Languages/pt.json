@@ -3712,6 +3712,11 @@
     "many": "{0} de clipes na fila. “Iniciar” executa as tarefas pendentes uma após a outra.",
     "other": "{0} clipes na fila. “Iniciar” executa as tarefas pendentes uma após a outra."
   },
+  "{0} columns": {
+    "one": "{0} coluna",
+    "many": "{0} de colunas",
+    "other": "{0} colunas"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "Conflitos: {0}, inválidos: {1}. Apenas o diretório é atualizado; os itens permanecem inalterados.",
     "many": "Conflitos: {0}, inválidos: {1}. Apenas o diretório é atualizado; os itens permanecem inalterados.",

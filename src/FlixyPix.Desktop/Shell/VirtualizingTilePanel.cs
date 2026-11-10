@@ -16,7 +16,7 @@ public sealed class VisibleRangeEventArgs(RoutedEvent routedEvent, int first, in
 /// <summary>Wrapping tile layout that only creates containers for the rows in view (plus one row either side). All tiles share
 /// one size, so a tile's place follows from its index alone: the columns follow from the available width and the target
 /// tile width, the tiles stretch to fill the row exactly, and the height comes from the first realized container.
-/// When the columns or the tile size change, the tile at the top stays at the top.
+/// When the columns or the tile size change, one tile keeps its place (see <see cref="AnchorNow"/>).
 /// <para>The items may be a window of a longer result: <see cref="TotalCountProperty"/> sizes the scroll range for the whole
 /// result and <see cref="WindowStartProperty"/> says where the loaded items sit in it. Both are set on the list, so they
 /// survive switching between tile and list view. The panel reports what is in view; the owner loads another window.</para></summary>
@@ -48,6 +48,9 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  private Point _offset;
  private int _columns = 1;
  private (int First, int Last) _reported = (-1, -1);
+ /// <summary>The tile that keeps its place while the columns or the tile size change. It stays the same over several
+ /// changes in a row, so zooming out and in again comes back to the same place; scrolling clears it.</summary>
+ private (int Index, double Fraction, int Selected)? _zoomAnchor;
  private const double LineStep = 48;
  /// <summary>Where a smooth wheel scroll is heading; null when no scroll animation runs.</summary>
  private double? _scrollTarget;
@@ -85,8 +88,8 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   var width = double.IsInfinity(available.Width) ? Target * 4 : available.Width;
   var height = double.IsInfinity(available.Height) ? _tile.Height * 3 : available.Height;
   var loaded = LoadedCount; var start = Start; var total = Total;
-  // The first tile of the top row before a change of columns or tile size; it stays at the top afterwards.
-  var top = _tileKnown ? (int)(_offset.Y / _tile.Height) * _columns : 0;
+  // The tile that keeps its place, judged by the layout before a change of columns or tile size.
+  var anchor = _tileKnown ? AnchorNow(total) : default;
   var (columns, tile) = (_columns, _tile);
   _columns = SingleColumn ? 1 : Math.Max(1, (int)(width / Target));
   var cell = width / _columns;
@@ -99,7 +102,11 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   _tile = new Size(cell, _tile.Height);
   for (var pass = 0; pass < 3; pass++)
   {
-   if (_columns != columns || Math.Abs(_tile.Height - tile.Height) >= .5) _offset.Y = top / _columns * _tile.Height;
+   if (_tileKnown && (_columns != columns || Math.Abs(_tile.Height - tile.Height) >= .5))
+   {
+    if (_zoomAnchor is not { } kept || kept.Selected != anchor.Selected) _zoomAnchor = anchor;
+    _offset.Y = AnchoredOffset(_zoomAnchor.Value, total, height);
+   }
    var rows = (total + _columns - 1) / _columns;
    UpdateScrollInfo(new Size(width, rows * _tile.Height), new Size(width, height));
    var (firstIndex, lastIndex) = Range(total, 1);
@@ -135,6 +142,30 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   var firstRow = Math.Max(0, (int)(_offset.Y / _tile.Height) - spareRows);
   var lastRow = (int)Math.Ceiling((_offset.Y + _viewport.Height) / _tile.Height) - 1 + spareRows;
   return (Math.Min(total - 1, firstRow * _columns), Math.Min(total - 1, (lastRow + 1) * _columns - 1));
+ }
+
+ /// <summary>The selected tile when its row is fully in view, at its height in the view; otherwise the first tile of the
+ /// top row, counting a row as the top one when at least half of it shows.</summary>
+ private (int Index, double Fraction, int Selected) AnchorNow(int total)
+ {
+  var selected = ItemsOwnerControl is Selector { SelectedIndex: >= 0 } list ? Start + list.SelectedIndex : -1;
+  if (selected >= 0 && _viewport.Height > 0)
+  {
+   var top = selected / _columns * _tile.Height;
+   if (top >= _offset.Y - .5 && top + _tile.Height <= _offset.Y + _viewport.Height + .5) return (selected, (top - _offset.Y) / _viewport.Height, selected);
+  }
+  var row = (int)Math.Round(_offset.Y / _tile.Height);
+  return (Math.Max(0, Math.Min(total - 1, row * _columns)), 0, selected);
+ }
+
+ /// <summary>Offset that puts the anchor's row at the same height of the view again, wholly in view where the view is tall enough.</summary>
+ private double AnchoredOffset((int Index, double Fraction, int Selected) anchor, int total, double viewport)
+ {
+  var top = Math.Min(anchor.Index, Math.Max(0, total - 1)) / _columns * _tile.Height;
+  var offset = top - anchor.Fraction * viewport;
+  if (top + _tile.Height > offset + viewport) offset = top + _tile.Height - viewport;
+  if (top < offset) offset = top;
+  return Math.Max(0, offset);
  }
 
  private void Report(int total)
@@ -267,7 +298,7 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  {
   offset = Math.Max(0, Math.Min(offset, _extent.Height - _viewport.Height));
   if (double.IsNaN(offset) || Math.Abs(offset - _offset.Y) < .1) return;
-  _offset.Y = offset;
+  _offset.Y = offset; _zoomAnchor = null;
   ScrollOwner?.InvalidateScrollInfo();
   InvalidateMeasure();
  }

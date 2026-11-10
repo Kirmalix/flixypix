@@ -3454,6 +3454,9 @@
   "{0} clips queued. Click Start to run queued jobs one at a time.": {
     "other": "{0} 件のクリップをキューに追加しました。「開始」で待機中のジョブを順番に実行します。"
   },
+  "{0} columns": {
+    "other": "{0} 列"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "other": "競合：{0} 件、無効：{1} 件。ディレクトリのみを更新し、メディアは変更しません。"
   },

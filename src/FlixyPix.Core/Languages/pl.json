@@ -3712,6 +3712,11 @@
     "few": "Dodano {0} klipy do kolejki. Start wykonuje oczekujące zadania po kolei.",
     "many": "Dodano {0} klipów do kolejki. Start wykonuje oczekujące zadania po kolei."
   },
+  "{0} columns": {
+    "one": "1 kolumna",
+    "few": "{0} kolumny",
+    "many": "{0} kolumn"
+  },
   "{0} conflicts, {1} invalid. Only directory entries are imported; media items remain unchanged.": {
     "one": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian.",
     "few": "Konflikty: {0}, nieprawidłowe: {1}. Zmiany dotyczą tylko katalogu tagów; multimedia pozostają bez zmian.",
