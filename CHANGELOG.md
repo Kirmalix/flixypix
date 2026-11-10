@@ -5,6 +5,10 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 
 ## 0.7.0
 
+**Upgrading from 0.6.0:** the catalog format changes. FlixyPix asks before converting a library and
+keeps a copy of the catalog beside it; 0.6.0 cannot open a converted library. Back up your media files
+separately.
+
 **A calmer start**
 
 - A large library starts in seconds, also right after booting: the window is ready first, and folders, filters
@@ -37,6 +41,19 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - The wheel glides in every page at the same pace on any screen, and dialogs and settings pages arrive softly.
 - Notices rise into place and leave to the side; the arrows of folding groups turn, and a new favorite answers
   with a short pop.
+
+**Tiles that keep their place**
+
+- The tile size changes by whole columns: every step of the slider in the view menu, and every turn of
+  Ctrl+wheel, adds or removes one column, and the slider says how many there are. Before, most of its way
+  changed nothing.
+- Changing the size keeps your place: the selected tile, or else the first one at the top, stays where it was,
+  and zooming back returns to the same spot.
+- Opening or closing a side bar keeps the columns; the tiles only grow or shrink a little.
+- The view menu offers narrow, normal or wide spacing between tiles. Normal is a little tighter than before.
+- The buttons on a tile under the pointer are smaller and sit on a light shade at the top instead of darkening
+  the picture. Each can be switched off under Settings → General → Tiles. The quick collection button appears
+  once the quick collection holds something; B fills it.
 
 **A more consistent look**
 
