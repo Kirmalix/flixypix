@@ -672,11 +672,33 @@ public partial class MainWindow
          .OfType<System.Windows.Controls.ListBoxItem>().First(item => !item.IsMouseOver);
         hovered.RaiseEvent(new System.Windows.Input.MouseEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0) { RoutedEvent = System.Windows.Input.Mouse.MouseEnterEvent });
         await Task.Delay(400);
-        Require(Motion.IsLifted(hovered) && hovered.RenderTransform is TranslateTransform { Y: -Motion.LiftHeight }, "The tile did not lift under the pointer.");
+        Require(Motion.IsLifted(hovered) && hovered.RenderTransform is TranslateTransform { Y: var lifted } && lifted == -Motion.LiftFor(hovered), "The tile did not lift under the pointer.");
+        // The shadow lies under the tile: an effect on the tile itself would draw pictures and text through a picture of them, blurred.
+        Require(hovered.Effect == null && Motion.Shade(hovered) is { Effect: System.Windows.Media.Effects.DropShadowEffect, Visibility: Visibility.Visible }, "The lifted tile casts no shadow of its own under it.");
         Capture(RootContent, Path.Combine(directory, "desktop-hover-lift.png"));
         hovered.RaiseEvent(new System.Windows.Input.MouseEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0) { RoutedEvent = System.Windows.Input.Mouse.MouseLeaveEvent });
         await Task.Delay(400);
-        Require(hovered.RenderTransform is TranslateTransform { Y: 0 } && hovered.Effect == null, "The tile did not settle after the pointer left.");
+        Require(hovered.RenderTransform is TranslateTransform { Y: 0 } && Motion.Shade(hovered) is { Effect: null, Visibility: Visibility.Collapsed }, "The tile did not settle after the pointer left.");
+        // Every tile shows its stars, rated or not; a click rates that medium, the same star again removes the rating.
+        var starTile = (System.Windows.Controls.ListBoxItem)MediaList.ItemContainerGenerator.ContainerFromIndex(1); var starCard = (MediaCard)starTile.DataContext; var starId = starCard.Item.Id; var ratedBefore = starCard.Item.Rating;
+        var stars = Visuals<TileRating>(starTile).Single();
+        Require(stars.IsVisible && stars.Value == ratedBefore && stars.ActualWidth >= 5 * stars.StarSize, "A tile does not show its rating as stars.");
+        Require(Visuals<System.Windows.Controls.Border>(starTile).Any(border => border.ToolTip is System.Windows.Controls.ToolTip), "The tile has no tooltip with its details.");
+        var pick = ratedBefore == 8 ? 3 : 4;
+        stars.Rate(pick); await _lastRefresh;
+        Require(_repository.GetMedia(starId)!.Rating == pick * 2 && MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == starId).Rating == pick * 2, "A click on the stars of a tile did not rate it.");
+        Require(MediaList.SelectedItems.Count == 1 && ((MediaCard)MediaList.SelectedItem).Item.Id != starId, "Rating a tile changed the selection.");
+        // The refresh brought new tiles; they exist once the list is laid out.
+        var ratedCard = MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == starId); MediaList.ScrollIntoView(ratedCard); MediaList.UpdateLayout();
+        stars = Visuals<TileRating>((System.Windows.Controls.ListBoxItem)MediaList.ItemContainerGenerator.ContainerFromItem(ratedCard)).Single();
+        Require(stars.Value == pick * 2, "The tile does not show its new rating.");
+        stars.Rate(pick); await _lastRefresh;
+        Require(_repository.GetMedia(starId)!.Rating == 0, "The same star again did not remove the rating.");
+        if (ratedBefore > 0) { _repository.ApplyImmediateEdit([starId], ImmediateEditFields.Rating, current => current with { Rating = ratedBefore }); Refresh(); await _lastRefresh; }
+        // The pointer over any tile tells its file name and details, not only the inspector of the selected one.
+        var hint = MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == starId);
+        Require(hint.FileName == Path.GetFileName(hint.Item.Path) && hint.HoverDetails.Contains(Path.GetDirectoryName(hint.Item.Path)!, StringComparison.Ordinal) && hint.HoverDetails.Contains(T("Added"), StringComparison.Ordinal),
+         "The details under the pointer miss the folder or the date: " + hint.HoverDetails);
         // Started videos show how far they were watched.
         var watched = new MediaCard(new MediaItem { Path = Path.Combine(fixtureDirectory, "angefangen.mp4"), Kind = MediaKind.Video, DurationSeconds = 600, PlaybackPositionSeconds = 240 }, false, context: _cardContext);
         Require(watched.ProgressVisibility == Visibility.Visible && Math.Abs(watched.Progress - .4) < 1e-9 && watched.ProgressLabel.Contains("40", StringComparison.Ordinal), "The watch progress is wrong.");
@@ -702,6 +724,12 @@ public partial class MainWindow
         Capture(RootContent, Path.Combine(directory, "desktop-sidebar-folded.png"));
         OpenSidebarAt("collections"); OpenDetailsAt("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(SidebarExpanded && DetailsExpanded && !_settings.SidebarCollapsed && !_settings.DetailsCollapsed, "A symbol of a rail did not open its bar.");
+        // A double click on a tile unfolds folded details and stays in the grid; with the details in place it opens the page (checked further on).
+        ToggleDetails(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        var viewBefore = _view;
+        Require(!DetailsExpanded && Selected != null, "The double click check needs folded details and a selection.");
+        OpenFromDoubleClick(Selected!); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Require(DetailsExpanded && !_settings.DetailsCollapsed && _view == viewBefore && !IsDetailView, "A double click did not unfold the details in place.");
         // The details as tabs show one part at a time; switching back shows everything again.
         SetDetailsTabs(true); ShowDetailsTab("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(DetailsTabBar.IsVisible && DetailsScenesPart.Visibility == Visibility.Visible && DetailsTagsPart.Visibility == Visibility.Collapsed && DetailsFieldsPart.Visibility == Visibility.Collapsed,

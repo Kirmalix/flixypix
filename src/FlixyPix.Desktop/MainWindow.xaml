@@ -206,7 +206,8 @@
      <ScrollViewer x:Name="SubfolderScroll" Visibility="Collapsed" MaxHeight="112" Margin="0,0,0,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><WrapPanel x:Name="SubfolderCards"/></ScrollViewer>
     </StackPanel>
     <Grid x:Name="MediaArea" Grid.Row="3"><ListBox x:Name="MediaList" SelectionMode="Extended" MouseRightButtonUp="MediaRightClicked" PreviewMouseLeftButtonDown="MediaListMouseDown" PreviewMouseMove="MediaListMouseMove" PreviewMouseLeftButtonUp="MediaListMouseUp" SelectionChanged="MediaSelected" MouseDoubleClick="MediaDoubleClick" ScrollViewer.VerticalScrollBarVisibility="Auto"><ListBox.ItemsPanel><ItemsPanelTemplate><local:VirtualizingTilePanel/></ItemsPanelTemplate></ListBox.ItemsPanel><ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="local:Motion.HoverLift" Value="True"/><Setter Property="Margin" Value="{DynamicResource TileGap}"/><Setter Property="Padding" Value="{DynamicResource TileInset}"/></Style></ListBox.ItemContainerStyle><ListBox.ItemTemplate><DataTemplate>
-      <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="{DynamicResource TileCardPadding}">
+      <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="{DynamicResource TileCardPadding}" ToolTipService.Placement="Bottom" ToolTipService.VerticalOffset="4" ToolTipService.ShowDuration="30000">
+       <Border.ToolTip><ToolTip><StackPanel><TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding HoverDetails}" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel></ToolTip></Border.ToolTip>
        <StackPanel>
         <local:AspectBox Ratio="0.5625"><Grid Background="{DynamicResource MediaBackground}" local:RoundedClip.Radius="6" local:Privacy.Blur="True">
          <TextBlock Text="{Binding Icon}" Style="{StaticResource Icon}" FontSize="30" Foreground="{DynamicResource IconMuted}" HorizontalAlignment="Center"/>
@@ -229,13 +230,14 @@
           </StackPanel>
          </Grid>
         </Grid></local:AspectBox>
-        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" TextWrapping="{Binding TitleWrapping}" Height="{Binding TitleHeight}" Margin="2,9,2,3" FontWeight="SemiBold" ToolTip="{Binding Path}"/>
+        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" TextWrapping="{Binding TitleWrapping}" Height="{Binding TitleHeight}" Margin="2,9,2,3" FontWeight="SemiBold"/>
         <DockPanel Margin="2,0,2,1">
          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-          <Button Content="{Binding QuickGlyph}" Visibility="{Binding QuickVisibility}" ToolTip="{Binding QuickHint}" Click="TileQuickCollection" Padding="3,0" Background="Transparent" Foreground="{DynamicResource Accent}"/><TextBlock Text="{Binding Stars}" Foreground="{DynamicResource Gold}" FontSize="11" VerticalAlignment="Center"/>
+          <Button Content="{Binding QuickGlyph}" Visibility="{Binding QuickVisibility}" ToolTip="{Binding QuickHint}" Click="TileQuickCollection" Padding="3,0" Background="Transparent" Foreground="{DynamicResource Accent}"/>
           <TextBlock Text="&#xE823;" Style="{StaticResource Icon}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="5,0,0,0" Visibility="{Binding WatchLaterVisibility}" ToolTip="{local:T 'Watch later'}"/>
           <TextBlock Text="&#xEB52;" Style="{StaticResource Icon}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="5,0,0,0" Visibility="{Binding FavoriteVisibility}" ToolTip="{local:T 'Favorite'}"/>
           <TextBlock Text="&#xE8FD;" Style="{StaticResource Icon}" FontSize="11" Foreground="{DynamicResource Accent}" Margin="5,0,0,0" Visibility="{Binding TargetVisibility}" ToolTip="{local:T 'In the target collection (B)'}"/>
+          <local:TileRating Value="{Binding Rating}" Fill="{DynamicResource Gold}" Empty="{DynamicResource StarEmpty}" Margin="6,0,0,0" AutomationProperties.Name="{local:T 'Rating'}"/>
          </StackPanel>
          <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11" TextTrimming="CharacterEllipsis"/>
         </DockPanel>

@@ -47,6 +47,29 @@ internal sealed class MediaCard : INotifyPropertyChanged
  public string Subtitle => string.Join(" · ", new[] { Item.Width.HasValue ? $"{Item.Width} × {Item.Height}" : null,
   Item.Kind != MediaKind.Image && Item.DurationSeconds.HasValue ? DurationText(Item.DurationSeconds.Value) : null,
   Item.FileSize.HasValue ? SizeText(Item.FileSize.Value) : null, Item.Extra.ContainsKey("folders.previewStale") ? T("Changed") : null }.Where(x => x != null));
+ /// <summary>The rating on the catalog's scale of 0–10, for the stars on the tile.</summary>
+ public int Rating => Item.Rating;
+ public string FileName => System.IO.Path.GetFileName(Item.Path);
+ /// <summary>What the pointer shows over a tile, below the file name: title, size and technical data, dates, tags and the
+ /// folder. Read from the catalog only, so it costs nothing while browsing.</summary>
+ public string HoverDetails
+ {
+  get
+  {
+   static string Line(string label, string value) => label + ": " + value;
+   var lines = new List<string>();
+   if (!string.IsNullOrWhiteSpace(Item.Title) && Item.Title != System.IO.Path.GetFileNameWithoutExtension(Item.Path) && Item.Title != FileName) lines.Add(Line(T("Title"), Item.Title));
+   if (Subtitle.Length > 0) lines.Add(Subtitle);
+   if (MainWindow.TechnicalSummary(Item.Technical) is { Length: > 0 } technical) lines.Add(technical);
+   if (Item.FileCreatedAt is { } created) lines.Add(Line(T("File date"), created.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)));
+   lines.Add(Line(T("Added"), Item.AddedAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)));
+   var tags = Item.Tags.Concat(Item.TagCategories.Values.SelectMany(values => values)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+   if (tags.Count > 0) lines.Add(Line(T("Tags"), string.Join(", ", tags.Take(HoverTags)) + (tags.Count > HoverTags ? " …" : "")));
+   if (System.IO.Path.GetDirectoryName(Item.Path) is { Length: > 0 } folder) lines.Add(Line(T("Folder"), folder));
+   return string.Join(Environment.NewLine, lines);
+  }
+ }
+ private const int HoverTags = 14;
  public string DurationLabel => Item.Kind != MediaKind.Image && Item.DurationSeconds is > 0 and var seconds ? DurationText(seconds) : "";
  /// <summary>Resolution class like 720p, 1080p, 4K or 8K, for videos and images from 720 lines up (the original's overlays said HD/FHD/UHD).</summary>
  public string Quality => QualityOf(Item.Width, Item.Height);
