@@ -612,9 +612,10 @@ public partial class MainWindow
         Require(Selected?.Id == ((MediaCard)MediaList.Items[^1]).Item.Id && WindowStart + MediaList.Items.Count == total, "End did not select the last medium of the whole result.");
         await SelectIndexAsync(0);
         Require(WindowStart == 0 && Selected?.Id == ((MediaCard)MediaList.Items[0]).Item.Id, "Home did not select the first medium.");
-        // Tiles stretch over the full row: the columns follow the target width and fill the view without a gap.
+        // Tiles stretch over the full row: the columns follow the target width and fill the view without a gap. After a change of
+        // width the columns may stay, with the tiles close to the target.
         var panel = Tiles!; var targetWidth = VirtualizingTilePanel.GetTargetTileWidth(MediaList);
-        Require(panel.TileWidth >= targetWidth && Math.Abs(panel.TileWidth * panel.Columns - panel.ViewportWidth) < 1 && panel.ViewportWidth / (panel.Columns + 1) < targetWidth,
+        Require(panel.TileWidth >= targetWidth * .75 - .5 && panel.TileWidth <= targetWidth * 1.5 + .5 && Math.Abs(panel.TileWidth * panel.Columns - panel.ViewportWidth) < 1,
          $"Tiles do not fill the row: {panel.Columns} × {panel.TileWidth:F1} for {panel.ViewportWidth:F1} (target {targetWidth}).");
         // Every step of the size slider is one column; right means fewer, larger tiles.
         var (fewestColumns, mostColumns) = TileColumnRange(panel.ViewportWidth);
@@ -633,6 +634,13 @@ public partial class MainWindow
         while (panel.Columns < columnsBefore) { SetTileColumns(panel.Columns + 1); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); }
         Require(_visibleFirst == topBefore && Math.Abs(panel.VerticalOffset - offsetBefore) < 1, $"Zooming out and in again drifted ({topBefore} → {_visibleFirst}).");
         SetTileWidth(192); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        // A side pane that opens or closes keeps the columns and the selected tile; only the tiles get narrower.
+        await SelectIndexAsync(40); var steadyColumns = panel.Columns; var steadyTile = panel.TileWidth; var detailsWidth = DetailsColumn.Width;
+        DetailsColumn.Width = new GridLength(DetailsColumn.ActualWidth + 120); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Require(panel.Columns == steadyColumns && panel.TileWidth < steadyTile && _visibleFirst <= 40 && _visibleLast >= 40,
+         $"A narrower grid changed the columns or lost the place ({steadyColumns} → {panel.Columns}, 40 → {_visibleFirst}–{_visibleLast}).");
+        DetailsColumn.Width = detailsWidth; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Require(panel.Columns == steadyColumns && Math.Abs(panel.TileWidth - steadyTile) < 1, "The columns did not come back with the pane.");
         // Pages: jumping to a page puts its first medium at the top, the bar shows the page.
         await GoToPageAsync(3);
         Require(_visibleFirst == 2 * PageSize && CurrentPage == 3 && PagerBar.Visibility == Visibility.Visible && PageLabel.Text == T("{0:N0}–{1:N0} of {2:N0}", 2 * PageSize + 1, Math.Min(3 * PageSize, _total), _total),

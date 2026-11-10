@@ -87,28 +87,36 @@ public partial class MainWindow
  {
   _tileWidth = Math.Clamp(width, MinTileWidth, MaxTileWidth);
   // The panel fits as many columns of at least this width as possible and stretches them to the full width.
-  if (MediaList != null) VirtualizingTilePanel.SetTargetTileWidth(MediaList, TileWidthSetting);
-  SyncTileSlider();
+  // Opening a side pane or resizing the window a little keeps the columns and only scales the tiles, while they stay
+  // close to the chosen size; a larger change lays the grid out for the chosen size again.
+  if (MediaList != null)
+  {
+   VirtualizingTilePanel.SetTileWidthRange(MediaList, new Size(Math.Max(MinTileWidth, _tileWidth * .75), Math.Min(MaxTileWidth, _tileWidth * 1.5)));
+   VirtualizingTilePanel.SetTargetTileWidth(MediaList, TileWidthSetting);
+  }
+  SyncTileSlider(Math.Max(1, (int)(TileArea / Math.Max(40, _tileWidth))));
  }
 
  /// <summary>Changes the tiles by whole columns, so every step shows; more columns make smaller tiles.</summary>
  private void SetTileColumns(int columns)
  {
   var area = TileArea; var (fewest, most) = TileColumnRange(area);
+  Tiles?.ChooseColumnsAgain();
   SetTileWidth(TileWidthForColumns(area, Math.Clamp(columns, fewest, most)));
  }
  private int CurrentTileColumns => Tiles is { Columns: > 0 } panel && !panel.SingleColumn ? panel.Columns : Math.Max(1, (int)(TileArea / Math.Max(40, _tileWidth)));
 
  /// <summary>The slider has one step per possible column count for the current width; right means larger tiles.</summary>
- private void SyncTileSlider()
+ /// <param name="columns">The columns about to be laid out; otherwise those of the grid as it is.</param>
+ private void SyncTileSlider(int? columns = null)
  {
   if (TileSize == null) return;
-  var area = TileArea; var (fewest, most) = TileColumnRange(area);
-  var columns = Math.Clamp(Math.Max(1, (int)(area / Math.Max(40, _tileWidth))), fewest, most);
+  var (fewest, most) = TileColumnRange(TileArea);
+  var shown = Math.Clamp(columns ?? CurrentTileColumns, fewest, most);
   _syncingTileSlider = true;
-  try { TileSize.Minimum = 0; TileSize.Maximum = Math.Max(1, most - fewest); TileSize.Value = most - columns; TileSize.IsEnabled = most > fewest; }
+  try { TileSize.Minimum = 0; TileSize.Maximum = Math.Max(1, most - fewest); TileSize.Value = most - shown; TileSize.IsEnabled = most > fewest; }
   finally { _syncingTileSlider = false; }
-  var label = Tn(columns, "1 column", "{0} columns");
+  var label = Tn(shown, "1 column", "{0} columns");
   TileColumnsLabel.Text = label; System.Windows.Automation.AutomationProperties.SetHelpText(TileSize, label);
  }
  private void TileSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

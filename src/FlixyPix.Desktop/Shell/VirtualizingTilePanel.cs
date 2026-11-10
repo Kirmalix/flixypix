@@ -15,7 +15,9 @@ public sealed class VisibleRangeEventArgs(RoutedEvent routedEvent, int first, in
 
 /// <summary>Wrapping tile layout that only creates containers for the rows in view (plus one row either side). All tiles share
 /// one size, so a tile's place follows from its index alone: the columns follow from the available width and the target
-/// tile width, the tiles stretch to fill the row exactly, and the height comes from the first realized container.
+/// tile width, the tiles stretch to fill the row exactly, and the height comes from the first realized container. With a
+/// <see cref="TileWidthRangeProperty"/> the columns stay when only the width changes (a side pane opens, the window is
+/// resized) and the tiles grow or shrink instead, as long as they stay in that range.
 /// When the columns or the tile size change, one tile keeps its place (see <see cref="AnchorNow"/>).
 /// <para>The items may be a window of a longer result: <see cref="TotalCountProperty"/> sizes the scroll range for the whole
 /// result and <see cref="WindowStartProperty"/> says where the loaded items sit in it. Both are set on the list, so they
@@ -32,6 +34,9 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  /// <summary>Smallest width a tile may have; the row is split into as many tiles of at least this width as fit.</summary>
  public static readonly DependencyProperty TargetTileWidthProperty = DependencyProperty.RegisterAttached("TargetTileWidth", typeof(double), typeof(VirtualizingTilePanel),
   new FrameworkPropertyMetadata(200.0, (d, _) => Invalidate(d)));
+ /// <summary>Narrowest and widest tile while the columns stay over a change of width; empty keeps no columns.</summary>
+ public static readonly DependencyProperty TileWidthRangeProperty = DependencyProperty.RegisterAttached("TileWidthRange", typeof(Size), typeof(VirtualizingTilePanel),
+  new FrameworkPropertyMetadata(Size.Empty, (d, _) => Invalidate(d)));
  public static readonly RoutedEvent VisibleRangeChangedEvent = EventManager.RegisterRoutedEvent("VisibleRangeChanged", RoutingStrategy.Bubble,
   typeof(EventHandler<VisibleRangeEventArgs>), typeof(VirtualizingTilePanel));
  public static int GetTotalCount(DependencyObject d) => (int)d.GetValue(TotalCountProperty);
@@ -40,6 +45,9 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  public static void SetWindowStart(DependencyObject d, int value) => d.SetValue(WindowStartProperty, value);
  public static double GetTargetTileWidth(DependencyObject d) => (double)d.GetValue(TargetTileWidthProperty);
  public static void SetTargetTileWidth(DependencyObject d, double value) => d.SetValue(TargetTileWidthProperty, value);
+ public static Size GetTileWidthRange(DependencyObject d) => (Size)d.GetValue(TileWidthRangeProperty);
+ /// <summary>Width = narrowest, Height = widest tile.</summary>
+ public static void SetTileWidthRange(DependencyObject d, Size value) => d.SetValue(TileWidthRangeProperty, value);
  public bool SingleColumn { get => (bool)GetValue(SingleColumnProperty); set => SetValue(SingleColumnProperty, value); }
 
  private Size _tile = new(200, 260);
@@ -47,6 +55,8 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  private Size _extent, _viewport;
  private Point _offset;
  private int _columns = 1;
+ /// <summary>Target width the columns were chosen for; NaN chooses them again from the target.</summary>
+ private double _columnsTarget = double.NaN;
  private (int First, int Last) _reported = (-1, -1);
  /// <summary>The tile that keeps its place while the columns or the tile size change. It stays the same over several
  /// changes in a row, so zooming out and in again comes back to the same place; scrolling clears it.</summary>
@@ -91,7 +101,7 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   // The tile that keeps its place, judged by the layout before a change of columns or tile size.
   var anchor = _tileKnown ? AnchorNow(total) : default;
   var (columns, tile) = (_columns, _tile);
-  _columns = SingleColumn ? 1 : Math.Max(1, (int)(width / Target));
+  _columns = ColumnsFor(width);
   var cell = width / _columns;
   // Measure one tile before laying out a screenful, so a wrong first guess does not build (and load) tiles that are dropped again.
   if (!_tileKnown && loaded > 0)
@@ -134,6 +144,22 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   }
   return final;
  }
+
+ /// <summary>As many columns of at least the target width as fit; with a tile width range the columns stay when only the
+ /// width changed, as long as the tiles stay in the range.</summary>
+ private int ColumnsFor(double width)
+ {
+  if (SingleColumn) return 1;
+  var target = Target;
+  var range = ItemsOwnerControl is { } owner ? GetTileWidthRange(owner) : Size.Empty;
+  if (range.IsEmpty || !_columnsTarget.Equals(target) || _columns < 1) { _columnsTarget = target; return Math.Max(1, (int)(width / target)); }
+  // Outside the range the columns follow the target again, as they would after a fresh start.
+  var tile = width / _columns;
+  return tile >= range.Width && tile <= range.Height ? _columns : Math.Max(1, (int)(width / target));
+ }
+
+ /// <summary>Chooses the columns from the target width again at the next layout, also when the target is the same.</summary>
+ internal void ChooseColumnsAgain() { _columnsTarget = double.NaN; InvalidateMeasure(); }
 
  /// <summary>Absolute indexes in view, widened by <paramref name="spareRows"/> rows on either side.</summary>
  private (int First, int Last) Range(int total, int spareRows)
