@@ -13964,10 +13964,6 @@
       "status": "unchanged",
       "digest": "ed9dd99f54dd85f3f69c5e5564b192b03b5a394b8d1092ff9129343072936c71"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "cb7fab3a6e069b80045f12f5b4bc4cac8ba5a55df0097fe25b74b703ba13381c"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "5ee8ca672ea22d551776be8888c4c7a47fe64154b8cbd750591e09a7705055a1"
@@ -14900,6 +14896,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "2f8f1a9634bdbd344252c3483f9b8daaa2d7bc93f2ec4fbbeebb05a31669adb2"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "9d0a5a25a8c601c5805cf5a9fc339a007e2a508cd6049f2cc04ef7b41f45b5ea"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "8967e2b561249b9332d4e4c551a123520926275015be17752868ff31cc06810a"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "b7da03f9a294e9b593bf26a2017cac18506d5f992388137e2c6a94542b2758ea"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "2d0aa6e84bfd5e227adf8e070d046a9809fec70e9a92ce62b453c7b9aa188688"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "169d32564c02e5c535f69b2246e78bf6949d33a768e6eb0d932d717c0d6ebc9f"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "6368aac50935ba93e0a4ec85a2f74517d8a95150e3c1abbffbc497d9ffdbd5a0"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "fa8dd009ce6fa710e0b87d663979cd9f1376f20ebbe395dfffd7ef3e5ccb02d6"
     }
   }
 }

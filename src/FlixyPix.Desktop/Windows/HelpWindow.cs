@@ -9,7 +9,7 @@ internal sealed class HelpWindow : Window
  (T("Folders"),T("Open “Folders” in the bar on the left and walk through them with the tree, the path above the media or the subfolders. The subfolder switch affects browsing only.")),
  (T("Filter"),T("Combine search, tags, rating and thumbnail filters. Click a filter chip to remove it. Save the view as a smart collection to reuse it.")),
  (T("Tags"),T("Select media before assigning tags. T starts the tag mode: 1–9 set your pinned tags. In the filter panel, Enter filters by the focused tag; Ctrl+Enter excludes it.")),
- (T("Collections"),T("The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.")),
+ (T("Collections"),T("B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.")),
  (T("Thumbnails"),T("Fit whole image preserves the complete thumbnail. Fill and crop fills the frame. High-resolution home artwork is generated only for the visible featured video.")),
  (T("Video player"),T("Use Tab to reach playback controls and arrow keys to adjust focused sliders. Escape closes menus first, then leaves full screen or closes the player. Player shortcuts can be configured in Settings."))];
  internal HelpWindow(Window owner,string title,IEnumerable<(string Title,string Body)> sections)

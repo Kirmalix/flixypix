@@ -13948,10 +13948,6 @@
       "status": "unchanged",
       "digest": "8d7895934dab99eaa0bfb7d20eea8fcaef0f6e7a91992d00b75e0ea13520ea04"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "680477fbd8c3a4d2704983238c6be55d18e9829e5a2fec08246dee9501e1f028"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "f3426078498b47787415d943b49a0e9b02ab59306dbf81ba8659bec5d4599c5e"
@@ -14940,6 +14936,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "84f217b5f956c4cd2c6e39cd4b02170daf9d588770b57812335c4f002bf7e760"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "4d0a10b2588586a7672ebfbfe0652ac5ae931681bdc2ffffa1bcd3d362273edf"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "ea8b9f1285fe9b8520a36356a91e4c6e17013cdf9ab9cbe5c1602b503c8e7125"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "1ef2c85f887bea65d91a9f60a25d5388c1f6cf1fd8fe9824673f121eeef79e37"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "2d05c7a09536b9b87e19c8e6048c084ea1c48b2a1c1fa32e2ce265d398eb8ccf"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "873ba1d94e5bafe285cde5db36d9be385f88005c25065878d6d06a7041f5f34c"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "bd2d2ca3689eb32723762ae80452bcc24385f4fe6309cc79c7e7f1cd728a04ef"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "83478b7ab5bfdcf7ed048eeb2a165ba89d00bae456c4e3a5eedaf08efea2ded4"
     }
   }
 }

@@ -347,6 +347,7 @@
   "Available · {0} files hidden": {
     "other": "アクセス可能 · 非表示のファイル：{0} 件"
   },
+  "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": "B は選択したメディアを選択中の対象コレクション（最初はクイックコレクション）に追加します。クイックコレクションに何か入ると、カードの丸印でも追加と削除を切り替えられます。ファイルは移動しません。",
   "Back": "戻る",
   "Back (Alt+←, mouse button 4)": "戻る (Alt+←、マウスボタン 4)",
   "Back and forward": "戻る・進む",
@@ -412,6 +413,7 @@
   "browse": "画像を切り替え",
   "Browse …": "参照…",
   "Building and checking the new library …": "新しいライブラリを作成・確認中…",
+  "Buttons on hover": "ポイント時のボタン",
   "By file extension.": "拡張子別。",
   "By the shorter side of the picture.": "画面の短い辺で分類します。",
   "Bytes": "バイト",
@@ -1609,6 +1611,7 @@
   "Names, categories and aliases have at most {0} characters.": {
     "other": "名前、カテゴリ、別名の最大文字数：{0}。"
   },
+  "Narrow": "狭い",
   "Natural": "天然",
   "Navigation": "ナビゲーション",
   "Needs a PIN. Asks for it before libraries can be seen. An encrypted library that opens directly asks only for its password. If you forget the PIN, delete “PinHash” from appsettings.json.": "PIN が必要です。ライブラリが表示される前に確認します。直接開く暗号化ライブラリでは、そのパスワードのみを確認します。PIN を忘れた場合は、appsettings.json から「PinHash」を削除してください。",
@@ -1735,6 +1738,7 @@
   "None": "なし",
   "none": "なし",
   "None of the {0} entries is in the catalog; no collection was created.": "{0} 件の項目はいずれもカタログにないため、コレクションは作成されませんでした。",
+  "Normal": "標準",
   "Normal speed": "通常の速度",
   "not": "否定",
   "Not a problem: these items stay unchanged in the catalog until the drive is connected again.": "問題ではありません。ドライブが再接続されるまで、これらのメディアはカタログにそのまま残ります。",
@@ -2506,6 +2510,7 @@
   "Show time stamp": "タイムスタンプを表示する",
   "Show vocabulary tags without assigned items": "メディアが割り当てられていない語彙のタグも表示",
   "Shown top left on the picture. Resolution from 720p, HDR, 50 frames per second and more, video codec and the number of files of an item. HDR, frame rate and codec need the technical data (Organize ▾ → Read technical data).": "画像の左上に表示します。720p 以上の解像度、HDR、毎秒 50 フレーム以上、動画コーデック、アイテムのファイル数。HDR、フレーム レート、コーデックには技術データが必要です（「整理 ▾」→「技術データを読み取る」）。",
+  "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": "ポインターがタイルの上にある間、右上に表示されます。クイックコレクションのボタンは、コレクションに何か入ると表示されます。",
   "Shows details, tags and scenes on the right as tabs instead of one below the other. The button at the top of the details switches as well. Applies to this computer.": "右側の詳細・タグ・シーンを縦に並べず、タブで表示します。詳細の上部にあるボタンでも切り替えられます。このコンピューターに適用されます。",
   "Shows the folder with catalog, thumbnails and caches in Explorer.": "カタログ、サムネイル、キャッシュのフォルダーをエクスプローラーで表示します。",
   "Shows the folder with the error logs, for example for a bug report.": "エラーログのフォルダーを表示します（不具合の報告用など）。",
@@ -2568,6 +2573,7 @@
   "Source {0} · {1:N0} source rows · export {2}…": "元データ {0} · {1:N0} 行 · エクスポート {2}…",
   "Space": "スペース",
   "Space, F, arrow keys, Shift+arrow keys, comma/period, B, M and L; Page↑/Page↓ for the previous and next jump mark.": "Space、F、矢印キー、Shift+矢印キー、カンマ／ピリオド、B、M、L を使用できます。Page Up／Page Down で前後のジャンプマークに移動します。",
+  "Spacing": "間隔",
   "Spacing around and between the scenes.": "シーン画像の周囲と画像間の余白。",
   "Spalte\u0004Input": "入力",
   "Speed": "スピード",
@@ -2739,7 +2745,6 @@
   "The checksum of a file in the backup does not match.": "バックアップ内のファイルのチェックサムが一致しません。",
   "The choice is previewed immediately and kept after saving. “Follow Windows” follows the Windows app theme and changes automatically with it.": "選択内容はすぐにプレビューに反映され、保存後も維持されます。「Windows に合わせる」は Windows のアプリモードに従い、自動で切り替わります。",
   "The chosen image cannot be read.": "選ばれた画像は読めません。",
-  "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": "カードの丸印でクイックコレクションへの追加と削除を切り替えます。B は選択した対象コレクションを使います。ファイルは移動しません。",
   "The clipboard contains no image.": "クリップボードに画像がありません。",
   "The clips of the tiles in view play without pointing at them, as many at once as the video wall allows.": "表示中のタイルのクリップをポインターを合わせずに再生します。同時に再生する数はビデオウォールの設定に従います。",
   "The complete catalog in the portable format, for example for another FlixyPix installation.": "ポータブル形式の完全なカタログです。別の FlixyPix などで使えます。",
@@ -3183,6 +3188,7 @@
   "Whole view ({0:N0} items) …": {
     "other": "表示中のすべて ({0:N0} 件)…"
   },
+  "Wide": "広い",
   "Width": "幅",
   "Width in pixels": "幅（ピクセル）",
   "Width of the preview clips": "プレビュークリップの幅",

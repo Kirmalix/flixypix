@@ -13897,10 +13897,6 @@
       "status": "unchanged",
       "digest": "04987adb88814981ca6ddcda277e23ce81a824adf914a7eb7f71ab06a8b8b0b9"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "f95ce0807e025ec744a53f89709d7e7079740d1f409c3ee0dd2876472cfea45d"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "25e0f17b0215b7129796cbb951fad285cdef88b6a81fd0ee942f649e257b3350"
@@ -14816,6 +14812,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "d72b04ef670de3a25deddbbfa5dd07f8153210d649cd592d15efe08f1ee78365"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "d634a54689eb72f7a5fc649c137ef71ac8c1d336c49b8434285018e53d048e07"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "1f63a1afbfffbdbadebb4451eae5d16ec68de5e955c26ce3225f65a3857c0651"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "cbb808de23d238ae0590e4790b7a707837e0274a521631e7677248a7cdc8e8b0"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "7f144a2e3a5156389e74741c322ec0bfe8b420e25bf921a8125350fb7003a387"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "c39ac8cd4285594f281e444d76914a4abdbe4ba5916bd4fbf39362ccdbf96bb6"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "31deab8a65e1cda9e33d876a62c7acb9580458e9c88f71751ec7e3b575df105a"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "7567038443651cfc002a0cda01434cc3a69b46077bc73f5dd30be45a54e5af99"
     }
   }
 }

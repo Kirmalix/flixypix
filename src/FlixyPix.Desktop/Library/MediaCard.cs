@@ -87,6 +87,10 @@ internal sealed class MediaCard : INotifyPropertyChanged
  private HashSet<Guid> QuickMembers => context.QuickMembers;
  public Visibility QuickVisibility => QuickMembers.Contains(Item.Id)?Visibility.Visible:Visibility.Collapsed;
  public string QuickGlyph => QuickMembers.Contains(Item.Id)?"●":"○";
+ /// <summary>The quick collection button under the pointer shows once the quick collection holds something; until then B fills it.</summary>
+ public Visibility QuickActionVisibility => Display.TileHoverActions.Contains(TileHoverAction.QuickCollection) && QuickMembers.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+ public Visibility WatchLaterActionVisibility => Display.TileHoverActions.Contains(TileHoverAction.WatchLater) ? Visibility.Visible : Visibility.Collapsed;
+ public Visibility FavoriteActionVisibility => Display.TileHoverActions.Contains(TileHoverAction.Favorite) ? Visibility.Visible : Visibility.Collapsed;
  public string QuickHint => QuickMembers.Contains(Item.Id)?T("Remove from quick collection"):T("Add to quick collection");
  public Visibility TargetVisibility => TargetMembers.Contains(Item.Id) ? Visibility.Visible : Visibility.Collapsed;
  public string PlayGlyph => Item.Kind == MediaKind.Image ? "" : "";

@@ -14781,10 +14781,6 @@
       "status": "unchanged",
       "digest": "72adc3c19c2de7b67f878c734a39b61d108657c4cf962ad2d6004b324532bba4"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "0be62cb3967b254abfff63f8406e6e552bd1cc6a475b434d03a3992729b354d6"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "816d9983f62dac274755c5e4670736959bcb1db0c24f2eb7647a2a0891bdb679"
@@ -15711,6 +15707,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "25ef2fcd9e533b95f38383965b530b73d9bd50e9aff839d74bb47fedb457784f"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "65728a73ee1109f641d84937b3ab7028eb384ef85ceaa2ec10707b37151668a3"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "882d6158050a2ce381efbdc3eb5e99cfd892110fc01c9c51cda1ef129ea0fa92"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "1096f17f832c3f0c4f403cb9875eef9322a608478c10b74f1d6a1f908e9d0a6b"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "5c3227c1119b2e93742e725ee399a1ddb33e497d7ddd349fcc8d65db6bf2cd16"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "7306bcf87db81cbaf1c181c25bf70ccb8dd0c4aab47e6fb1a7edb27990d61e95"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "059e7938a4784b0a1eba9c5d0e79db86b26aad20e5aecf1fb0d1dd142e107375"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "216990a345f9359da0c6f39648fc09fa199dc75dad722914796fecf451576b4c"
     }
   }
 }

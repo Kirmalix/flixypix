@@ -13918,10 +13918,6 @@
       "status": "unchanged",
       "digest": "ec92247c8bca3a84034e60e22829a0ceae61ee24cd80f1bf7826b1bb7ae4d832"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "75b488bd34476e515b637dfde54f2d8dc50685e963ef3d8c0302310a181d3858"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "8ba627f6c66917113fc42a38c66af8206f587acf165dd75bab5645685b9aee43"
@@ -14829,6 +14825,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "10f410fa31d3da429152e1df6b57e9e36a0b30819ecd51304cc34054c7516fab"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "0c0178c0d995e1a5e48ba19f720776ce89b93162eb9107c03e2b50e352fed950"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "79e536c57d033838ef3be450d9d382216e4aa455e0c1d04764a07f386ad1fe85"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "d26afbc09b964a6bf6cb61e9b5ab2d8b8b952a597186d097540fbae48ac3971c"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "7a3dc86b575d85a3fb3c9a1c10c481b512165a35ae90dfaa77ba2fc17921dd60"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "4cffdc639b155f0d7297abebebfed19fa879ca845e14f18cfc8acad65bb368cc"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "ec0fcb6bbac7d997f502bfa3f128c2134f599800732afcc56cabd7c4517b5f97"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "28116dfe85f604ef458b64f619df66f42e782af185a92e64b749ed2f589d622f"
     }
   }
 }

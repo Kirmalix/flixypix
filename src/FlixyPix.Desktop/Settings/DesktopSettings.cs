@@ -28,6 +28,8 @@ internal sealed partial record DesktopSettings
  public int ViewMode { get; init; }
  public int SortOrder { get; init; }
  public int TileWidth { get; init; } = 192;
+ /// <summary>Room between the tiles of the grid: 0 narrow, 1 normal, 2 wide.</summary>
+ public int TileSpacing { get; init; } = 1;
  /// <summary>Library view shown last (all, Video, Image, Audio, favorites, watchlater); used when the library asks to restore it.</summary>
  public string LastView { get; init; } = "all";
  /// <summary>Main window place on the screen (original "rememberform"); null until the window was closed once.</summary>

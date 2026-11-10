@@ -220,6 +220,8 @@ public sealed record CatalogPreferences
 /// <summary>Library behaviour from the original's general settings that still applies today.</summary>
 /// <summary>Badges on tiles: resolution (4K, 1080p …), HDR, high frame rate, video codec, number of files.</summary>
 public enum TileBadge { Resolution, Hdr, FrameRate, Codec, Versions }
+/// <summary>Buttons top right on a tile under the pointer.</summary>
+public enum TileHoverAction { QuickCollection, WatchLater, Favorite }
 /// <summary>Whether the sidebar lists the review inbox: automatically once reviewing is in use, always or never.</summary>
 public enum ReviewInboxMode { Automatic, Always, Never }
 
@@ -272,6 +274,8 @@ public sealed record GeneralPreferences
     public bool DeleteToRecycleBin { get; init; } = true;
     /// <summary>Badges on tiles (package P6), each switchable; the resolution badge was always on before.</summary>
     public List<TileBadge> TileBadges { get; init; } = [TileBadge.Resolution, TileBadge.Hdr, TileBadge.FrameRate, TileBadge.Versions];
+    /// <summary>Buttons a tile shows top right under the pointer, each switchable.</summary>
+    public List<TileHoverAction> TileHoverActions { get; init; } = [TileHoverAction.QuickCollection, TileHoverAction.WatchLater, TileHoverAction.Favorite];
     /// <summary>The sidebar shows how many media each folder holds, subfolders included (original "showvideofoldercounts").</summary>
     public bool ShowFolderCounts { get; init; } = true;
     /// <summary>The category choice shows how many media each category has (original "showvideocategorycounts").</summary>

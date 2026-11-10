@@ -87,7 +87,7 @@ public partial class MainWindow
    // Hide completely and mute: nothing stays on screen, no tray icon; showing gives the sound back.
    Use(new PrivacySettings { BossAction = BossAction.Vanish, BossPlayback = BossPlayback.Mute });
    AppShell.Boss(); await Settled();
-   Require(AppShell.IsHidden && !AppShell.TrayShown && !AppShell.IsOnScreen(this) && muted.SequenceEqual([true]) && paused == 0, "Hiding completely left something on screen or did not mute.");
+   Require(AppShell.IsHidden && !AppShell.TrayShown && !AppShell.IsOnScreen(this) && muted.SequenceEqual([true]) && paused == 0, $"Hiding completely left something on screen or did not mute (hidden {AppShell.IsHidden}, tray {AppShell.TrayShown}, on screen {AppShell.IsOnScreen(this)}, muted {string.Join(",", muted)}, paused {paused}).");
    AppShell.ShowAll(); await Settled();
    Require(!AppShell.IsHidden && AppShell.IsOnScreen(this) && muted.SequenceEqual([true, false]), "Coming back did not show the windows or give the sound back.");
    // Minimize and pause.

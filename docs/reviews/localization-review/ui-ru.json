@@ -13985,10 +13985,6 @@
       "status": "unchanged",
       "digest": "ea2b8c0e635ea50adb20030819a4169bc9d82399ac5cc6b2ad58a9dfc2da87ed"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "dc771741cee1f88a5ab54728ee42e85a7681d485a24973139546ba1ad1770e92"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "1e99cbb5b545ace1efb4c7a10b44339d34b916a39b77072c7a840e1c97ef9bd4"
@@ -14921,6 +14917,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "53695f2077ff1680c401b3bf7214f7dcba78ae07f057ee7d08c9d8de0c0152e3"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "828a6d31210bafcd7c8dd1b43903e130dbe447ee4d05485158740ba5fe34e2a2"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "ffea6cd167b2c941f94ff0fcfbb05b22d12e6a91fed591b4319caace336c7198"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "8b31c56c80a526cd83ea0ec26af48c5387071665139aa25daff4a62f2e563e9e"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "06ac4ca24f63c9d4a82f40e016a02e06490b8f9587f70640a4a2214feb9c3f1a"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "04756831d4379d7dd7144a24976b8afa75950d8a5e009cd8f3480e39d2dbaae4"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "da9a72187ec431fe6bb9180fc0564dbadc155bd8e8107d2c2e164354cf9b5ab3"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "38794ac4c129371c6b8ba979f4e35cac65a25bdb3335bb7547224aca1ace4def"
     }
   }
 }

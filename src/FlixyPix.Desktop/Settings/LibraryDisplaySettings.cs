@@ -24,12 +24,17 @@ internal sealed class LibraryDisplaySettings
   [TileBadge.Resolution] = Badge(T("Resolution")), [TileBadge.Hdr] = Badge("HDR"), [TileBadge.FrameRate] = Badge(T("60 fps")),
   [TileBadge.Codec] = Badge(T("Codec")), [TileBadge.Versions] = Badge(T("Several files")),
  };
+ /// <summary>One box per button a tile shows under the pointer.</summary>
+ internal readonly Dictionary<TileHoverAction, CheckBox> HoverActions = new()
+ {
+  [TileHoverAction.QuickCollection] = Badge(T("Quick collection")), [TileHoverAction.WatchLater] = Badge(T("Watch later")), [TileHoverAction.Favorite] = Badge(T("Favorite")),
+ };
  private static CheckBox Badge(string label) { var box = new CheckBox { Content = label, Margin = new Thickness(0, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center }; box.SetResourceReference(Control.ForegroundProperty, "Text"); return box; }
 
  internal LibraryDisplaySettings()
  {
   HistoryLength.SetLabel(T("Steps for back and forward")); RecentDays.SetLabel(T("Days for Recently watched"));
-  foreach (var check in new[] { ShowTitles, FullTitles, ShowProgress, ClickPlays, HoverLift, ShowPager, RememberWindow, TagsMatchAny, RecycleBin, ImageFade }.Concat(Badges.Values))
+  foreach (var check in new[] { ShowTitles, FullTitles, ShowProgress, ClickPlays, HoverLift, ShowPager, RememberWindow, TagsMatchAny, RecycleBin, ImageFade }.Concat(Badges.Values).Concat(HoverActions.Values))
   { check.Checked += (_, _) => Changed?.Invoke(); check.Unchecked += (_, _) => Changed?.Invoke(); }
   HistoryLength.Changed += () => Changed?.Invoke(); RecentDays.Changed += () => Changed?.Invoke();
   foreach (var box in new[] { RemoveCharacters, SpaceCharacters, SkipImages }) box.TextChanged += (_, _) => Changed?.Invoke();
@@ -52,7 +57,9 @@ internal sealed class LibraryDisplaySettings
    new SettingRow(T("Lift on hover"), T("Tiles lift slightly with a shadow."), HoverLift),
    new SettingRow(T("Page bar below the grid"), T("Page X of Y with direct page navigation (Ctrl+G)."), ShowPager),
    new SettingRow(T("Badges"), T("Shown top left on the picture. Resolution from 720p, HDR, 50 frames per second and more, video codec and the number of files of an item. HDR, frame rate and codec need the technical data (Organize ▾ → Read technical data)."),
-    new WrapPanel { Children = { Badges[TileBadge.Resolution], Badges[TileBadge.Hdr], Badges[TileBadge.FrameRate], Badges[TileBadge.Codec], Badges[TileBadge.Versions] } }, wide: true)),
+    new WrapPanel { Children = { Badges[TileBadge.Resolution], Badges[TileBadge.Hdr], Badges[TileBadge.FrameRate], Badges[TileBadge.Codec], Badges[TileBadge.Versions] } }, wide: true),
+   new SettingRow(T("Buttons on hover"), T("Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something."),
+    new WrapPanel { Children = { HoverActions[TileHoverAction.QuickCollection], HoverActions[TileHoverAction.WatchLater], HoverActions[TileHoverAction.Favorite] } }, wide: true)),
   SettingsUi.Card(T("Navigation"), null,
    new SettingRow(T("Back and forward"), T("Alt+← and Alt+→ remember this many views in this session."), HistoryLength),
    new SettingRow(T("Remember window position"), T("The main window opens again in the same place and size."), RememberWindow),
@@ -73,6 +80,7 @@ internal sealed class LibraryDisplaySettings
   SkipImages.Text = string.Join("; ", general.SkipImageNames); RecycleBin.IsChecked = general.DeleteToRecycleBin; ImageFade.IsChecked = general.ImageFade;
   RecentDays.Value = home.RecentDays;
   foreach (var (badge, box) in Badges) box.IsChecked = general.TileBadges.Contains(badge);
+  foreach (var (action, box) in HoverActions) box.IsChecked = general.TileHoverActions.Contains(action);
  }
 
  internal (FrameworkElement Field, string Message)? FirstInvalid() =>
@@ -88,5 +96,6 @@ internal sealed class LibraryDisplaySettings
   SkipImageNames = SkipImages.Text.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
   DeleteToRecycleBin = RecycleBin.IsChecked == true, ImageFade = ImageFade.IsChecked == true,
   TileBadges = [.. Badges.Where(pair => pair.Value.IsChecked == true).Select(pair => pair.Key)],
+  TileHoverActions = [.. HoverActions.Where(pair => pair.Value.IsChecked == true).Select(pair => pair.Key)],
  };
 }

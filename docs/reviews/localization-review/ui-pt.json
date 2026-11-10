@@ -13983,11 +13983,6 @@
       "digest": "4db4dda41fc1cdca370beb727db3a874ac2cabf66e3f30993a61b94fb753fe47",
       "previous_digest": "62816305f25bc4996436d7329b039b29297977f9341c037c7056ef182b866e47"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "corrected",
-      "digest": "cf8a2869f90c9a6ee2810647e3e439227e5b4db9e35834b840e73066b073c17b",
-      "previous_digest": "009626fe58079451fc0e94671e5aa92fad0689b3fdbb6d9a2bd7d56f24ce6f56"
-    },
     "The image-set proposals changed. Refresh the preview.": {
       "status": "corrected",
       "digest": "cee4772d1c0c431517746d8f84f4918234ca501acee56bc0ee89271786552ddb",
@@ -14886,6 +14881,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "26ca57e176535dfc2f87dea804938f8417119cf94f8d19449bf801cc805ab614"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "ab95c1e1ef0c0116817d388a184bd8cf986961733c159322ab31676efa878267"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "2ecc5145e2e3eb3e8d9138f0eea5ed248b106ee4975ad875318a49ff8f937681"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "5d17324a6f4a66c69b6f319160502f23501841bfff31b0c9a34de975b5e9f870"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "5c3227c1119b2e93742e725ee399a1ddb33e497d7ddd349fcc8d65db6bf2cd16"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "8703fad0f2e2b2217440180177fce11666c87eca0361b30c4efbbf1ef4423e22"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "09c53652028f7402af8a45c26001d9ac33fb70b2fa06b9d092056cfc652d2234"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "e9592425efd9c6223e7c79318bde149211f6c1a8ef444826d43599c480b736a1"
     }
   }
 }

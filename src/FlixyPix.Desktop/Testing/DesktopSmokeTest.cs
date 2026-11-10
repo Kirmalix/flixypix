@@ -641,6 +641,20 @@ public partial class MainWindow
          $"A narrower grid changed the columns or lost the place ({steadyColumns} → {panel.Columns}, 40 → {_visibleFirst}–{_visibleLast}).");
         DetailsColumn.Width = detailsWidth; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(panel.Columns == steadyColumns && Math.Abs(panel.TileWidth - steadyTile) < 1, "The columns did not come back with the pane.");
+        // Spacing changes the room around the tiles at once and keeps the selected tile in view.
+        foreach (var spacing in new[] { 0, 2, 1 })
+        {
+            TileSpacing.SelectedIndex = spacing; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var selectedTile = (System.Windows.Controls.Control)MediaList.ItemContainerGenerator.ContainerFromItem(MediaList.SelectedItem);
+            Require(selectedTile.Margin == TileSpacingOf(spacing).Gap && selectedTile.Padding == TileSpacingOf(spacing).Inset && _visibleFirst <= 40 && _visibleLast >= 40,
+             $"Spacing {spacing} did not apply or lost the place ({selectedTile.Margin}, 40 → {_visibleFirst}–{_visibleLast}).");
+        }
+        // Buttons under the pointer follow the settings; the quick collection button waits until the quick collection holds something.
+        var hoverItem = ((MediaCard)MediaList.Items[0]).Item;
+        var onlyFavorite = new MediaCard(hoverItem, false, context: new MediaCardContext { Display = new GeneralPreferences { TileHoverActions = [TileHoverAction.Favorite, TileHoverAction.QuickCollection] } });
+        var filledQuick = new MediaCard(hoverItem, false, context: new MediaCardContext { Display = new GeneralPreferences(), QuickMembers = [Guid.NewGuid()] });
+        Require(onlyFavorite.FavoriteActionVisibility == Visibility.Visible && onlyFavorite.WatchLaterActionVisibility == Visibility.Collapsed && onlyFavorite.QuickActionVisibility == Visibility.Collapsed
+         && filledQuick.QuickActionVisibility == Visibility.Visible && filledQuick.WatchLaterActionVisibility == Visibility.Visible, "The buttons on hover do not follow the settings.");
         // Pages: jumping to a page puts its first medium at the top, the bar shows the page.
         await GoToPageAsync(3);
         Require(_visibleFirst == 2 * PageSize && CurrentPage == 3 && PagerBar.Visibility == Visibility.Visible && PageLabel.Text == T("{0:N0}–{1:N0} of {2:N0}", 2 * PageSize + 1, Math.Min(3 * PageSize, _total), _total),

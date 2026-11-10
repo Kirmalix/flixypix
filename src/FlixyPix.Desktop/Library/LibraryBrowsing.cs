@@ -82,7 +82,7 @@ public partial class MainWindow
     private void ViewChanged(object sender, SelectionChangedEventArgs e) { if (_tileTemplate == null) return; ApplyViewMode(); SaveViewPreferences(); }
     private void ApplyViewMode()
     {
-        TileSizePanel.Visibility = ViewChoice.SelectedIndex != 1 ? Visibility.Visible : Visibility.Collapsed;
+        TileSizePanel.Visibility = TileSpacingPanel.Visibility = ViewChoice.SelectedIndex != 1 ? Visibility.Visible : Visibility.Collapsed;
         UpdateVideoWall();
         // The other view gets a new panel that starts at the top; keep the medium that was at the top.
         var anchor = _anchor;
@@ -103,6 +103,7 @@ public partial class MainWindow
             ViewMode = ViewChoice.SelectedIndex,
             SortOrder = SortChoice.SelectedIndex,
             TileWidth = TileWidthSetting,
+            TileSpacing = Math.Max(0, TileSpacing.SelectedIndex),
             LastView = _view,
             SidebarCollapsed = _sidebarAutoFolded ? _settings.SidebarCollapsed : !SidebarExpanded,
             SidebarWidth = PaneWidths().Sidebar,

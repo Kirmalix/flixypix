@@ -16,6 +16,7 @@ public partial class MainWindow
   EditRating.Describe = value => value == 0 ? T("Unrated") : T("{0:0.#} out of 5 stars", value / 2d);
   EditRating.Changed += () => { if (!_showingDetails) QuickSave(item => item with { Rating = EditRating.Value }, EditRating.Value == 0 ? T("Rating removed") : T("Rating saved")); };
   SetTileWidth(_settings.TileWidth);
+  TileSpacing.SelectedIndex = Math.Clamp(_settings.TileSpacing, 0, 2); ApplyTileSpacing(TileSpacing.SelectedIndex);
   ViewPopup.Opened += (_, _) => SyncTileSlider();
   ViewPopup.Closed += (_, _) => SaveViewPreferences();
  }
@@ -124,6 +125,25 @@ public partial class MainWindow
   // The slider reports its first value while the window is still being built, before the list exists.
   if (_syncingTileSlider || MediaList == null) return;
   SetTileColumns(TileColumnRange(TileArea).Most - (int)Math.Round(e.NewValue));
+ }
+ /// <summary>Room around each tile, its selection frame and its card, for narrow, normal and wide spacing.</summary>
+ internal static (Thickness Gap, Thickness Inset, Thickness Card) TileSpacingOf(int spacing) => spacing switch
+ {
+  0 => (new Thickness(0, 0, 2, 2), new Thickness(3), new Thickness(4)),
+  2 => (new Thickness(0, 0, 10, 10), new Thickness(5), new Thickness(9)),
+  _ => (new Thickness(0, 0, 4, 4), new Thickness(4), new Thickness(6)),
+ };
+ private void ApplyTileSpacing(int spacing)
+ {
+  var (gap, inset, card) = TileSpacingOf(spacing);
+  Resources["TileGap"] = gap; Resources["TileInset"] = inset; Resources["TileCardPadding"] = card;
+ }
+ private void TileSpacingChanged(object sender, SelectionChangedEventArgs e)
+ {
+  if (TileSpacing.SelectedIndex < 0) return;
+  // The tile height changes with the spacing; the grid measures it again and keeps its place.
+  ApplyTileSpacing(TileSpacing.SelectedIndex);
+  SaveViewPreferences();
  }
  private void TileSizeCommitted(object sender, RoutedEventArgs e) => SaveViewPreferences();
 

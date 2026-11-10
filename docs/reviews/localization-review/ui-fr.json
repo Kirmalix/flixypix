@@ -13898,10 +13898,6 @@
       "status": "unchanged",
       "digest": "30c0982be1a6a5b6ac1e5eb538141e8fd6f985a54cbcdb592c67a69f4aee3de6"
     },
-    "The circle on a media card adds it to the quick collection. B uses your chosen target collection. Neither action moves files.": {
-      "status": "unchanged",
-      "digest": "3cd27cbda1016d3dfd821919f5adb9435c9ba2de17c02001f666939d4406859b"
-    },
     "The contact sheet or its source changed. Reopen it or recreate the thumbnail.": {
       "status": "unchanged",
       "digest": "2ca949fce6e8382681ed83d6a3e3fe65bf52ea32ab8ef465ae7927b35b578912"
@@ -14845,6 +14841,34 @@
     "{0} columns": {
       "status": "unchanged",
       "digest": "0c9de1682cd591be1865d539df3547a1d45c0c1c575a500d2c8939f987d8cec7"
+    },
+    "B adds the selected items to your chosen target collection, at first the quick collection. Once the quick collection holds something, the circle on a media card adds to it as well. Neither action moves files.": {
+      "status": "unchanged",
+      "digest": "1f6e13c29029d61d2039031dd5f3fa9b77c86abaffa916f33a782dc213639a49"
+    },
+    "Buttons on hover": {
+      "status": "unchanged",
+      "digest": "0c0fcd49e7afd19a9d4481a2d8ea0b0485827f102919053bc7b14d4dfc3361fd"
+    },
+    "Narrow": {
+      "status": "unchanged",
+      "digest": "778d4f74e97e1df9f0aa3a46fc06a52adf2688cc674ae48329978d86eeaea208"
+    },
+    "Normal": {
+      "status": "unchanged",
+      "digest": "5c3227c1119b2e93742e725ee399a1ddb33e497d7ddd349fcc8d65db6bf2cd16"
+    },
+    "Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something.": {
+      "status": "unchanged",
+      "digest": "a02e99c8284741bffe0b41a64ab671e7730710d553825bc42e26ff8ddca121c2"
+    },
+    "Spacing": {
+      "status": "unchanged",
+      "digest": "0d303fc021a72886d4666faaa113096fed867cac7930cf8f7a1acd66dd8a3beb"
+    },
+    "Wide": {
+      "status": "unchanged",
+      "digest": "e13abf502db2df799980db8ceb2b52bbeb274c959c7045ce27a3d8caba7abe49"
     }
   }
 }
