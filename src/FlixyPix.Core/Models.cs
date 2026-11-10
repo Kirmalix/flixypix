@@ -151,6 +151,8 @@ public sealed record ImportResult
     /// <summary>For an import from EazyFlixPix 4: which areas of the catalog were complete, partial or absent.</summary>
     public LegacyCompatibilityReport? Compatibility { get; init; }
     public int Imported { get; init; }
+    /// <summary>The media a scan added, for what follows an import (metadata of the files, previews).</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public List<Guid> ImportedIds { get; init; } = [];
     public int Skipped { get; init; }
     public List<string> Errors { get; init; } = [];
     public List<string> Warnings { get; init; } = [];
@@ -238,6 +240,9 @@ public sealed record GeneralPreferences
     public bool MarkMissingFiles { get; init; } = true;
     /// <summary>Original "Always show import errors": the import report also opens without errors.</summary>
     public bool AlwaysShowImportReport { get; init; }
+    /// <summary>Imports and folder syncs adopt what the files and their XMP sidecars say: keywords, title, description,
+    /// rating and date taken (<see cref="CatalogRepository.AdoptFileMetadata"/>).</summary>
+    public bool ReadMetadataOnImport { get; init; } = true;
     /// <summary>Original "Always load last view on startup".</summary>
     public bool RestoreLastView { get; init; }
     /// <summary>What a restore brings back; the original only knew the view, FlixyPix restores everything by default.</summary>

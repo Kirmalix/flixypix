@@ -56,6 +56,24 @@ public partial class MainWindow
     await encoder.WaitForExitAsync(); Require(encoder.ExitCode == 0, await error); await output;
     Require(new DesktopMetadataReader().Read(tagged, MediaKind.Video)?.Title == "Titel aus den Eigenschaften", "The Windows properties of an MP4 were not read.");
    }
+   // An import reads the same by itself: a new image arrives with its title and keyword; with the setting off it stays as scanned.
+   var arriving = Path.Combine(folder, "ankunft.jpg"); File.Copy(imagePath, arriving);
+   var scanned = await new MediaScanner(_repository).ScanAsync([arriving]);
+   Require(scanned.ImportedIds.Count == 1 && await AdoptFileMetadataAsync(scanned.ImportedIds, CancellationToken.None) == 1, "The import did not read the metadata of the new file.");
+   var arrived = _repository.GetMediaByPath(arriving);
+   Require(arrived is { Title: "Abend am Meer" } && arrived.Tags.Contains("Meer"), "The import did not take over the metadata of the new file.");
+   _repository.Delete(arrived!.Id);
+   var preferences = _repository.GetPreferences();
+   _repository.SavePreferences(preferences with { General = preferences.General with { ReadMetadataOnImport = false } });
+   try
+   {
+    scanned = await new MediaScanner(_repository).ScanAsync([arriving]);
+    Require(scanned.ImportedIds.Count == 1 && await AdoptFileMetadataAsync(scanned.ImportedIds, CancellationToken.None) == 0, "The import read the metadata although the setting is off.");
+    var plain = _repository.GetMediaByPath(arriving);
+    Require(plain is { Tags.Count: 0 } && plain.Title != "Abend am Meer", "The import read the metadata although the setting is off.");
+    _repository.Delete(plain!.Id);
+   }
+   finally { _repository.SavePreferences(preferences); }
   }
   finally { _repository.Delete(image.Id); _repository.Delete(video.Id); }
  }

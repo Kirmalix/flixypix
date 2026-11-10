@@ -24,6 +24,19 @@ public partial class MainWindow
   return (ids, T("all images and videos in the library"));
  }
 
+ /// <summary>New and changed media take over what their files say, unless the library setting is off. Unreadable files
+ /// go to the error log; the previews that follow name them to the user anyway.</summary>
+ /// <returns>The number of media that took something over.</returns>
+ internal async Task<int> AdoptFileMetadataAsync(IReadOnlyCollection<Guid> ids, CancellationToken token, Action<int, int>? report = null)
+ {
+  if (ids.Count == 0 || !_repository.GetPreferences().General.ReadMetadataOnImport) return 0;
+  var total = ids.Count;
+  var progress = report == null ? null : new Progress<int>(done => report(done, total));
+  var result = await Task.Run(() => _repository.AdoptFileMetadata(ids, new DesktopMetadataReader(), progress, token), token);
+  if (result.Problems.Count > 0) ErrorLog.Write("Metadata on import", new IOException(string.Join(Environment.NewLine, result.Problems.Take(50))));
+  return result.Applied;
+ }
+
  private async void ImportFileMetadata()
  {
   var selection = SelectedMedia;

@@ -450,6 +450,9 @@ public partial class MainWindow : Window
             try
             {
                 var result = await Task.Run(() => new MediaScanner(_repository).ScanAsync(paths, progress, token), token);
+                // What the files say about themselves comes first: tags, ratings and dates are there while the previews follow.
+                var adopted = await AdoptFileMetadataAsync(result.ImportedIds, token, (done, total) => Status.Text = T("Read metadata") + $" · {done:N0} / {total:N0}");
+                if (adopted > 0) { ShowToast(Tn(adopted, "Metadata imported for 1 item", "Metadata imported for {0:N0} items")); Refresh(); }
                 await AfterImportAsync(token);
                 ShowImportResult(result);
             }

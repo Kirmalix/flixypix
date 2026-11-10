@@ -1639,6 +1639,7 @@
   "New files, familiar places. Keep your library up to date.": "新しいファイルも、いつものフォルダーで。ライブラリを最新の状態に保ちましょう。",
   "New in FlixyPix": "FlixyPix の新しい値",
   "New in this set": "このセットに新規作成",
+  "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": "新しいメディアは、インポート時とメディアフォルダーの同期時に、ファイルとその XMP サイドカー ファイルからキーワード（タグとして）、タイトル、説明、評価、撮影日時を引き継ぎます。補うのは空いている項目だけで、ファイルは読み取るだけです。",
   "New items to look through and approve.": "新しいメディアを確認して承認します。",
   "New library": "新しいライブラリ",
   "New library created · FlixyPix": "新しいライブラリを作成しました · FlixyPix",

@@ -41,6 +41,7 @@ internal sealed partial class SettingsWindow
      RestoreChoice, wide: true)),
    SettingsUi.Card(T("Import"), null,
     new SettingRow(T("Include hidden folders"), T("When off, hidden subfolders are skipped in folder imports. Folders chosen explicitly are always imported."), IncludeHidden),
+    new SettingRow(T("Read metadata from files"), T("New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read."), ReadMetadata),
     new SettingRow(T("Always show the import report"), T("Otherwise the report only opens on errors or notes."), AlwaysReport)),
    SettingsUi.Card(T("Display"), null,
     new SettingRow(T("Show file extension"), T("Appends the extension like “.mp4” to the titles in tiles and list."), ShowExtension),

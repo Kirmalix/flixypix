@@ -1715,6 +1715,7 @@
   "New files, familiar places. Keep your library up to date.": "Новые файлы, знакомые папки. Поддерживайте библиотеку в актуальном состоянии.",
   "New in FlixyPix": "Новое в FlixyPix",
   "New in this set": "Создать в этом наборе",
+  "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": "Новые медиафайлы получают ключевые слова как теги, название, описание, оценку и дату съёмки из файлов и их сопроводительных файлов XMP — при импорте и при синхронизации папок медиа. Дополняется только то, чего не хватает; файлы только читаются.",
   "New items to look through and approve.": "Просмотреть и одобрить новые медиафайлы.",
   "New library": "Новая библиотека",
   "New library created · FlixyPix": "Новая библиотека создана · FlixyPix",

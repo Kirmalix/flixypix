@@ -1677,6 +1677,7 @@
   "New files, familiar places. Keep your library up to date.": "Nieuwe bestanden, vertrouwde mappen. Houd je bibliotheek bij.",
   "New in FlixyPix": "Nieuw in FlixyPix",
   "New in this set": "Nieuw in deze set",
+  "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": "Nieuwe media nemen trefwoorden als tags, titel, beschrijving, beoordeling en opnamedatum over uit de bestanden en hun XMP-sidecarbestanden, bij het importeren en bij het synchroniseren van de mediamappen. Alleen wat nog ontbreekt wordt aangevuld; de bestanden worden alleen gelezen.",
   "New items to look through and approve.": "Nieuwe media bekijken en goedkeuren.",
   "New library": "Nieuwe bibliotheek",
   "New library created · FlixyPix": "Nieuwe bibliotheek gemaakt · FlixyPix",

@@ -1715,6 +1715,7 @@
   "New files, familiar places. Keep your library up to date.": "Nowe pliki, znajome foldery. Aktualizuj swoją bibliotekę.",
   "New in FlixyPix": "Nowy w FlixyPix",
   "New in this set": "Nowe w tym zestawie",
+  "New items take over keywords as tags, title, description, rating and date taken from the files and their XMP sidecars, on import and when media folders are synced. Only missing information is filled in; the files are only read.": "Nowe media przejmują słowa kluczowe jako tagi, tytuł, opis, ocenę i datę wykonania z plików i ich plików towarzyszących XMP, podczas importu i synchronizacji folderów multimediów. Uzupełniane jest tylko to, czego brakuje; pliki są tylko odczytywane.",
   "New items to look through and approve.": "Przejrzyj i zatwierdź nowe media.",
   "New library": "Nowa biblioteka",
   "New library created · FlixyPix": "Nowa biblioteka utworzona · FlixyPix",
