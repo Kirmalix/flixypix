@@ -16,7 +16,7 @@ public partial class MainWindow
     private DispatcherTimer? _folderPoll;
     private DispatcherTimer? _folderStart;
     private LibraryFolderWatcher? _folderWatcher;
-    private CancellationTokenSource? _folderCheck;
+    private CancellationTokenSource? _folderCheck, _backgroundFolderPlan;
     private FolderSyncPlan? _folderPlan;
     private LibraryFoldersWindow? _foldersWindow;
     /// <summary>Time without file system events before a check runs.</summary>
@@ -81,13 +81,19 @@ public partial class MainWindow
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, libraryToken);
         token = linked.Token;
-        await _folderSyncGate.WaitAsync(token);
+        // A check the user asked for does not wait silently behind one in the background; it gives the newer answer anyway.
+        if (background) _backgroundFolderPlan = linked; else _backgroundFolderPlan?.Cancel();
         try
         {
-            var folders = _repository.GetLibraryFolders().Where(f => !background || f.Watch).ToList();
-            return await Task.Run(() => { _repository.InitializeFolderReferences(folders, token); return _repository.PlanFolderSync(folders, token, progress); }, token);
+            await _folderSyncGate.WaitAsync(token);
+            try
+            {
+                var folders = _repository.GetLibraryFolders().Where(f => !background || f.Watch).ToList();
+                return await Task.Run(() => _repository.PlanFolderSync(folders, token, progress), token);
+            }
+            finally { _folderSyncGate.Release(); }
         }
-        finally { _folderSyncGate.Release(); }
+        finally { if (_backgroundFolderPlan == linked) _backgroundFolderPlan = null; }
     });
     private async Task CheckLibraryFoldersCoreAsync(bool background)
     {

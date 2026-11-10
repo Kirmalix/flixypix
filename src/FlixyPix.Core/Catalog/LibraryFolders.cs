@@ -101,10 +101,23 @@ public sealed partial class CatalogRepository
         return result;
     }
 
-    /// <summary>Compares the folders with the catalog. Reads the file system only; nothing is changed.</summary>
+    /// <summary>Time between progress reports of a folder check: one report per file would flood the window, which then
+    /// handles them before it draws anything.</summary>
+    private static readonly TimeSpan FolderProgressInterval = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>Compares the folders with the catalog. Reads the file system only; media are not changed. For entries without a
+    /// file date it notes the size and date seen first, so a later check can tell a changed file.</summary>
     public FolderSyncPlan PlanFolderSync(IReadOnlyList<LibraryFolder>? folders = null, CancellationToken cancellationToken = default, IProgress<FolderSyncProgress>? progress = null)
     {
         int scanned = 0;
+        var reported = System.Diagnostics.Stopwatch.StartNew();
+        void Report(string path, bool now = false)
+        {
+            if (progress == null || !now && reported.Elapsed < FolderProgressInterval) return;
+            reported.Restart();
+            progress.Report(new("Checking folders …", scanned, null, path));
+        }
+        var baselines = new Dictionary<string, (long Size, DateTimeOffset Modified)>();
         var preferences = GetPreferences();
         var chosen = (folders ?? preferences.LibraryFolders).Select(NormalizeLibraryFolder).ToList();
         var kindOf = MediaScanner.FolderKinds(preferences.Previews);
@@ -134,7 +147,7 @@ public sealed partial class CatalogRepository
                     foreach (var entry in new DirectoryInfo(directory).EnumerateFileSystemInfos())
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        progress?.Report(new("Checking folders ?", ++scanned, null, entry.FullName));
+                        Report(entry.FullName, ++scanned == 1);
                         if (entry is DirectoryInfo child)
                         {
                             if (!folder.IncludeSubfolders || child.Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
@@ -153,9 +166,14 @@ public sealed partial class CatalogRepository
                     errors.Add($"{directory}: {error.Message}");
                 }
             }
+            // Reading the catalog part of a large folder takes a moment; the window says so instead of standing still.
+            Report(folder.Path, now: true);
             // Further versions of media are cataloged with their medium and never new.
             foreach (var key in VersionKeysUnder(folder.Path)) known.Add(key);
-            foreach (var item in MediaUnder(folder.Path))
+            var (media, seen) = CatalogUnder(folder.Path);
+            foreach (var (key, state) in seen) baselines.TryAdd(key, state);
+            cancellationToken.ThrowIfCancellationRequested();
+            foreach (var item in media)
             {
                 var key = PathKey(item.Path);
                 known.Add(key);
@@ -168,14 +186,26 @@ public sealed partial class CatalogRepository
         var missing = cataloged.Where(c => !found.ContainsKey(c.Key) && !unscanned.Any(u => c.Key.StartsWith(u + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal)) && !File.Exists(c.Value.Path))
             .Select(c => c.Value).ToList();
         var changes = new List<FolderChange>();
+        var noted = new List<(string Key, long Size, DateTimeOffset Modified)>();
         foreach (var entry in found)
         {
             if (!cataloged.TryGetValue(entry.Key, out var old)) continue;
 
             var stamp = entry.Value.Modified;
-            if (old.Size is { } size && size != entry.Value.Size || old.Modified is { } previous && previous != stamp)
+            var (size, previous) = (old.Size, old.Modified);
+            if (previous is null)
+            {
+                // The state seen first counts as the cataloged one; a size that already differs is a change of its own.
+                if (baselines.TryGetValue(entry.Key, out var first)) (size, previous) = (first.Size, first.Modified);
+                else if (size is null || size == entry.Value.Size) { noted.Add((entry.Key, entry.Value.Size, stamp)); continue; }
+            }
+            if (size is { } bytes && bytes != entry.Value.Size || previous is { } date && date != stamp)
                 changes.Add(new(FolderChangeKind.Modified, entry.Value.Path, entry.Value.Kind, entry.Value.Size, entry.Value.Folder.Id, old.Id, old.Path, stamp));
         }
+        // A noted state is no longer needed once the entry has a date of its own or left the catalog.
+        var stale = baselines.Keys.Where(key => !cataloged.TryGetValue(key, out var item) || item.Modified != null).ToList();
+        cancellationToken.ThrowIfCancellationRequested();
+        SaveFolderBaselines(noted, stale);
         void Pair(FolderChangeKind kind, Func<string, long?, MediaKind, string?> key)
         {
             var targets = added.GroupBy(a => key(a.Path, a.Size, a.Kind)).Where(g => g.Key != null && g.Count() == 1).ToDictionary(g => g.Key!, g => g.Single());
@@ -292,13 +322,13 @@ public sealed partial class CatalogRepository
 
     private static bool IsInside(string key, string folderKey) => key.StartsWith(folderKey + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal);
 
-    /// <summary>Catalog entries below a folder, read through the path index on a reader of its own: with many media this takes
-    /// long, and the window goes on working meanwhile.</summary>
-    private List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> MediaUnder(string folder)
+    /// <summary>Catalog entries below a folder and the states noted for them, read through the path index on a reader of its
+    /// own: with many media this takes long, and the window goes on working meanwhile.</summary>
+    private (List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> Media, Dictionary<string, (long Size, DateTimeOffset Modified)> Baselines) CatalogUnder(string folder)
     {
         lock (gate) ThrowIfDisposed();
         using var aside = OpenAside();
-        return MediaUnder(folder, aside);
+        return (MediaUnder(folder, aside), FolderBaselinesUnder(folder, aside));
     }
 
     private static List<(Guid Id, string Path, MediaKind Kind, long? Size, DateTimeOffset? Modified)> MediaUnder(string folder, SqliteConnection source)

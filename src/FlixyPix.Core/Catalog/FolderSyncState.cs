@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 namespace FlixyPix.Core;
 
 public sealed record FolderSyncReport(DateTimeOffset At, FolderSyncResult Result, IReadOnlyList<FolderChange> Changes)
@@ -9,68 +10,47 @@ public sealed record FolderSyncReport(DateTimeOffset At, FolderSyncResult Result
 }
 public sealed partial class CatalogRepository
 {
-    /// <summary>Notes size and date of files in the folders that have none yet, in portions, so the window never waits long.
-    /// Only media inside the folders are read: a whole library would cost seconds and gigabytes at every check.</summary>
-    public void InitializeFolderReferences(IReadOnlyList<LibraryFolder> folders, CancellationToken token = default)
+    /// <summary>Size and date a folder check first saw for files whose catalog entry knows no file date (entries taken over
+    /// from EazyFlixPix 4). They are kept beside the media: writing them into each entry cost a large library a quarter of an
+    /// hour and a new search index.</summary>
+    private void InitializeFolderBaselineSchema(SqliteTransaction transaction)
     {
-        foreach (var folder in folders)
+        using var create = Command("CREATE TABLE IF NOT EXISTS folder_baselines(path_key TEXT PRIMARY KEY, size INTEGER NOT NULL, modified INTEGER NOT NULL) WITHOUT ROWID", transaction);
+        create.ExecuteNonQuery();
+    }
+
+    private static Dictionary<string, (long Size, DateTimeOffset Modified)> FolderBaselinesUnder(string folder, SqliteConnection source)
+    {
+        var prefix = PathKey(folder) + System.IO.Path.DirectorySeparatorChar;
+        using var command = source.CreateCommand();
+        command.CommandText = "SELECT path_key,size,modified FROM folder_baselines WHERE path_key >= $prefix AND path_key < $end";
+        command.Parameters.AddWithValue("$prefix", prefix); command.Parameters.AddWithValue("$end", prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1));
+        using var reader = command.ExecuteReader();
+        var result = new Dictionary<string, (long, DateTimeOffset)>();
+        while (reader.Read()) result[reader.GetString(0)] = (reader.GetInt64(1), new DateTimeOffset(reader.GetInt64(2), TimeSpan.Zero));
+        return result;
+    }
+
+    /// <summary>Notes new first-seen states and drops those whose entry has a file date of its own by now, in one transaction.</summary>
+    private void SaveFolderBaselines(IReadOnlyCollection<(string Key, long Size, DateTimeOffset Modified)> noted, IReadOnlyCollection<string> stale)
+    {
+        if (noted.Count == 0 && stale.Count == 0) return;
+        lock (gate)
         {
-            var prefix = PathKey(folder.Path) + System.IO.Path.DirectorySeparatorChar;
-            var end = prefix[..^1] + (char)(System.IO.Path.DirectorySeparatorChar + 1);
-            var after = prefix;
-            while (true)
+            ThrowIfDisposed();
+            using var transaction = connection.BeginTransaction();
+            using var save = Command("INSERT OR REPLACE INTO folder_baselines(path_key,size,modified) VALUES($key,$size,$modified)", transaction, ("$key", ""), ("$size", 0L), ("$modified", 0L));
+            foreach (var (key, size, modified) in noted)
             {
-                token.ThrowIfCancellationRequested();
-                List<(string Key, MediaItem Item)> portion = [];
-                lock (gate)
-                {
-                    ThrowIfDisposed();
-                    using var command = Command("SELECT path_key,document FROM media WHERE path_key>$after AND path_key<$end AND (json_extract(document,'$.fileModifiedAtUtc') IS NULL OR json_array_length(document,'$.files')>0) ORDER BY path_key LIMIT 2000",
-                        null, ("$after", after), ("$end", end));
-                    using var reader = command.ExecuteReader();
-                    while (reader.Read()) portion.Add((reader.GetString(0), JsonSerializer.Deserialize<MediaItem>(reader.GetString(1), Json)!));
-                }
-                if (portion.Count == 0) break;
-                after = portion[^1].Key;
-                InitializeFolderReferences(folders, portion.Select(p => p.Item), token);
+                save.Parameters["$key"].Value = key; save.Parameters["$size"].Value = size; save.Parameters["$modified"].Value = modified.UtcTicks;
+                save.ExecuteNonQuery();
             }
-            // Versions of media whose main file lies elsewhere.
-            List<MediaItem> versions = [];
-            lock (gate)
-            {
-                ThrowIfDisposed();
-                using var command = Command("SELECT document FROM media WHERE id IN (SELECT media_id FROM media_files WHERE path_key>=$prefix AND path_key<$end)", null, ("$prefix", prefix), ("$end", end));
-                using var reader = command.ExecuteReader();
-                while (reader.Read()) versions.Add(JsonSerializer.Deserialize<MediaItem>(reader.GetString(0), Json)!);
-            }
-            InitializeFolderReferences(folders, versions, token);
+            using var drop = Command("DELETE FROM folder_baselines WHERE path_key=$key", transaction, ("$key", ""));
+            foreach (var key in stale) { drop.Parameters["$key"].Value = key; drop.ExecuteNonQuery(); }
+            transaction.Commit();
         }
     }
 
-    private void InitializeFolderReferences(IReadOnlyList<LibraryFolder> folders, IEnumerable<MediaItem> items, CancellationToken token)
-    {
-        foreach (var item in items)
-        {
-            token.ThrowIfCancellationRequested();
-            MediaFile Reference(MediaFile old)
-            {
-                if (old.FileModifiedAtUtc != null || !folders.Any(f => IsInside(PathKey(old.Path), PathKey(f.Path)) && (f.IncludeSubfolders || string.Equals(Path.GetDirectoryName(old.Path), f.Path, StringComparison.OrdinalIgnoreCase)))) return old;
-                try
-                {
-                    var file = new FileInfo(old.Path);
-                    return file.Exists && (old.FileSize == null || old.FileSize == file.Length) ? old with { FileSize = file.Length, FileModifiedAtUtc = new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero) } : old;
-                }
-                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return old; }
-            }
-            var main = Reference(MediaVersions.Main(item)); var versions = item.Files.Select(Reference).ToList();
-            if (main.FileModifiedAtUtc != item.FileModifiedAtUtc || !versions.SequenceEqual(item.Files))
-                lock (gate)
-                {
-                    if (GetMedia(item.Id) is not { } current || current.Path != item.Path || current.FileModifiedAtUtc != item.FileModifiedAtUtc || !current.Files.SequenceEqual(item.Files)) continue;
-                    Upsert(current with { FileSize = main.FileSize, FileModifiedAtUtc = main.FileModifiedAtUtc, Files = versions });
-                }
-        }
-    }
     public int RemoveMissingFolderFiles(FolderSyncPlan plan, IReadOnlyCollection<FolderChange> chosen, CancellationToken token = default)
     {
         lock (gate)
