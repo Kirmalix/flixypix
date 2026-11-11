@@ -91,6 +91,151 @@ public sealed class StashImportTests:IDisposable
   Assert.Equal(StashFieldStatus.PreviouslyKept,after.Single(field=>field.Field=="title").Status);Assert.Equal(StashFieldStatus.Equal,after.Single(field=>field.Field=="rating").Status);
  }
 
+ private const string UsageScene="""{"title":"Scene A","files":["/library/a.mp4"],"play_history":["2024-03-02T20:15:00Z","2024-01-05T10:00:00+01:00","not a time"],"o_history":["2024-03-02T20:40:00Z"]}""";
+ private void AddUsageLibrary()
+ {
+  File.WriteAllText(Path.Combine(Target,"a.mp4"),"synthetic video");File.WriteAllText(Path.Combine(Target,"b.jpg"),"synthetic image");
+  Add("scenes/a.json",UsageScene);Add("images/b.json","""{"title":"Image B","files":["/library/b.jpg"],"o_counter":3}""");
+ }
+
+ [Fact]
+ public async Task FirstImportTakesCountersAndHistoryAndARepeatAddsNothing()
+ {
+  AddUsageLibrary();using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  Assert.Contains(rows.Single(row=>row.Draft.Kind==StashEntityKind.Scene).Draft.Issues,issue=>issue.Code=="usage-time"&&issue.Severity==StashIssueSeverity.Warning);
+  await db.ApplyStashImportAsync(snapshot,Request(source,rows.Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var video=db.Search().Single(item=>item.Kind==MediaKind.Video);var image=db.Search().Single(item=>item.Kind==MediaKind.Image);
+  Assert.Equal((2L,1L,new DateTimeOffset(2024,3,2,20,15,0,TimeSpan.Zero)),(video.PlayCount,video.OCount,video.LastPlayedAt));
+  Assert.Equal((null,3L),(image.PlayCount,image.OCount));
+  var history=db.GetHistory(video.Id);
+  Assert.Equal(new[]{new DateTimeOffset(2024,1,5,9,0,0,TimeSpan.Zero),new DateTimeOffset(2024,3,2,20,15,0,TimeSpan.Zero)},history.Where(entry=>entry.Kind==HistoryKind.Play).Select(entry=>entry.At).Order());
+  Assert.Equal(new DateTimeOffset(2024,3,2,20,40,0,TimeSpan.Zero),history.Single(entry=>entry.Kind==HistoryKind.O).At);
+  Assert.Empty(db.GetHistory(image.Id));
+
+  var repeat=Preview(db,snapshot,source);Assert.All(repeat.SelectMany(row=>row.Fields),field=>Assert.Equal(StashFieldStatus.Equal,field.Status));
+  var again=await db.ApplyStashImportAsync(snapshot,Request(source,Confirmed(repeat)));Assert.Equal(2,again.Unchanged);Assert.Equal(3,db.CountHistory());
+ }
+
+ [Fact]
+ public async Task LaterLocalPlaybackStaysUnlessTheCounterIsTakenAndHistoryIsOnlyAdded()
+ {
+  AddUsageLibrary();using var db=Open(false);var source=Profile(db);
+  using(var first=await Read())await db.ApplyStashImportAsync(first,Request(source,Preview(db,first,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var video=db.Search().Single(item=>item.Kind==MediaKind.Video);var local=new DateTimeOffset(2025,6,1,12,0,0,TimeSpan.Zero);
+  db.BeginPlayback(video.Id,local);db.Upsert(db.GetMedia(video.Id)! with {PlayCount=4,LastPlayedAt=local});
+  Add("scenes/a.json",UsageScene.Replace("\"not a time\"","\"2024-05-05T05:05:05Z\"").Replace("\"o_history\":[","\"o_history\":[\"2024-06-06T06:06:06Z\","));
+  using var snapshot=await Read();var rows=Preview(db,snapshot,source);var scene=rows.Single(row=>row.Draft.Kind==StashEntityKind.Scene);
+  Assert.Equal(StashFieldStatus.Conflict,scene.Fields.Single(field=>field.Field=="playCount").Status);
+  Assert.Equal(StashFieldStatus.SourceChanged,scene.Fields.Single(field=>field.Field=="oCount").Status);
+  var items=Confirmed(rows).Select(item=>item.SourceOrdinal==scene.Draft.SourceOrdinal?item with {Fields=[new("playCount",StashFieldDecision.KeepLocal),new("oCount",StashFieldDecision.UseSource)]}:item).ToArray();
+  await db.ApplyStashImportAsync(snapshot,Request(source,items));
+  var kept=db.GetMedia(video.Id)!;Assert.Equal((4L,2L,local),(kept.PlayCount,kept.OCount,kept.LastPlayedAt));
+  Assert.Equal((3,2),(db.GetHistory(video.Id).Count(entry=>entry.Kind==HistoryKind.Play),db.GetHistory(video.Id).Count(entry=>entry.Kind==HistoryKind.O)));
+
+  var taken=Confirmed(Preview(db,snapshot,source)).Select(item=>item.SourceOrdinal==scene.Draft.SourceOrdinal?item with {Fields=[new("playCount",StashFieldDecision.UseSource)]}:item).ToArray();
+  await db.ApplyStashImportAsync(snapshot,Request(source,taken));
+  var merged=db.GetMedia(video.Id)!;Assert.Equal((3L,new DateTimeOffset(2024,5,5,5,5,5,TimeSpan.Zero)),(merged.PlayCount,merged.LastPlayedAt));
+  // The local playback stays in the history beside the three of the source.
+  Assert.Equal(4,db.GetHistory(video.Id).Count(entry=>entry.Kind==HistoryKind.Play));
+ }
+
+ [Fact]
+ public async Task SwitchedOffHistoryTakesOnlyTheCounters()
+ {
+  AddUsageLibrary();using var db=Open(false);var source=Profile(db);db.SaveHistoryPreferences(db.GetPreferences().History with {Enabled=false});
+  using var snapshot=await Read();await db.ApplyStashImportAsync(snapshot,Request(source,Preview(db,snapshot,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var video=db.Search().Single(item=>item.Kind==MediaKind.Video);Assert.Equal((2L,1L),(video.PlayCount,video.OCount));Assert.Equal(0,db.CountHistory());
+ }
+
+ /// <summary>Bytes with a PNG signature; the import only looks at the signature.</summary>
+ private static byte[] Png(byte marker)=>[137,80,78,71,13,10,26,10,marker];
+ private void AddPictureLibrary(byte cover,byte portrait)
+ {
+  File.WriteAllText(Path.Combine(Target,"a.mp4"),"synthetic video");
+  Add("performers/jane.json",$$"""{"name":"Jane","image":"{{Convert.ToBase64String(Png(portrait))}}"}""");
+  Add("tags/outdoor.json",$$"""{"name":"Outdoor","image":"{{Convert.ToBase64String(Png(3))}}"}""");
+  Add("scenes/a.json",$$"""{"title":"Scene A","files":["/library/a.mp4"],"performers":["Jane"],"tags":["Outdoor"],"cover":"{{Convert.ToBase64String(Png(cover))}}"}""");
+ }
+
+ [Fact]
+ public async Task FirstImportTakesTheCoverAndThePerformerImageAndARepeatAddsNothing()
+ {
+  AddPictureLibrary(1,2);using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  Assert.Equal(".png",rows.Single(row=>row.Draft.Kind==StashEntityKind.Scene).Draft.Picture!.Format);
+  var result=await db.ApplyStashImportAsync(snapshot,Request(source,rows.Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  // A plain tag has no category and so no image; the note names it.
+  Assert.Contains(result.Warnings,warning=>warning.Contains("Outdoor"));
+  var video=Assert.Single(db.Search());var asset=Assert.Single(db.GetMediaAssets(video.Id));
+  Assert.Equal((MediaAssetKind.Thumbnail,true),(asset.Kind,asset.IsCustom));Assert.Equal(Png(1),asset.Data);
+  Assert.Null(video.ThumbnailPath);Assert.Equal(asset.Id.ToString(),video.Extra["thumbnail.assetId"]);
+  var jane=new TagKey(Performers,"Jane");Assert.Equal(Png(2),db.GetTagAsset(db.GetTagPictureIds()[jane])!.Data);Assert.Single(db.GetTagPictureIds());
+
+  var repeat=Preview(db,snapshot,source);Assert.All(repeat.SelectMany(row=>row.Fields),field=>Assert.Equal(StashFieldStatus.Equal,field.Status));
+  Assert.Contains(repeat.SelectMany(row=>row.Fields),field=>field.Field=="cover");Assert.Contains(repeat.SelectMany(row=>row.Fields),field=>field.Field=="picture");
+  var again=await db.ApplyStashImportAsync(snapshot,Request(source,Confirmed(repeat)));Assert.Equal(3,again.Unchanged);
+  Assert.Single(db.GetMediaAssets(video.Id));Assert.Single(db.GetTagAssetSummaries(jane));
+ }
+
+ [Fact]
+ public async Task ChangedPicturesStayLocalUntilTheyAreTakenAndTheEarlierOnesAreKept()
+ {
+  AddPictureLibrary(1,2);using var db=Open(false);var source=Profile(db);
+  using(var first=await Read())await db.ApplyStashImportAsync(first,Request(source,Preview(db,first,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var video=Assert.Single(db.Search());var jane=new TagKey(Performers,"Jane");
+  // The app has written the stored cover to a thumbnail file in the meantime.
+  var shown=Path.Combine(root,"shown.png");File.WriteAllBytes(shown,Png(1));db.Upsert(video with {ThumbnailPath=shown});
+  AddPictureLibrary(11,12);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  var scene=rows.Single(row=>row.Draft.Kind==StashEntityKind.Scene);var performer=rows.Single(row=>row.Draft.Kind==StashEntityKind.Performer);
+  Assert.Equal(StashFieldStatus.SourceChanged,scene.Fields.Single(field=>field.Field=="cover").Status);
+  Assert.Equal(StashFieldStatus.SourceChanged,performer.Fields.Single(field=>field.Field=="picture").Status);
+  StashImportItem[] Decide(IReadOnlyList<StashImportPreviewRow> preview,StashFieldDecision decision)=>Confirmed(preview).Select(item=>
+   item.SourceOrdinal==scene.Draft.SourceOrdinal?item with {Fields=[new("cover",decision)]}:item.SourceOrdinal==performer.Draft.SourceOrdinal?item with {Fields=[new("picture",decision)]}:item).ToArray();
+
+  await db.ApplyStashImportAsync(snapshot,Request(source,Decide(rows,StashFieldDecision.KeepLocal)));
+  Assert.Equal(shown,db.GetMedia(video.Id)!.ThumbnailPath);Assert.Equal(Png(1),Assert.Single(db.GetMediaAssets(video.Id)).Data);
+  Assert.Equal(Png(2),db.GetTagAsset(db.GetTagPictureIds()[jane])!.Data);
+  var kept=Preview(db,snapshot,source);Assert.Equal(StashFieldStatus.PreviouslyKept,kept.Single(row=>row.Draft.Kind==StashEntityKind.Scene).Fields.Single(field=>field.Field=="cover").Status);
+
+  await db.ApplyStashImportAsync(snapshot,Request(source,Decide(kept,StashFieldDecision.UseSource)));
+  var taken=db.GetMedia(video.Id)!;var assets=db.GetMediaAssets(video.Id);Assert.Equal(2,assets.Count);
+  Assert.Null(taken.ThumbnailPath);Assert.Equal(Png(11),assets.Single(asset=>asset.Id.ToString()==taken.Extra["thumbnail.assetId"]).Data);
+  Assert.Equal(Png(12),db.GetTagAsset(db.GetTagPictureIds()[jane])!.Data);Assert.Single(db.GetTagAssetSummaries(jane));
+  // The earlier image is released, not deleted.
+  var released=Assert.Single(db.GetTagAssetSummaries(unassignedOnly:true));Assert.Equal(jane,Assert.Single(released.PreviousTags));
+  Assert.All(Preview(db,snapshot,source).SelectMany(row=>row.Fields),field=>Assert.Equal(StashFieldStatus.Equal,field.Status));
+ }
+
+ [Fact]
+ public async Task AnUnreadablePictureIsLeftOutWithANote()
+ {
+  File.WriteAllText(Path.Combine(Target,"a.mp4"),"synthetic video");
+  Add("scenes/a.json",$$"""{"title":"Scene A","files":["/library/a.mp4"],"cover":"{{Convert.ToBase64String("not a picture"u8)}}"}""");
+  Add("performers/jane.json","""{"name":"Jane","image":"***"}""");
+  using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
+  Assert.All(rows,row=>{Assert.Null(row.Draft.Picture);Assert.Contains(row.Draft.Issues,issue=>issue.Code=="picture"&&issue.Severity==StashIssueSeverity.Warning);});
+  await db.ApplyStashImportAsync(snapshot,Request(source,rows.Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  Assert.Empty(db.GetMediaAssets(Assert.Single(db.Search()).Id));Assert.Empty(db.GetTagPictureIds());
+ }
+
+ [Fact]
+ public async Task AnExportOfStash032IsReadLikeTheOneBefore()
+ {
+  // 0.32.0 adds "production_date" to scenes and writes the perceptual hash of a file as text. The hash is not read;
+  // the production date stands in where the release date is missing.
+  File.WriteAllText(Path.Combine(Target,"a.mp4"),"synthetic video");File.WriteAllText(Path.Combine(Target,"b.mp4"),"another video");
+  Add("scenes/b.json","""{"title":"Scene B","files":["/library/b.mp4"],"production_date":"2020-11-30"}""");
+  Add("files/a.json","""{"type":"video","path":"/library/a.mp4","size":15,"mod_time":"2026-11-02T10:00:00Z","fingerprints":[{"type":"oshash","fingerprint":"0f1e2d3c4b5a6978"},{"type":"phash","fingerprint":"f0e1d2c3b4a59687"}],"duration":12.5,"width":1920,"height":1080}""");
+  Add("scenes/a.json","""{"title":"Scene A","files":["/library/a.mp4"],"date":"2021-05-01","production_date":"2020-11-30"}""");
+  using var db=Open(false);var source=Profile(db);using var snapshot=await Read();Assert.Equal(0,snapshot.ErrorDocuments);
+  var scenes=Preview(db,snapshot,source).Where(row=>row.Draft.Kind==StashEntityKind.Scene).ToArray();
+  Assert.Empty(scenes.Single(row=>row.Draft.Name=="Scene A").Draft.Issues);
+  await db.ApplyStashImportAsync(snapshot,Request(source,scenes.Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var video=db.Search().Single(item=>item.Title=="Scene A");Assert.Equal((new DateOnly(2021,5,1),12.5,1920),(video.ReleaseDate,video.DurationSeconds,video.Width));
+  Assert.Equal(new DateOnly(2020,11,30),db.Search().Single(item=>item.Title=="Scene B").ReleaseDate);
+  // The source record keeps both dates.
+  Assert.Contains(db.GetStashBindings(source.Id),binding=>System.Text.Encoding.UTF8.GetString(db.ReadStashProvenanceBytes(binding.ProvenanceId)!).Contains("\"date\":\"2021-05-01\",\"production_date\""));
+ }
+
  [Fact]
  public async Task ExistingLocalMediumIsOnlyBoundWhenChosenAndKeepsItsValues()
  {

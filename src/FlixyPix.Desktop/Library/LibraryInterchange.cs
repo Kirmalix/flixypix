@@ -58,7 +58,17 @@ public partial class MainWindow
    var path = await cache.ExtractAsync(entry, token);
    return new(entry.ArchivePath, entry.EntryName, path, entry.ArchiveSha256, entry.UncompressedSize);
   }
-  return new StashImportWindow(this, catalog ?? _repository, Resolve, () => Refresh());
+  var target = catalog ?? _repository;
+  return new StashImportWindow(this, target, Resolve, videos => StashCovers = ShowStashCoversAsync(target, videos));
+ }
+ /// <summary>The thumbnail files of the last Stash import being written.</summary>
+ internal Task StashCovers { get; private set; } = Task.CompletedTask;
+ /// <summary>Covers taken from Stash are stored in the catalog; their thumbnail files are written here, then the view is refreshed.</summary>
+ private async Task ShowStashCoversAsync(CatalogRepository catalog, IReadOnlyList<Guid> videos)
+ {
+  try { foreach (var id in videos) await ShowStoredThumbnailAsync(id, default, catalog); }
+  catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or UnauthorizedAccessException or ObjectDisposedException) { }
+  if (!_closing) Refresh();
  }
  private void ImportFromStash() => OpenStashImport().ShowDialog();
  private void ExportCsv()

@@ -40,7 +40,8 @@ internal sealed class StashImportWindow : Window
  private const int BatchSize=256;
  private readonly CatalogRepository repository;
  private readonly StashArchiveResolver archives;
- private readonly Action imported;
+ /// <summary>Called after an import with the videos it created or updated, so their stored thumbnails can be shown.</summary>
+ private readonly Action<IReadOnlyList<Guid>> imported;
  private readonly WindowFrame frame;
  private readonly ContentControl page=new();
  private readonly Button back,next,stop;
@@ -65,11 +66,11 @@ internal sealed class StashImportWindow : Window
  private readonly StackPanel details=new(){Margin=new Thickness(16,0,0,0)};
  private readonly TextBlock summary=new(){TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,8)};
 
- internal StashImportWindow(Window owner,CatalogRepository repository,StashArchiveResolver archives,Action imported)
+ internal StashImportWindow(Window owner,CatalogRepository repository,StashArchiveResolver archives,Action<IReadOnlyList<Guid>> imported)
  {
   this.repository=repository;this.archives=archives;this.imported=imported;Owner=owner;
   Title=T("Import from Stash");Width=1120;Height=780;MinWidth=760;MinHeight=520;ShowInTaskbar=false;WindowStartupLocation=WindowStartupLocation.CenterOwner;
-  frame=new WindowFrame(T("Import from Stash"),T("Reads a Stash 0.31.1 metadata export folder. The source and the media files stay unchanged; nothing in the catalog changes before the last step."),page,scroll:false);
+  frame=new WindowFrame(T("Import from Stash"),T("Reads a Stash {0} metadata export folder. The source and the media files stay unchanged; nothing in the catalog changes before the last step.",StashExport.CheckedVersions),page,scroll:false);
   stop=frame.Add(T("Cancel"),()=>work?.Cancel());stop.Visibility=Visibility.Collapsed;
   back=frame.Add(T("Back"),()=>GoTo(step-1));
   next=frame.Add(T("Next"),()=>Work=NextAsync(),primary:true);
@@ -337,8 +338,9 @@ internal sealed class StashImportWindow : Window
    {
     table.RowDefinitions.Add(new());var r=table.RowDefinitions.Count-1;
     Cell(r,0,new TextBlock{Text=FieldName(field.Field)+"\n"+FieldStatus(field.Status),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,6,8,6)});
-    Cell(r,1,new TextBlock{Text=Display(field.Local),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,6,8,6)});
-    Cell(r,2,new TextBlock{Text=Display(field.Source),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,6,8,6)});
+    var pictures=field.Field is "cover" or "picture";
+    Cell(r,1,pictures?Picture(()=>LocalPicture(row),field.Local):new TextBlock{Text=Display(field.Local),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,6,8,6)});
+    Cell(r,2,pictures?Picture(()=>Snapshot?.ReadPicture(draft.SourceOrdinal),field.Source):new TextBlock{Text=Display(field.Source),TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,6,8,6)});
     var take=new CheckBox{Content=T("Take"),IsChecked=row.UseSource.Contains(field.Field),VerticalAlignment=VerticalAlignment.Top,Margin=new Thickness(0,6,0,6)};
     take.Click+=(_,_)=>{if(take.IsChecked==true){row.UseSource.Add(field.Field);row.Include=true;}else row.UseSource.Remove(field.Field);Refresh(row);};
     Cell(r,3,take);
@@ -346,12 +348,39 @@ internal sealed class StashImportWindow : Window
    details.Children.Add(table);
   }
  }
+ /// <summary>Shows the details of one record, as a click in the list does.</summary>
+ internal void Select(Row row){list.SelectedItem=row;list.ScrollIntoView(row);}
  private void Refresh(Row row){if(row.Missing!=null)row.Include=false;var index=list.SelectedIndex;list.Items.Refresh();list.SelectedIndex=index;UpdateSummary();}
  private static string FieldName(string field)=>field switch
  {
   "title"=>T("Title"),"description"=>T("Description"),"rating"=>T("Rating"),"releaseDate"=>T("Release date"),"tags"=>T("Tags"),"markers"=>T("Scenes and bookmarks"),
-  "aliases"=>T("Aliases"),"favorite"=>T("Favorite"),"profile"=>T("Profile"),"name"=>T("Name"),"mediaIds"=>T("Images"),"members"=>T("Members"),"parents"=>T("Parents"),_=>field,
+  "aliases"=>T("Aliases"),"favorite"=>T("Favorite"),"profile"=>T("Profile"),"name"=>T("Name"),"mediaIds"=>T("Images"),"members"=>T("Members"),"parents"=>T("Parents"),
+  "playCount"=>T("Play count"),"oCount"=>T("O counter"),"cover"=>T("Thumbnail"),"picture"=>T("Image"),_=>field,
  };
+ /// <summary>The image the local target shows now: the chosen thumbnail of a medium or the image of a directory entry.</summary>
+ private byte[]? LocalPicture(Row row)
+ {
+  var target=row.Target??row.Preview.Binding?.Target;
+  if(target?.Tag is {} key)return repository.GetTagPictureIds().TryGetValue(key,out var id)?repository.GetTagAsset(id)?.Data:null;
+  return target?.Id is {} media&&repository.GetMedia(media)?.Extra.GetValueOrDefault("thumbnail.assetId") is {} chosen&&Guid.TryParse(chosen,out var asset)?repository.GetMediaAsset(asset)?.Data:null;
+ }
+ /// <summary>Shows one side of an image field: the image itself with its size, or the size alone when it cannot be shown here.</summary>
+ private static FrameworkElement Picture(Func<byte[]?> read,JsonElement value)
+ {
+  var text=new TextBlock{Text=Display(value),TextWrapping=TextWrapping.Wrap};var panel=new StackPanel{Margin=new Thickness(0,6,8,6),Children={text}};
+  if(value.ValueKind!=JsonValueKind.Object)return panel;
+  try
+  {
+   if(read() is not {Length:>0} data)return panel;
+   var bitmap=new System.Windows.Media.Imaging.BitmapImage();
+   using(var stream=new MemoryStream(data)){bitmap.BeginInit();bitmap.CacheOption=System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;bitmap.DecodePixelWidth=320;bitmap.StreamSource=stream;bitmap.EndInit();}
+   bitmap.Freeze();
+   var image=new Image{Source=bitmap,MaxWidth=160,MaxHeight=120,Stretch=System.Windows.Media.Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Left,Margin=new Thickness(0,0,0,4)};
+   Privacy.SetBlur(image,true);panel.Children.Insert(0,image);
+  }
+  catch(Exception error)when(error is IOException or InvalidDataException or NotSupportedException or InvalidOperationException or ArgumentException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException){}
+  return panel;
+ }
  private static string FieldStatus(StashFieldStatus status)=>status switch
  {
   StashFieldStatus.New=>T("not decided before"),StashFieldStatus.SourceChanged=>T("changed in Stash"),StashFieldStatus.SourceUnchanged=>T("unchanged in Stash"),
@@ -364,6 +393,7 @@ internal sealed class StashImportWindow : Window
   {
    JsonValueKind.Null or JsonValueKind.Undefined=>"–",JsonValueKind.String=>value.GetString()!,JsonValueKind.True=>T("Yes"),JsonValueKind.False=>T("No"),
    JsonValueKind.Array=>Tn(value.GetArrayLength(),"1 entry","{0:N0} entries")+(value.GetArrayLength()>0?": "+string.Join(", ",value.EnumerateArray().Take(6).Select(Short)):""),
+   JsonValueKind.Object when value.TryGetProperty("sha256",out _)&&value.TryGetProperty("bytes",out var bytes)&&bytes.TryGetInt64(out var size)=>MediaCard.SizeText(size),
    _=>value.ToString(),
   };
   return text.Length>400?text[..400]+" …":text;
@@ -395,7 +425,7 @@ internal sealed class StashImportWindow : Window
   var(snapshot,profile,performers,studios)=(Snapshot!,Profile!,Category(performerCategory),Category(studioCategory));
   // Batches follow the dependency order, so every record finds what it refers to in its own or an earlier batch.
   var ordered=chosen.OrderBy(r=>Array.IndexOf(Order,r.Preview.Draft.Kind)).ToArray();
-  var created=0;var updated=0;var unchanged=0;var warnings=new List<string>();var done=0;string? failure=null;
+  var created=0;var updated=0;var unchanged=0;var warnings=new List<string>();var done=0;string? failure=null;var videos=new List<Guid>();
   using(var busy=Begin(T("Importing …")))
   {
    try
@@ -405,13 +435,14 @@ internal sealed class StashImportWindow : Window
      var batch=ordered.Skip(start).Take(BatchSize).ToArray();profile=repository.GetStashSource(profile.Id)??throw new InvalidOperationException(T("The import source no longer exists."));
      var result=await repository.ApplyStashImportAsync(snapshot,new(profile.Id,profile.Revision,performers,studios,batch.Select(Item).ToArray()),busy.Token,archives);
      created+=result.Created;updated+=result.Updated;unchanged+=result.Unchanged;warnings.AddRange(result.Warnings);done+=batch.Length;
+     videos.AddRange(result.Bindings.Where(binding=>binding.Target is {Kind:StashTargetKind.Video,Id:not null}).Select(binding=>binding.Target.Id!.Value));
      frame.Status.Text=T("Importing … {0:N0} / {1:N0}",done,ordered.Length);
     }
    }
    catch(Exception error)when(error is OperationCanceledException or IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException)
    {failure=error is OperationCanceledException?T("Cancelled"):error.Message;}
   }
-  if(done>0)imported();
+  if(done>0)imported(videos);
   var lines=new List<string>{T("New: {0:N0} · Updated: {1:N0} · Unchanged: {2:N0}",created,updated,unchanged)};
   if(failure!=null)lines.Add(done>0?T("Stopped after {0:N0} of {1:N0} records; completed batches stay imported. {2}",done,ordered.Length,failure):T("Nothing was imported. {0}",failure));
   var distinct=warnings.Distinct().ToArray();

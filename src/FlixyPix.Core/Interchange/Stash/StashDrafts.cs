@@ -13,16 +13,45 @@ public sealed record StashMediaDraft(MediaKind Kind,string? Title,string? Descri
 {
  // Multiple files remain proposals until explicitly confirmed as versions.
  public ReviewState InitialReviewState=>ReviewState.Unreviewed;
+ public StashUsageDraft? Usage {get;init;}
 }
+/// <summary>Counters and history of a scene or image. A counter the source record does not carry is null and never touches local data.
+/// Stash exports scenes with "play_history" and "o_history" and images with "o_counter"; the plain counters of older exports are read too.</summary>
+public sealed record StashUsageDraft(long? Plays,DateTimeOffset? LastPlayedAt,IReadOnlyList<DateTimeOffset> PlayTimes,long? Os,IReadOnlyList<DateTimeOffset> OTimes);
+/// <summary>The picture a record carries inline: the cover of a scene, the image of a performer, studio or tag. The bytes stay in the source document.</summary>
+public sealed record StashPictureDraft(string Sha256,long Bytes,string Format);
 public sealed record StashDirectoryDraft(string Name,TagRole Role,IReadOnlyList<string> Aliases,bool? Favorite,string? Description,TagProfile? Profile,string? Disambiguation);
 public sealed record StashMemberDraft(long SourceOrdinal,StashEntityKind Kind,int? SourceOrder,string SourceRelativePath);
 /// <summary>Source proposals have no target IDs. Persistent identity/conflict resolution and explicit confirmation precede any catalog write.</summary>
 public sealed record StashImportDraft(long SourceOrdinal,StashEntityKind Kind,string RelativePath,string SourceSha256,string Name,
  StashMediaDraft? Media,StashDirectoryDraft? Directory,IReadOnlyList<StashResolvedReference> References,IReadOnlyList<StashMemberDraft> Members,IReadOnlyList<StashReadIssue> Issues)
-{public bool HasErrors=>Issues.Any(issue=>issue.Severity==StashIssueSeverity.Error);}
+{
+ public bool HasErrors=>Issues.Any(issue=>issue.Severity==StashIssueSeverity.Error);
+ public StashPictureDraft? Picture {get;init;}
+}
+
+public static partial class StashExport
+{
+ /// <summary>The inline picture of a record, decoded from its base64 text: "cover" of a scene, "image" of a performer, studio or tag.
+ /// Null without one; unreadable tells that there is one which is no picture in a supported format or exceeds the picture limit.</summary>
+ internal static byte[]? PictureBytes(StashEntityKind kind,JsonElement root,out bool unreadable)
+ {
+  unreadable=false;
+  var property=kind switch{StashEntityKind.Scene=>"cover",StashEntityKind.Performer or StashEntityKind.Studio or StashEntityKind.Tag=>"image",_=>null};
+  if(property==null||root.ValueKind!=JsonValueKind.Object||!root.TryGetProperty(property,out var field)||field.ValueKind!=JsonValueKind.String)return null;
+  var text=field.GetString()!;if(text.Length==0)return null;
+  if(text.StartsWith("data:",StringComparison.OrdinalIgnoreCase)&&text.IndexOf(',') is >0 and var comma)text=text[(comma+1)..];
+  unreadable=true;if(text.Length>(long)CatalogRepository.MaximumAssetBytes*4/3+4)return null;
+  byte[] data;try{data=Convert.FromBase64String(text);}catch(FormatException){return null;}
+  if(data.Length is 0 or >CatalogRepository.MaximumAssetBytes||CatalogRepository.ImageExtension(data)==null)return null;
+  unreadable=false;return data;
+ }
+}
 
 public sealed partial class StashExportSnapshot
 {
+ /// <summary>The inline picture of one staged record for showing it in a preview; null without a readable one.</summary>
+ public byte[]? ReadPicture(long ordinal)=>ReadDocument(ordinal) is {Document:{} root}record?StashExport.PictureBytes(record.Kind,root,out _):null;
  /// <summary>Projects a bounded source page. Only explicitly mapped local paths are passed to the availability check.</summary>
  public IReadOnlyList<StashImportDraft> ReadDraftPage(StashSourceProfile profile,int offset,int limit=24,Func<string,bool>? exists=null,CancellationToken token=default)
  {
@@ -56,9 +85,11 @@ public sealed partial class StashExportSnapshot
   var issues=record.Issues.ToList();
   void Issue(string code,string message,bool error=true)
   {if(issues.Count>=256){if(!error||issues.Any(issue=>issue.Severity==StashIssueSeverity.Error))return;issues.RemoveAt(255);}issues.Add(new(code,error?StashIssueSeverity.Error:StashIssueSeverity.Warning,message));}
-  string name=Path.GetFileNameWithoutExtension(record.RelativePath);var references=new List<StashResolvedReference>();var members=new List<StashMemberDraft>();StashMediaDraft? media=null;StashDirectoryDraft? directory=null;
+  string name=Path.GetFileNameWithoutExtension(record.RelativePath);var references=new List<StashResolvedReference>();var members=new List<StashMemberDraft>();StashMediaDraft? media=null;StashDirectoryDraft? directory=null;StashPictureDraft? picture=null;
   if(record.Valid&&record.Document is {} root)
   {
+   if(StashExport.PictureBytes(record.Kind,root,out var unreadable) is {} bytes)picture=new(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)),bytes.Length,CatalogRepository.ImageExtension(bytes)!);
+   else if(unreadable)Issue("picture","The picture of this record is not a readable picture of at most 32 MiB and is left out.",false);
    name=Text(root,record.Kind is StashEntityKind.Performer or StashEntityKind.Studio or StashEntityKind.Tag or StashEntityKind.Group?"name":"title")??name;
    using(var command=connection.CreateCommand())
    {
@@ -100,7 +131,10 @@ public sealed partial class StashExportSnapshot
       markers.Add(new(markers.Count,Text(marker,"title")??"",start,end,Strings(marker,"tags").Concat(Text(marker,"primary_tag")is {Length:>0} tag?[tag]:[]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()));
      }
     }
-    media=new(record.Kind==StashEntityKind.Scene?MediaKind.Video:MediaKind.Image,Text(root,"title"),Text(root,"details"),Int(root,"rating")is {} rating?(int)Math.Round(rating/10d,MidpointRounding.AwayFromZero):null,Date(root,"date",Issue),Bool(root,"organized"),Strings(root,"tags"),files,markers);
+    media=new(record.Kind==StashEntityKind.Scene?MediaKind.Video:MediaKind.Image,Text(root,"title"),Text(root,"details"),Int(root,"rating")is {} rating?(int)Math.Round(rating/10d,MidpointRounding.AwayFromZero):null,
+     // Stash 0.32 knows a production date beside the release date; it stands in only where the release date is missing.
+     Date(root,"date",Issue)??(record.Kind==StashEntityKind.Scene?Date(root,"production_date",Issue):null),Bool(root,"organized"),Strings(root,"tags"),files,markers)
+     {Usage=Usage(root,record.Kind==StashEntityKind.Scene,Issue)};
    }
    else if(record.Kind is StashEntityKind.Performer or StashEntityKind.Studio or StashEntityKind.Tag)
    {
@@ -133,8 +167,36 @@ public sealed partial class StashExportSnapshot
     if(record.Kind==StashEntityKind.Gallery&&members.Count>0)Issue("derived-image-order","Image order is derived from source file paths; the folder export does not carry explicit gallery image positions.",false);
    }
   }
-  return new(record.Ordinal,record.Kind,record.RelativePath,record.Sha256,name,media,directory,references,members,issues);
+  return new(record.Ordinal,record.Kind,record.RelativePath,record.Sha256,name,media,directory,references,members,issues){Picture=picture};
  }
+ private const int MaximumUsageTimes=100_000;
+ private static StashUsageDraft? Usage(JsonElement root,bool scene,Action<string,string,bool> issue)
+ {
+  List<DateTimeOffset> Times(string property)
+  {
+   var result=new List<DateTimeOffset>();if(!root.TryGetProperty(property,out var field)||field.ValueKind!=JsonValueKind.Array)return result;var left=false;
+   foreach(var entry in field.EnumerateArray())
+   {
+    if(result.Count>=MaximumUsageTimes){left=true;break;}
+    if(Time(entry) is {} time)result.Add(time);else left=true;
+   }
+   if(left)issue("usage-time","Unreadable or too many source times are left out: "+property,false);
+   result.Sort();return result;
+  }
+  long? Count(string property,int times)
+  {
+   var counter=Long(root,property) is {} value and >=0 and <=int.MaxValue?value:(long?)null;
+   return times>0?Math.Max(times,counter??0):counter is >0?counter:null;
+  }
+  // Images only carry the counter; playback belongs to scenes.
+  var plays=scene?Times("play_history"):[];var os=scene?Times("o_history"):[];
+  var last=scene&&root.TryGetProperty("last_played_at",out var played)?Time(played):null;
+  if(plays.Count>0&&(last==null||plays[^1]>last))last=plays[^1];
+  var usage=new StashUsageDraft(scene?Count("play_count",plays.Count):null,last,plays,Count("o_counter",os.Count),os);
+  return usage.Plays==null&&usage.Os==null?null:usage;
+ }
+ private static DateTimeOffset? Time(JsonElement value)=>value.ValueKind==JsonValueKind.String&&
+  DateTimeOffset.TryParse(value.GetString(),CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var time)&&time.Year is >=1970 and <=9000?time.ToUniversalTime():null;
  private IReadOnlyList<long> ReferenceTargets(StashEntityKind kind,string key)
  {
   using var command=connection.CreateCommand();command.CommandText="SELECT ordinal FROM reference_keys WHERE kind=$kind AND key=$key ORDER BY ordinal LIMIT 2";command.Parameters.AddWithValue("$kind",(int)kind);command.Parameters.AddWithValue("$key",key);using var reader=command.ExecuteReader();var result=new List<long>();while(reader.Read())result.Add(reader.GetInt64(0));return result;
