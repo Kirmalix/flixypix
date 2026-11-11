@@ -3,7 +3,10 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
-## Unreleased
+## 0.8.0
+
+**Upgrading from 0.7.0:** the catalog format stays the same (schema 27); a library opens without conversion,
+and 0.7.0 can still open it. Back up your catalog and media files as always.
 
 - Checking media folders is quick again in large libraries taken over from EazyFlixPix 4: the first check took up to
   a quarter of an hour without showing progress, because it wrote a file date into every older entry and queued
@@ -29,7 +32,7 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Rate in the grid: every tile and every row of the list view shows five stars beside the file size, also for unrated
   items. A click sets whole stars, the same star again removes the rating; on a tile inside a selection of several it
   rates all of them. The pointer over any tile shows the file name with size, technical data, dates, tags and folder.
-  A double click unfolds the details when they are folded.
+  A double click on a video unfolds the details when they are folded; on an image it opens the loupe.
 - An import and a folder sync read what the files say about themselves: keywords become tags, and title, description,
   rating and date taken are taken over from images, from the Windows properties of videos and from XMP sidecars, such
   as ratings and keywords Lightroom wrote into the files. Only missing information is filled in. "Read metadata from
@@ -48,6 +51,9 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   data instead, which takes a moment and looks a little different; a RAW file without a usable preview is developed
   right away. Where the camera's preview is smaller than the sensor image, as with Olympus, Panasonic and Sony,
   zooming past the preview or choosing the original size develops the sensor data by itself and swaps the picture. Libraries from earlier versions get the RAW types into their image types once.
+- The RAW switch of the image viewer stays as you leave it: while it is on, every RAW file is developed when you look
+  at it; switched off, nothing is developed by itself. A RAW file developed once is found again and keeps showing its
+  development.
 - A shot the camera saved as RAW and JPEG is one item: it shows the JPEG and keeps the RAW file with it, and falls
   back to the RAW file when the JPEG is gone. An import joins such pairs by itself, the media folder check offers a
   RAW file that arrives later to its picture, and two selected items can be combined by hand. The details list both
@@ -59,6 +65,16 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   images are shown side by side, and an image that gets replaced is kept. Stash exports no resume position, so none
   is taken over. Exports of Stash 0.32 are read like those of 0.31; the production date of a scene, new there,
   becomes its release date where Stash has none.
+- The loupe: a double click, Enter or the space bar on an image shows it large in place of the tiles, without a
+  window of its own. The arrow keys leaf through the images of the list, a film strip shows the neighbours, and the
+  details beside it follow. The keys of the tiles keep working: 0–5 rate (with Shift the next image follows), F pins
+  a favorite, T starts the tag mode. A click or Z changes between the whole picture and its pixels, Ctrl with the
+  mouse wheel zooms at the pointer, and dragging moves a zoomed picture. G leads back to the tile of the image looked
+  at last. The stage is never empty: the thumbnail shows at once until the full picture is read, and the next images
+  are read ahead in the direction you leaf. Images outside the tiles on show, such as on the start page or in image
+  sets, still open in a window.
+- The info line of the image viewer tells how a photo was taken: camera, lens, focal length, aperture, exposure time
+  and ISO, read from the file, also from RAW files.
 
 ## 0.7.0
 
