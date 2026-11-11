@@ -181,6 +181,8 @@ public sealed partial class CatalogRepository
     {
      if(item.Target!=null||item.TargetName!=null||item.CreateTarget)throw new ArgumentException(T("Plain tags have no editable directory fields: {0}",record.Draft.Name));
      if(record.Draft.Directory is {} tag&&(tag.Aliases.Count>0||tag.Description!=null))context.Warnings.Add(T("Aliases and the description of a tag are kept only with its source record: {0}",record.Draft.Name));
+     // A tag image needs a category, which a plain tag does not have.
+     if(record.Draft.Picture!=null)context.Warnings.Add(T("The image of a plain tag is kept only with its source record: {0}",record.Draft.Name));
      // Plain tags have no directory entry; the source record is kept as provenance and its parents go into the tag hierarchy.
      var provenanceOnly=new StashTargetReference(StashTargetKind.ProvenanceOnly);
      Plan(record,provenanceOnly,StashDecide(record,item,binding,provenanceOnly,binding==null,context,transaction,counts),binding!=null&&binding.Target!=provenanceOnly);
@@ -192,7 +194,7 @@ public sealed partial class CatalogRepository
     {
      if(context.Directory.Values.Any(other=>SameHierarchyKey(other,target.Tag!)))throw new ArgumentException(T("Two selected Stash entries would get the same directory name: {0}",target.Tag!.Value));
      context.Directory[record.Document.Ordinal]=target.Tag!;
-     if(isNew)CreateStashDirectoryEntry(record,target.Tag!,transaction);
+     if(isNew){CreateStashDirectoryEntry(record,target.Tag!,transaction);SetStashTagPicture(target.Tag!,record,transaction,token);}
     }
     else if(isNew)target=new(target.Kind,record.Draft.Kind switch
     {
@@ -391,10 +393,60 @@ public sealed partial class CatalogRepository
    Title=media.Title??Path.GetFileNameWithoutExtension(item.Extra.GetValueOrDefault("entryName")??item.Path),Description=media.Description,Rating=Math.Clamp(media.Rating??0,0,10),
    ReleaseDate=media.ReleaseDate,Tags=plain.ToList(),TagCategories=categorized,ReviewState=media.InitialReviewState,
   };
+  if(media.Usage is {} usage)item=WithStashUsage(item,usage,true,true);
   var saved=UpsertCore(item,transaction);
+  if(media.Usage is {} history)AddStashHistory(saved.Id,history,true,true,transaction);
+  SetStashCover(saved.Id,record,transaction);
   AddStashVersions(saved.Id,record.Draft,selection,context,transaction);
   if(media.Kind==MediaKind.Video)AddStashMarkers(saved.Id,media.Markers,transaction);
-  return saved;
+  return ReadMediaDocument(saved.Id,transaction)!;
+ }
+
+ private sealed record StashPictureValue(string Sha256,long Bytes);
+
+ /// <summary>Stores the cover of the source record as a picture of the medium and makes it the thumbnail. The thumbnail file is cleared,
+ /// so the app shows the stored picture (<c>thumbnail.assetId</c>); earlier pictures of the medium stay.</summary>
+ private void SetStashCover(Guid id,StashImportRecord record,SqliteTransaction transaction)
+ {
+  if(record.Draft.Picture is not {} picture||record.Document.Document is not {} root||StashExport.PictureBytes(record.Document.Kind,root,out _) is not {} data)return;
+  var item=ReadMediaDocument(id,transaction)!;var known=ReadMediaAssetMetadata(id,transaction);
+  var asset=known.FirstOrDefault(a=>a.Kind==MediaAssetKind.Thumbnail&&a.Sha256==picture.Sha256);
+  if(asset==null)
+  {
+   asset=new MediaAsset{MediaId=id,Data=data,IsCustom=true,Position=known.Count,Kind=MediaAssetKind.Thumbnail,Label=T("Cover from Stash"),Extra=new(){["stash.source"]=record.Draft.RelativePath}};
+   ValidateAsset(asset);asset=SaveAsset(asset,transaction);
+  }
+  if(item.Extra.GetValueOrDefault("thumbnail.assetId")==asset.Id.ToString())return;
+  UpsertCore(item with {ThumbnailPath=null,Extra=new(item.Extra){["thumbnail.assetId"]=asset.Id.ToString()}},transaction);
+ }
+
+ /// <summary>The picture the medium shows as its chosen thumbnail, if it is one stored in the catalog.</summary>
+ private StashPictureValue? StashLocalCover(MediaItem item,SqliteTransaction transaction)
+  =>item.Extra.GetValueOrDefault("thumbnail.assetId") is {} chosen&&ReadMediaAssetMetadata(item.Id,transaction).FirstOrDefault(a=>a.Id.ToString()==chosen) is {Sha256.Length:>0} asset
+   ?new(asset.Sha256,asset.ByteLength):null;
+
+ private bool HasTagAssetSchema(SqliteTransaction transaction)
+ {using var command=Command("SELECT 1 FROM sqlite_master WHERE type='table' AND name='tag_assets'",transaction);return command.ExecuteScalar()!=null;}
+
+ /// <summary>The image a directory entry shows: the first one of its tag that can be shown, as in <see cref="GetTagPictureIds"/>.</summary>
+ private StashPictureValue? StashLocalTagPicture(TagKey key,SqliteTransaction transaction)
+ {
+  if(!HasTagAssetSchema(transaction))return null;
+  using var command=Command("""
+   SELECT json_extract(document,'$.sha256'),json_extract(document,'$.byteLength') FROM tag_assets
+   WHERE json_extract(document,'$.tag.category')=$category COLLATE EFP_ORDINAL AND json_extract(document,'$.tag.value')=$value COLLATE EFP_ORDINAL
+   AND json_extract(document,'$.format') IS NOT NULL ORDER BY id LIMIT 1
+   """,transaction,("$category",key.Category),("$value",key.Value));
+  using var reader=command.ExecuteReader();return reader.Read()?new(reader.GetString(0),reader.GetInt64(1)):null;
+ }
+
+ /// <summary>Makes the image of the source record the one the directory entry shows; its other images are released and kept unassigned.</summary>
+ private void SetStashTagPicture(TagKey key,StashImportRecord record,SqliteTransaction transaction,CancellationToken token)
+ {
+  if(record.Draft.Picture is not {} picture||record.Document.Document is not {} root||StashExport.PictureBytes(record.Document.Kind,root,out _) is not {} data)return;
+  var tag=NormalizeTagKey(key);InitializeTagAssetSchema(transaction);
+  var fresh=StoreTagAssetCore(data,picture.Sha256,tag,T("Image from Stash"),null,"stash-import",transaction);
+  RewriteTagAssetAssociations(transaction,token,asset=>asset.Id!=fresh.Id&&asset.Tag!=null&&SameHierarchyKey(asset.Tag,tag),_=>null);
  }
 
  /// <summary>Further mapped files outside archives become versions once confirmed; otherwise the import only mentions them. Returns whether a version was added.</summary>
@@ -407,6 +459,34 @@ public sealed partial class CatalogRepository
   var files=item.Files.Concat(further.Select(file=>new MediaFile{Path=file.TargetPath!,FileSize=file.Bytes,Width=file.Width is >0?file.Width:null,Height=file.Height is >0?file.Height:null,
    DurationSeconds=file.DurationSeconds,Technical=file.Technical})).ToList();
   UpsertCore(item with {Files=files},transaction);return true;
+ }
+
+ /// <summary>Takes the chosen counters as the source has them, with the last playback.</summary>
+ private static MediaItem WithStashUsage(MediaItem item,StashUsageDraft usage,bool plays,bool os)
+ {
+  if(plays&&usage.Plays is {} count&&item.Kind!=MediaKind.Image)item=item with {PlayCount=count,LastPlayedAt=usage.LastPlayedAt??item.LastPlayedAt};
+  if(os&&usage.Os is {} o)item=item with {OCount=o};
+  return item;
+ }
+
+ /// <summary>Adds the source times missing in the local history; local entries are never removed. Nothing is added while the history is off.</summary>
+ private void AddStashHistory(Guid id,StashUsageDraft usage,bool plays,bool os,SqliteTransaction transaction)
+ {
+  if(!ReadPreferences(transaction).History.Enabled)return;
+  void Add(HistoryKind kind,IReadOnlyList<DateTimeOffset> times)
+  {
+   if(times.Count==0)return;var known=new HashSet<long>();
+   using(var read=Command("SELECT at FROM play_history WHERE media_id=$media AND kind=$kind",transaction,("$media",id.ToString()),("$kind",(int)kind)))
+   using(var reader=read.ExecuteReader())while(reader.Read())known.Add(FromJulianDay(reader.GetDouble(0)).ToUnixTimeSeconds());
+   foreach(var time in times)
+   {
+    if(!known.Add(time.ToUnixTimeSeconds()))continue;
+    using var insert=Command("INSERT INTO play_history(media_id,kind,at) VALUES($media,$kind,$at)",transaction,("$media",id.ToString()),("$kind",(int)kind),("$at",JulianDay(time)));
+    insert.ExecuteNonQuery();
+   }
+  }
+  if(plays)Add(HistoryKind.Play,usage.PlayTimes);
+  if(os)Add(HistoryKind.O,usage.OTimes);
  }
 
  private static string? StashText(StashSourceDocument document,string property)=>document.Document is {} root&&root.TryGetProperty(property,out var value)&&value.ValueKind==JsonValueKind.String?value.GetString():null;
@@ -503,6 +583,12 @@ public sealed partial class CatalogRepository
     result.Add(new("tags",StashTagValue(plain,categorized),StashTagValue(local.Tags.Where(t=>!categorizedLocal.Contains(t)),local.TagCategories)));
    }
    if(media.Kind==MediaKind.Video&&root.TryGetProperty("markers",out _))result.Add(new("markers",Value(SourceMarkers(media.Markers)),Value(LocalMarkers(local.Id,transaction))));
+   if(media.Usage is {} usage)
+   {
+    if(usage.Plays is {} plays&&media.Kind==MediaKind.Video)result.Add(new("playCount",Value(plays),Value(local.PlayCount??0)));
+    if(usage.Os is {} os)result.Add(new("oCount",Value(os),Value(local.OCount??0)));
+   }
+   if(draft.Picture is {} cover)result.Add(new("cover",Value(new StashPictureValue(cover.Sha256,cover.Bytes)),Value(StashLocalCover(local,transaction))));
   }
   else if(draft.Kind==StashEntityKind.Tag)
   {
@@ -534,6 +620,7 @@ public sealed partial class CatalogRepository
    if(directory.Description!=null)result.Add(new("description",Value(directory.Description),Value(entry?.Description)));
    if(directory.Favorite is {} favorite)result.Add(new("favorite",Value(favorite),Value(entry?.IsFavorite??false)));
    if(directory.Profile!=null)result.Add(new("profile",Value(directory.Profile),Value(entry?.Profile)));
+   if(draft.Picture is {} picture)result.Add(new("picture",Value(new StashPictureValue(picture.Sha256,picture.Bytes)),Value(StashLocalTagPicture(NormalizeTagKey(key),transaction))));
   }
   return result;
  }
@@ -561,11 +648,11 @@ public sealed partial class CatalogRepository
   if(versioned&&used.Count==0)counts[1]++;
   else if(used.Count>0)
   {
-   if(record.Draft.Media is {} media)ApplyStashMediaFields(target.Id!.Value,media,used,record.Draft,context,transaction);
+   if(record.Draft.Media is {} media){ApplyStashMediaFields(target.Id!.Value,media,used,record.Draft,context,transaction);if(used.Contains("cover"))SetStashCover(target.Id!.Value,record,transaction);}
    else if(record.Draft.Kind==StashEntityKind.Tag)ChangeStashTagParents(StashTagKey(record.Draft),_=>StashSourceParents(record.Draft),transaction);
    else if(target.Kind==StashTargetKind.ImageSet)ApplyStashImageSetFields(target.Id!.Value,record,used,context,transaction);
    else if(target.Kind==StashTargetKind.PublicationGroup)ApplyStashGroupFields(target.Id!.Value,record,used,context,transaction);
-   else ApplyStashDirectoryFields(target.Tag!,record.Draft.Directory!,used,transaction);
+   else{ApplyStashDirectoryFields(target.Tag!,record.Draft.Directory!,used,transaction);if(used.Contains("picture"))SetStashTagPicture(target.Tag!,record,transaction,CancellationToken.None);}
    counts[1]++;
   }
   else if(binding!=null&&binding.Target==target&&!binding.Detached&&baselines.Count==binding.Fields.Count)counts[2]++;
@@ -585,8 +672,10 @@ public sealed partial class CatalogRepository
    var(plain,categorized)=StashSourceTags(draft,context,transaction);
    item=item with {Tags=plain.ToList(),TagCategories=categorized};
   }
+  if(media.Usage is {} usage)item=WithStashUsage(item,usage,fields.Contains("playCount"),fields.Contains("oCount"));
   UpsertCore(item,transaction);
   if(fields.Contains("markers"))AddStashMarkers(id,media.Markers,transaction);
+  if(media.Usage is {} history)AddStashHistory(id,history,fields.Contains("playCount"),fields.Contains("oCount"),transaction);
  }
 
  private void ApplyStashImageSetFields(Guid id,StashImportRecord record,IReadOnlySet<string> fields,StashImportContext context,SqliteTransaction transaction)

@@ -14281,10 +14281,6 @@
       "status": "unchanged",
       "digest": "e7e2ed412914a64c5ea67f9b3cc095a970e07598b473ecc1c801cf1305470fde"
     },
-    "Reads a Stash 0.31.1 metadata export folder. The source and the media files stay unchanged; nothing in the catalog changes before the last step.": {
-      "status": "unchanged",
-      "digest": "1e1979b525da9eae2e646526574a0fe09948d6fbd21f23da7f8fef3041c7e8f8"
-    },
     "Saved source": {
       "status": "unchanged",
       "digest": "e9cd0aa9aeb7f8f2895a7eada44152f2e010781158f758ae8d4c4d5736ac7a98"
@@ -15236,6 +15232,26 @@
     "Camera RAW files": {
       "status": "unchanged",
       "digest": "eeae20b8519b4dd7941ba360d27c42350ff5c285a4410c92515f6631f0d67e95"
+    },
+    "Cover from Stash": {
+      "status": "corrected",
+      "digest": "474214929c66959e24882902bf0f6eedbe6b6ed02b372f89442b0a95befadc7d",
+      "previous_digest": "07590971e25b4c8a1c35a77e508505e23c072fb2324b0552e94cae486da32a70"
+    },
+    "Image from Stash": {
+      "status": "corrected",
+      "digest": "8398f39d447803ac3b3227bbb4a312fcec26f1eb89907cea729d152e39d2fca4",
+      "previous_digest": "c2050d59cf294b4e5da9ed0ebe9381a2a994a8bfa4df20a1f8c30119313d4a2a"
+    },
+    "Reads a Stash {0} metadata export folder. The source and the media files stay unchanged; nothing in the catalog changes before the last step.": {
+      "status": "corrected",
+      "digest": "76d5c75c5d243dbe9048f7fad4d38b985f8e441ac287ac5ae8939c46b3d146e4",
+      "previous_digest": "bf1b037ba5a776be8c0ce92426f8974bcfd2b78da8b75f7752122fa5df948be6"
+    },
+    "The image of a plain tag is kept only with its source record: {0}": {
+      "status": "corrected",
+      "digest": "444cb02cb1e78cd87a6a73eb37897c553440bfbd1a16e907413491559f3c42cd",
+      "previous_digest": "5a6ac0737431237bd09b6efb4f25ab1b31cee854acb94db09adf398854b70c22"
     }
   }
 }

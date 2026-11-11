@@ -29,12 +29,14 @@ public partial class MainWindow
  }
 
  /// <summary>Shows the thumbnail a medium refers to by <c>thumbnail.assetId</c> when it has no thumbnail file yet.</summary>
- internal async Task ShowStoredThumbnailAsync(Guid mediaId, CancellationToken token = default)
+ /// <param name="catalog">Another catalog than the open one, for tests.</param>
+ internal async Task ShowStoredThumbnailAsync(Guid mediaId, CancellationToken token = default, CatalogRepository? catalog = null)
  {
-  if (_repository.GetMedia(mediaId) is not { ThumbnailPath: null } item || !item.Extra.TryGetValue("thumbnail.assetId", out var id) || !Guid.TryParse(id, out var assetId)) return;
-  if (_repository.GetMediaAsset(assetId) is not { } asset || CatalogRepository.ImageExtension(asset.Data) == null) return;
-  var path = await Task.Run(() => _repository.MaterializeMediaAsset(asset, Path.Combine(_settings.DataDirectory, "media-assets")), token);
-  _repository.Upsert(item with { ThumbnailPath = path });
+  var repository = catalog ?? _repository;
+  if (repository.GetMedia(mediaId) is not { ThumbnailPath: null } item || !item.Extra.TryGetValue("thumbnail.assetId", out var id) || !Guid.TryParse(id, out var assetId)) return;
+  if (repository.GetMediaAsset(assetId) is not { } asset || CatalogRepository.ImageExtension(asset.Data) == null) return;
+  var path = await Task.Run(() => repository.MaterializeMediaAsset(asset, Path.Combine(_settings.DataDirectory, "media-assets")), token);
+  repository.Upsert(item with { ThumbnailPath = path });
  }
 
  private async Task<List<Guid>> CollectVideoIdsAsync(CancellationToken token)

@@ -53,6 +53,12 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   RAW file that arrives later to its picture, and two selected items can be combined by hand. The details list both
   files, and the RAW file can be split off again. Tiles show a badge "RAW" or "RAW+JPG", which the badge settings of the tiles switch off,
   and the pointer over a tile names the camera.
+- The import from Stash takes more along: how often a scene was played and its O counter with the times of both,
+  the O counter of images, the cover of a scene as its thumbnail and the images of performers and studios. For
+  entries that exist already these are fields like the others: they stay as they are until you take them, the two
+  images are shown side by side, and an image that gets replaced is kept. Stash exports no resume position, so none
+  is taken over. Exports of Stash 0.32 are read like those of 0.31; the production date of a scene, new there,
+  becomes its release date where Stash has none.
 
 ## 0.7.0
 

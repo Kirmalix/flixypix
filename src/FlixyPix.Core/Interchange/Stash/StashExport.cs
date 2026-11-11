@@ -21,6 +21,10 @@ public sealed record StashReadLimits(int MaximumFiles=400_000,int MaximumEntityB
 public static partial class StashExport
 {
  public const string Version="0.31.1";
+ /// <summary>The Stash versions whose folder export was checked against this contract, as shown to the user. 0.32.0 only adds
+ /// "production_date" to scenes, which becomes the release date where "date" is missing, and writes perceptual hashes of files as
+ /// text, which are not read.</summary>
+ public const string CheckedVersions="0.31 / 0.32";
  public const string SourceCommit="4de2351e7cc990d7ccd7cb6c84c275cd53bf6e55";
  internal static readonly IReadOnlyDictionary<string,StashEntityKind> Sections=new Dictionary<string,StashEntityKind>(StringComparer.Ordinal)
  { ["scenes"]=StashEntityKind.Scene,["images"]=StashEntityKind.Image,["galleries"]=StashEntityKind.Gallery,["performers"]=StashEntityKind.Performer,

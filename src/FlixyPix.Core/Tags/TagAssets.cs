@@ -160,21 +160,26 @@ public sealed partial class CatalogRepository
         lock (gate)
         {
             ThrowIfDisposed(); using var transaction = connection.BeginTransaction(); InitializeTagAssetSchema(transaction);
-            using var duplicate = Command("""
-                SELECT document FROM tag_assets WHERE json_extract(document,'$.sha256')=$hash
-                AND json_extract(document,'$.tag.category')=$category COLLATE EFP_ORDINAL
-                AND json_extract(document,'$.tag.value')=$tag COLLATE EFP_ORDINAL ORDER BY id LIMIT 1
-                """, transaction, ("$hash", hash), ("$category", tag.Category), ("$tag", tag.Value));
-            var previous = duplicate.ExecuteScalar() is string json ? JsonSerializer.Deserialize<TagAsset>(json, Json)! : null;
-            var asset = previous == null ? new TagAsset
-            {
-                Id = AllocateTagAssetId(hash, tag, transaction),
-                Tag = tag, Label = label, Data = data, Sha256 = hash, ByteLength = data.Length,
-                SourceSha256 = hash, SourcePaths = source == null ? [] : [source], Provenance = new() { ["import.method"] = method }
-            } : previous with { Data = data, SourcePaths = (source == null ? previous.SourcePaths : previous.SourcePaths.Append(source)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(), SourceSha256 = previous.SourceSha256 ?? hash };
-            var normalized = NormalizeTagAsset(asset, requireChecksum: previous != null, copyData: false);
-            cancellationToken.ThrowIfCancellationRequested(); var saved = SaveTagAsset(normalized, transaction); transaction.Commit(); return saved;
+            cancellationToken.ThrowIfCancellationRequested(); var saved = StoreTagAssetCore(data, hash, tag, label, source, method, transaction); transaction.Commit(); return saved;
         }
+    }
+
+    /// <summary>Stores the bytes for the tag inside a running transaction; the same bytes for the same tag are stored once.</summary>
+    private TagAsset StoreTagAssetCore(byte[] data, string hash, TagKey tag, string label, string? source, string method, SqliteTransaction transaction)
+    {
+        using var duplicate = Command("""
+            SELECT document FROM tag_assets WHERE json_extract(document,'$.sha256')=$hash
+            AND json_extract(document,'$.tag.category')=$category COLLATE EFP_ORDINAL
+            AND json_extract(document,'$.tag.value')=$tag COLLATE EFP_ORDINAL ORDER BY id LIMIT 1
+            """, transaction, ("$hash", hash), ("$category", tag.Category), ("$tag", tag.Value));
+        var previous = duplicate.ExecuteScalar() is string json ? JsonSerializer.Deserialize<TagAsset>(json, Json)! : null;
+        var asset = previous == null ? new TagAsset
+        {
+            Id = AllocateTagAssetId(hash, tag, transaction),
+            Tag = tag, Label = label, Data = data, Sha256 = hash, ByteLength = data.Length,
+            SourceSha256 = hash, SourcePaths = source == null ? [] : [source], Provenance = new() { ["import.method"] = method }
+        } : previous with { Data = data, SourcePaths = (source == null ? previous.SourcePaths : previous.SourcePaths.Append(source)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(), SourceSha256 = previous.SourceSha256 ?? hash };
+        return SaveTagAsset(NormalizeTagAsset(asset, requireChecksum: previous != null, copyData: false), transaction);
     }
 
     public Task<TagAsset> ImportTagAssetFileAsync(string sourcePath, TagKey key, string? label = null, CancellationToken cancellationToken = default) =>
