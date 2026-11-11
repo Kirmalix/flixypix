@@ -3,8 +3,9 @@
 # 1. Only from a committed state: the commit in the version must be the code that was built.
 # 2. Version from Git, no file change: <Version of Directory.Build.props>-dev.<commits since the last release tag>,
 #    the SDK appends +<commit>. On a release tag the version of Directory.Build.props applies unchanged.
-# 3. Unit tests run unless the Build workflow passed for exactly this commit (-RunTests forces them).
-#    build.ps1 always runs the UI smoke test against the finished package.
+# 3. Building and testing are separate: a test build only builds, packages and installs. Tests have usually run
+#    before (scripts\tests\Invoke-Tests.ps1, a smoke run, CI). -RunTests adds the unit tests, -UiSmoke the UI smoke
+#    test against the finished package.
 # 4. Package in artifacts\releases\FlixyPix-<version>-win-x64 with ZIP, manifest and checksum; clean-workspace.ps1
 #    keeps the newest two there.
 # 5. Installs into -InstallTo: the program files are replaced, the Data folder (library, settings, logs) stays.
@@ -14,7 +15,8 @@ param(
     [string]$InstallTo = 'C:\Projekte\FlixyPix-App',
     [string]$MoveDataFrom,
     [switch]$NoInstall,
-    [switch]$RunTests
+    [switch]$RunTests,
+    [switch]$UiSmoke
 )
 $ErrorActionPreference = 'Stop'
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
@@ -46,15 +48,8 @@ try {
     $output = Join-Path $releases "$name\FlixyPix"
     if (Test-Path -LiteralPath (Join-Path $releases $name)) { throw "This build exists already: $(Join-Path $releases $name)" }
 
-    # 3. Unit tests unless CI passed for this commit.
-    $ciPassed = $false
-    if (!$RunTests -and (Get-Command gh -ErrorAction SilentlyContinue)) {
-        try {
-            $runs = gh run list --commit $commit --workflow Build --json conclusion,status 2>$null | ConvertFrom-Json
-            $ciPassed = [bool]($runs | Where-Object { $_.status -eq 'completed' -and $_.conclusion -eq 'success' })
-        } catch { $ciPassed = $false }
-    }
-    Write-Host $(if ($ciPassed) { 'CI passed for this commit: unit tests skipped.' } else { 'Unit tests run (no passed CI run for this commit).' })
+    # 3. Tests only on request.
+    Write-Host ("Unit tests: $(if ($RunTests) { 'run' } else { 'not run (-RunTests)' }) · UI smoke test: $(if ($UiSmoke) { 'run' } else { 'not run (-UiSmoke)' })")
 
     # The profile's TEMP may be an 8.3 short path that SQLite cannot open; the run uses an ASCII folder of its own.
     # No compiler server or build node stays behind to lock it.
@@ -64,7 +59,8 @@ try {
     $env:TEMP = $temp; $env:TMP = $temp; $env:UseSharedCompilation = 'false'; $env:MSBUILDDISABLENODEREUSE = '1'
     try {
         $buildArguments = @{ OutputDirectory = $output; InformationalVersion = $version }
-        if ($ciPassed) { $buildArguments.SkipTests = $true }
+        if (!$RunTests) { $buildArguments.SkipTests = $true }
+        if (!$UiSmoke) { $buildArguments.SkipUiSmoke = $true }
         & (Join-Path $repository 'scripts\build.ps1') @buildArguments
         # 4. Package.
         python scripts\release\package-portable.py --source $output --output (Join-Path $releases "$name.zip") --version $version
