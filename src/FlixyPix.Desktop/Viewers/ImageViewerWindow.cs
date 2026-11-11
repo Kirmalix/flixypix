@@ -81,7 +81,7 @@ internal sealed partial class ImageViewerWindow : Window
   left.Children.Add(Command("",T("Previous image (←)"),()=>Navigate(-1))); left.Children.Add(Command("",T("Next image (→)"),()=>Navigate(1)));
   left.Children.Add(Gap());
   left.Children.Add(Command("",T("Zoom out (−)"),()=>ChangeZoom(1/1.25))); left.Children.Add(Command("",T("Zoom in (+)"),()=>ChangeZoom(1.25)));
-  left.Children.Add(Command("",T("Fit (F)"),Fit)); left.Children.Add(Command("",T("Original size 1:1"),()=>{ _fit=false; _zoom=1; ReadyTask=ShowFrameAsync(_load?.Token??default); }));
+  left.Children.Add(Command("",T("Fit (F)"),Fit)); left.Children.Add(Command("",T("Original size 1:1"),OriginalSize));
   left.Children.Add(Command("",T("Rotate (R)"),Rotate));
   _frameButtons.Children.Add(Command("",T("Previous page or previous frame of the animation (Page↑)"),()=>ChangeFrame(-1))); _frameButtons.Children.Add(_play);
   _frameButtons.Children.Add(Command("",T("Next page or next frame of the animation (Page↓)"),()=>ChangeFrame(1)));
@@ -177,7 +177,7 @@ internal sealed partial class ImageViewerWindow : Window
  {
   _animation.Stop(); _load?.Cancel(); _load?.Dispose(); _load=new(); var token=_load.Token;
   _info=null; _windowsDecoded=false; _frame=0; _animationLoops=0; _label.Text=T("Reading image …");
-  _develop=_developing=false; _path=_rawPath=null; UpdateRawSwitch();
+  _develop=_developing=_keepPreview=_keepSize=false; _path=_rawPath=null; UpdateRawSwitch();
   if(!(SlideshowRunning && Slideshow.Fade) && !_fadeNext) _image.Source=null;
   if(_itemCount==0)return;
   try
@@ -201,9 +201,10 @@ internal sealed partial class ImageViewerWindow : Window
 
  private async Task ShowFrameAsync(CancellationToken token)
  {
+  var develop=_develop && _rawPath!=null;
   try
   {
-   if(_currentItem==null || _path is not { } path)return; var frame=_frame; var bound=Bound(); var develop=_develop && _rawPath!=null;
+   if(_currentItem==null || _path is not { } path)return; var frame=_frame; var bound=Bound();
    BitmapSource bitmap;
    if(develop) bitmap=DesktopImaging.Bitmap((await DesktopImaging.Service.DecodeAsync(_rawPath!,0,bound,bound,token,develop:true)).PngBytes);
    else if(_windowsDecoded && frame==0 && await DecodeFastAsync(path,bound,token) is { } fast) bitmap=fast.Bitmap;
@@ -212,13 +213,21 @@ internal sealed partial class ImageViewerWindow : Window
    Present(bitmap);
   }
   catch(OperationCanceledException) { }
-  catch(Exception error) when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException) { if(!token.IsCancellationRequested) { _playing=false; _label.Text=T("The image cannot be shown: ")+error.Message; } }
+  catch(Exception error) when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException) { if(!token.IsCancellationRequested)
+   {
+    _playing=false; _label.Text=T("The image cannot be shown: ")+error.Message;
+    // A RAW file that cannot be developed keeps its picture on show, and zooming does not try again.
+    if(develop && _develop) { _develop=_developing=_keepSize=false; _keepPreview=true; UpdateRawSwitch(); }
+   } }
  }
  /// <summary>Longest side to decode: twice the window when fitting, so zooming in a little stays sharp; full size otherwise.</summary>
  private int Bound()=>_fit?Math.Max(1600,(int)Math.Max(_scroll.ActualWidth,_scroll.ActualHeight)*2):0;
 
  private void Present(BitmapSource bitmap)
  {
+  // Preview and developed picture differ in size: what was on screen keeps its size when one replaces the other.
+  if(_keepSize && !_fit && _image.Source is BitmapSource before) _zoom=Math.Clamp(_zoom*Math.Max(before.PixelWidth,before.PixelHeight)/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight),.02,16);
+  _keepSize=false;
   _image.Source=bitmap; _image.Width=bitmap.PixelWidth; _image.Height=bitmap.PixelHeight;
   if(_fit)Fit(); else Apply();
   _frameButtons.Visibility=_info?.FrameCount>1?Visibility.Visible:Visibility.Collapsed; _play.Visibility=_info?.IsAnimated==true?Visibility.Visible:Visibility.Collapsed; UpdatePlayButton();
@@ -270,7 +279,9 @@ internal sealed partial class ImageViewerWindow : Window
   if(!_closed && _playing && _info?.IsAnimated==true) { _animation.Interval=_info.FrameDurations[_frame]; _animation.Start(); }
  }
  internal void Rotate() { _rotation=(_rotation+90)%360; if(_fit)Fit(); else Apply(); }
- internal void ChangeZoom(double multiplier) { _fit=false; _zoom=Math.Clamp(_zoom*multiplier,.02,16); Apply(); }
+ internal void ChangeZoom(double multiplier) { _fit=false; _zoom=Math.Clamp(_zoom*multiplier,.02,16); Apply(); DevelopWhenPreviewRunsOut(false); }
+ /// <summary>One pixel of the image per pixel of the screen; for a RAW file with a smaller preview that is the sensor image.</summary>
+ internal void OriginalSize() { _fit=false; _zoom=1; if(!DevelopWhenPreviewRunsOut(true)) ReadyTask=ShowFrameAsync(_load?.Token??default); }
  internal void Fit()
  {
   _fit=true; if(_image.Source is not BitmapSource source)return;
@@ -312,6 +323,8 @@ internal sealed partial class ImageViewerWindow : Window
  internal string? ShownPath => _path;
  /// <summary>The sensor data of the RAW file is shown instead of a finished picture.</summary>
  internal bool Developed => _develop || _info is { IsRaw: true, ShownByPreview: false };
+ /// <summary>Pixels of the picture on show.</summary>
+ internal (int Width, int Height) ShownSize => _image.Source is BitmapSource shown ? (shown.PixelWidth, shown.PixelHeight) : (0, 0);
  internal bool RawSwitchShown => _raw.Visibility==Visibility.Visible;
  internal string RawSwitchText => _rawText.Text;
 
@@ -326,10 +339,34 @@ internal sealed partial class ImageViewerWindow : Window
  {
   if(_currentItem==null || _rawPath==null || _info==null || _developing || _info is { IsRaw: true, ShownByPreview: false } || !File.Exists(_rawPath)) return;
   StopSlideshow();
-  _develop=!_develop; _developing=_develop; UpdateRawSwitch();
+  // Going back to the camera's picture by hand holds until the next image, also when zooming in.
+  _keepPreview=_develop;
+  SwitchDevelop(!_develop, keepSize: true);
+ }
+
+ private void SwitchDevelop(bool develop, bool keepSize)
+ {
+  _develop=develop; _developing=develop; _keepSize=keepSize && !_fit; UpdateRawSwitch();
   _load?.Cancel(); _load?.Dispose(); _load=new(); var token=_load.Token;
   ReadyTask=Run();
   async Task Run() { await ShowFrameAsync(token); if(!token.IsCancellationRequested) { _developing=false; UpdateRawSwitch(); UpdateInfo(); } }
+ }
+
+ private bool _keepPreview, _keepSize;
+ /// <summary>The camera's preview is clearly smaller than the sensor image (Olympus, Panasonic, Sony and others).</summary>
+ private bool PreviewIsSmaller => _info is { IsRaw: true, ShownByPreview: true, PreviewWidth: { } width, PreviewHeight: { } height } && Math.Max(width,height)<Math.Max(_info.Width,_info.Height)*9/10;
+
+ /// <summary>A preview smaller than the sensor image has no more to show beyond its own pixels: zooming past them, or
+ /// asking for the original size, develops the sensor data in the background and swaps the picture.</summary>
+ /// <param name="original">The original size was asked for; otherwise what is on screen keeps its size.</param>
+ private bool DevelopWhenPreviewRunsOut(bool original)
+ {
+  if(_fit || _develop || _developing || _keepPreview || !PreviewIsSmaller || _rawPath==null || _image.Source is not BitmapSource shown || !File.Exists(_rawPath)) return false;
+  var preview=Math.Max(_info!.PreviewWidth!.Value,_info.PreviewHeight!.Value);
+  if(!original && Math.Max(shown.PixelWidth,shown.PixelHeight)*_zoom<preview*.999) return false;
+  StopSlideshow();
+  SwitchDevelop(true, keepSize: !original);
+  return true;
  }
 
  private void UpdateRawSwitch()

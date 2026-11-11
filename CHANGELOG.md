@@ -46,7 +46,8 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   RW2, Pentax PEF and further types. A RAW file is shown by the picture the camera put into it, which appears as fast
   as a JPEG and looks as the camera meant the shot. The RAW button in the image viewer (key D) develops the sensor
   data instead, which takes a moment and looks a little different; a RAW file without a usable preview is developed
-  right away. Libraries from earlier versions get the RAW types into their image types once.
+  right away. Where the camera's preview is smaller than the sensor image, as with Olympus, Panasonic and Sony,
+  zooming past the preview or choosing the original size develops the sensor data by itself and swaps the picture. Libraries from earlier versions get the RAW types into their image types once.
 - A shot the camera saved as RAW and JPEG is one item: it shows the JPEG and keeps the RAW file with it, and falls
   back to the RAW file when the JPEG is gone. An import joins such pairs by itself, the media folder check offers a
   RAW file that arrives later to its picture, and two selected items can be combined by hand. The details list both
