@@ -39,9 +39,9 @@ covers every text.
 
 `Directory.Build.props` names the next version with `-dev` (for example `0.6.0-dev`). Test builds come
 from `.\scripts\release\new-test-build.ps1`: only from a committed state, versioned
-`<next version>-dev.<commits since the last release tag>+<commit>`, checked with the UI smoke test
-(unit tests too unless CI passed for that commit), packaged under `artifacts\releases` and installed
-into a working installation whose `Data` folder stays. A release sets the plain version and its
+`<next version>-dev.<commits since the last release tag>+<commit>`, packaged under `artifacts\releases` and installed
+into a working installation whose `Data` folder stays. A test build does not test: run the tests before
+it, or add `-RunTests` for the unit tests and `-UiSmoke` for the UI smoke test against the package. A release sets the plain version and its
 `CHANGELOG.md` heading, then pushes the tag `v<version>`. Old build and test output is removed by
 `.\scripts\clean-workspace.ps1`, which the build and test scripts run on their own.
 
