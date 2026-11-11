@@ -106,7 +106,7 @@ public partial class MainWindow
             AddImagesToSet(smokeSet, [setImages[0]]);
             Require(_repository.GetImageSet(smokeSet.Id)!.MediaIds.SequenceEqual(setImages.Select(i => i.Id)) && _repository.GetImageSet(smokeSet.Id)!.CoverId == setImages[0].Id, "Stale add menu overwrote current set data.");
             _setMembers.SelectedIndex = 1; await OpenSetImageAsync();
-            Require(_viewer is ImageViewerWindow { CurrentIndex: 1 }, "Image set viewer did not use set order.");
+            Require(ImageView is { CurrentIndex: 1 }, "Image set viewer did not use set order.");
             _viewer!.Close(); _viewer = null;
             RefreshImageSets(); await _setCoverTask;
             Require((_setMembers.SelectedItem as MediaItem)?.Id == setImages[1].Id && !_setActions["Move down"].IsEnabled, "Set refresh lost last member selection/boundary.");

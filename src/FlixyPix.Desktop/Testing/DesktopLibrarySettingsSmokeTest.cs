@@ -65,14 +65,15 @@ public partial class MainWindow
    target.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent });
    var armed = $"armed {_clickToPlay != null}, drag {_dragStart != null}, display {_cardContext.Display.ClickPlays}, on picture {OnPicture(target, item)}";
    target.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseUpEvent });
-   for (var wait = 0; _viewer is not ImageViewerWindow && wait < 40; wait++) await Task.Delay(50);
-   Require(_viewer is ImageViewerWindow, "A click on the picture did not open the medium (" + armed + ").");
-   var viewer = (ImageViewerWindow)_viewer!; await viewer.ReadyTask;
+   for (var wait = 0; ImageView is null && wait < 40; wait++) await Task.Delay(50);
+   Require(ImageView is not null, "A click on the picture did not open the medium (" + armed + ").");
+   // The loupe starts reading once it is laid out.
+   var viewer = ImageView!; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); await viewer.ReadyTask;
    Require(viewer.HasImage && viewer.WindowsDecoded, "A plain image did not open through the Windows decoder.");
-   viewer.Navigate(1); await viewer.ReadyTask;
+   viewer.Navigate(viewer.CurrentIndex + 1 < viewer.Count ? 1 : -1); await viewer.ReadyTask;
    Require(viewer.HasImage, "The next image did not show.");
    Require(viewer.FadeOnChange && viewer.LastChangeFaded, "The viewer did not cross-fade to the next image.");
-   StopSlideshow();
+   CloseImageViewers();
 
    // Deleting moves the file to the recycle bin (recorded here, so no test file lands in the real bin).
    var recycled = new List<string>();

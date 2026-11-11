@@ -313,8 +313,8 @@ public partial class MainWindow
         setCaches.ForEach(File.Delete);
         var archiveSet = _repository.UpsertImageSet(new ImageSet { Name = "Archive set", MediaIds = setItems.Select(i => i.Id).ToList() });
         await OpenImageSetAsync(archiveSet, setItems[1].Id);
-        for (var wait = 0; !File.Exists(setCaches[1]) && wait < 100; wait++) { if (_viewer is ImageViewerWindow loading) await loading.ReadyTask; await Task.Delay(50); }
-        Require(_viewer is ImageViewerWindow { CurrentIndex: 1 } && File.Exists(setCaches[1]) && !File.Exists(setCaches[0]) && !File.Exists(setCaches[2]),
+        for (var wait = 0; !File.Exists(setCaches[1]) && wait < 100; wait++) { if (ImageView is { } loading) await loading.ReadyTask; await Task.Delay(50); }
+        Require(ImageView is { CurrentIndex: 1 } && File.Exists(setCaches[1]) && !File.Exists(setCaches[0]) && !File.Exists(setCaches[2]),
          "Opening an archive image set did not extract only the shown image.");
         _viewer!.Close(); _viewer = null;
         _repository.DeleteImageSet(archiveSet.Id); foreach (var item in setItems) _repository.Delete(item.Id);
@@ -729,7 +729,10 @@ public partial class MainWindow
         ToggleDetails(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         var viewBefore = _view;
         Require(!DetailsExpanded && Selected != null, "The double click check needs folded details and a selection.");
-        OpenFromDoubleClick(Selected!); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        // Images open the loupe instead (DesktopLoupeSmokeTest); the details rule holds for the other tiles.
+        var doubleClicked = MediaList.Items.Cast<MediaCard>().Select(c => c.Item).FirstOrDefault(i => i.Kind != MediaKind.Image)
+            ?? Selected! with { Kind = MediaKind.Video };
+        OpenFromDoubleClick(doubleClicked); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(DetailsExpanded && !_settings.DetailsCollapsed && _view == viewBefore && !IsDetailView, "A double click did not unfold the details in place.");
         // The details as tabs show one part at a time; switching back shows everything again.
         SetDetailsTabs(true); ShowDetailsTab("scenes"); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -771,18 +774,19 @@ public partial class MainWindow
         ViewChoice.SelectedIndex = 1; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture((FrameworkElement)RootContent, Path.Combine(directory, "desktop-list.png"));
         Require(_settings.ViewMode == 1, "View mode preference did not update."); ViewChoice.SelectedIndex = 0;
         await RunRawSmokeTestAsync(directory); await RefreshAsync(first.Id);
+        await RunLoupeSmokeTestAsync(directory, first); await RefreshAsync(first.Id);
         var hashBefore = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(first.Path));
         ShowImage(_repository.Search().Single(item => item.Id == first.Id)); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-        Require(_viewer is ImageViewerWindow, "Image viewer not opened.");
-        var viewer = (ImageViewerWindow)_viewer!; await viewer.ReadyTask; Require(viewer.HasImage, "Image viewer failed to decode image.");
+        Require(ImageView is not null, "Image viewer not opened.");
+        var viewer = ImageView!; await viewer.ReadyTask; Require(viewer.HasImage, "Image viewer failed to decode image.");
         var zoom = viewer.ZoomFactor; viewer.ChangeZoom(1.25); Require(viewer.ZoomFactor > zoom, "Viewer zoom failed."); viewer.Rotate();
         Require(viewer.Rotation == 90, "View-only rotation failed.");
         // Flip (view only), copy picture and path, wallpaper and favorite; clipboard and wallpaper go through hooks, so the user's stay untouched.
-        var (putImage, putText, setWallpaper) = (ImageViewerWindow.PutImage, ImageViewerWindow.PutText, ImageViewerWindow.SetWallpaper);
+        var (putImage, putText, setWallpaper) = (ImageViewer.PutImage, ImageViewer.PutText, ImageViewer.SetWallpaper);
         try
         {
             object? copied = null; string? copiedText = null, wallpaperPath = null;
-            ImageViewerWindow.PutImage = image => copied = image; ImageViewerWindow.PutText = text => copiedText = text; ImageViewerWindow.SetWallpaper = path => { wallpaperPath = path; return true; };
+            ImageViewer.PutImage = image => copied = image; ImageViewer.PutText = text => copiedText = text; ImageViewer.SetWallpaper = path => { wallpaperPath = path; return true; };
             var shown = viewer.CurrentItem!;
             viewer.Flip(true); Require(viewer.FlippedHorizontally && !viewer.FlippedVertically, "Flipping did not mirror the view.");
             Require(viewer.CopyImage() && copied != null && viewer.CopyPath() && copiedText == shown.Path, "Copying the picture or its path failed.");
@@ -790,13 +794,13 @@ public partial class MainWindow
             var favorite = viewer.SwitchFavorite(); Require(favorite == _repository.IsFavorite(_repository.GetMedia(shown.Id)!), "The favorite switch did not reach the catalog.");
             viewer.SwitchFavorite(); viewer.Flip(true); Require(!viewer.FlippedHorizontally, "Flipping back failed.");
         }
-        finally { (ImageViewerWindow.PutImage, ImageViewerWindow.PutText, ImageViewerWindow.SetWallpaper) = (putImage, putText, setWallpaper); }
-        Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "image-viewer.png"));
+        finally { (ImageViewer.PutImage, ImageViewer.PutText, ImageViewer.SetWallpaper) = (putImage, putText, setWallpaper); }
+        Capture(viewer, Path.Combine(directory, "image-viewer.png"));
         // Details, film strip and the slideshow with its settings.
         viewer.SetInfo(true); Require(viewer.InfoShown && viewer.InfoText.Contains(first.Title) && viewer.InfoText.Contains("800 × 480"), "Image details were not shown over the picture.");
         viewer.SetStrip(true); await viewer.StripTask; await Task.Delay(400); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(viewer.StripCount > 1, "The film strip did not list the neighbouring images.");
-        Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "image-viewer-strip.png"));
+        Capture(viewer, Path.Combine(directory, "image-viewer-strip.png"));
         viewer.Slideshow = new SlideshowPreferences { IntervalSeconds = .25, Order = SlideshowOrder.InOrder, Fade = true, PanAndZoom = true };
         var slideStart = viewer.CurrentIndex; viewer.StartSlideshow(); await Task.Delay(900);
         Require(viewer.SlideshowRunning && viewer.CurrentIndex != slideStart, "The slideshow did not advance with its interval.");
@@ -804,7 +808,7 @@ public partial class MainWindow
         viewer.Slideshow = viewer.Slideshow with { Order = SlideshowOrder.Random };
         Require(Enumerable.Range(0, 20).All(_ => viewer.NextSlideIndex() != viewer.CurrentIndex), "A random slide repeated the current image.");
         viewer.SetInfo(false); viewer.SetStrip(false);
-        var indexBefore = viewer.CurrentIndex; viewer.Navigate(1); await viewer.ReadyTask; Require(viewer.HasImage, "Image viewer next image decoding failed."); Require(viewer.CurrentIndex != indexBefore, "Viewer next image failed."); viewer.Fit(); StopSlideshow();
+        var indexBefore = viewer.CurrentIndex; viewer.Navigate(indexBefore + 1 < viewer.Count ? 1 : -1); await viewer.ReadyTask; Require(viewer.HasImage, "Image viewer next image decoding failed."); Require(viewer.CurrentIndex != indexBefore, "Viewer next image failed."); viewer.Fit(); CloseImageViewers();
         Require(hashBefore.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(first.Path))), "Viewer modified source image.");
         var queueDirectory = Path.Combine(directory, "queue");
         var queue = new MediaQueuePage(this, queueDirectory, _tools, first.Path, []); queue.AddPreparedJob(new MediaJob { Kind = MediaJobKind.Convert, Input = first.Path, Output = Path.Combine(queueDirectory, "output.mp4") });

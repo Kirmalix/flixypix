@@ -37,7 +37,7 @@ public partial class MainWindow
    _publicationMembers!.SelectedIndex=2;Click(_publicationActions["Move up"]);Click(_publicationActions["Move up"]);
    Require(SelectedPublicationGroup!.Members[0]==new PublicationGroupMember(PublicationGroupMemberKind.ImageSet,set.Id)&&!_publicationActions["Move up"].IsEnabled,"Reorder lost selection/boundary.");
    Click(_publicationActions["Open"]);await _publicationOpenTask;
-   Require(_viewer is ImageViewerWindow{CurrentIndex:1},"Group did not open set viewer in saved order at its cover.");_viewer!.Close();_viewer=null;
+   Require(ImageView is {CurrentIndex:1},"Group did not open set viewer in saved order at its cover.");_viewer!.Close();_viewer=null;
    Require(CaptureViewState().PublicationGroupId==group.Id&&KeyboardRegions().Contains(_publicationPage),"Group view state/keyboard region missing.");
    _toasts.Children.Clear();Capture(this,Path.Combine(directory,"publication-groups-main.png"));
    ApplyViewState(new(){View="all"});await _lastRefresh;Require(MediaList.IsVisible&&!_publicationPage.IsVisible,"Media view did not return after groups.");

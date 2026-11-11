@@ -37,8 +37,10 @@ public partial class MainWindow
             {
                 if (_playback.Current is null && _playback.Window is not null) await _playback.PrepareStartAsync(ReleasePlaybackAsync);
                 if (!_playback.IsCurrentStart(request)) return;
-                ShowImage(item);
-                if (_viewer is ImageViewerWindow imageViewer) await imageViewer.ReadyTask;
+                var opened = ShowImage(item);
+                // The viewer starts reading once it is part of the window.
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+                await opened.ReadyTask;
                 return;
             }
             // The next video opens where the previous one was, in the same window size or full screen.
@@ -85,7 +87,9 @@ public partial class MainWindow
         catch (OperationCanceledException) { if (item.Kind != MediaKind.Image && _playback.IsCurrentStart(request)) await StopPlayer(); }
         catch (Exception ex) { if (item.Kind != MediaKind.Image && _playback.IsCurrentStart(request)) await StopPlayer(); if (!_closing) Message.Show(this, ex.Message, T("Playback"), MessageBoxButton.OK, MessageBoxImage.Warning); }
     });
-    private void ShowImage(MediaItem item)
+    /// <summary>Shows an image large: among the tiles on show in the loupe, which takes their place and leafs through the
+    /// images of the same list; otherwise, as from the home page or a detail page, in a viewer window.</summary>
+    private ImageViewer ShowImage(MediaItem item)
     {
         var previous = _viewer; _viewer = null; previous?.Close();
         var images = _currentImages.Any(i => i.Id == item.Id) ? _currentImages.Select(i => i.Id == item.Id ? item : i).ToArray() : new[] { item };
@@ -93,19 +97,36 @@ public partial class MainWindow
         var imagePlaylist = _imagePlaylist; var collectionOrder = _imageCollectionOrder;
         var initial = imagePlaylist == null ? _repository.GetPosition(imageQuery, item.Id) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery, collectionOrder, item.Id).Offset;
         var imageCount = !initial.HasValue ? 0 : checked((int)(imagePlaylist == null ? _repository.CountMedia(imageQuery) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery, collectionOrder).Page.TotalCount));
-        _viewer = initial.HasValue ? new ImageViewerWindow(this, images, item.Id, index => _libraryTasks.Run<MediaItem?>(async token =>
-        {
-            var page = await Task.Run(() => imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page);
-            return page.Items.FirstOrDefault() is { } image ? await EnsureArchiveImageAsync(image, token) : null;
-        }), imageCount, initial.Value, index => _libraryTasks.Run<MediaItem?>(async token =>
-            (await Task.Run(() => imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page, token)).Items.FirstOrDefault()))
-         : new ImageViewerWindow(this, images, item.Id);
-        var viewer = (ImageViewerWindow)_viewer; var preferences = _repository.GetPreferences();
-        viewer.DeleteMedium = image => DeleteWithQuestion(image, viewer); viewer.ToggleFavorite = ToggleFavorite;
+        var loupe = initial.HasValue && LoupeFits;
+        var (itemAt, peekAt) = ImageList(imageQuery, imagePlaylist, collectionOrder);
+        var viewer = initial.HasValue ? new ImageViewer(images, item.Id, itemAt, imageCount, initial.Value, peekAt, embedded: loupe) : new ImageViewer(images, item.Id);
+        ConfigureViewer(viewer);
+        if (loupe) { OpenLoupe(viewer); return viewer; }
+        CloseLoupe(reselect: false);
+        var window = new ImageViewerWindow(this, viewer); _viewer = window;
+        window.Closed += (_, _) => { if (ReferenceEquals(_viewer, window)) { _viewer = null; _collectionPlayback?.Cancel(); } };
+        window.Show();
+        return viewer;
+    }
+
+    /// <summary>The images of a list by their place in it: for showing, which takes an image out of its archive, and for
+    /// a look ahead, which does not.</summary>
+    private (Func<int, Task<MediaItem?>> ItemAt, Func<int, Task<MediaItem?>> PeekAt) ImageList(MediaQuery imageQuery, Playlist? imagePlaylist, bool collectionOrder)
+    {
+        MediaItem? At(int index) => (imagePlaylist == null ? _repository.QueryPage(imageQuery with { Offset = index, Limit = 1 }) : _repository.QueryPlaylistPage(imagePlaylist, imageQuery with { Offset = index, Limit = 1 }, collectionOrder).Page).Items.FirstOrDefault();
+        return (index => _libraryTasks.Run<MediaItem?>(async token => await Task.Run(() => At(index)) is { } image ? await EnsureArchiveImageAsync(image, token) : null),
+            index => _libraryTasks.Run<MediaItem?>(async token => await Task.Run(() => At(index), token)));
+    }
+
+    /// <summary>What every image viewer takes from the library: its actions and the settings of the viewer.</summary>
+    private void ConfigureViewer(ImageViewer viewer)
+    {
+        var preferences = _repository.GetPreferences();
+        viewer.DeleteMedium = image => DeleteWithQuestion(image, Window.GetWindow(viewer)); viewer.ToggleFavorite = ToggleFavorite;
         viewer.UseAsTagPicture = image => ChooseTagPicture(image, viewer); viewer.UseAsThumbnail = image => ChooseThumbnailTarget(image, viewer);
         viewer.WheelAction = preferences.General.ImageWheel; viewer.FadeOnChange = preferences.General.ImageFade; viewer.MediaKeys = preferences.Playback.MediaKeys; viewer.Slideshow = preferences.Slideshow;
-        viewer.Closed += (_, _) => { if (ReferenceEquals(_viewer, viewer)) { _viewer = null; _collectionPlayback?.Cancel(); } };
-        _viewer.Show();
+        viewer.DevelopRaw = preferences.General.DevelopRaw;
+        viewer.DevelopRawChanged = on => { try { _repository.SaveGeneralPreferences(_repository.GetPreferences().General with { DevelopRaw = on }); } catch (Exception error) when (error is IOException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException) { Status.Text = error.Message; } };
     }
     private Task SavePlaybackPosition() => _playback.Current is { } session ? SavePlaybackPositionAsync(session, final: false) : Task.CompletedTask;
 

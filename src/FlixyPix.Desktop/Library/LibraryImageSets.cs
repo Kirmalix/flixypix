@@ -137,8 +137,8 @@ public partial class MainWindow
          try { return await task; } catch (Exception) { if (ReferenceEquals(resolved[index], task)) resolved[index] = null; throw; }
      });
         var initial = Math.Max(0, Array.FindIndex(images, image => image.Id == selected));
-        _viewer?.Close(); var viewer = new ImageViewerWindow(this, images, images[initial].Id, ItemAt, images.Length, initial); _viewer = viewer;
-        viewer.Closed += (_, _) => { if (ReferenceEquals(_viewer, viewer)) _viewer = null; }; viewer.Show(); await viewer.ReadyTask;
+        CloseImageViewers(); var viewer = new ImageViewerWindow(this, new ImageViewer(images, images[initial].Id, ItemAt, images.Length, initial)); _viewer = viewer; ConfigureViewer(viewer.View);
+        viewer.Closed += (_, _) => { if (ReferenceEquals(_viewer, viewer)) _viewer = null; }; viewer.Show(); await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Loaded); await viewer.View.ReadyTask;
     });
     private async Task OpenSetImageFromUiAsync()
     {

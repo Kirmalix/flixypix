@@ -26,14 +26,14 @@ public partial class MainWindow
   finally { File.Delete(beside); }
 
   // Copy and paste go through the viewer's and the directory's clipboard hooks, so the user's clipboard stays untouched.
-  var putBefore = ImageViewerWindow.PutImage; var clipboardBefore = DirectoryWindow.ClipboardImage; BitmapSource? copied = null;
+  var putBefore = ImageViewer.PutImage; var clipboardBefore = DirectoryWindow.ClipboardImage; BitmapSource? copied = null;
   try
   {
-   ImageViewerWindow.PutImage = image => copied = image; DirectoryWindow.ClipboardImage = () => copied;
+   ImageViewer.PutImage = image => copied = image; DirectoryWindow.ClipboardImage = () => copied;
    Require(CopyThumbnail() && copied?.PixelWidth == MediaCard.LoadBitmap(video.ThumbnailPath, 0)?.PixelWidth, "The thumbnail was not copied in its own size.");
    Require(await PasteThumbnailAsync() == 1 && _repository.GetMedia(videoId)!.Extra.ContainsKey("thumbnail.assetId"), "The pasted picture did not become the thumbnail.");
   }
-  finally { ImageViewerWindow.PutImage = putBefore; DirectoryWindow.ClipboardImage = clipboardBefore; }
+  finally { ImageViewer.PutImage = putBefore; DirectoryWindow.ClipboardImage = clipboardBefore; }
 
   var title = _repository.GetMedia(videoId)!.Title;
   _repository.Upsert(_repository.GetMedia(videoId)! with { Title = "Ein anderer Titel" });

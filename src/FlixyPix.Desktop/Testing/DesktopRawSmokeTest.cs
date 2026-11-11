@@ -27,10 +27,10 @@ public partial class MainWindow
    var encoder = new JpegBitmapEncoder { QualityLevel = 90 }; encoder.Frames.Add(BitmapFrame.Create(bitmap));
    using var stream = File.Create(path); encoder.Save(stream);
   }
-  async Task<ImageViewerWindow> Open(MediaItem item)
+  async Task<ImageViewer> Open(MediaItem item)
   {
    ShowImage(item); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-   var opened = _viewer as ImageViewerWindow ?? throw new InvalidOperationException("The image viewer did not open.");
+   var opened = ImageView ?? throw new InvalidOperationException("The image viewer did not open.");
    await opened.ReadyTask; Require(opened.HasImage, "The viewer did not show " + Path.GetFileName(item.Path) + ".");
    return opened;
   }
@@ -81,24 +81,35 @@ public partial class MainWindow
    Require(viewer.RawSwitchShown && viewer.RawSwitchText == T("JPEG + RAW") && viewer.ShownPath == pairPicture && !viewer.Developed, "The pair does not show its picture with the RAW switch: " + viewer.RawSwitchText);
    viewer.SetInfo(true);
    Require(viewer.InfoText.Contains(T("RAW file: {0}", "IMG_0042.dng"), StringComparison.Ordinal), "The details over the picture do not name the RAW file.");
-   Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "raw-viewer-pair.png"));
+   Capture(viewer, Path.Combine(directory, "raw-viewer-pair.png"));
    viewer.ToggleDevelop(); await viewer.ReadyTask;
    Require(viewer.Developed && viewer.RawSwitchText == T("RAW · developed") && viewer.InfoText.Contains(T("RAW, developed from the sensor data"), StringComparison.Ordinal)
     && viewer.InfoText.Contains("96 × 64", StringComparison.Ordinal) && viewer.InfoText.Contains(pair.Files[0].Path, StringComparison.Ordinal), "Developing the RAW file of the pair failed: " + viewer.RawSwitchText);
-   Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "raw-viewer-developed.png"));
+   Capture(viewer, Path.Combine(directory, "raw-viewer-developed.png"));
    viewer.ToggleDevelop(); await viewer.ReadyTask;
    Require(!viewer.Developed && viewer.RawSwitchText == T("JPEG + RAW"), "The way back to the finished picture failed.");
 
    // A RAW file alone: the preview is the picture; D develops.
    viewer = await Open(single); viewer.SetInfo(true);
    Require(viewer.RawSwitchShown && viewer.RawSwitchText == "RAW" && !viewer.Developed && viewer.ShownPath == alone && viewer.InfoText.Contains("1600", StringComparison.Ordinal), "The RAW file is not shown by its preview: " + viewer.RawSwitchText + " · " + viewer.InfoText);
-   Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "raw-viewer-preview.png"));
+   Capture(viewer, Path.Combine(directory, "raw-viewer-preview.png"));
+   for (var wait = 0; viewer.CaptureLine.Length == 0 && wait < 40; wait++) await Task.Delay(50);
+   Require(viewer.CaptureLine.Contains("FlixyPix Test Camera", StringComparison.Ordinal) && viewer.CaptureLine.Contains("ISO 200", StringComparison.Ordinal), "The viewer does not tell camera and exposure of the RAW file: " + viewer.CaptureLine);
    viewer.ToggleDevelop(); await viewer.ReadyTask;
    Require(viewer.Developed && viewer.HasImage, "Developing the RAW file failed.");
+   // The RAW switch lasts. On: a RAW file never developed is developed by itself when it is looked at.
+   Require(viewer.DevelopRaw && _repository.GetPreferences().General.DevelopRaw, "The RAW switch was not kept.");
+   var large = Path.Combine(folder, "IMG_0045.dng"); SyntheticDng.Write(large, width: 2400, height: 1600, previewWidth: 1200);
+   var late = Path.Combine(folder, "IMG_0046.dng"); SyntheticDng.Write(late, previewWidth: 1600);
+   await Task.Run(() => new MediaScanner(_repository).ScanAsync([large, late], null, CancellationToken.None)); await AfterImportAsync(CancellationToken.None); await Prepared();
+   var lateItem = _repository.GetMediaByPath(late) ?? throw new InvalidOperationException("The late RAW file is no item.");
+   viewer = await Open(lateItem);
+   Require(viewer.DevelopRaw && viewer.Developed && viewer.RawSwitchText == T("RAW · developed"), "With the RAW switch on the RAW file was not developed by itself: " + viewer.RawSwitchText);
+   // Off: the camera's picture again, and nothing is developed by itself any more.
+   viewer.ToggleDevelop(); await viewer.ReadyTask;
+   Require(!viewer.Developed && !viewer.DevelopRaw && !_repository.GetPreferences().General.DevelopRaw, "Switching off did not bring the camera's picture back or was not kept.");
    // A preview smaller than the sensor image: fitted it is the picture; zooming past its pixels develops the sensor
    // data and keeps the size on screen; the original size is that of the sensor image; going back by hand holds.
-   var large = Path.Combine(folder, "IMG_0045.dng"); SyntheticDng.Write(large, width: 2400, height: 1600, previewWidth: 1200);
-   await Task.Run(() => new MediaScanner(_repository).ScanAsync([large], null, CancellationToken.None)); await AfterImportAsync(CancellationToken.None); await Prepared();
    viewer = await Open(_repository.GetMediaByPath(large) ?? throw new InvalidOperationException("The large RAW file is no item."));
    Require(!viewer.Developed && viewer.ShownSize == (1200, 800), $"The fitted RAW file is not shown by its preview ({viewer.ShownSize}).");
    for (var step = 0; step < 12 && !viewer.Developed; step++) viewer.ChangeZoom(1.25);
@@ -112,6 +123,9 @@ public partial class MainWindow
    viewer.OriginalSize(); await viewer.ReadyTask;
    Require(viewer.Developed && viewer.ShownSize == (2400, 1600) && viewer.ZoomFactor == 1, $"The original size is not the sensor image ({viewer.ShownSize}, {viewer.ZoomFactor:0.###}).");
    // Without a preview there is nothing to switch.
+   // With the switch off a RAW file developed before still shows its development, at once.
+   viewer = await Open(lateItem);
+   Require(!viewer.DevelopRaw && viewer.Developed && viewer.RawSwitchText == T("RAW · developed"), "A RAW file developed before does not show its development with the switch off: " + viewer.RawSwitchText);
    viewer = await Open(plain);
    Require(viewer.RawSwitchShown && viewer.Developed && viewer.RawSwitchText == T("RAW · developed"), "A RAW file without a preview was not developed: " + viewer.RawSwitchText);
    viewer.ToggleDevelop(); await viewer.ReadyTask;
@@ -122,7 +136,8 @@ public partial class MainWindow
    try
    {
     viewer = await Open(pair);
-    Require(viewer.ShownPath == pairRaw && viewer.RawSwitchText == "RAW", "Without its picture the pair does not show the RAW file: " + viewer.ShownPath);
+    // The RAW file of the pair was developed above, so that development is what shows.
+    Require(viewer.ShownPath == pairRaw && viewer.Developed, "Without its picture the pair does not show the RAW file: " + viewer.ShownPath + " · " + viewer.RawSwitchText);
    }
    finally { File.Move(away, pairPicture); }
    viewer.Close();
@@ -198,7 +213,7 @@ public partial class MainWindow
     if (_repository.GetMediaByPath(Directory.GetFiles(samples).Where(MediaFormats.IsRaw).Order(StringComparer.OrdinalIgnoreCase).First()) is { } sample)
     {
      viewer = await Open(sample); viewer.SetInfo(true);
-     Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "raw-samples-viewer.png"));
+     Capture(viewer, Path.Combine(directory, "raw-samples-viewer.png"));
      viewer.Close();
     }
    }
@@ -206,7 +221,8 @@ public partial class MainWindow
   finally
   {
    _cardContext.Display = badgesBefore;
-   if (_viewer is ImageViewerWindow open) open.Close();
+   CloseImageViewers();
+   if (_repository.GetPreferences().General.DevelopRaw) _repository.SaveGeneralPreferences(_repository.GetPreferences().General with { DevelopRaw = false });
    _repository.SaveLibraryFolders([]);
    foreach (var item in _repository.Search().Where(item => !known.Contains(item.Id))) _repository.Delete(item.Id);
    await Prepared(); await RefreshAsync();

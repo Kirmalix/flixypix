@@ -55,6 +55,8 @@ public partial class MainWindow
     internal bool ApplyViewState(ViewState state, string? title = null)
     {
         if (!LeaveRoleView()) { UpdateNavigation(); return false; }
+        // Another place: the loupe gives the tiles back without looking for its image among them.
+        CloseLoupe(reselect: false);
         if (IsRoleView) RecordView();
         RememberCurrentArea();
         var before = _startupReady && Motion.Smooth ? CaptureViewState() : null;

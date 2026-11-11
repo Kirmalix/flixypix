@@ -74,9 +74,7 @@ public sealed class ImageService
     token.ThrowIfCancellationRequested();
     using var input = new FileStream(Path.GetFullPath(path), FileMode.Open, FileAccess.Read, FileShare.Read);
     // A RAW file has tens of megabytes; place, size and date say as well whether it is still the same.
-    var hash = MediaFormats.IsRaw(input.Name)
-     ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"raw|{input.Name.ToUpperInvariant()}|{input.Length}|{File.GetLastWriteTimeUtc(input.Name).Ticks}")))
-     : Convert.ToHexStringLower(SHA256.HashData(input));
+    var hash = MediaFormats.IsRaw(input.Name) ? RawHash(input.Name, input.Length, File.GetLastWriteTimeUtc(input.Name)) : Convert.ToHexStringLower(SHA256.HashData(input));
     input.Position = 0;
     token.ThrowIfCancellationRequested();
     try { var result = work(input, hash); token.ThrowIfCancellationRequested(); return result; }
@@ -85,6 +83,33 @@ public sealed class ImageService
   }
   finally { gate.Release(); }
  }
+ private static string RawHash(string fullPath, long length, DateTime modifiedUtc) =>
+  Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"raw|{fullPath.ToUpperInvariant()}|{length}|{modifiedUtc.Ticks}")));
+
+ /// <summary>The development of a RAW file that is still in the cache, as a PNG file: the one fitted to
+ /// <paramref name="bound"/> pixels or, where only that exists, the one in full size. Null when the file was never
+ /// developed, has changed since, or the cache has let the development go. Nothing is decoded and no other work of the
+ /// service is waited for, so this answers at once.</summary>
+ public string? FindDeveloped(string path, int bound)
+ {
+  try
+  {
+   var file = new FileInfo(Path.GetFullPath(path));
+   if (!MediaFormats.IsRaw(file.FullName) || !file.Exists) return null;
+   var hash = RawHash(file.FullName, file.Length, file.LastWriteTimeUtc) + "|developed";
+   foreach (var size in bound > 0 ? new[] { bound, 0 } : [0])
+   {
+    var disk = Path.Combine(cacheDirectory, Key(hash, 0, size, size) + ".png");
+    if (!File.Exists(disk)) continue;
+    // Looked at again: the cache keeps it longer.
+    try { File.SetLastWriteTimeUtc(disk, DateTime.UtcNow); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+    return disk;
+   }
+   return null;
+  }
+  catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { return null; }
+ }
+
  private ImageInfo GetInfo(Stream stream, string hash,CancellationToken token=default)
  {
   if (metadata.TryGetValue(hash, out var existing)) return existing;

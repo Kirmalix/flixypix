@@ -16078,6 +16078,41 @@
       "status": "corrected",
       "digest": "a363f1ad5685ab2f07be3c28f33154434ae9d6c04fac7d248429cff377771775",
       "previous_digest": "5a6ac0737431237bd09b6efb4f25ab1b31cee854acb94db09adf398854b70c22"
+    },
+    "A double click, Enter or the space bar on an image shows it large in place of the tiles. The arrow keys leaf through the images of the list, and the film strip below shows their neighbours. The details beside it follow, and the keys of the tiles keep working: 0–5 rate, with Shift the next image follows, F pins a favorite and T starts the tag mode. A click or Z changes between the whole picture and its pixels, Ctrl with the mouse wheel zooms at the pointer, and a zoomed picture is moved by dragging it. Esc or G leads back to the tiles.": {
+      "status": "corrected",
+      "digest": "043f69a0cb8ae230b6827c92cc62717e21ad24c4aaa7d6ece49edbdcca8520c1",
+      "previous_digest": "42932d17db9d2fa6dde87e5d2368bafd37938e98707dd4d0391140f60491b3eb"
+    },
+    "A RAW file is shown by the picture the camera put into it. D or the RAW switch of the image viewer develops the sensor data instead, which takes a moment and looks a little different. The switch stays as you leave it: while it is on, every RAW file is developed when you look at it; switched off, nothing is developed by itself. A RAW file developed once keeps showing its development. A shot saved as RAW and JPEG is one item that shows the JPEG and keeps the RAW file with it. The details list both files, and the RAW file can be split off there.": {
+      "status": "corrected",
+      "digest": "4e215c08e736bb017df2c3f01177f4377efbf64fff3b0785206cc5022b8fbeed",
+      "previous_digest": "8dad1efec8e7f9ee13f1c42f65ad72bc9ece6291c5d51c66ea6bf19c2f654d4d"
+    },
+    "Back to the tiles (Esc or G)": {
+      "status": "corrected",
+      "digest": "e1f117c87093aaca5dce0bf22f825b6239637489e3f7eacd5b5733595cf9fec0",
+      "previous_digest": "9a0a802b92806479582d41c34e3beb6e06a83d53b65b89c2ebee85b54255268d"
+    },
+    "Loupe": {
+      "status": "corrected",
+      "digest": "f688b28442fcded9d6b53dc8d248f69ec2d4dfd42fd78ed445604ec846444dc6",
+      "previous_digest": "c11e4fb93d7e56adbd4ccebfebd69424b07f9d62fe8589fbec530b26bb53d0e2"
+    },
+    "Original size 1:1 (Z)": {
+      "status": "corrected",
+      "digest": "3ea242adfbd36196518bcb17de348e69ad3c1cbc08f2c6f5356b8a2ac8f1f6fc",
+      "previous_digest": "d895791c19232690d9a059c35cef75afe7a083cdac30f45d380867813bd6337e"
+    },
+    "The RAW switch is off: nothing is developed by itself. A RAW file developed before still shows its development.": {
+      "status": "corrected",
+      "digest": "abe6b3d82a6c0091f9e6266b3a287469054653496ebcf179861e03274563b662",
+      "previous_digest": "3a6fb4e4d07db8d72d99d99391cc1565f8a9ef2b0afcb471960a7d190c9e1f87"
+    },
+    "The RAW switch is on: every RAW file is developed when you look at it.": {
+      "status": "corrected",
+      "digest": "602db4d3c5cb5be865c45fe209ac92f1854325e2a3ae45bf73746585f0491999",
+      "previous_digest": "2307e0c4ea23d1d3e46a18623db8402462a21d9eb35b8b3949d0e1d0a240f299"
     }
   }
 }

@@ -39,6 +39,8 @@ public partial class MainWindow
     internal Task WalkHistoryAsync(int direction)
      => _libraryTasks.Run(async token =>
     {
+        // Back from the loupe leads to the tiles it stands in for.
+        if (_loupe != null && direction < 0) { CloseLoupe(); return; }
         if (!LeaveRoleView()) return;
         if (CaptureViewState() is var now) _history.Record(now); // keep the current scroll place in the entry we leave
         var target = direction < 0 ? _history.Back() : _history.Forward();

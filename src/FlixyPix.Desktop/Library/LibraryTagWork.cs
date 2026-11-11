@@ -208,6 +208,7 @@ public partial class MainWindow
         // The grid keeps the keyboard, so the arrow keys go on to the next medium.
         Dispatcher.BeginInvoke(() =>
         {
+            if (_loupe is { } loupe) { loupe.Focus(); return; }
             if (MediaList.IsKeyboardFocusWithin) return;
             if (MediaList.SelectedItem is { } item && MediaList.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem row) row.Focus(); else MediaList.Focus();
         }, DispatcherPriority.Loaded);
@@ -216,7 +217,7 @@ public partial class MainWindow
     /// <summary>The work of a key in tag mode, or null when the key is not for tag mode.</summary>
     internal Task? TagWorkKey(Key key, ModifierKeys modifiers, bool textEntry)
     {
-        if (textEntry || modifiers != ModifierKeys.None || !_startupReady || !MediaList.IsVisible || FilterFlyout.IsOpen || ViewPopup.IsOpen) return null;
+        if (textEntry || modifiers != ModifierKeys.None || !_startupReady || !(MediaList.IsVisible || _loupe != null) || FilterFlyout.IsOpen || ViewPopup.IsOpen) return null;
         if (!_tagWork)
         {
             if (key != Key.T || SelectedMedia.Count == 0) return null;

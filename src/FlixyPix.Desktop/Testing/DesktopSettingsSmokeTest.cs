@@ -85,11 +85,12 @@ public partial class MainWindow
   Require(_view == "Image" && SortChoice.SelectedIndex == 1 && SearchBox.Text.Length == 0, "The last view was not restored.");
   ApplyViewState(new ViewState()); await _lastRefresh;
   ShowImage(cards.First(c => c.Item.Kind == MediaKind.Image && !c.IsMissing).Item);
-  var viewer = (ImageViewerWindow)_viewer!; await viewer.ReadyTask;
+  var viewer = ImageView!; await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); await viewer.ReadyTask;
   var zoom = viewer.ZoomFactor;
   Require(viewer.WheelAction == ImageWheelAction.Zoom && viewer.HandleWheel(120, false) && viewer.ZoomFactor > zoom, "The image viewer ignored the mouse wheel setting.");
-  StopSlideshow();
-  MediaList.SelectedItem = missingCard; RemoveSelected();
+  CloseImageViewers(); await _lastRefresh;
+  // The loupe may have refreshed the tiles meanwhile; the tile of the missing file is looked up afresh.
+  MediaList.SelectedItem = MediaList.Items.Cast<MediaCard>().First(c => c.Item.Id == missing.Id); RemoveSelected();
   Require(_repository.GetMedia(missing.Id) == null, "Removing from the catalog still asked although confirmation was off.");
   _repository.SavePreferences(before); _settings = settingsBefore;
   await RefreshAsync();

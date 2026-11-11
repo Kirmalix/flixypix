@@ -296,6 +296,7 @@ public partial class MainWindow : Window
                 _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
                 _imageQuery = imageQuery;
                 _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
+                LoupeListChanged();
                 _cardContext.QuickMembers = snapshot.Playlists.FirstOrDefault(p => p.Kind == PlaylistKind.Quick)?.MediaIds.ToHashSet() ?? [];
                 _cardContext.FinishedMembers = snapshot.Finished; _cardContext.Display = general; _cardContext.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? [];
                 Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
@@ -549,8 +550,9 @@ public partial class MainWindow : Window
     }
 
     private async void PlaySelected(object sender, RoutedEventArgs e) { if (Selected is { } item) { StopSlideshow(); await Play(item); } }
-    /// <summary>A double click on a tile unfolds the details when they are folded to their rail; with the details in place it
-    /// opens the page of the medium. The buttons and stars of a tile keep their own clicks.</summary>
+    /// <summary>A double click on an image opens it in the loupe. On another tile it unfolds the details when they are folded
+    /// to their rail; with the details in place it opens the page of the medium. The buttons and stars of a tile keep their
+    /// own clicks.</summary>
     private void MediaDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (OnTileControl(e.OriginalSource as DependencyObject) || Selected is not { } item) return;
@@ -558,6 +560,7 @@ public partial class MainWindow : Window
     }
     internal void OpenFromDoubleClick(MediaItem item)
     {
+        if (item.Kind == MediaKind.Image) { StopSlideshow(); _ = Play(item); return; }
         if (!DetailsExpanded && !DetailsNotNeeded && (_settings.DetailsCollapsed || _detailsAutoFolded)) { OpenDetailsAt(_detailsTab); return; }
         OpenDetail(item);
     }
@@ -656,6 +659,7 @@ public partial class MainWindow : Window
             return;
         }
         if (TagWorkKey(e.Key, Keyboard.Modifiers, TextEntry(e.OriginalSource)) is { } tagWork) { e.Handled = true; await tagWork; return; }
+        if (LoupeTakesKeys(e.OriginalSource) && LoupeKey(e)) { e.Handled = true; return; }
         if (await HandleLibraryKeyboardAsync(e)) { e.Handled = true; return; }
         if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down) return;
         // Back and forward like a browser; Alt arrives as a system key.

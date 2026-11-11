@@ -57,7 +57,7 @@ public partial class MainWindow
   sections.Add((T("Tags"),string.Join("\n",QuickTags.Select((tag,i)=>(i+1)+"   "+tag).Prepend("T   "+T("Tag mode")))));
   var playback=_repository.GetPreferences().Playback;
   sections.Add((T("Shortcuts in the player")+(playback.KeyboardShortcuts?"":" · "+T("Inactive")),string.Join("\n",playback.AllShortcuts().Select(p=>p.Key+"   "+(PlayerActions.All.FirstOrDefault(a=>a.Action==p.Owner).Label??p.Owner)))));
-  sections.Add((T("Images"),"← / → · + / − · F · R · Space · S · I · T · Page↑ / Page↓ · Esc"));
+  sections.Add((T("Images"),"← / → · Home / End · Z · + / − · R · D · S · I · Page↑ / Page↓ · 0–5 · Shift+0–5 · F · T · Esc / G"));
   new HelpWindow(owner??this,shortcuts?T("Keyboard shortcuts"):T("Help"),sections).ShowDialog();
  }
  private void ThumbnailFitChanged(object sender,SelectionChangedEventArgs e)

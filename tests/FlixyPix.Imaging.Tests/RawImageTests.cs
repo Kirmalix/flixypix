@@ -120,6 +120,37 @@ public sealed class RawImageTests : IDisposable
   Assert.True(PerceptualHash.Distance(ImageFingerprints.Hash(Raw("bare.dng", previewWidth: 0)), ImageFingerprints.Hash(preview)) > 6);
  }
 
+ [Fact]
+ public async Task ADevelopmentMadeOnceIsFoundAgain()
+ {
+  var service = Service(); var path = Raw();
+  Assert.Null(service.FindDeveloped(path, 3200));
+  // The camera's preview is no development.
+  await service.DecodeAsync(path, 0, 3200, 3200);
+  Assert.Null(service.FindDeveloped(path, 3200));
+  var developed = await service.DecodeAsync(path, 0, 3200, 3200, develop: true);
+  var found = service.FindDeveloped(path, 3200);
+  Assert.NotNull(found);
+  Assert.Equal(developed.PngBytes, File.ReadAllBytes(found));
+  // Another service on the same cache finds it too, as after a restart.
+  Assert.Equal(found, Service().FindDeveloped(path, 3200));
+  // Not a picture, and not a file that changed since.
+  Assert.Null(service.FindDeveloped(Path.Combine(root, "missing.dng"), 3200));
+  File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(5));
+  Assert.Null(service.FindDeveloped(path, 3200));
+ }
+
+ [Fact]
+ public async Task ADevelopmentInFullSizeServesTheFittedPictureToo()
+ {
+  var service = Service(); var path = Raw();
+  await service.DecodeAsync(path, 0, 0, 0, develop: true);
+  var found = service.FindDeveloped(path, 3200);
+  Assert.NotNull(found);
+  using var image = new MagickImage(found);
+  Assert.Equal((96u, 64u), (image.Width, image.Height));
+ }
+
  [Theory]
  [InlineData("NIKON CORPORATION", "NIKON D750", "NIKON D750")]
  [InlineData("Canon", "Canon EOS R6", "Canon EOS R6")]

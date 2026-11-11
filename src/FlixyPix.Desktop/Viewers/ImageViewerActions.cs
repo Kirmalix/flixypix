@@ -11,7 +11,7 @@ namespace FlixyPix.Desktop;
 
 /// <summary>What the original image viewer (frmMaxPic) offered besides viewing: flip, copy picture or path, desktop
 /// wallpaper, show in Explorer, favorite and delete. Flipping changes the view only, never the file.</summary>
-internal sealed partial class ImageViewerWindow
+internal sealed partial class ImageViewer
 {
  /// <summary>Clipboard and wallpaper go through these, so the smoke test leaves the user's clipboard and desktop alone.</summary>
  internal static Action<BitmapSource> PutImage { get; set; } = Clipboard.SetImage;

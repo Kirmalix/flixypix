@@ -13,7 +13,7 @@ public partial class MainWindow
     internal bool CopyThumbnail()
     {
         if (Selected is not { ThumbnailPath: { } path } || !File.Exists(path) || MediaCard.LoadBitmap(path, 0) is not { } bitmap) { Status.Text = T("This item has no thumbnail."); return false; }
-        ImageViewerWindow.PutImage(bitmap); Status.Text = T("Thumbnail copied"); return true;
+        ImageViewer.PutImage(bitmap); Status.Text = T("Thumbnail copied"); return true;
     }
 
     /// <summary>The picture on the clipboard becomes the own thumbnail of every selected medium; the number of media changed.</summary>

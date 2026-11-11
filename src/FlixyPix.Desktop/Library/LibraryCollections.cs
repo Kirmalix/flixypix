@@ -100,7 +100,7 @@ public partial class MainWindow
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { Status.Text = T("Collection interrupted: ") + ex.Message; }
-        finally { if (ReferenceEquals(_collectionPlayback, cancellation)) { _collectionPlayback = null; _viewer?.Close(); _viewer = null; } cancellation.Dispose(); }
+        finally { if (ReferenceEquals(_collectionPlayback, cancellation)) { _collectionPlayback = null; CloseImageViewers(); } cancellation.Dispose(); }
     });
     private static async Task WaitForEntryEnd(MpvPlayer player, double? end, CancellationToken token)
     {

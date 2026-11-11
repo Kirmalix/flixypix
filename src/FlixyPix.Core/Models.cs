@@ -275,6 +275,9 @@ public sealed record GeneralPreferences
     public List<string> SkipImageNames { get; init; } = [];
     /// <summary>Images cross-fade when the viewer moves to the next one (original "image_fade").</summary>
     public bool ImageFade { get; init; }
+    /// <summary>The RAW switch of the image viewer: while it is on, a camera RAW file is developed when it is looked at.
+    /// Off, the camera's picture is shown, and only a development made before stays in use.</summary>
+    public bool DevelopRaw { get; init; }
     /// <summary>Deleting a file moves it to the recycle bin instead of removing it for good (original "deletetorecyclebin").</summary>
     public bool DeleteToRecycleBin { get; init; } = true;
     /// <summary>Badges on tiles (package P6), each switchable; the resolution badge was always on before.</summary>
