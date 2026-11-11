@@ -67,7 +67,7 @@ internal sealed class MediaArtworkWindow : Window
  }
  private async Task AddImageAsync()
  {
-  var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Add artwork to the item"), Filter = MediaFormats.ImageDialogFilter };
+  var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Add artwork to the item"), Filter = MediaFormats.PictureDialogFilter };
   if (picker.ShowDialog(this) != true) return;
   if (new FileInfo(picker.FileName).Length > CatalogRepository.MaximumAssetBytes) throw new IOException(T("The image file exceeds 32 MiB."));
   await DesktopImaging.Service.GetInfoAsync(picker.FileName);

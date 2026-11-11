@@ -61,6 +61,9 @@ internal sealed class MediaCard : INotifyPropertyChanged
    if (!string.IsNullOrWhiteSpace(Item.Title) && Item.Title != System.IO.Path.GetFileNameWithoutExtension(Item.Path) && Item.Title != FileName) lines.Add(Line(T("Title"), Item.Title));
    if (Subtitle.Length > 0) lines.Add(Subtitle);
    if (MainWindow.TechnicalSummary(Item.Technical) is { Length: > 0 } technical) lines.Add(technical);
+   if (Item.Extra.GetValueOrDefault(CameraKey) is { Length: > 0 } camera) lines.Add(Line(T("Camera"), camera));
+   if (Item.Kind == MediaKind.Image && Item.Files.FirstOrDefault(file => MediaFormats.IsRaw(file.Path)) is { } rawFile)
+    lines.Add(T("RAW file: {0}", System.IO.Path.GetFileName(rawFile.Path) + (rawFile.FileSize is { } rawSize ? " · " + SizeText(rawSize) : "")));
    if (Item.FileCreatedAt is { } created) lines.Add(Line(T("File date"), created.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)));
    lines.Add(Line(T("Added"), Item.AddedAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)));
    var tags = Item.Tags.Concat(Item.TagCategories.Values.SelectMany(values => values)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -86,9 +89,23 @@ internal sealed class MediaCard : INotifyPropertyChanged
     if (shown.Contains(TileBadge.FrameRate) && TechnicalLabels.HighFrameRate(technical.FrameRate)) badges.Add(TechnicalLabels.FrameRate(technical.FrameRate));
     if (shown.Contains(TileBadge.Codec) && technical.VideoCodec is { Length: > 0 } codec) badges.Add(TechnicalLabels.Codec(codec));
    }
-   if (shown.Contains(TileBadge.Versions) && Item.Files.Count > 0) badges.Add(Tn(Item.Files.Count + 1, "1 file", "{0} files"));
+   var raw = RawBadge(Item);
+   if (shown.Contains(TileBadge.Raw) && raw.Length > 0) badges.Add(raw);
+   // A picture with its RAW file says so; "2 files" would only repeat it.
+   if (shown.Contains(TileBadge.Versions) && Item.Files.Count > 0 && !(raw.Length > 0 && Item.Files.Count == 1 && shown.Contains(TileBadge.Raw))) badges.Add(Tn(Item.Files.Count + 1, "1 file", "{0} files"));
    return badges;
   }
+ }
+ /// <summary>Where the catalog keeps maker and model of the camera an image was taken with.</summary>
+ internal const string CameraKey = CatalogRepository.CameraKey;
+ /// <summary>"RAW" for a camera RAW file, "RAW+JPG" for a picture with its RAW file; empty otherwise.</summary>
+ internal static string RawBadge(MediaItem item)
+ {
+  if (item.Kind != MediaKind.Image) return "";
+  if (MediaFormats.IsRaw(item.Path)) return "RAW";
+  if (!item.Files.Any(file => MediaFormats.IsRaw(file.Path))) return "";
+  var type = System.IO.Path.GetExtension(item.Path).TrimStart('.').ToUpperInvariant();
+  return "RAW+" + (type is "JPEG" or "JPE" ? "JPG" : type);
  }
  public bool IsFavorite => Item.IsFavorite;
  public bool WatchLater => Item.WatchLater;

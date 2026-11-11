@@ -231,6 +231,10 @@ public sealed record PreviewPreferences
     public bool FingerprintsOnImport { get; init; }
     public List<string> VideoExtensions { get; init; } = MediaFormats.VideoExtensions.Order(StringComparer.OrdinalIgnoreCase).ToList();
     public List<string> ImageExtensions { get; init; } = MediaFormats.ImageExtensions.Order(StringComparer.OrdinalIgnoreCase).ToList();
+    /// <summary>Which file types FlixyPix added by itself this library has seen: 1 = camera RAW files. A library saved before
+    /// gets them into its image types once; what the user removes afterwards stays removed.</summary>
+    public int TypesRevision { get; init; }
+    public const int CurrentTypesRevision = 1;
     /// <summary>Hover preview on video tiles, following the original "Hover preview" options (frame mode).</summary>
     public bool HoverEnabled { get; init; } = true;
     public int HoverFrames { get; init; } = 5;

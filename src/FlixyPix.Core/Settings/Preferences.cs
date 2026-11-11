@@ -83,6 +83,12 @@ public sealed partial class CatalogRepository
         if (preferences.Playback.MouseRevision < PlaybackPreferences.CurrentMouseRevision)
             preferences = preferences with { Playback = preferences.Playback with { MouseRevision = PlaybackPreferences.CurrentMouseRevision,
                 RightClick = preferences.Playback.RightClick == PlayerMouseAction.Nothing ? PlayerMouseAction.ContextMenu : preferences.Playback.RightClick } };
+        // Camera RAW files came later; libraries from before get them into their image types once, later choices stay.
+        if (preferences.Previews.TypesRevision < PreviewPreferences.CurrentTypesRevision)
+            preferences = preferences with { General = preferences.General with { TileBadges = [.. preferences.General.TileBadges.Append(TileBadge.Raw).Distinct()] },
+              Previews = preferences.Previews with { TypesRevision = PreviewPreferences.CurrentTypesRevision,
+                ImageExtensions = preferences.Previews.ImageExtensions.Concat(MediaFormats.RawExtensions.Order(StringComparer.Ordinal))
+                    .Except(preferences.Previews.VideoExtensions, StringComparer.OrdinalIgnoreCase).Distinct(StringComparer.OrdinalIgnoreCase).ToList() } };
         return preferences;
     }
 

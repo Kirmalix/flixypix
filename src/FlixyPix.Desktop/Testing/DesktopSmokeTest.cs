@@ -770,6 +770,7 @@ public partial class MainWindow
         SortChoice.SelectedIndex = 0; await RefreshAsync(first.Id);
         ViewChoice.SelectedIndex = 1; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture((FrameworkElement)RootContent, Path.Combine(directory, "desktop-list.png"));
         Require(_settings.ViewMode == 1, "View mode preference did not update."); ViewChoice.SelectedIndex = 0;
+        await RunRawSmokeTestAsync(directory); await RefreshAsync(first.Id);
         var hashBefore = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(first.Path));
         ShowImage(_repository.Search().Single(item => item.Id == first.Id)); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Require(_viewer is ImageViewerWindow, "Image viewer not opened.");

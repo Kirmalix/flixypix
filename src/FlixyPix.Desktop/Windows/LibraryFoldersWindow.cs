@@ -73,6 +73,7 @@ internal sealed class LibraryFoldersWindow : Window
             get
             {
                 if (IsMissing) return T("Stays in the catalog with all its details. Tick it and choose “Remove from catalog” to remove it.");
+                if (Change.PairWith is { } picture) return T("Joins “{0}” as its RAW file instead of becoming an entry of its own.", Path.GetFileName(picture));
                 if (Change.Kind != FolderChangeKind.Modified || Change.PreviousSize != Change.Size || Change.PreviousModifiedAtUtc is not { } before || Change.ModifiedAtUtc is not { } now) return "";
                 return now < before ? T("Same size, older date: perhaps restored from a backup.") : T("Same size, newer date: often another program wrote details such as tags into the file.");
             }
@@ -479,6 +480,7 @@ internal sealed class LibraryFoldersWindow : Window
         LastResult = result;
         var facts = new List<string>();
         if (result.Imported > 0) facts.Add(Tn(result.Imported, "1 file imported", "{0:N0} files imported"));
+        if (result.Paired > 0) facts.Add(Tn(result.Paired, "1 RAW file joined its picture", "{0:N0} RAW files joined their pictures"));
         if (result.Updated > 0) facts.Add(Tn(result.Updated, "1 file updated", "{0:N0} files updated"));
         if (result.Relinked > 0) facts.Add(Tn(result.Relinked, "1 file reassigned", "{0:N0} files reassigned"));
         if (result.Removed > 0) facts.Add(Tn(result.Removed, "1 file removed from the catalog", "{0:N0} files removed from the catalog"));
@@ -550,6 +552,7 @@ internal sealed class LibraryFoldersWindow : Window
     internal static string Result(FolderSyncResult result)
     {
         var text = T("{0:N0} imported, {1:N0} reassigned", result.Imported, result.Relinked) + " · " + T("Changed") + ": " + result.Updated.ToString("N0");
+        if (result.Paired > 0) text += " · " + Tn(result.Paired, "1 RAW file joined its picture", "{0:N0} RAW files joined their pictures");
         if (result.Removed > 0) text += " · " + T("Remove from catalog") + ": " + result.Removed.ToString("N0");
         if (result.Ignored > 0) text += T(", {0:N0} hidden", result.Ignored);
         if (result.Skipped.Count > 0) text += " · " + T("Skipped") + ": " + result.Skipped.Count.ToString("N0");

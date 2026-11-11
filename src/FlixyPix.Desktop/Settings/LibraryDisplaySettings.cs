@@ -22,7 +22,7 @@ internal sealed class LibraryDisplaySettings
  internal readonly Dictionary<TileBadge, CheckBox> Badges = new()
  {
   [TileBadge.Resolution] = Badge(T("Resolution")), [TileBadge.Hdr] = Badge("HDR"), [TileBadge.FrameRate] = Badge(T("60 fps")),
-  [TileBadge.Codec] = Badge(T("Codec")), [TileBadge.Versions] = Badge(T("Several files")),
+  [TileBadge.Codec] = Badge(T("Codec")), [TileBadge.Versions] = Badge(T("Several files")), [TileBadge.Raw] = Badge("RAW"),
  };
  /// <summary>One box per button a tile shows under the pointer.</summary>
  internal readonly Dictionary<TileHoverAction, CheckBox> HoverActions = new()
@@ -57,7 +57,7 @@ internal sealed class LibraryDisplaySettings
    new SettingRow(T("Lift on hover"), T("Tiles lift slightly with a shadow."), HoverLift),
    new SettingRow(T("Page bar below the grid"), T("Page X of Y with direct page navigation (Ctrl+G)."), ShowPager),
    new SettingRow(T("Badges"), T("Shown top left on the picture. Resolution from 720p, HDR, 50 frames per second and more, video codec and the number of files of an item. HDR, frame rate and codec need the technical data (Organize ▾ → Read technical data)."),
-    new WrapPanel { Children = { Badges[TileBadge.Resolution], Badges[TileBadge.Hdr], Badges[TileBadge.FrameRate], Badges[TileBadge.Codec], Badges[TileBadge.Versions] } }, wide: true),
+    new WrapPanel { Children = { Badges[TileBadge.Resolution], Badges[TileBadge.Hdr], Badges[TileBadge.FrameRate], Badges[TileBadge.Codec], Badges[TileBadge.Versions], Badges[TileBadge.Raw] } }, wide: true),
    new SettingRow(T("Buttons on hover"), T("Shown top right while the pointer is over a tile. The quick collection button appears once the quick collection holds something."),
     new WrapPanel { Children = { HoverActions[TileHoverAction.QuickCollection], HoverActions[TileHoverAction.WatchLater], HoverActions[TileHoverAction.Favorite] } }, wide: true)),
   SettingsUi.Card(T("Navigation"), null,

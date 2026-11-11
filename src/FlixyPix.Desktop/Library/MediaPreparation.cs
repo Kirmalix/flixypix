@@ -62,6 +62,21 @@ public partial class MainWindow
         {
             var info = await DesktopImaging.Service.GetInfoAsync(item.Path, token);
             updated = updated with { Width = info.Width, Height = info.Height };
+            if (info.Camera is { Length: > 0 } camera) updated = updated with { Extra = new(updated.Extra) { [MediaCard.CameraKey] = camera } };
+            // The RAW file of a picture: its size is read once, which takes a few hundredths of a second.
+            if (item.Files.Any(file => file.Width == null && MediaFormats.IsRaw(file.Path)))
+            {
+                var files = new List<MediaFile>();
+                foreach (var file in item.Files)
+                {
+                    var measured = file;
+                    if (file.Width == null && MediaFormats.IsRaw(file.Path) && File.Exists(file.Path))
+                        try { var raw = await DesktopImaging.Service.GetInfoAsync(file.Path, token); measured = file with { Width = raw.Width, Height = raw.Height }; }
+                        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException) { }
+                    files.Add(measured);
+                }
+                updated = updated with { Files = files };
+            }
         }
         if (canProbe && (updated.Width == null || item.Kind != MediaKind.Image && item.DurationSeconds == null))
         {

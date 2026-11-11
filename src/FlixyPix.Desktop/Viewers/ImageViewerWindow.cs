@@ -85,7 +85,7 @@ internal sealed partial class ImageViewerWindow : Window
   left.Children.Add(Command("",T("Rotate (R)"),Rotate));
   _frameButtons.Children.Add(Command("",T("Previous page or previous frame of the animation (Page↑)"),()=>ChangeFrame(-1))); _frameButtons.Children.Add(_play);
   _frameButtons.Children.Add(Command("",T("Next page or next frame of the animation (Page↓)"),()=>ChangeFrame(1)));
-  _play.Click+=(_,_)=>ToggleAnimation(); left.Children.Add(_frameButtons); left.Children.Add(_label);
+  _play.Click+=(_,_)=>ToggleAnimation(); left.Children.Add(_frameButtons); left.Children.Add(BuildRawSwitch()); left.Children.Add(_label);
   DockPanel.SetDock(left,Dock.Left); toolbar.Children.Add(left);
   var right=new StackPanel { Orientation=Orientation.Horizontal };
   _infoToggle.Click+=(_,_)=>SetInfo(_infoToggle.IsChecked==true); _stripToggle.Click+=(_,_)=>SetStrip(_stripToggle.IsChecked==true);
@@ -122,7 +122,7 @@ internal sealed partial class ImageViewerWindow : Window
     case Key.Escape: if(SlideshowRunning) StopSlideshow(); else Close(); break;
     case Key.Right: StopSlideshow(); Navigate(1); break; case Key.Left: StopSlideshow(); Navigate(-1); break;
     case Key.Add: case Key.OemPlus: ChangeZoom(1.25); break; case Key.Subtract: case Key.OemMinus: ChangeZoom(1/1.25); break;
-    case Key.F: Fit(); break; case Key.R: Rotate(); break;
+    case Key.F: Fit(); break; case Key.R: Rotate(); break; case Key.D: ToggleDevelop(); break;
     case Key.Space: if(SlideshowRunning) StopSlideshow(); else ToggleAnimation(); break;
     case Key.S: ToggleSlideshow(); break; case Key.I: SetInfo(!InfoShown); break; case Key.T: SetStrip(_stripPanel.Visibility!=Visibility.Visible); break;
     case Key.PageDown: ChangeFrame(1); break; case Key.PageUp: ChangeFrame(-1); break;
@@ -177,6 +177,7 @@ internal sealed partial class ImageViewerWindow : Window
  {
   _animation.Stop(); _load?.Cancel(); _load?.Dispose(); _load=new(); var token=_load.Token;
   _info=null; _windowsDecoded=false; _frame=0; _animationLoops=0; _label.Text=T("Reading image …");
+  _develop=_developing=false; _path=_rawPath=null; UpdateRawSwitch();
   if(!(SlideshowRunning && Slideshow.Fade) && !_fadeNext) _image.Source=null;
   if(_itemCount==0)return;
   try
@@ -186,9 +187,12 @@ internal sealed partial class ImageViewerWindow : Window
    Title=item.Title+T(" · Image viewer");
    if(_stripPanel.Visibility==Visibility.Visible) StripTask=LoadStripAsync();
    // Common still images come through the Windows decoder in a fraction of the time; everything else through ImageMagick.
-   var fast=await DecodeFastAsync(item.Path,Bound(),token); if(token.IsCancellationRequested)return;
+   // A pair of RAW file and camera picture shows the picture, and the RAW file once the picture is gone.
+   var path=_path=await Task.Run(()=>RawPairs.DisplayPath(item),token);
+   _rawPath=RawPairs.RawOf(item);
+   var fast=await DecodeFastAsync(path,Bound(),token); if(token.IsCancellationRequested)return;
    if(fast!=null) { _windowsDecoded=true; _info=fast.Info; Present(fast.Bitmap); Prefetch(); return; }
-   _info=await DesktopImaging.Service.GetInfoAsync(item.Path,token); if(token.IsCancellationRequested)return; await ShowFrameAsync(token);
+   _info=await DesktopImaging.Service.GetInfoAsync(path,token); if(token.IsCancellationRequested)return; await ShowFrameAsync(token);
   }
   catch(OperationCanceledException) { }
   catch(Exception error) when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException) { if(!token.IsCancellationRequested) _label.Text=T("The image cannot be shown: ")+error.Message; }
@@ -199,11 +203,12 @@ internal sealed partial class ImageViewerWindow : Window
  {
   try
   {
-   if(_currentItem==null)return; var frame=_frame; var path=_currentItem.Path; var bound=Bound();
+   if(_currentItem==null || _path is not { } path)return; var frame=_frame; var bound=Bound(); var develop=_develop && _rawPath!=null;
    BitmapSource bitmap;
-   if(_windowsDecoded && frame==0 && await DecodeFastAsync(path,bound,token) is { } fast) bitmap=fast.Bitmap;
+   if(develop) bitmap=DesktopImaging.Bitmap((await DesktopImaging.Service.DecodeAsync(_rawPath!,0,bound,bound,token,develop:true)).PngBytes);
+   else if(_windowsDecoded && frame==0 && await DecodeFastAsync(path,bound,token) is { } fast) bitmap=fast.Bitmap;
    else bitmap=DesktopImaging.Bitmap((await DesktopImaging.Service.DecodeAsync(path,frame,bound,bound,token)).PngBytes);
-   if(_closed || token.IsCancellationRequested || path!=_currentItem?.Path || frame!=_frame)return;
+   if(_closed || token.IsCancellationRequested || path!=_path || frame!=_frame || develop!=_develop)return;
    Present(bitmap);
   }
   catch(OperationCanceledException) { }
@@ -217,7 +222,7 @@ internal sealed partial class ImageViewerWindow : Window
   _image.Source=bitmap; _image.Width=bitmap.PixelWidth; _image.Height=bitmap.PixelHeight;
   if(_fit)Fit(); else Apply();
   _frameButtons.Visibility=_info?.FrameCount>1?Visibility.Visible:Visibility.Collapsed; _play.Visibility=_info?.IsAnimated==true?Visibility.Visible:Visibility.Collapsed; UpdatePlayButton();
-  UpdateInfo(); ScheduleFrame();
+  UpdateInfo(); UpdateRawSwitch(); ScheduleFrame();
   if(SlideshowRunning) Transition();
   else if(_fadeNext) { _fadeNext=false; LastChangeFaded=true; _image.BeginAnimation(OpacityProperty,new DoubleAnimation(.15,1,TimeSpan.FromMilliseconds(280))); }
   else LastChangeFaded=false;
@@ -249,11 +254,13 @@ internal sealed partial class ImageViewerWindow : Window
   {
    // Only a look: an image still inside an archive is not extracted for a page the user may never turn.
    var peeked=_peekAt!=null ? await _peekAt(index) : _itemAt==null || _items.Count==_itemCount ? (index<_items.Count ? _items[index] : null) : null;
-   if(peeked is not { Kind: MediaKind.Image } item || _closed || !FastImageDecoder.Handles(item.Path) || _prefetched.ContainsKey((item.Path,bound))) return;
-   var file=new FileInfo(item.Path); if(!file.Exists) return;
+   if(peeked is not { Kind: MediaKind.Image } item || _closed) return;
+   var path=await Task.Run(()=>RawPairs.DisplayPath(item));
+   if(_closed || !FastImageDecoder.Handles(path) || _prefetched.ContainsKey((path,bound))) return;
+   var file=new FileInfo(path); if(!file.Exists) return;
    // Two neighbours are enough; a large image costs tens of megabytes.
    while(_prefetched.Count>=2) _prefetched.Remove(_prefetched.Keys.First());
-   _prefetched[(item.Path,bound)]=(FastImageDecoder.DecodeAsync(item.Path,bound,_prefetching.Token),file.Length,file.LastWriteTimeUtc);
+   _prefetched[(path,bound)]=(FastImageDecoder.DecodeAsync(path,bound,_prefetching.Token),file.Length,file.LastWriteTimeUtc);
   }
   catch(Exception error) when(error is OperationCanceledException or IOException or UnauthorizedAccessException or InvalidOperationException) { }
  }
@@ -281,14 +288,75 @@ internal sealed partial class ImageViewerWindow : Window
  private void UpdateInfo()
  {
   if(_currentItem is not { } item) return;
-  var file=new FileInfo(item.Path);
+  // The developed RAW file of a pair is another file than the picture: its size, date and place are told then.
+  var rawOfPair=_develop && _info is { IsRaw: false } && _rawPath!=null ? item.Files.FirstOrDefault(f=>string.Equals(f.Path,_rawPath,StringComparison.OrdinalIgnoreCase)) : null;
+  var shownPath=rawOfPair?.Path??_path??item.Path; var file=new FileInfo(shownPath);
   var lines=new List<string> { item.Title };
-  var facts=new[] { _info is { } info ? $"{info.Width} × {info.Height}" : null, file.Exists ? MediaCard.SizeText(file.Length) : null, file.Exists ? file.LastWriteTime.ToString("d. MMMM yyyy, HH:mm") : null }.OfType<string>();
+  var facts=new[] { rawOfPair!=null ? (rawOfPair is { Width: >0, Height: >0 } ? $"{rawOfPair.Width} × {rawOfPair.Height}" : null) : _info is { } info ? $"{info.Width} × {info.Height}" : null, file.Exists ? MediaCard.SizeText(file.Length) : null, file.Exists ? file.LastWriteTime.ToString("d. MMMM yyyy, HH:mm") : null }.OfType<string>();
   lines.Add(string.Join(" · ",facts));
+  if(RawLine() is { Length: >0 } raw) lines.Add(raw);
+  if(item.Extra.GetValueOrDefault(MediaCard.CameraKey) is { Length: >0 } camera) lines.Add(camera);
   if(item.Rating>0) lines.Add(new string('★',item.Rating/2)+(item.Rating%2==1?"½":""));
   if(item.Tags.Count>0) lines.Add(string.Join(", ",item.Tags));
-  lines.Add(item.Path);
+  lines.Add(shownPath);
   _infoText.Text=string.Join("\n",lines.Where(l=>l.Length>0));
+ }
+
+ // Camera RAW files: the camera's preview is the picture; the sensor data is developed on request (D).
+ private readonly Button _raw = new() { Style=(Style)Application.Current.Resources["Quiet"], Padding=new Thickness(2), Margin=new Thickness(8,0,0,0), Visibility=Visibility.Collapsed, VerticalAlignment=VerticalAlignment.Center };
+ private readonly Border _rawPill = new() { CornerRadius=new CornerRadius(6), Padding=new Thickness(9,4,9,5) };
+ private readonly TextBlock _rawText = new() { FontSize=12, FontWeight=FontWeights.SemiBold };
+ private string? _path, _rawPath;
+ private bool _develop, _developing;
+ /// <summary>The file on show: the main file of the item, or its RAW file when the picture of a pair is gone.</summary>
+ internal string? ShownPath => _path;
+ /// <summary>The sensor data of the RAW file is shown instead of a finished picture.</summary>
+ internal bool Developed => _develop || _info is { IsRaw: true, ShownByPreview: false };
+ internal bool RawSwitchShown => _raw.Visibility==Visibility.Visible;
+ internal string RawSwitchText => _rawText.Text;
+
+ private Button BuildRawSwitch()
+ {
+  _rawPill.Child=_rawText; _raw.Content=_rawPill; _raw.Click+=(_,_)=>ToggleDevelop();
+  return _raw;
+ }
+
+ /// <summary>Develops the RAW file of the image on show, or goes back to the finished picture.</summary>
+ internal void ToggleDevelop()
+ {
+  if(_currentItem==null || _rawPath==null || _info==null || _developing || _info is { IsRaw: true, ShownByPreview: false } || !File.Exists(_rawPath)) return;
+  StopSlideshow();
+  _develop=!_develop; _developing=_develop; UpdateRawSwitch();
+  _load?.Cancel(); _load?.Dispose(); _load=new(); var token=_load.Token;
+  ReadyTask=Run();
+  async Task Run() { await ShowFrameAsync(token); if(!token.IsCancellationRequested) { _developing=false; UpdateRawSwitch(); UpdateInfo(); } }
+ }
+
+ private void UpdateRawSwitch()
+ {
+  var item=_currentItem; var raw=_info?.IsRaw==true; var pair=!raw && _rawPath!=null && _info!=null;
+  if(item==null || _info==null || !raw && !pair) { _raw.Visibility=Visibility.Collapsed; return; }
+  _raw.Visibility=Visibility.Visible;
+  var always=raw && !_info.ShownByPreview; var active=_develop || always;
+  _rawText.Text=_developing ? T("RAW · developing …") : active ? T("RAW · developed") : pair ? T("JPEG + RAW") : "RAW";
+  _rawPill.SetResourceReference(Border.BackgroundProperty,active?"SelectionBackground":"ButtonBackground");
+  _rawText.SetResourceReference(TextBlock.ForegroundProperty,active?"Accent":"Muted");
+  var tip=always ? T("This RAW file holds no preview of the camera, so its sensor data is developed.")
+   : _develop ? T("Developed from the sensor data of the RAW file. Click for the finished picture again (D).")
+   : pair ? T("The camera's picture of this shot is shown. Click to develop the RAW file beside it instead: that takes a moment and looks a little different (D).")
+   : _info.PreviewWidth is { } width && _info.PreviewHeight is { } height && Math.Max(width,height)<Math.Max(_info.Width,_info.Height)*9/10
+    ? T("The camera's preview inside the RAW file is shown ({0} × {1}). Click to develop the sensor data in full resolution ({2} × {3}): that takes a moment and looks a little different (D).", width, height, _info.Width, _info.Height)
+    : T("The camera's preview inside the RAW file is shown. Click to develop the sensor data instead: that takes a moment and looks a little different (D).");
+  _raw.ToolTip=tip; AutomationProperties.SetName(_raw,_rawText.Text); AutomationProperties.SetHelpText(_raw,tip);
+ }
+
+ /// <summary>What the details over the picture say about the RAW side of the image.</summary>
+ private string RawLine()
+ {
+  if(_info==null) return "";
+  if(Developed) return T("RAW, developed from the sensor data");
+  if(_info.IsRaw) return _info.PreviewWidth is { } width && _info.PreviewHeight is { } height ? T("RAW, shown by the camera's preview ({0} × {1})", width, height) : "RAW";
+  return _rawPath is { } path ? T("RAW file: {0}", Path.GetFileName(path)) : "";
  }
 
  // Film strip: the neighbouring images; a click opens one.
@@ -322,7 +390,7 @@ internal sealed partial class ImageViewerWindow : Window
   try
   {
    if(await ItemAtAsync(index) is not { } item || token.IsCancellationRequested) return;
-   var source=item.ThumbnailPath is { } thumbnail && File.Exists(thumbnail) ? thumbnail : item.Path;
+   var source=item.ThumbnailPath is { } thumbnail && File.Exists(thumbnail) ? thumbnail : RawPairs.DisplayPath(item);
    var bitmap=await FastImageDecoder.DecodeAsync(source,160,token) is { } fast ? fast.Bitmap : await DesktopImaging.LoadBitmapAsync(source,160,token);
    if(!token.IsCancellationRequested) image.Source=bitmap;
   }

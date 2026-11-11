@@ -93,7 +93,7 @@ public static class XmpSidecar
         Photoshop = "http://ns.adobe.com/photoshop/1.0/", Exif = "http://ns.adobe.com/exif/1.0/";
 
     /// <summary>The existing sidecar of a media file: "&lt;Datei&gt;.xmp", otherwise "&lt;Name&gt;.xmp" when no other file
-    /// in the folder has the same name; null when there is none.</summary>
+    /// in the folder has the same name, or only the other half of a RAW and JPEG pair; null when there is none.</summary>
     public static string? Find(string mediaPath)
     {
         var full = mediaPath + ".xmp";
@@ -103,8 +103,10 @@ public static class XmpSidecar
         try
         {
             var namesakes = Directory.EnumerateFiles(folder, Path.GetFileNameWithoutExtension(mediaPath) + ".*")
-                .Count(f => !f.EndsWith(".xmp", StringComparison.OrdinalIgnoreCase));
-            return namesakes <= 1 ? stem : null;
+                .Where(f => !f.EndsWith(".xmp", StringComparison.OrdinalIgnoreCase)).ToList();
+            // A RAW file and the camera's picture of the same shot are one medium, and "Name.xmp" is what was written for it.
+            var pair = namesakes.Count == 2 && namesakes.Count(MediaFormats.IsRaw) == 1 && namesakes.Count(RawPairs.CanHaveRaw) == 1;
+            return namesakes.Count <= 1 || pair ? stem : null;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { return null; }
     }

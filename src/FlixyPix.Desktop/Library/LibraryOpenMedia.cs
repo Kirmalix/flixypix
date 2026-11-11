@@ -27,7 +27,8 @@ public partial class MainWindow
             libraryToken.ThrowIfCancellationRequested();
             if (!_playback.IsCurrentStart(request)) return;
             var playback = _repository.GetPreferences().Playback;
-            var path = file ?? (item.Kind == MediaKind.Image ? item.Path : MediaVersions.PlaybackPath(item, playback.PlayBestVersion, File.Exists) ?? item.Path);
+            // An image whose picture is gone shows its RAW file.
+            var path = file ?? (item.Kind == MediaKind.Image ? RawPairs.DisplayPath(item) : MediaVersions.PlaybackPath(item, playback.PlayBestVersion, File.Exists) ?? item.Path);
             if (!File.Exists(path)) { Message.Show(this, T("The media file is unavailable. Under Tools you can assign its new location."), T("File missing")); return; }
             if (item.Kind != MediaKind.Image) _lastPlayedId = item.Id;
             // Counts for the start page (recently watched, popular, suggestions).

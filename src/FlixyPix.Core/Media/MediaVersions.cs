@@ -180,7 +180,10 @@ public sealed partial class CatalogRepository
             foreach (var otherId in others)
             {
                 var other = ReadMediaDocument(otherId, transaction) ?? throw new ArgumentException(T("The item no longer exists."));
-                if (other.Kind != main.Kind || main.Kind == MediaKind.Image) throw new ArgumentException(T("Only videos with videos or audio files with audio files can become versions of one item."));
+                if (other.Kind != main.Kind) throw new ArgumentException(T("Only videos with videos or audio files with audio files can become versions of one item."));
+                // Images are one item only as a shot: the picture and the RAW files it was made from.
+                if (main.Kind == MediaKind.Image && (MediaFormats.IsRaw(main.Path) || MediaVersions.All(other).Any(file => !MediaFormats.IsRaw(file.Path))))
+                    throw new ArgumentException(T("Images become one item only as a picture with its RAW file."));
                 var categories = merged.TagCategories.ToDictionary(pair => pair.Key, pair => pair.Value.ToList(), StringComparer.OrdinalIgnoreCase);
                 foreach (var (name, tags) in other.TagCategories) categories[name] = [.. (categories.GetValueOrDefault(name) ?? []).Concat(tags).Distinct(StringComparer.OrdinalIgnoreCase)];
                 merged = merged with
