@@ -31,6 +31,7 @@ public sealed class MediaScanner(CatalogRepository repository)
         var imported = 0; var importedIds = new List<Guid>();
         var skipped = 0;
         var processed = 0;
+        var pairs = new RawPairs.FolderListing();
         while (pending.TryPop(out var candidate))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -67,9 +68,30 @@ public sealed class MediaScanner(CatalogRepository repository)
                 if (kind is null) skipped++;
                 else
                 {
-                    var info = new FileInfo(path);
-                    var item = new MediaItem { Path = path, Title = preferences.General.ImportTitle(path), Kind = kind.Value, FileSize = info.Length, FileModifiedAtUtc = new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), FileCreatedAt = FileDate(info) };
-                    if (repository.AddScannedItem(item)) { imported++; importedIds.Add(item.Id); } else skipped++;
+                    MediaItem Item(string file)
+                    {
+                        var info = new FileInfo(file);
+                        return new MediaItem { Path = file, Title = preferences.General.ImportTitle(file), Kind = MediaKind.Image, FileSize = info.Length, FileModifiedAtUtc = new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), FileCreatedAt = FileDate(info) };
+                    }
+                    bool Wanted(string file) => kindOf(file) == MediaKind.Image && !preferences.General.SkipsImage(file);
+                    var item = Item(path) with { Kind = kind.Value };
+                    // A RAW file and the camera's picture of the same shot are one medium: the picture with the RAW file as
+                    // its further version, whichever of the two the scan meets first.
+                    if (kind == MediaKind.Image && pairs.PictureBeside(path) is { } picture && Wanted(picture))
+                    {
+                        if (repository.AttachRawVersion(picture, RawPairs.FileOf(path)) is { } owner) { imported++; if (!importedIds.Contains(owner)) importedIds.Add(owner); }
+                        else if (repository.FindPath(path) is null && repository.FindPath(picture) is null)
+                        {
+                            item = Item(picture) with { Files = [RawPairs.FileOf(path)] };
+                            if (repository.AddScannedItem(item)) { imported++; importedIds.Add(item.Id); } else skipped++;
+                        }
+                        else skipped++;
+                    }
+                    else
+                    {
+                        if (kind == MediaKind.Image && pairs.RawBeside(path) is { } raw && Wanted(raw) && repository.FindPath(raw) is null) item = item with { Files = [RawPairs.FileOf(raw)] };
+                        if (repository.AddScannedItem(item)) { imported++; importedIds.Add(item.Id); } else skipped++;
+                    }
                 }
                 progress?.Report(new ScanProgress(path, processed, imported));
             }

@@ -18,7 +18,7 @@ internal static class FastImageDecoder
     /// <summary>The same limit as the ImageMagick way.</summary>
     private const long MaximumPixels = 100_000_000;
 
-    internal static bool Handles(string path) => Extensions.Contains(Path.GetExtension(path));
+    internal static bool Handles(string path) => Extensions.Contains(Path.GetExtension(path)) || FlixyPix.Core.MediaFormats.IsRaw(path);
 
     /// <param name="bound">Longest side of the result, or 0 for full size.</param>
     internal static Task<Result?> DecodeAsync(string path, int bound, CancellationToken token) =>
@@ -29,7 +29,35 @@ internal static class FastImageDecoder
         if (!Handles(path)) return null;
         try
         {
+            if (FlixyPix.Core.MediaFormats.IsRaw(path)) return DecodeRaw(path, bound, token);
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16);
+            return Decode(stream, Path.GetExtension(path).TrimStart('.').ToUpperInvariant(), bound, token);
+        }
+        catch (Exception error) when (error is FileFormatException or NotSupportedException or ArgumentException or COMException or InvalidOperationException or OverflowException or ExternalException or InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>A camera RAW file is shown by the JPEG the camera put into it, which decodes like any JPEG. Null without a
+    /// preview of a usable size: then the sensor data has to be developed, which ImageMagick does.</summary>
+    private static Result? DecodeRaw(string path, int bound, CancellationToken token)
+    {
+        if (RawImages.ReadPreview(path, token) is not { } preview || !RawImages.Serves(preview.LongestSide, bound)) return null;
+        using var stream = new MemoryStream(preview.Jpeg, writable: false);
+        if (Decode(stream, "RAW", bound, token, preview.Orientation) is not { } shown) return null;
+        var turned = preview.Turned;
+        return shown with
+        {
+            Info = new ImageInfo(turned ? preview.RawHeight : preview.RawWidth, turned ? preview.RawWidth : preview.RawHeight, 1, false, [TimeSpan.Zero], "RAW", "")
+            { IsRaw = true, PreviewWidth = turned ? preview.Height : preview.Width, PreviewHeight = turned ? preview.Width : preview.Height },
+        };
+    }
+
+    /// <param name="turn">EXIF orientation to turn the picture by instead of the one the picture itself names.</param>
+    private static Result? Decode(Stream stream, string format, int bound, CancellationToken token, int? turn = null)
+    {
+        {
             if (IsAnimatedPng(stream)) return null;
             stream.Position = 0;
             var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
@@ -39,7 +67,7 @@ internal static class FastImageDecoder
             if (width <= 0 || height <= 0 || (long)width * height > MaximumPixels) return null;
             // WPF converts CMYK without the printer profile; ImageMagick shows those colours correctly.
             if (frame.Format == PixelFormats.Cmyk32) return null;
-            var orientation = Orientation(frame.Metadata as BitmapMetadata);
+            var orientation = turn ?? Orientation(frame.Metadata as BitmapMetadata);
             token.ThrowIfCancellationRequested();
 
             stream.Position = 0;
@@ -64,12 +92,8 @@ internal static class FastImageDecoder
             var cached = new CachedBitmap(result, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
             cached.Freeze();
             var swap = orientation is 5 or 6 or 7 or 8;
-            var info = new ImageInfo(swap ? height : width, swap ? width : height, 1, false, [TimeSpan.Zero], decoder.CodecInfo?.FriendlyName ?? Path.GetExtension(path).TrimStart('.').ToUpperInvariant(), "");
+            var info = new ImageInfo(swap ? height : width, swap ? width : height, 1, false, [TimeSpan.Zero], decoder.CodecInfo?.FriendlyName ?? format, "");
             return new(cached, info);
-        }
-        catch (Exception error) when (error is FileFormatException or NotSupportedException or ArgumentException or COMException or InvalidOperationException or OverflowException or ExternalException)
-        {
-            return null;
         }
     }
 

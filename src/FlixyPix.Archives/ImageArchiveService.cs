@@ -18,7 +18,8 @@ public sealed partial class ImageArchiveService
     public const long MaximumImageSize = 128L * 1024 * 1024;
     public const long MaximumTotalSize = 2L * 1024 * 1024 * 1024;
     public const int MaximumEntryCount = 10_000;
-    private static IReadOnlySet<string> Extensions => MediaFormats.ImageExtensions;
+    // Finished pictures only: a camera RAW file is read from its place on the drive, not out of an archive.
+    private static IReadOnlySet<string> Extensions => MediaFormats.PictureExtensions;
     private static readonly UTF8Encoding ZipEncoding = new(false, true);
     private readonly string _cache;
 

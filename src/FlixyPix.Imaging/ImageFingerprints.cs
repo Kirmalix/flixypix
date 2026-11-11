@@ -11,15 +11,31 @@ public static class ImageFingerprints
 {
  public static ulong Hash(string path)
  {
-  using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan);
-  var settings = ImageService.Settings(stream); settings.FrameIndex = 0; settings.FrameCount = 1;
-  // JPEG decodes straight at a small size, which saves most of the work for large photos.
-  settings.SetDefines(new JpegReadDefines { Size = new MagickGeometry(128, 128) });
-  using var image = new MagickImage(stream, settings);
+  using var image = Read(path);
   image.AutoOrient();
   image.Grayscale(PixelIntensityMethod.Rec601Luma);
   image.Resize(new MagickGeometry(PerceptualHash.Size, PerceptualHash.Size) { IgnoreAspectRatio = true });
   image.Depth = 8;
   return PerceptualHash.FromGray(image.ToByteArray(MagickFormat.Gray));
+ }
+
+ private static MagickImage Read(string path)
+ {
+  // JPEG decodes straight at a small size, which saves most of the work for large photos.
+  var small = new JpegReadDefines { Size = new MagickGeometry(128, 128) };
+  // A RAW file is compared by the picture it shows, the camera's preview; without one its sensor data is worked out simply.
+  if (MediaFormats.IsRaw(path))
+  {
+   if (RawImages.ReadPreview(path) is { } preview)
+   {
+    var jpeg = new MagickReadSettings(); jpeg.SetDefines(small);
+    return new MagickImage(preview.Jpeg, jpeg) { Orientation = (Orientation)preview.Orientation };
+   }
+   return new MagickImage(path, RawImages.Settings(fast: true));
+  }
+  using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan);
+  var settings = ImageService.Settings(stream); settings.FrameIndex = 0; settings.FrameCount = 1;
+  settings.SetDefines(small);
+  return new MagickImage(stream, settings);
  }
 }

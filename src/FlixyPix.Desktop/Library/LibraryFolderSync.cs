@@ -158,9 +158,10 @@ public partial class MainWindow
         try
         {
             result = await Task.Run(() => _repository.ApplyFolderSync(plan, chosen, ignoreDeclined, cancellation.Token, progress), cancellation.Token);
-            if (result.Imported > 0 || result.Updated > 0)
+            if (result.Imported > 0 || result.Updated > 0 || result.Paired > 0)
             {
-                arrived = chosen.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>().ToList();
+                // A RAW file that joined its picture leads to that picture, once.
+                arrived = chosen.Where(c => c.Kind is FolderChangeKind.New or FolderChangeKind.Modified).Select(c => c.MediaId is { } id ? _repository.GetMedia(id) : _repository.GetMediaByPath(c.Path)).OfType<MediaItem>().DistinctBy(i => i.Id).ToList();
                 // What was taken over stays, also when reading the files' own metadata is cancelled.
                 try { adopted = await AdoptFileMetadataAsync(arrived.Select(i => i.Id).ToList(), cancellation.Token, (done, total) => ((IProgress<FolderSyncProgress>)progress).Report(new("Read metadata", done, total, ""))); }
                 catch (OperationCanceledException) { }

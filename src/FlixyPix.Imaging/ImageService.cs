@@ -11,6 +11,15 @@ public sealed record ImageInfo(int Width, int Height, int FrameCount, bool IsAni
 {
  /// <summary>Number of complete animation plays, or zero for unlimited repeats.</summary>
  public uint AnimationIterations { get; init; }
+ /// <summary>A camera RAW file; <see cref="Width"/> and <see cref="Height"/> are those of the sensor image.</summary>
+ public bool IsRaw { get; init; }
+ /// <summary>Size of the camera's preview inside a RAW file, turned as it is shown; null without one.</summary>
+ public int? PreviewWidth { get; init; }
+ public int? PreviewHeight { get; init; }
+ /// <summary>Maker and model of the camera, where the file names them.</summary>
+ public string? Camera { get; init; }
+ /// <summary>The preview is what a RAW file is shown by; false when it has none of a usable size and is developed instead.</summary>
+ public bool ShownByPreview => IsRaw && PreviewWidth is { } width && PreviewHeight is { } height && Math.Max(width, height) >= RawImages.UsablePreview;
 }
 public sealed record DecodedImage(byte[] PngBytes, int Width, int Height, int OriginalWidth, int OriginalHeight, string SourceSha256);
 
@@ -39,10 +48,11 @@ public sealed class ImageService
   FileAccessPolicy.Current.EnsureWritable(this.cacheDirectory);
  }
  public Task<ImageInfo> GetInfoAsync(string path, CancellationToken cancellationToken = default) => Execute(path, (stream, hash) => GetInfo(stream, hash, cancellationToken), cancellationToken);
- public Task<DecodedImage> DecodeAsync(string path, int frameIndex = 0, int maxWidth = 0, int maxHeight = 0, CancellationToken cancellationToken = default)
+ /// <param name="develop">For a camera RAW file: work out the sensor data instead of taking the camera's preview.</param>
+ public Task<DecodedImage> DecodeAsync(string path, int frameIndex = 0, int maxWidth = 0, int maxHeight = 0, CancellationToken cancellationToken = default, bool develop = false)
  {
   if (frameIndex < 0 || maxWidth < 0 || maxHeight < 0 || maxWidth > 32768 || maxHeight > 32768) throw new ArgumentOutOfRangeException(nameof(frameIndex));
-  return Execute(path, (stream, hash) => Decode(stream, hash, frameIndex, maxWidth, maxHeight, cancellationToken), cancellationToken);
+  return Execute(path, (stream, hash) => Decode(stream, hash, frameIndex, maxWidth, maxHeight, cancellationToken, develop), cancellationToken);
  }
  /// <summary>Creates a normal PNG suitable for simple UI thumbnails; its lifetime follows the disk cache.</summary>
  public async Task<string> GetPreviewPathAsync(string path, int maxWidth = 390, int maxHeight = 390, CancellationToken cancellationToken = default)
@@ -63,7 +73,11 @@ public sealed class ImageService
    {
     token.ThrowIfCancellationRequested();
     using var input = new FileStream(Path.GetFullPath(path), FileMode.Open, FileAccess.Read, FileShare.Read);
-    var hash = Convert.ToHexStringLower(SHA256.HashData(input)); input.Position = 0;
+    // A RAW file has tens of megabytes; place, size and date say as well whether it is still the same.
+    var hash = MediaFormats.IsRaw(input.Name)
+     ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"raw|{input.Name.ToUpperInvariant()}|{input.Length}|{File.GetLastWriteTimeUtc(input.Name).Ticks}")))
+     : Convert.ToHexStringLower(SHA256.HashData(input));
+    input.Position = 0;
     token.ThrowIfCancellationRequested();
     try { var result = work(input, hash); token.ThrowIfCancellationRequested(); return result; }
     catch (MagickException error) { throw new InvalidDataException("Bild konnte nicht gelesen werden: " + error.Message, error); }
@@ -76,6 +90,19 @@ public sealed class ImageService
   if (metadata.TryGetValue(hash, out var existing)) return existing;
   stream.Position = 0;
   ValidateSignature(stream);
+  if (IsRaw(stream))
+  {
+   using var pinged = RawImages.Ping(stream);
+   if (pinged.Width == 0 || pinged.Height == 0 || (long)pinged.Width * pinged.Height > RawImages.MaximumPixels) throw new InvalidDataException("Das Bild überschreitet die Grenze von 160 Megapixeln.");
+   var preview = RawImages.Preview(pinged);
+   var turned = preview?.Turned ?? pinged.Orientation is Orientation.RightTop or Orientation.RightBottom or Orientation.LeftTop or Orientation.LeftBottom;
+   var rawInfo = new ImageInfo((int)(turned ? pinged.Height : pinged.Width), (int)(turned ? pinged.Width : pinged.Height), 1, false, [TimeSpan.Zero], "RAW", hash)
+   {
+    IsRaw = true, Camera = RawImages.Camera(pinged),
+    PreviewWidth = preview == null ? null : turned ? preview.Height : preview.Width, PreviewHeight = preview == null ? null : turned ? preview.Width : preview.Height,
+   };
+   if (metadata.Count >= 4096) metadata.Clear(); metadata[hash] = rawInfo; return rawInfo;
+  }
   var apng=ApngDocument.TryRead(stream,token);
   if(apng!=null)
   {
@@ -94,14 +121,16 @@ public sealed class ImageService
   if (animated && ((long)canvasWidth*canvasHeight > 32_000_000L/images.Count)) throw new InvalidDataException("Diese Animation überschreitet das dekodierbare Gesamtbudget von 32 Megapixeln.");
   var swap = first.Orientation is Orientation.RightTop or Orientation.RightBottom or Orientation.LeftTop or Orientation.LeftBottom;
   var result = new ImageInfo(checked((int)(swap ? canvasHeight : canvasWidth)), checked((int)(swap ? canvasWidth : canvasHeight)), images.Count, animated,
-   images.Select(i => TimeSpan.FromSeconds(Math.Max(.01, i.AnimationDelay / (double)Math.Max(1, i.AnimationTicksPerSecond)))).ToArray(), first.Format.ToString(), hash) { AnimationIterations=first.AnimationIterations };
+   images.Select(i => TimeSpan.FromSeconds(Math.Max(.01, i.AnimationDelay / (double)Math.Max(1, i.AnimationTicksPerSecond)))).ToArray(), first.Format.ToString(), hash)
+   { AnimationIterations=first.AnimationIterations, Camera=first.GetExifProfile() is { } exif ? RawImages.Camera(exif.GetValue(ExifTag.Make)?.Value, exif.GetValue(ExifTag.Model)?.Value) : null };
   if (metadata.Count >= 4096) metadata.Clear(); metadata[hash] = result; return result;
  }
- private DecodedImage Decode(Stream stream, string hash, int frame, int width, int height, CancellationToken token)
+ private DecodedImage Decode(Stream stream, string hash, int frame, int width, int height, CancellationToken token, bool develop = false)
  {
   var info = GetInfo(stream, hash,token);
   if (frame >= info.FrameCount) throw new ArgumentOutOfRangeException(nameof(frame));
-  var key = Key(hash, frame, width, height);
+  develop &= info.IsRaw;
+  var key = Key(develop ? hash + "|developed" : hash, frame, width, height);
   if (memory.TryGetValue(key, out var cached)) { lru.Remove(cached.Node); lru.AddFirst(cached.Node); return Clone(cached.Image); }
   var disk = Path.Combine(cacheDirectory, key + ".png");
   if (File.Exists(disk))
@@ -119,6 +148,21 @@ public sealed class ImageService
   using var image = ReadFrame();
   MagickImage ReadFrame()
   {
+   if (info.IsRaw)
+   {
+    var bound = Math.Max(width, height);
+    if (!develop)
+    {
+     using var pinged = RawImages.Ping(stream);
+     if (RawImages.Preview(pinged) is { } preview && RawImages.Serves(preview.LongestSide, bound))
+      return new MagickImage(preview.Jpeg) { Orientation = (Orientation)preview.Orientation };
+     stream.Position = 0; token.ThrowIfCancellationRequested();
+    }
+    // Without a usable preview the sensor data is worked out; simply, when the result is scaled down to less than half.
+    var developed = new MagickImage();
+    try { developed.Read(stream, RawImages.Settings(fast: bound > 0 && bound * 2 <= Math.Max(info.Width, info.Height))); return developed; }
+    catch { developed.Dispose(); throw; }
+   }
    if(info.Format=="APNG")return ApngDocument.TryRead(stream,token)!.Decode(frame,token);
    if (info.IsAnimated) { images.Read(stream); images.Coalesce(); }
    else { var settings = Settings(stream); settings.FrameIndex = (uint)frame; settings.FrameCount = 1; images.Read(stream, settings); }
@@ -145,10 +189,22 @@ public sealed class ImageService
   Span<byte> header = stackalloc byte[4]; var count = stream.Read(header); stream.Position = 0;
   return count == 4 && header.SequenceEqual(new byte[] {0,0,1,0}) ? new MagickReadSettings { Format = MagickFormat.Ico } : new MagickReadSettings();
  }
+ /// <summary>RAW files are told by their name: most start like a TIFF, and what is read as RAW must be one.</summary>
+ internal static bool IsRaw(Stream stream) => stream is FileStream file && MediaFormats.IsRaw(file.Name);
  internal static void ValidateSignature(Stream stream)
  {
   Span<byte> header=stackalloc byte[32]; var count=stream.Read(header); header=header[..count]; stream.Position=0;
   var brands=count>=12?Encoding.ASCII.GetString(header[8..]):"";
+  if(IsRaw(stream))
+  {
+   // TIFF and its relatives (DNG, CR2, NEF, ARW, PEF …, ORF, RW2), Fuji, Canon CR3 and CRW, Minolta, Sigma.
+   var raw=header.StartsWith("II*\0"u8) || header.StartsWith("MM\0*"u8) || header.StartsWith("IIRO"u8) || header.StartsWith("IIRS"u8) || header.StartsWith("MMOR"u8) ||
+    header.StartsWith("IIU\0"u8) || header.StartsWith("FUJIFILMCCD-RAW"u8) || header.StartsWith("\0MRM"u8) || header.StartsWith("FOVb"u8) ||
+    count>=14 && header[..2].SequenceEqual("II"u8) && header[6..14].SequenceEqual("HEAPCCDR"u8) ||
+    count>=12 && header[4..8].SequenceEqual("ftyp"u8) && brands.Contains("crx",StringComparison.Ordinal);
+   if(!raw)throw new InvalidDataException("Die Datei enthält kein unterstütztes Bildformat.");
+   return;
+  }
   var known=header.StartsWith(new byte[]{0xff,0xd8,0xff}) || header.StartsWith(new byte[]{137,80,78,71,13,10,26,10}) ||
    header.StartsWith("GIF87a"u8) || header.StartsWith("GIF89a"u8) || header.StartsWith("BM"u8) || header.StartsWith("II*\0"u8) ||
    header.StartsWith("MM\0*"u8) || header.StartsWith("II+\0"u8) || header.StartsWith("MM\0+"u8) || header.StartsWith(new byte[]{0,0,1,0}) ||

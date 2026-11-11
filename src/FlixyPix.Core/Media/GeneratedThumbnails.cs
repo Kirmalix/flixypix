@@ -32,6 +32,8 @@ public sealed partial class CatalogRepository
  }
 
  /// <summary>Applies background analysis to a fresh document without replacing edits made during decoding.</summary>
+ /// <summary>Where a medium keeps maker and model of the camera an image was taken with.</summary>
+ public const string CameraKey="capture.camera";
  internal MediaItem? SetPreparedMedia(MediaItem expected,MediaItem prepared,long sourceSize,DateTimeOffset sourceModifiedAtUtc)
  {
   if(expected.Id!=prepared.Id||PathKey(expected.Path)!=PathKey(prepared.Path))throw new ArgumentException("The prepared medium changed identity.");
@@ -50,11 +52,14 @@ public sealed partial class CatalogRepository
    if(changeThumbnail&&prepared.ContactSheet is {} sheet&&prepared.ThumbnailPath!=expected.ThumbnailPath&&
     (prepared.ThumbnailPath==null||!sheet.MatchesImage(prepared.ThumbnailPath)||!sheet.MatchesSource(prepared)))throw new ArgumentException("The prepared contact sheet does not match its image or source.");
    if(changeThumbnail&&prepared.Extra.TryGetValue(GeneratedThumbnailStyleKey,out var style))extra[GeneratedThumbnailStyleKey]=style;
+   if(prepared.Extra.TryGetValue(CameraKey,out var camera)&&!string.IsNullOrEmpty(camera))extra[CameraKey]=camera;
    if(changeThumbnail&&prepared.ThumbnailPath!=expected.ThumbnailPath&&prepared.Extra.ContainsKey(GeneratedThumbnailStyleKey))extra.Remove("thumbnail.assetId");
    if(!prepared.Extra.ContainsKey("folders.previewStale")&&current.Extra.GetValueOrDefault("folders.previewStale")==expected.Extra.GetValueOrDefault("folders.previewStale"))extra.Remove("folders.previewStale");
    var saved=UpsertCore(current with {Width=current.Width==expected.Width?prepared.Width:current.Width,Height=current.Height==expected.Height?prepared.Height:current.Height,
     DurationSeconds=current.DurationSeconds==expected.DurationSeconds?prepared.DurationSeconds:current.DurationSeconds,Technical=current.Technical==expected.Technical?prepared.Technical:current.Technical,
-    Kind=prepared.Kind,ThumbnailPath=changeThumbnail?prepared.ThumbnailPath:current.ThumbnailPath,ContactSheet=changeThumbnail?prepared.ContactSheet:current.ContactSheet,Extra=extra},transaction);
+    Kind=prepared.Kind,ThumbnailPath=changeThumbnail?prepared.ThumbnailPath:current.ThumbnailPath,ContactSheet=changeThumbnail?prepared.ContactSheet:current.ContactSheet,Extra=extra,
+    // What the preparation measured for further files that had no size yet (the RAW file of a picture).
+    Files=current.Files.Select(file=>file.Width==null&&prepared.Files.FirstOrDefault(measured=>PathKey(measured.Path)==PathKey(file.Path)) is {Width:not null} known?file with {Width=known.Width,Height=known.Height}:file).ToList()},transaction);
    transaction.Commit();return saved;
   }
  }

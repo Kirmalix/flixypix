@@ -15207,6 +15207,90 @@
     "Pictures from videos": {
       "status": "unchanged",
       "digest": "4bb479118c77687b8fe24780d452001aa1c22269ebe2651dfd97a8ed160a0434"
+    },
+    "Camera": {
+      "status": "unchanged",
+      "digest": "1c0684933f0bef903063ab1293f814333d5fb3c96b847e74124ec6327300ea4c"
+    },
+    "Combine picture and RAW file": {
+      "status": "unchanged",
+      "digest": "574d5278e59dd68443633dc606359b10e42d067b3a3b4db377af7d9df4bd2989"
+    },
+    "Developed from the sensor data of the RAW file. Click for the finished picture again (D).": {
+      "status": "unchanged",
+      "digest": "424751e21d783fc417f6d00ea0fa1e6b9e70520b5b4715256167563c0c4eff20"
+    },
+    "Images become one item only as a picture with its RAW file.": {
+      "status": "unchanged",
+      "digest": "42445593bd86a7f25bd0d9c906378b6658e1d6848219f1efe64fa788d49352c8"
+    },
+    "Joins “{0}” as its RAW file instead of becoming an entry of its own.": {
+      "status": "unchanged",
+      "digest": "7cad5862d755c43d25b903991485ad8c0446277b822d088b6e9c5df4c248eb16"
+    },
+    "JPEG + RAW": {
+      "status": "unchanged",
+      "digest": "f21d9f5c521058ec22936c150d476dea8b20111e13166fad226cd72342615652"
+    },
+    "picture": {
+      "status": "unchanged",
+      "digest": "9b1c7b4ab1a2efb9e3b13534bfde94f0192cfa00dbc506e65d0bc33e57171450"
+    },
+    "RAW file": {
+      "status": "unchanged",
+      "digest": "06abfb48b82f891203418916ecfa2554e0d053ad52a8011ae9d33c208b3d7d16"
+    },
+    "RAW file: {0}": {
+      "status": "unchanged",
+      "digest": "abdbdb8fe2c8809e88f6eb70f323679b5b78b7d9a3ac72628c4edd323d8f51e0"
+    },
+    "RAW · developed": {
+      "status": "unchanged",
+      "digest": "1047de7cdd598b7651d20612bca8090e07b17f5e78ab988c49765097ad14bd1b"
+    },
+    "RAW · developing …": {
+      "status": "unchanged",
+      "digest": "6e0d3fa46a06e26dce9d2201d335c5a81cc29ebe8661cb12f8de522d0cbbdda6"
+    },
+    "RAW, developed from the sensor data": {
+      "status": "unchanged",
+      "digest": "0edebbfaedcde1b0bd9618ea706bc12e0f459c7b93d8485c811a4f2670e768e4"
+    },
+    "RAW, shown by the camera's preview ({0} × {1})": {
+      "status": "unchanged",
+      "digest": "0456b8e5444be4c7815f7a2e3ac882c5436597164dc4bf94bedcbbd1b8c80158"
+    },
+    "shown": {
+      "status": "unchanged",
+      "digest": "bb83ca2fab8ca9274f5aef9d27dd9e31b1a1a1a39f49a3293a3ceb2fbc8dd9fb"
+    },
+    "The camera's picture of this shot is shown. Click to develop the RAW file beside it instead: that takes a moment and looks a little different (D).": {
+      "status": "unchanged",
+      "digest": "f488d9ea0c38c4aeaab979826a55e4b0ec205cc20fecdc5065265b939db0b4f4"
+    },
+    "The camera's preview inside the RAW file is shown ({0} × {1}). Click to develop the sensor data in full resolution ({2} × {3}): that takes a moment and looks a little different (D).": {
+      "status": "unchanged",
+      "digest": "9c5eb4f85167931940352fcda64c2ebd2dfaf06544d4cde76b0c1aa7e3a63ad8"
+    },
+    "The camera's preview inside the RAW file is shown. Click to develop the sensor data instead: that takes a moment and looks a little different (D).": {
+      "status": "unchanged",
+      "digest": "bfa77b467686d639f3b18cd773ffae1398e698138182ea74fe974edfb10057b1"
+    },
+    "This RAW file holds no preview of the camera, so its sensor data is developed.": {
+      "status": "unchanged",
+      "digest": "4ddd72a2a4da84a366b59f534bd0a736b1d718ca2ad582f1d708b9433360b09b"
+    },
+    "{0:N0} RAW files joined their pictures": {
+      "status": "unchanged",
+      "digest": "df137ebbadba1496e41d5ea97355e55315d2f0da88d81c8fae50ccbf0f0aa868"
+    },
+    "A RAW file is shown by the picture the camera put into it. D in the image viewer develops the sensor data instead, which takes a moment and looks a little different; D again brings the camera's picture back. A shot saved as RAW and JPEG is one item that shows the JPEG and keeps the RAW file with it. The details list both files, and the RAW file can be split off there.": {
+      "status": "unchanged",
+      "digest": "4a6338237a53aeb85d178ab404d7a0e324edb89666f2c9bcc0b4fda11e2c4d91"
+    },
+    "Camera RAW files": {
+      "status": "unchanged",
+      "digest": "287bcff9135396fa4d1644c7b26caefed8f811f64ed05f8ae6e7f2c1d2439626"
     }
   }
 }

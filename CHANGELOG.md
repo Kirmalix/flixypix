@@ -42,6 +42,16 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
 - Pictures saved from a video go into a folder of their own per video below the screenshot folder, a range into one
   more below that, and they join the library at once as images that lead back to their moment in the video. Both can
   be switched off under Player, Screenshots.
+- Camera RAW files are images now: DNG, Canon CR2 and CR3, Nikon NEF, Sony ARW, Fujifilm RAF, Olympus ORF, Panasonic
+  RW2, Pentax PEF and further types. A RAW file is shown by the picture the camera put into it, which appears as fast
+  as a JPEG and looks as the camera meant the shot. The RAW button in the image viewer (key D) develops the sensor
+  data instead, which takes a moment and looks a little different; a RAW file without a usable preview is developed
+  right away. Libraries from earlier versions get the RAW types into their image types once.
+- A shot the camera saved as RAW and JPEG is one item: it shows the JPEG and keeps the RAW file with it, and falls
+  back to the RAW file when the JPEG is gone. An import joins such pairs by itself, the media folder check offers a
+  RAW file that arrives later to its picture, and two selected items can be combined by hand. The details list both
+  files, and the RAW file can be split off again. Tiles show a badge "RAW" or "RAW+JPG", which the badge settings of the tiles switch off,
+  and the pointer over a tile names the camera.
 
 ## 0.7.0
 

@@ -27,7 +27,12 @@ public enum FolderChangeKind { Moved, Renamed, New, Missing, Modified }
 /// <param name="PreviousSize">Size the catalog knew, so the window can say what changed.</param>
 /// <param name="PreviousModifiedAtUtc">File date the catalog knew, or the one a check first saw for an entry without a date.</param>
 public sealed record FolderChange(FolderChangeKind Kind, string Path, MediaKind MediaKind, long? Size, Guid FolderId,
-    Guid? MediaId = null, string? PreviousPath = null, DateTimeOffset? ModifiedAtUtc = null, long? PreviousSize = null, DateTimeOffset? PreviousModifiedAtUtc = null);
+    Guid? MediaId = null, string? PreviousPath = null, DateTimeOffset? ModifiedAtUtc = null, long? PreviousSize = null, DateTimeOffset? PreviousModifiedAtUtc = null)
+{
+    /// <summary>For a new RAW file: the camera picture of the same shot beside it. Taking the file over makes it the RAW
+    /// file of that picture instead of an entry of its own (<see cref="RawPairs"/>).</summary>
+    public string? PairWith { get; init; }
+}
 
 /// <param name="Unreachable">Folders whose root does not exist (drive offline, share disconnected); their media are not reported missing.</param>
 public sealed record FolderSyncPlan(IReadOnlyList<LibraryFolder> Folders, IReadOnlyList<FolderChange> Changes,
@@ -43,6 +48,8 @@ public sealed record FolderSyncResult(int Imported, int Relinked, int Ignored, I
 {
     public int Updated { get; init; }
     public int Removed { get; init; }
+    /// <summary>RAW files that joined the camera picture of their shot.</summary>
+    public int Paired { get; init; }
 }
 
 public sealed partial class CatalogRepository
@@ -223,7 +230,10 @@ public sealed partial class CatalogRepository
         // Moved keeps name and size; a rename keeps only a size that is large and unique on both sides.
         Pair(FolderChangeKind.Moved, (path, size, kind) => size is { } bytes ? $"{kind}|{System.IO.Path.GetFileName(path).ToUpperInvariant()}|{bytes}" : null);
         Pair(FolderChangeKind.Renamed, (path, size, kind) => size is >= RenameMinimumBytes ? $"{kind}|{System.IO.Path.GetExtension(path).ToUpperInvariant()}|{size}" : null);
-        changes.AddRange(added.Select(a => new FolderChange(FolderChangeKind.New, a.Path, a.Kind, a.Size, a.Folder.Id, ModifiedAtUtc: a.Modified)));
+        // A new RAW file beside its camera picture joins that picture, whether the picture is in the catalog or new as well.
+        var addedKeys = added.Select(a => PathKey(a.Path)).ToHashSet(StringComparer.Ordinal);
+        string? PictureOf(string path) => RawPairs.PictureBeside(path, candidate => found.ContainsKey(PathKey(candidate))) is { } picture && PathKey(picture) is var key && (cataloged.ContainsKey(key) || addedKeys.Contains(key)) ? found[key].Path : null;
+        changes.AddRange(added.Select(a => new FolderChange(FolderChangeKind.New, a.Path, a.Kind, a.Size, a.Folder.Id, ModifiedAtUtc: a.Modified) { PairWith = a.Kind == MediaKind.Image ? PictureOf(a.Path) : null }));
         changes.AddRange(missing.Select(m => new FolderChange(FolderChangeKind.Missing, m.Path, m.Kind, m.Size, m.Folder.Id, m.Id, PreviousSize: m.Size, PreviousModifiedAtUtc: m.Modified)));
         return new(chosen, changes.OrderBy(c => c.Kind).ThenBy(c => c.Path, StringComparer.OrdinalIgnoreCase).ToList(), unreachable, errors);
     }
@@ -238,14 +248,15 @@ public sealed partial class CatalogRepository
         if (chosen.Any(c => !plan.Changes.Contains(c))) throw new ArgumentException("Only changes of this plan can be applied.", nameof(chosen));
         var folders = plan.Folders.ToDictionary(f => f.Id);
         var skipped = new List<string>();
-        int imported = 0, relinked = 0, ignored = 0, updated = 0, done = 0;
+        int imported = 0, relinked = 0, ignored = 0, updated = 0, done = 0, paired = 0;
         var general = GetPreferences().General;
         lock (gate)
         {
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
             bool Cataloged(string path) { using var lookup = Command("SELECT 1 FROM media WHERE path_key=$path", transaction, ("$path", PathKey(path))); if (lookup.ExecuteScalar() is not null) return true; using var version = Command("SELECT 1 FROM media_files WHERE path_key=$path", transaction, ("$path", PathKey(path))); return version.ExecuteScalar() is not null; }
-            foreach (var change in chosen.Where(c => c.Kind != FolderChangeKind.Missing))
+            // RAW files that join a picture come last, so a picture taken over in the same run is there already.
+            foreach (var change in chosen.Where(c => c.Kind != FolderChangeKind.Missing).OrderBy(c => c.PairWith != null))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!File.Exists(change.Path)) { skipped.Add(T("{0}: the file no longer exists.", change.Path)); continue; }
@@ -277,6 +288,16 @@ public sealed partial class CatalogRepository
                 if (Cataloged(change.Path)) { skipped.Add(T("{0}: the file is now in the catalog.", change.Path)); continue; }
                 if (change.Kind == FolderChangeKind.New)
                 {
+                    if (change.PairWith is { } picturePath)
+                    {
+                        using var owner = Command("SELECT document FROM media WHERE path_key=$path", transaction, ("$path", PathKey(picturePath)));
+                        if (owner.ExecuteScalar() is string pictureJson && JsonSerializer.Deserialize<MediaItem>(pictureJson, Json) is { Kind: MediaKind.Image } picture)
+                        {
+                            UpsertCore(picture with { Files = [.. picture.Files, new MediaFile { Path = change.Path, FileSize = change.Size, FileModifiedAtUtc = change.ModifiedAtUtc }] }, transaction);
+                            paired++;
+                            continue;
+                        }
+                    }
                     var category = folders.TryGetValue(change.FolderId, out var folder) ? folder.Category : null;
                     UpsertCore(new MediaItem { Path = change.Path, Title = general.ImportTitle(change.Path), Kind = change.MediaKind, FileSize = change.Size, Category = category,
                         FileModifiedAtUtc = change.ModifiedAtUtc, FileCreatedAt = MediaScanner.FileDate(new FileInfo(change.Path)) }, transaction);
@@ -309,7 +330,7 @@ public sealed partial class CatalogRepository
             cancellationToken.ThrowIfCancellationRequested();
             transaction.Commit();
         }
-        return new(imported, relinked, ignored, skipped) { Updated = updated };
+        return new(imported, relinked, ignored, skipped) { Updated = updated, Paired = paired };
     }
 
     private static int IgnoreCore(List<LibraryFolder> folders, IEnumerable<string> paths)

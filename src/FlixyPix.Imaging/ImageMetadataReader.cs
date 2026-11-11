@@ -19,6 +19,7 @@ public sealed class ImageMetadataReader : IFileMetadataReader
   if (kind != MediaKind.Image) return null;
   using var stream = new FileStream(Path.GetFullPath(path), FileMode.Open, FileAccess.Read, FileShare.Read);
   ImageService.ValidateSignature(stream);
+  if (ImageService.IsRaw(stream)) return Raw(stream);
   using var image = new MagickImage();
   try { image.Ping(stream, ImageService.Settings(stream)); }
   catch (MagickException error) { throw new InvalidDataException("Bild konnte nicht gelesen werden: " + error.Message, error); }
@@ -27,6 +28,26 @@ public sealed class ImageMetadataReader : IFileMetadataReader
   catch (System.Xml.XmlException) { }
   var metadata = (xmp ?? new FileMetadata()).Or(Iptc(image.GetIptcProfile())).Or(Exif(image.GetExifProfile()));
   return metadata.IsEmpty ? null : metadata;
+ }
+
+ /// <summary>A RAW file: rating, keywords and title from the XMP packet programs such as Lightroom or the camera write
+ /// into it, the capture date from the camera's preview or, where that says nothing, from what LibRaw reports.</summary>
+ private static FileMetadata? Raw(Stream stream)
+ {
+  MagickImage image;
+  try { image = RawImages.Ping(stream); }
+  catch (MagickException error) { throw new InvalidDataException("Bild konnte nicht gelesen werden: " + error.Message, error); }
+  using (image)
+  {
+   FileMetadata? xmp = null, preview = null;
+   try { if (image.GetXmpProfile() is { } profile && profile.ToXDocument() is { } document) xmp = XmpSidecar.Parse(document.ToString()); }
+   catch (System.Xml.XmlException) { }
+   if (RawImages.Preview(image) is { } embedded)
+    try { using var jpeg = new MagickImage(); jpeg.Ping(embedded.Jpeg); preview = Exif(jpeg.GetExifProfile()); }
+    catch (MagickException) { }
+   var metadata = (xmp ?? new FileMetadata()).Or(preview).Or(new FileMetadata { TakenAt = RawImages.Taken(image) });
+   return metadata.IsEmpty ? null : metadata;
+  }
  }
 
  private static FileMetadata? Iptc(IIptcProfile? iptc)

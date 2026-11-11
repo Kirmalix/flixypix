@@ -85,6 +85,8 @@ public partial class MainWindow
  /// <summary>Combines the selected videos (or audio files) into one medium; the user picks the main file, the best is offered first.</summary>
  private void CombineAsVersions(IReadOnlyList<MediaItem> items)
  {
+  // A picture and its RAW file: the picture is the main file, there is nothing to choose.
+  if (RawPairPicture(items) is { } picture) { CombineAsVersions(picture, items); return; }
   if (items.Count < 2 || items[0].Kind == MediaKind.Image || items.Any(i => i.Kind != items[0].Kind))
   { Message.Show(this, T("Choose two or more videos, or two or more audio files."), T("Combine as versions")); return; }
   var ordered = items.OrderByDescending(i => MediaVersions.Best(i, _ => true) is { } best ? Math.Min(best.Width ?? 0, best.Height ?? 0) : 0)
@@ -97,6 +99,11 @@ public partial class MainWindow
   if (dialog.Chosen is not { } main) return;
   CombineAsVersions(main, items);
  }
+
+ /// <summary>The picture among selected images that are one picture and otherwise RAW files only; null for anything else.</summary>
+ internal static MediaItem? RawPairPicture(IReadOnlyList<MediaItem> items) =>
+  items.Count >= 2 && items.All(i => i.Kind == MediaKind.Image) && items.Where(i => !MediaFormats.IsRaw(i.Path)).ToList() is [var picture]
+   && items.Where(i => i != picture).All(i => MediaVersions.All(i).All(file => MediaFormats.IsRaw(file.Path))) ? picture : null;
 
  internal MediaItem? CombineAsVersions(MediaItem main, IReadOnlyList<MediaItem> items)
  {
@@ -123,7 +130,7 @@ public partial class MainWindow
    var created = _repository.SplitVersion(item.Id, file.Path);
    Refresh(created.Id); Status.Text = T("“{0}” is an item of its own again", Path.GetFileName(file.Path));
    // The new item needs a thumbnail of its own.
-   if (File.Exists(created.Path) && ToolExists(_settings.Ffmpeg, "ffmpeg"))
+   if (File.Exists(created.Path) && (created.Kind == MediaKind.Image || ToolExists(_settings.Ffmpeg, "ffmpeg")))
     _repository.Upsert(await PrepareItemAsync(created, _repository.GetPreferences().Previews, ToolExists(_settings.Ffprobe, "ffprobe"), true, CancellationToken.None));
    return created;
   }
@@ -136,13 +143,20 @@ public partial class MainWindow
  {
   if (items.Count > 1)
   {
-   var combinable = items[0].Kind != MediaKind.Image && items.All(i => i.Kind == items[0].Kind) && !outside;
-   yield return MenuSpec.Command(T("Combine as versions …"), () => CombineAsVersions(items), enabled: combinable);
+   var pair = RawPairPicture(items) != null;
+   var combinable = (pair || items[0].Kind != MediaKind.Image && items.All(i => i.Kind == items[0].Kind)) && !outside;
+   yield return MenuSpec.Command(pair ? T("Combine picture and RAW file") : T("Combine as versions …"), () => CombineAsVersions(items), enabled: combinable);
    yield break;
   }
   var item = items[0];
   if (item.Kind != MediaKind.Image) yield return MenuSpec.Command(T("Read technical data"), () => ReadTechnicalData([item]));
   if (item.Files.Count == 0) yield break;
+  if (item.Kind == MediaKind.Image)
+  {
+   // The files of an image are not played; the RAW file can become an item of its own again.
+   yield return MenuSpec.Submenu(T("Split off as own item"), item.Files.Select(file => MenuSpec.Command(VersionLabel(file), async () => await SplitVersionAsync(item, file))).ToList());
+   yield break;
+  }
   yield return MenuSpec.Separator;
   foreach (var file in MediaVersions.All(item))
   {
@@ -162,19 +176,32 @@ public partial class MainWindow
   VersionRows.Children.Clear();
   if (item == null || item.Files.Count == 0) { VersionsSection.Visibility = Visibility.Collapsed; return; }
   VersionsSection.Visibility = Visibility.Visible;
-  var best = _repository.GetPreferences().Playback.PlayBestVersion ? MediaVersions.Best(item, File.Exists)?.Path : null;
+  var image = item.Kind == MediaKind.Image;
+  var best = image ? RawPairs.DisplayPath(item) : _repository.GetPreferences().Playback.PlayBestVersion ? MediaVersions.Best(item, File.Exists)?.Path : null;
   var files = MediaVersions.All(item);
   for (var index = 0; index < files.Count; index++)
   {
    var file = files[index]; var main = index == 0;
    var title = new TextBlock { Text = Path.GetFileName(file.Path), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = file.Path };
+   // An image says what its files are: the picture on show and the RAW file it was made from.
    var facts = new TextBlock { FontSize = 12, Foreground = SettingsUi.Muted, TextWrapping = TextWrapping.Wrap,
-    Text = string.Join(" · ", new[] { main ? T("main file") : "", string.Equals(file.Path, best, StringComparison.OrdinalIgnoreCase) ? T("plays") : "", FileFacts(file),
-     File.Exists(file.Path) ? "" : T("unavailable") }.Where(part => part.Length > 0)) };
-   var play = SettingsUi.SmallButton(T("Play")); var chosen = file;
-   play.Click += async (_, _) => { StopSlideshow(); await Play(item, file: chosen.Path); };
+    Text = string.Join(" · ", (image
+     ? new[] { MediaFormats.IsRaw(file.Path) ? T("RAW file") : T("picture"), string.Equals(file.Path, best, StringComparison.OrdinalIgnoreCase) ? T("shown") : "",
+        file.Width is > 0 && file.Height is > 0 ? $"{file.Width} × {file.Height}" : "", file.FileSize is { } size ? MediaCard.SizeText(size) : "" }
+     : new[] { main ? T("main file") : "", string.Equals(file.Path, best, StringComparison.OrdinalIgnoreCase) ? T("plays") : "", FileFacts(file) })
+     .Append(File.Exists(file.Path) ? "" : T("unavailable")).Where(part => part.Length > 0)) };
+   var chosen = file;
+   var play = SettingsUi.SmallButton(image ? T("Show in folder") : T("Play"));
+   if (image) play.Click += (_, _) => { if (File.Exists(chosen.Path)) { var info = new System.Diagnostics.ProcessStartInfo("explorer.exe"); info.ArgumentList.Add("/select,"); info.ArgumentList.Add(chosen.Path); System.Diagnostics.Process.Start(info); } };
+   else play.Click += async (_, _) => { StopSlideshow(); await Play(item, file: chosen.Path); };
    var buttons = SettingsUi.Buttons(play);
-   if (!main)
+   // The picture of a shot stays its main file; the RAW file can only leave again.
+   if (!main && image)
+   {
+    var split = SettingsUi.SmallButton(T("Split off"), T("Makes this file an item of its own again.")); split.Click += async (_, _) => await SplitVersionAsync(item, chosen);
+    buttons.Children.Add(split);
+   }
+   else if (!main)
    {
     var makeMain = SettingsUi.SmallButton(T("Main file"), T("Makes this file the main file; the former one becomes a version.")); makeMain.Click += (_, _) => MakeMainVersion(item, chosen);
     var split = SettingsUi.SmallButton(T("Split off"), T("Makes this file an item of its own again.")); split.Click += async (_, _) => await SplitVersionAsync(item, chosen);

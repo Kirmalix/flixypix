@@ -243,7 +243,7 @@ public partial class MainWindow
     private async void SelectCustomThumbnail()
     {
         if (_closing || Selected is not { } item) return;
-        var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Choose custom thumbnail"), Filter = MediaFormats.ImageDialogFilter };
+        var picker = new OpenFileDialog { AddToRecent = Privacy.AddToRecent, Title = T("Choose custom thumbnail"), Filter = MediaFormats.PictureDialogFilter };
         if (picker.ShowDialog(this) == true)
         {
             try { await SetCustomThumbnail(item, picker.FileName); Refresh(item.Id); }

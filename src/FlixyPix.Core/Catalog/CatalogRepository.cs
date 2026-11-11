@@ -200,6 +200,21 @@ public sealed partial class CatalogRepository : IDisposable
         }
     }
 
+    /// <summary>Makes a RAW file the further version of the image whose main file is the camera picture beside it. Returns
+    /// the image; null when the picture is no image of the catalog or the RAW file is cataloged already.</summary>
+    internal Guid? AttachRawVersion(string picturePath, MediaFile raw)
+    {
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            if (FindPath(raw.Path) is not null) return null;
+            using var command = Command("SELECT document FROM media WHERE path_key=$path", null, ("$path", PathKey(picturePath)));
+            if (command.ExecuteScalar() is not string json || JsonSerializer.Deserialize<MediaItem>(json, Json) is not { Kind: MediaKind.Image } picture) return null;
+            Upsert(picture with { Files = [.. picture.Files, raw] });
+            return picture.Id;
+        }
+    }
+
     public void Delete(Guid id)
     {
         lock (gate)
