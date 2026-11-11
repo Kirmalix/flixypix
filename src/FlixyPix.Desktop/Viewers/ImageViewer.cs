@@ -99,7 +99,7 @@ internal sealed partial class ImageViewer : ContentControl
   Focusable=true; IsTabStop=true; FocusVisualStyle=null; HorizontalContentAlignment=HorizontalAlignment.Stretch; VerticalContentAlignment=VerticalAlignment.Stretch;
   var toolbar=new DockPanel { Margin=new Thickness(8,6,8,6), LastChildFill=true };
   var left=new StackPanel { Orientation=Orientation.Horizontal };
-  if(embedded) { left.Children.Add(Command("",T("Back to the tiles (Esc or G)"),()=>Close())); left.Children.Add(Gap()); }
+  if(embedded) { left.Children.Add(Command("",T("Back to the tiles (G)"),()=>Close())); left.Children.Add(Gap()); }
   left.Children.Add(Command("",T("Previous image (←)"),()=>Navigate(-1))); left.Children.Add(Command("",T("Next image (→)"),()=>Navigate(1)));
   left.Children.Add(Gap());
   left.Children.Add(Command("",T("Zoom out (−)"),()=>ChangeZoom(1/1.25))); left.Children.Add(Command("",T("Zoom in (+)"),()=>ChangeZoom(1.25)));

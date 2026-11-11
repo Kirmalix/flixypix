@@ -8,7 +8,7 @@ namespace FlixyPix.Desktop;
 
 /// <summary>The loupe: an image of the list on show, large in place of the tiles. The arrow keys leaf through the images
 /// of that list and the film strip shows its neighbours. The image on show is the selection: the details beside it
-/// follow, and rating, favorite, tag mode and removing work as on the tiles. Esc or G leads back to the tiles, at the
+/// follow, and rating, favorite, tag mode and removing work as on the tiles. G leads back to the tiles, at the
 /// image last looked at.</summary>
 public partial class MainWindow
 {

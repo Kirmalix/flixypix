@@ -15231,6 +15231,16 @@
       "status": "corrected",
       "digest": "cf3701a54d24cb6759d448536348f451bc192fc0034cb12c4796dc3aef3fdab2",
       "previous_digest": "2307e0c4ea23d1d3e46a18623db8402462a21d9eb35b8b3949d0e1d0a240f299"
+    },
+    "A double click, Enter or the space bar on an image shows it large in place of the tiles. The arrow keys leaf through the images of the list, and the film strip below shows their neighbours. The details beside it follow, and the keys of the tiles keep working: 0–5 rate, with Shift the next image follows, F pins a favorite and T starts the tag mode. A click or Z changes between the whole picture and its pixels, Ctrl with the mouse wheel zooms at the pointer, and a zoomed picture is moved by dragging it. G leads back to the tiles.": {
+      "status": "corrected",
+      "digest": "63804b8d3a84866cbb0961a0de6768125be24b8e96d05254a7a59c8126efee8f",
+      "previous_digest": "48bc54d72eab12a2cfbb458fad5ba31a7757fa64b7d0465a84c0ffd1fb7721ff"
+    },
+    "Back to the tiles (G)": {
+      "status": "corrected",
+      "digest": "bb67c5f0e6e7bd21692eb607e80f80df4bed5941506c9fd9b9f7376af1d6e705",
+      "previous_digest": "8691884ace23fd6a1122c236814f9493eb4d7150624edc83fa26b91050ae8aed"
     }
   }
 }

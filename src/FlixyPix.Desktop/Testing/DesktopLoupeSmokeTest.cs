@@ -11,7 +11,7 @@ public partial class MainWindow
 {
  /// <summary>The loupe: a double click on an image shows it in place of the tiles; the arrow keys leaf through the list,
  /// the selection and the details follow, a digit rates the image on show, Z changes between the fitted picture and its
- /// pixels, and Esc leads back to the tile of the image looked at last. An image that is not among the tiles on show
+ /// pixels, and G leads back to the tile of the image looked at last. An image that is not among the tiles on show
  /// opens in a window as before.</summary>
  private async Task RunLoupeSmokeTestAsync(string directory, MediaItem first)
  {
