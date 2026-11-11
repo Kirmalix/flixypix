@@ -95,6 +95,22 @@ public partial class MainWindow
    Capture((FrameworkElement)viewer.Content, Path.Combine(directory, "raw-viewer-preview.png"));
    viewer.ToggleDevelop(); await viewer.ReadyTask;
    Require(viewer.Developed && viewer.HasImage, "Developing the RAW file failed.");
+   // A preview smaller than the sensor image: fitted it is the picture; zooming past its pixels develops the sensor
+   // data and keeps the size on screen; the original size is that of the sensor image; going back by hand holds.
+   var large = Path.Combine(folder, "IMG_0045.dng"); SyntheticDng.Write(large, width: 2400, height: 1600, previewWidth: 1200);
+   await Task.Run(() => new MediaScanner(_repository).ScanAsync([large], null, CancellationToken.None)); await AfterImportAsync(CancellationToken.None); await Prepared();
+   viewer = await Open(_repository.GetMediaByPath(large) ?? throw new InvalidOperationException("The large RAW file is no item."));
+   Require(!viewer.Developed && viewer.ShownSize == (1200, 800), $"The fitted RAW file is not shown by its preview ({viewer.ShownSize}).");
+   for (var step = 0; step < 12 && !viewer.Developed; step++) viewer.ChangeZoom(1.25);
+   var onScreen = viewer.ZoomFactor * 1200; await viewer.ReadyTask;
+   Require(viewer.Developed && viewer.ShownSize == (2400, 1600) && Math.Abs(viewer.ZoomFactor * 2400 - onScreen) < 2, $"Zooming past the preview did not develop the sensor image at the same size ({viewer.ShownSize}, {viewer.ZoomFactor:0.###}).");
+   viewer.ToggleDevelop(); await viewer.ReadyTask;
+   Require(!viewer.Developed && viewer.ShownSize == (1200, 800) && Math.Abs(viewer.ZoomFactor * 1200 - onScreen) < 2, "D did not bring the camera's picture back at the same size.");
+   viewer.ChangeZoom(1.25); await viewer.ReadyTask;
+   Require(!viewer.Developed, "Zooming developed again although the camera's picture was chosen by hand.");
+   viewer.Fit(); viewer.Navigate(0); await viewer.ReadyTask;
+   viewer.OriginalSize(); await viewer.ReadyTask;
+   Require(viewer.Developed && viewer.ShownSize == (2400, 1600) && viewer.ZoomFactor == 1, $"The original size is not the sensor image ({viewer.ShownSize}, {viewer.ZoomFactor:0.###}).");
    // Without a preview there is nothing to switch.
    viewer = await Open(plain);
    Require(viewer.RawSwitchShown && viewer.Developed && viewer.RawSwitchText == T("RAW · developed"), "A RAW file without a preview was not developed: " + viewer.RawSwitchText);
