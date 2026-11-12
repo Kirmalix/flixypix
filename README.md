@@ -7,7 +7,7 @@ It suits any collection and is also built for adult ones.
 It began as an independent successor for people still using EazyFlixPix 4.8.4, a program that is no
 longer maintained, and it can take over those catalogs.
 
-![FlixyPix with a library of sample images, the left bar and the details of the selected item](docs/images/flixypix.png)
+https://github.com/user-attachments/assets/ec7e8389-42bd-42b4-99a9-cdaa4e1b691b
 
 ## What you can do with it
 
@@ -27,6 +27,17 @@ longer maintained, and it can take over those catalogs.
 
 The interface speaks English, German, French, Spanish, Italian, Brazilian Portuguese, Dutch, Polish,
 Japanese and Russian.
+
+## Screenshots
+
+![FlixyPix with a library of sample images, the left bar and the details of the selected item](docs/images/flixypix.png)
+
+| | |
+|---|---|
+| ![Tag mode: pinned tags and suggestions on number and letter keys](docs/images/tag-mode.png) | ![A search for "volleyball" narrows the library to eleven items](docs/images/search.png) |
+| Tag mode: pinned tags and suggestions on single keys | Search across titles, tags and file paths |
+| ![The loupe shows the selected picture large in place of the tiles](docs/images/loupe.png) | ![All previews blurred for privacy](docs/images/blur.png) |
+| The loupe shows a picture large in place of the tiles | Blurred previews when others can see the screen |
 
 ## Adult collections
 

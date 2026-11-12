@@ -26,7 +26,11 @@ src/
 !src/FlixyPix.Imaging/README.md
 tests/
 
+docs/images/blur.png
 docs/images/flixypix.png
+docs/images/loupe.png
+docs/images/search.png
+docs/images/tag-mode.png
 docs/release/media-tools-lock.json
 docs/release/portable-readme.en.md
 docs/release/portable-readme.md
