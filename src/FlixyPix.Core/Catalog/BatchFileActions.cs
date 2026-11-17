@@ -60,7 +60,7 @@ public sealed partial class CatalogRepository
                 var original = target; var suffix = 2;
                 do { target = Path.Combine(Path.GetDirectoryName(original)!,Path.GetFileNameWithoutExtension(original) + $" ({suffix++})" + Path.GetExtension(original)); }
                 while (File.Exists(target) || Directory.Exists(target) || reserved.Contains(target) || FindPath(target) is not null);
-                note = "Namenskollision: neuer eindeutiger Zielname.";
+                note = T("The name is taken in the target folder; a free name is used.");
             }
             reserved.Add(target);
             var info = new FileInfo(source); var length = info.Length; var write = info.LastWriteTimeUtc;

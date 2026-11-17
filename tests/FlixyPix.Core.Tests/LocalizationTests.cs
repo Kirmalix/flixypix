@@ -165,8 +165,6 @@ public sealed class LocalizationTests : IDisposable
             ("Replace existing generated images: yes/no", ["yes", "no"]),
             ("Replace: enter yes or no.", ["yes", "no"]),
             ("Active · yes or no", ["yes", "no"]),
-            ("If the target is taken: Cancel, Skip or Unique", ["Cancel", "Skip", "Unique"]),
-            ("Please enter Cancel, Skip or Unique.", ["Cancel", "Skip", "Unique"]),
         };
         foreach (var language in Texts.Languages)
         {

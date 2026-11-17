@@ -58,7 +58,7 @@ public partial class MainWindow
   entries.Add(MenuSpec.Separator);
   entries.Add(MenuSpec.Command(_playlist != null && !outside ? T("Remove from collection") : T("Remove from catalog …"),
    outside ? () => RemoveMedia(items, fromCollection: false) : () => RemoveMedia(items), "", outside ? null : KeyLabel("Delete")));
-  entries.Add(MenuSpec.Command(T("Delete file …"), () => DeleteMedia(items), ""));
+  entries.Add(MenuSpec.Command(T("Delete file …"), () => DeleteMedia(items), "", outside ? null : KeyLabel("Shift+Delete")));
   return entries;
  }
 

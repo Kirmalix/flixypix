@@ -243,6 +243,26 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
   base.OnItemsChanged(sender, args);
  }
 
+ /// <summary>Absolute indexes of the tiles a rectangle touches, in content coordinates (panel point plus <see cref="VerticalOffset"/>).
+ /// The gaps between tiles do not count, so a rectangle started between two tiles takes neither until it reaches one.</summary>
+ internal List<int> IndexesIn(Rect content, double gap)
+ {
+  var found = new List<int>(); var total = Total;
+  if (total == 0 || content.IsEmpty || _tile.Width <= 0 || _tile.Height <= 0) return found;
+  var firstRow = Math.Max(0, (int)(content.Top / _tile.Height)); var lastRow = Math.Min((total - 1) / _columns, (int)(content.Bottom / _tile.Height));
+  for (var row = firstRow; row <= lastRow; row++)
+  {
+   if (content.Bottom <= row * _tile.Height + gap || content.Top >= (row + 1) * _tile.Height - gap) continue;
+   for (var column = 0; column < _columns; column++)
+   {
+    var index = row * _columns + column;
+    if (index >= total) break;
+    if (content.Right > column * _tile.Width + gap && content.Left < (column + 1) * _tile.Width - gap) found.Add(index);
+   }
+  }
+  return found;
+ }
+
  /// <summary>Scrolls so that the tile at <paramref name="absolute"/> (index in the whole result) is in the top row.</summary>
  internal void ScrollToIndex(int absolute) => SetVerticalOffset(Math.Max(0, absolute) / _columns * _tile.Height);
 

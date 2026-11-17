@@ -27,30 +27,23 @@ public partial class MainWindow
   if (ids.Length == 0) { Message.Show(this,T("Please select items with Ctrl/Shift.")); return; }
   if (target != null && !Directory.Exists(target)) { Message.Show(this, T("The folder cannot be reached.") + "\n" + target, T("Quick access"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
   string? directory = target; string? template = null;
-  if (action != BatchFileAction.Rename && directory == null)
-  {
-   var picker = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Target folder for the selected files") };
-   if (picker.ShowDialog(this) != true) return; directory = picker.FolderName;
-  }
-  else
+  if (action == BatchFileAction.Rename)
   {
    var fields = Dialogs.Fields(this,T("File name template"),(T("Template: {name} = previous name, {index} = four-digit number, {ext} = extension"),"{name}-{index}{ext}"));
    if (fields == null) return; template = fields[0];
   }
-  var collision = preset;
-  if (collision == null)
+  else if (directory == null)
   {
-   var policy = Dialogs.Fields(this,T("Name collisions"),(T("If the target is taken: Cancel, Skip or Unique"),T("Cancel")));
-   if (policy == null) return;
-   // The answer is typed in the language the dialog asked in.
-   bool Is(string answer) => policy[0].Trim().Equals(answer, StringComparison.CurrentCultureIgnoreCase);
-   collision = Is(T("Cancel")) ? BatchCollisionPolicy.Cancel : Is(T("Skip")) ? BatchCollisionPolicy.Skip : Is(T("Unique")) ? BatchCollisionPolicy.UniqueName : null;
-   if (collision == null) { Message.Show(this,T("Please enter Cancel, Skip or Unique.")); return; }
+   var picker = new OpenFolderDialog { AddToRecent = Privacy.AddToRecent, Title = T("Target folder for the selected files") };
+   if (picker.ShowDialog(this) != true) return; directory = picker.FolderName;
   }
+  // Nothing is asked about taken names beforehand: a taken name gets a free one ("name (2).ext"), the preview lists every
+  // such entry before anything happens, and no existing file is ever overwritten.
+  var collision = preset ?? BatchCollisionPolicy.UniqueName;
   await RunOperation(T("Prepare file actions"),async token =>
   {
    var progress = new Progress<BatchFileProgress>(value => Status.Text = T("Checking previews: {0} / {1} · {2}", value.Completed, value.Total, Path.GetFileName(value.Path)));
-   var plan = await Task.Run(() => _repository.PlanFileBatchAsync(ids,action,directory,collision.Value,template,token,progress),token);
+   var plan = await Task.Run(() => _repository.PlanFileBatchAsync(ids,action,directory,collision,template,token,progress),token);
    if (!ReviewBatchFilePlan(plan)) return;
    var runProgress = new Progress<BatchFileProgress>(value => Status.Text = T("File actions: {0} / {1} · {2}", value.Completed, value.Total, Path.GetFileName(value.Path)));
    var result = await Task.Run(() => _repository.ExecuteFileBatchAsync(plan,token,runProgress),token);
@@ -64,7 +57,7 @@ public partial class MainWindow
  private bool ReviewBatchFilePlan(BatchFilePlan plan)
  {
   var ready = plan.Items.Count(item => item.State == BatchFileItemState.Ready); var skipped = plan.Items.Count(item => item.State == BatchFileItemState.Skipped); var blocked = plan.Items.Count(item => item.State == BatchFileItemState.Blocked);
-  var verb = plan.Action switch { BatchFileAction.Copy => T("copy"), BatchFileAction.Move => T("pan"), _ => T("rename") };
+  var verb = plan.Action switch { BatchFileAction.Copy => T("copy"), BatchFileAction.Move => Tc("file action", "move"), _ => T("rename") };
   var panel = new DockPanel { Margin = new Thickness(20) };
   var dialog = new Window { Owner = this, ShowInTaskbar = false, Title = T("Preview of the file actions"), Width = 1140, Height = 680, MinWidth = 800, MinHeight = 450,
    Content = panel, WindowStartupLocation = WindowStartupLocation.CenterOwner };

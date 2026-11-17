@@ -1228,11 +1228,6 @@
       "status": "unchanged",
       "digest": "3aed2fe3673af8a649daf49d103562ae459de0baaf49b3a4d3597286354276ba"
     },
-    "If the target is taken: Cancel, Skip or Unique": {
-      "status": "corrected",
-      "digest": "ac5f5f60ab894c869181447b7e0fc958dfb27f461bea21bea75f09c0aa54ac19",
-      "previous_digest": "3737b81dcf27feb310b16fc3e43e2090c21511875fc5874d4a283f5b4b792618"
-    },
     "Shared by {0:N0} items · click adds: {1}": {
       "status": "unchanged",
       "digest": "25301e1f711e3693c0e3c9c9e7a618ac72a82c8bbf2767862c96529b8df231a5"
@@ -1489,11 +1484,6 @@
     "Image of “{0}” set": {
       "status": "unchanged",
       "digest": "9da1cdeca1de5f86c83e9bf89de54e05f1b3348a6dd208ad9c6a74a76fbb356b"
-    },
-    "Reading image …": {
-      "status": "corrected",
-      "digest": "33af097411156886ccb2393052bf4ad55ed3fe292b5dcc4d2573ce935c7b00e3",
-      "previous_digest": "d8445da28eaf4ef1602d462333c817fc1f7d068bb644f1fad9b3a52cfeeff49f"
     },
     "Choose image": {
       "status": "unchanged",
@@ -1781,11 +1771,6 @@
     "Please select 1–100,000 items.": {
       "status": "unchanged",
       "digest": "2650159e23a782ff9f55146d34e9b471d26c1a08b5d2a1ee1c14e3e61c8d5a25"
-    },
-    "Please enter Cancel, Skip or Unique.": {
-      "status": "corrected",
-      "digest": "e47c5e6823ba6c2e655790e2df3af1cbcbf65c2a4629c91b1520ebb85bcdecd5",
-      "previous_digest": "db0a25fb55e5310c41b7d9ddce36e005f790543a03c1d5467663cd2afe2f5fb8"
     },
     "Please give the program with its full path.": {
       "status": "unchanged",
@@ -3324,11 +3309,6 @@
       "status": "corrected",
       "digest": "be7b778d8a37dc074d7279bb9ee9579cfd03b75025e73009ae5c9094bd6fd3e1",
       "previous_digest": "b79814b960aea50e0d928734b49f201ffaa6614373c8b597bcb887e98428572f"
-    },
-    "Unique": {
-      "status": "corrected",
-      "digest": "e97a9e074b4dc7f92b78dde49315ca6f977635b74811042a2966b8b1385ed353",
-      "previous_digest": "f145deff78f50d28f7565fb52365be66b975c0bebebaa652ea9375def4a4f93a"
     },
     "A library cannot be moved into itself.": {
       "status": "unchanged",
@@ -6012,11 +5992,6 @@
       "digest": "4e4fd025e751a1082ccf3e6712f0fc33b7c86a5437bfd6cdb6b5b39f69faf86f",
       "previous_digest": "1eca86aecd0d4ef4e62ea80d3cb541d5c1ef826a8e5d2c65e1a5cc6ee65ceb2b"
     },
-    "Name collisions": {
-      "status": "corrected",
-      "digest": "8e62820ed7c1dfe1948f18632413c5f3ea1fe71a1b18e49fb8f217d4a0e8543d",
-      "previous_digest": "fbaeeaf239162d7a1777a6cf61c3138b053f4deb3aa0424ec104299a1273a19d"
-    },
     "Separate name parts with semicolons, e.g. “thumb; folder; cover”.": {
       "status": "corrected",
       "digest": "4778dbdaff46af716e01bdf957d2a2b03b1118143e7d8e9c8942b14f548d4b1e",
@@ -6734,10 +6709,6 @@
       "status": "corrected",
       "digest": "6b29b822f540406ab1743a78badafe4b67f1333fee382b81a033373bc786062c",
       "previous_digest": "eed6f96663f237a24469c1f276fcc533fdf00e97da216f8df5b4ffef70662f39"
-    },
-    "Original size 1:1": {
-      "status": "unchanged",
-      "digest": "7eb189026313d1be1749ba99e746976558b73dfea68ea1565792f297de1414f5"
     },
     "Original title": {
       "status": "unchanged",
@@ -10962,11 +10933,6 @@
       "status": "corrected",
       "digest": "003c5460bf4a52f0ba85d0260e1e344d5a969733025db1c5e8930181973b2506",
       "previous_digest": "30f3641f300c0091565045b9388739c57525bba3a5ccea2bf7de922e38985fe4"
-    },
-    "Skip": {
-      "status": "corrected",
-      "digest": "cf276f0b64764137a73c6c5d7ceeae501691bb57ca4e2d6d4320367b32649ddf",
-      "previous_digest": "e41f6715cf5f14fc1c577e94f029af823ea6fa72b14e1e609e21e038af1be743"
     },
     "”, “": {
       "status": "unchanged",
@@ -15280,10 +15246,6 @@
       "status": "unchanged",
       "digest": "df137ebbadba1496e41d5ea97355e55315d2f0da88d81c8fae50ccbf0f0aa868"
     },
-    "A RAW file is shown by the picture the camera put into it. D in the image viewer develops the sensor data instead, which takes a moment and looks a little different; D again brings the camera's picture back. A shot saved as RAW and JPEG is one item that shows the JPEG and keeps the RAW file with it. The details list both files, and the RAW file can be split off there.": {
-      "status": "unchanged",
-      "digest": "4a6338237a53aeb85d178ab404d7a0e324edb89666f2c9bcc0b4fda11e2c4d91"
-    },
     "Camera RAW files": {
       "status": "unchanged",
       "digest": "287bcff9135396fa4d1644c7b26caefed8f811f64ed05f8ae6e7f2c1d2439626"
@@ -15308,20 +15270,10 @@
       "digest": "c17614e9e3518ff541dbe4e6d647ee6e507032b63708ae71f2b57e1ca0b7818d",
       "previous_digest": "5a6ac0737431237bd09b6efb4f25ab1b31cee854acb94db09adf398854b70c22"
     },
-    "A double click, Enter or the space bar on an image shows it large in place of the tiles. The arrow keys leaf through the images of the list, and the film strip below shows their neighbours. The details beside it follow, and the keys of the tiles keep working: 0–5 rate, with Shift the next image follows, F pins a favorite and T starts the tag mode. A click or Z changes between the whole picture and its pixels, Ctrl with the mouse wheel zooms at the pointer, and a zoomed picture is moved by dragging it. Esc or G leads back to the tiles.": {
-      "status": "corrected",
-      "digest": "39aa6006b42d855eafa54d050237c1a0631bdefeeb65eb2c01198b754ca4fc88",
-      "previous_digest": "42932d17db9d2fa6dde87e5d2368bafd37938e98707dd4d0391140f60491b3eb"
-    },
     "A RAW file is shown by the picture the camera put into it. D or the RAW switch of the image viewer develops the sensor data instead, which takes a moment and looks a little different. The switch stays as you leave it: while it is on, every RAW file is developed when you look at it; switched off, nothing is developed by itself. A RAW file developed once keeps showing its development. A shot saved as RAW and JPEG is one item that shows the JPEG and keeps the RAW file with it. The details list both files, and the RAW file can be split off there.": {
       "status": "corrected",
       "digest": "15a399a1657bc957f70e9d9d36c38e6a1b4bf258c61833e39a1bd3f2d7c1d210",
       "previous_digest": "8dad1efec8e7f9ee13f1c42f65ad72bc9ece6291c5d51c66ea6bf19c2f654d4d"
-    },
-    "Back to the tiles (Esc or G)": {
-      "status": "corrected",
-      "digest": "7c44adca55a92f9be6acefa2710f24c1db8b5b0ac04c9550d422c623dc970e2d",
-      "previous_digest": "9a0a802b92806479582d41c34e3beb6e06a83d53b65b89c2ebee85b54255268d"
     },
     "Loupe": {
       "status": "corrected",
@@ -15396,6 +15348,14 @@
     "Take out of the survey (X)": {
       "status": "unchanged",
       "digest": "5a40dfef897145f4f7dba68838587ac99290543382135256f2f16ac191bac47c"
+    },
+    "file action\u0004move": {
+      "status": "unchanged",
+      "digest": "1a748aff87d8ea5f545a8746c137a25c20bb9cb457bd8bea023d39e42865c6c7"
+    },
+    "The name is taken in the target folder; a free name is used.": {
+      "status": "unchanged",
+      "digest": "7c44f026c23d695fec1becf8a0075380da8eeaf610e61ee9ebf2b1adf56919d1"
     }
   }
 }

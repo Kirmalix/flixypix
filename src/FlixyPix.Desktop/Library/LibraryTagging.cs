@@ -289,11 +289,12 @@ public partial class MainWindow
 
     private void MediaListMouseDown(object sender, MouseButtonEventArgs e)
     {
-        _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null;
+        _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null; _bandOrigin = null;
         // The stars of a tile rate; they neither select nor drag it.
         if (e.OriginalSource is TileRating) return;
-        if (ItemsControl.ContainerFromElement(MediaList, (DependencyObject)e.OriginalSource) is not ListBoxItem item) return;
-        _dragStart = e.GetPosition(MediaList);
+        // Free space starts a selection rectangle, and so does a tile that is not selected; a selected tile drags the selection.
+        if (ItemsControl.ContainerFromElement(MediaList, (DependencyObject)e.OriginalSource) is not ListBoxItem item) { OfferBand(e); return; }
+        if (item.IsSelected || !OfferBand(e)) _dragStart = e.GetPosition(MediaList);
         // "Klick auf das Bild spielt ab": a plain click on the picture (not on its buttons) plays once the button is released without dragging.
         if (_cardContext.Display.ClickPlays && Keyboard.Modifiers == ModifierKeys.None && e.ClickCount <= 1 && item.DataContext is MediaCard card && OnPicture((DependencyObject)e.OriginalSource, item)) _clickToPlay = card;
         // Keep a multi-selection alive so it can be dragged; a plain click without drag still selects only this item.
@@ -301,6 +302,7 @@ public partial class MainWindow
     }
     private void MediaListMouseMove(object sender, MouseEventArgs e)
     {
+        if (MoveBand(e)) { e.Handled = true; return; }
         if (_dragStart is not { } start || e.LeftButton != MouseButtonState.Pressed) return;
         var offset = e.GetPosition(MediaList) - start;
         if (Math.Abs(offset.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(offset.Y) < SystemParameters.MinimumVerticalDragDistance) return;
@@ -308,11 +310,13 @@ public partial class MainWindow
         var ids = SelectedMedia.Select(i => i.Id.ToString()).ToArray(); if (ids.Length == 0) return;
         DragDrop.DoDragDrop(MediaList, new DataObject(MediaDragFormat, ids), DragDropEffects.Copy);
     }
-    private void MediaListMouseUp(object sender, MouseButtonEventArgs e)
+    private async void MediaListMouseUp(object sender, MouseButtonEventArgs e)
     {
+        if (_band != null) { e.Handled = true; await EndBandAsync(); return; }
         if (_pendingSingleSelection is { } item) { MediaList.SelectedItems.Clear(); item.IsSelected = true; }
-        var play = _dragStart != null ? _clickToPlay : null;
-        _pendingSingleSelection = null; _dragStart = null; _clickToPlay = null;
+        // A click that neither dragged nor drew a rectangle may play the tile.
+        var play = _dragStart != null || _bandOrigin != null ? _clickToPlay : null;
+        _pendingSingleSelection = null; _dragStart = null; _clickToPlay = null; _bandOrigin = null;
         if (play != null) { StopSlideshow(); _ = Play(play.Item); }
     }
     private MediaCard? _clickToPlay;

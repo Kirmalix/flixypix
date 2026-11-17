@@ -696,7 +696,8 @@ public partial class MainWindow : Window
                 if (e.Key == Key.N && SelectedMedia.Count > 0) { e.Handled = true; OpenSurvey(); return; }
             }
             if (e.Key == Key.Enter && MediaList.IsKeyboardFocusWithin && Selected is { } item) { e.Handled = true; StopSlideshow(); await Play(item); }
-            if (e.Key == Key.Delete && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RemoveSelected(); }
+            // Delete removes from the catalog (or the open collection); Shift+Delete deletes the files after one question.
+            if (e.Key == Key.Delete && MediaList.IsKeyboardFocusWithin) { e.Handled = true; if (Keyboard.Modifiers == ModifierKeys.Shift) DeleteMedia(SelectedMedia); else RemoveSelected(); }
         }
     });
 }
