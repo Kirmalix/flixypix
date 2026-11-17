@@ -66,6 +66,9 @@ public partial class MainWindow
    var scene=changed.Rows.Single(r=>r.Preview.Draft.Kind==StashEntityKind.Scene);Require(scene.Status==T("Changed")&&!scene.Include,"A changed Stash scene was not shown as changed or was preselected.");
    // The field table shows the local and the new cover side by side.
    changed.Select(scene);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture((FrameworkElement)changed.Content,Path.Combine(root,"stash-fields.png"));
+   // An earlier import shows the entry it writes into as the local target, not an empty choice.
+   Require(scene.Preview.LocalMatches.Count>0&&changed.TargetChoice==scene.Preview.LocalMatches.Single(m=>m.Target==scene.Preview.Binding!.Target).Label&&scene.Target==null,
+    "The local target of an earlier imported Stash scene is empty: "+(changed.TargetChoice??"(none)"));
    scene.Include=true;await changed.ApplyAsync();await StashCovers;
    var kept=db.Search().Single(m=>m.Kind==MediaKind.Video);
    Require(kept.Title=="Stash scene"&&Convert.ToBase64String(File.ReadAllBytes(kept.ThumbnailPath!))==cover,"A Stash field was taken without being chosen.");

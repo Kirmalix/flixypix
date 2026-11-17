@@ -54,6 +54,9 @@ internal sealed class StashImportWindow : Window
  internal Task Work {get;private set;}=Task.CompletedTask;
  internal string Report {get;private set;}="";
  internal string StatusText=>frame.Status.Text;
+ /// <summary>The local target shown for the selected record, empty when nothing is chosen.</summary>
+ internal string? TargetChoice=>targetChoice?.SelectedItem as string;
+ private ComboBox? targetChoice;
  // Step 1
  private readonly ComboBox sources=new(){MinWidth=320,Margin=new Thickness(0,4,0,8)};
  private readonly TextBox folder=new(){MinWidth=420},name=new(){MaxLength=256,Margin=new Thickness(0,4,0,8)};
@@ -291,7 +294,7 @@ internal sealed class StashImportWindow : Window
 
  private void ShowDetails()
  {
-  details.Children.Clear();if(list.SelectedItem is not Row row)return;var preview=row.Preview;var draft=preview.Draft;
+  details.Children.Clear();targetChoice=null;if(list.SelectedItem is not Row row)return;var preview=row.Preview;var draft=preview.Draft;
   details.Children.Add(new TextBlock{Text=Kind(draft.Kind)+" · "+draft.Name,FontSize=16,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap});
   details.Children.Add(SettingsUi.Hint(draft.RelativePath+" · "+row.Status));
   foreach(var issue in draft.Issues)details.Children.Add(new TextBlock{Text=(issue.Severity==StashIssueSeverity.Error?"⚠ ":"ℹ ")+issue.Message,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,4,0,0)});
@@ -307,9 +310,11 @@ internal sealed class StashImportWindow : Window
   {
    var options=preview.LocalMatches.Select(m=>(object)m.Label).Append(T("Create a new entry")).ToArray();
    var target=new ComboBox{Margin=new Thickness(0,4,0,8),ItemsSource=options};
-   target.SelectedIndex=row.CreateTarget?preview.LocalMatches.Count:row.Target is {} t?preview.LocalMatches.ToList().FindIndex(m=>m.Target==t):-1;
-   target.SelectionChanged+=(_,_)=>{var i=target.SelectedIndex;row.CreateTarget=i==preview.LocalMatches.Count;row.Target=i>=0&&!row.CreateTarget?preview.LocalMatches[i].Target:null;Refresh(row);ShowDetails();};
-   details.Children.Add(Label(T("Local target")));details.Children.Add(target);
+   // Without a choice an earlier import keeps writing into its entry, so that entry is shown as chosen.
+   var bound=preview.Binding is {Detached:false} b?b.Target:null;
+   target.SelectedIndex=row.CreateTarget?preview.LocalMatches.Count:(row.Target??bound) is {} t?preview.LocalMatches.ToList().FindIndex(m=>m.Target==t):-1;
+   target.SelectionChanged+=(_,_)=>{var i=target.SelectedIndex;row.CreateTarget=i==preview.LocalMatches.Count;row.Target=i>=0&&!row.CreateTarget&&preview.LocalMatches[i].Target!=bound?preview.LocalMatches[i].Target:null;Refresh(row);ShowDetails();};
+   details.Children.Add(Label(T("Local target")));details.Children.Add(target);targetChoice=target;
   }
   if(draft.Kind is StashEntityKind.Performer or StashEntityKind.Studio&&row.Target==null&&preview.Binding is not {Detached:false})
   {

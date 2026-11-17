@@ -78,6 +78,9 @@ public sealed partial class CatalogRepository
     var binding=identity is {State:StashIdentityState.Matched,Candidates:[var only]}?ReadEntity<StashBinding>("stash_bindings",only.Id,transaction):null;
     if(binding!=null)binding=ObserveStashBinding(binding,draft.Kind,lookup);
     var matches=StashImportSupported(draft.Kind)?StashLocalMatches(draft,categories,transaction):[];
+    // The entry an earlier import wrote into is always one of the choices, even after it was renamed or moved.
+    if(binding is {Detached:false}&&draft.Kind!=StashEntityKind.Tag&&matches.Count>0&&matches.All(m=>m.Target!=binding.Target)&&StashTargetLabel(binding.Target,transaction) is {} bound)
+     matches=[new(binding.Target,bound),..matches];
     var compared=draft.Kind==StashEntityKind.Tag?new StashTargetReference(StashTargetKind.ProvenanceOnly):binding is {Detached:false}?binding.Target:matches.Count==1?matches[0].Target:null;
     IReadOnlyList<StashFieldDiff> fields=[];
     if(compared!=null&&StashImportSupported(draft.Kind))
@@ -353,6 +356,23 @@ public sealed partial class CatalogRepository
   else if(draft.Kind==StashEntityKind.Group)
    result.AddRange(ReadDocuments<PublicationGroup>("publication_groups",transaction).Where(group=>Same(group.Name,draft.Name)).Select(group=>new StashImportCandidate(new(StashTargetKind.PublicationGroup,group.Id),group.Name)));
   return result;
+ }
+
+ /// <summary>The name a local target is shown with, or null when it no longer exists.</summary>
+ private string? StashTargetLabel(StashTargetReference target,SqliteTransaction transaction)
+ {
+  switch(target.Kind)
+  {
+   case StashTargetKind.Video or StashTargetKind.Image when target.Id is {} id:
+   {
+    using var command=Command("SELECT document FROM media WHERE id=$id",transaction,("$id",id.ToString()));
+    return command.ExecuteScalar() is string json&&JsonSerializer.Deserialize<MediaItem>(json,Json) is {} item?(item.Title.Length>0?item.Title:item.Path):null;
+   }
+   case StashTargetKind.DirectoryEntry when target.Tag is {} key: return DirectoryKeyExists(key,transaction)?key.Category+": "+key.Value:null;
+   case StashTargetKind.ImageSet when target.Id is {} id: return ReadEntity<ImageSet>("image_sets",id,transaction)?.Name;
+   case StashTargetKind.PublicationGroup when target.Id is {} id: return ReadEntity<PublicationGroup>("publication_groups",id,transaction)?.Name;
+   default: return null;
+  }
  }
 
  private void CreateStashDirectoryEntry(StashImportRecord record,TagKey key,SqliteTransaction transaction)

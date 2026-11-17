@@ -307,6 +307,19 @@ public sealed class StashImportTests:IDisposable
  }
 
  [Fact]
+ public async Task AnEarlierImportOffersItsOwnTargetAmongTheLocalMatches()
+ {
+  AddOrganization();using var db=Open(false);var source=Profile(db);using var snapshot=await Read();
+  await db.ApplyStashImportAsync(snapshot,Request(source,Preview(db,snapshot,source).Select(row=>new StashImportItem(row.Draft.SourceOrdinal))));
+  var scene=Preview(db,snapshot,source).First(row=>row.Draft.Kind==StashEntityKind.Scene);
+  Assert.Contains(scene.LocalMatches,match=>match.Target==scene.Binding!.Target);
+  // Renamed locally, with a new set under the old name: the bound set still comes first, under its new name.
+  var set=Assert.Single(db.GetImageSets());db.UpsertImageSet(set with {Name="Beach"});var other=db.UpsertImageSet(new ImageSet{Name="Holiday"});
+  var gallery=Preview(db,snapshot,source).Single(row=>row.Draft.Kind==StashEntityKind.Gallery);
+  Assert.Equal(new[]{("Beach",(Guid?)set.Id),("Holiday",other.Id)},gallery.LocalMatches.Select(match=>(match.Label,match.Target.Id)));
+ }
+
+ [Fact]
  public async Task MembersMustBeSelectedOrImportedEarlierAndChangedMembershipIsOnlyTakenWhenChosen()
  {
   AddOrganization();using var db=Open(false);var source=Profile(db);using var snapshot=await Read();var rows=Preview(db,snapshot,source);
