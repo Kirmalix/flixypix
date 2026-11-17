@@ -96,6 +96,7 @@ public partial class MainWindow
     await BackToTiles(again, System.Windows.Input.Key.Escape);
    }
    finally { AppShell.BossKey = bossKey; }
+   await RunCompareAndSurveySmokeAsync(directory, first, Idle, Settled);
 
    // Not among the tiles on show: a window, as before.
    ApplyViewState(new ViewState { View = "home" }); await Settled();

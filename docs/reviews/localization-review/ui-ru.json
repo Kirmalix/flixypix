@@ -15333,6 +15333,50 @@
       "status": "corrected",
       "digest": "922d27bb868e3a4a20b589024ef01c19303120e6018ca578ab5ba6c16134895b",
       "previous_digest": "8691884ace23fd6a1122c236814f9493eb4d7150624edc83fa26b91050ae8aed"
+    },
+    "C in the loupe keeps the image on show on the left as the reference and shows the next one beside it; the arrow keys leaf on on the right, and zooming and moving the picture follow on both sides. C, G or Esc ends the comparison. On the tiles, C compares two chosen images. N shows several chosen images side by side as large as possible: X takes the selected one out of the survey (the library keeps it), a double click or Enter shows it in the loupe and G leads back to the survey. 0–5, F and Del work on the selected image.": {
+      "status": "unchanged",
+      "digest": "682bd6d0be3a583a650cca104780bea6d1bbb8caa9f1ac6cd1bb6d7a27ea67ed"
+    },
+    "Compare and survey": {
+      "status": "unchanged",
+      "digest": "4047823478fc02dc9f5b689a37d211c0c8747cd287a8f321c039d32fc69a76e1"
+    },
+    "Compare: this image stays on the left as the reference (C)": {
+      "status": "unchanged",
+      "digest": "0115362490f976e87bef84756905958f250774de6d70499a06cb02cdc64fcd8a"
+    },
+    "Comparing with “{0}” · C ends the comparison": {
+      "status": "unchanged",
+      "digest": "261450ac263db24c441c90a75b7c432a5ec96a212261eb7528118599ce9bd182"
+    },
+    "Double-click or Enter shows an image in the loupe · X takes it out of the survey · 0–5 rate": {
+      "status": "unchanged",
+      "digest": "0da03cba6613c886478b4db5076fe5278455a316545f09cef1b0a05be084fbd9"
+    },
+    "End the comparison (C)": {
+      "status": "unchanged",
+      "digest": "fd004ee9eb9ec0f319ceca4c42806812494310904f074e20286e2b34e338721c"
+    },
+    "Reference": {
+      "status": "unchanged",
+      "digest": "d397df66c707f342be22a3d4bfb201eedeff8c08621274f64f80b64a52d9700f"
+    },
+    "Select at least two images for the survey (N).": {
+      "status": "unchanged",
+      "digest": "f2b23273cd4e49dccf14fa564dc5a5c27e72fe016698fd974e4d44aa86f10555"
+    },
+    "Select two images to compare them (C).": {
+      "status": "unchanged",
+      "digest": "5a3bc35d72990ee01f0285e28a346820570db1a26bc10ab7e2ca33ccca8e447d"
+    },
+    "Survey · {0:N0}": {
+      "status": "unchanged",
+      "digest": "9798714e92b6f4758e3dce991ee41401c133b885b0a4d7eb8ca2a1bec4f86a24"
+    },
+    "Take out of the survey (X)": {
+      "status": "unchanged",
+      "digest": "447e56451b9749448c11ec92a52c3fb73c55fcd19da0ebc32cf2a3e70b66e4b0"
     }
   }
 }

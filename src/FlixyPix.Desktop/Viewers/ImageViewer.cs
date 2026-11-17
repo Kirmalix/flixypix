@@ -97,17 +97,18 @@ internal sealed partial class ImageViewer : ContentControl
  {
   _embedded=embedded; _items=[.. items]; _itemAt=itemAt; _peekAt=peekAt; _itemCount=itemCount??items.Count; _index=initialIndex??Math.Max(0,items.ToList().FindIndex(i=>i.Id==selectedId));
   Focusable=true; IsTabStop=true; FocusVisualStyle=null; HorizontalContentAlignment=HorizontalAlignment.Stretch; VerticalContentAlignment=VerticalAlignment.Stretch;
-  var toolbar=new DockPanel { Margin=new Thickness(8,6,8,6), LastChildFill=true };
+  var toolbar=_toolbar=new DockPanel { Margin=new Thickness(8,6,8,6), LastChildFill=true };
   var left=new StackPanel { Orientation=Orientation.Horizontal };
   if(embedded) { left.Children.Add(Command("",T("Back to the tiles (G)"),()=>Close())); left.Children.Add(Gap()); }
   left.Children.Add(Command("",T("Previous image (←)"),()=>Navigate(-1))); left.Children.Add(Command("",T("Next image (→)"),()=>Navigate(1)));
   left.Children.Add(Gap());
   left.Children.Add(Command("",T("Zoom out (−)"),()=>ChangeZoom(1/1.25))); left.Children.Add(Command("",T("Zoom in (+)"),()=>ChangeZoom(1.25)));
-  left.Children.Add(Command("",T("Fit (F)"),Fit)); left.Children.Add(Command("",T("Original size 1:1 (Z)"),()=>OriginalSize()));
+  left.Children.Add(Command("",T("Fit (F)"),()=>{ Fit(); UserView(); })); left.Children.Add(Command("",T("Original size 1:1 (Z)"),()=>OriginalSize()));
   left.Children.Add(Command("",T("Rotate (R)"),Rotate));
   _frameButtons.Children.Add(Command("",T("Previous page or previous frame of the animation (Page↑)"),()=>ChangeFrame(-1))); _frameButtons.Children.Add(_play);
   _frameButtons.Children.Add(Command("",T("Next page or next frame of the animation (Page↓)"),()=>ChangeFrame(1)));
   _play.Click+=(_,_)=>ToggleAnimation(); left.Children.Add(_frameButtons); left.Children.Add(BuildRawSwitch()); left.Children.Add(_label);
+  if(embedded) left.Children.Add(CompareButton());
   DockPanel.SetDock(left,Dock.Left); toolbar.Children.Add(left);
   var right=new StackPanel { Orientation=Orientation.Horizontal };
   _infoToggle.Click+=(_,_)=>SetInfo(_infoToggle.IsChecked==true); _stripToggle.Click+=(_,_)=>SetStrip(_stripToggle.IsChecked==true);
@@ -129,7 +130,7 @@ internal sealed partial class ImageViewer : ContentControl
   Loaded+=(_,_)=>
   {
    if(_started || _closed) return; _started=true;
-   SetInfo(Slideshow.ShowInfo); if(_embedded) { _stripToggle.IsChecked=true; _stripPanel.Visibility=Visibility.Visible; }
+   SetInfo(Slideshow.ShowInfo); if(_embedded && !_reference) { _stripToggle.IsChecked=true; _stripPanel.Visibility=Visibility.Visible; }
    ReadyTask=LoadCurrentAsync();
   };
   _animation.Tick+=async (_,_)=>
@@ -183,7 +184,7 @@ internal sealed partial class ImageViewer : ContentControl
    case Key.Escape: if(SlideshowRunning) StopSlideshow(); else Close(); break;
    case Key.Right: StopSlideshow(); Navigate(1); break; case Key.Left: StopSlideshow(); Navigate(-1); break;
    case Key.Add: case Key.OemPlus: ChangeZoom(1.25); break; case Key.Subtract: case Key.OemMinus: ChangeZoom(1/1.25); break;
-   case Key.F: Fit(); break; case Key.R: Rotate(); break; case Key.D: ToggleDevelop(); break;
+   case Key.F: Fit(); UserView(); break; case Key.R: Rotate(); break; case Key.D: ToggleDevelop(); break;
    case Key.Z: ToggleZoom(); break;
    case Key.Space: if(SlideshowRunning) StopSlideshow(); else ToggleAnimation(); break;
    case Key.S: ToggleSlideshow(); break; case Key.I: SetInfo(!InfoShown); break; case Key.T: SetStrip(_stripPanel.Visibility!=Visibility.Visible); break;
@@ -207,7 +208,7 @@ internal sealed partial class ImageViewer : ContentControl
   if(_press is not { } from || e.LeftButton!=MouseButtonState.Pressed) return;
   var delta=e.GetPosition(_scroll)-from;
   if(!_dragged && Math.Abs(delta.X)<4 && Math.Abs(delta.Y)<4) return;
-  _dragged=true; _hold=null; _scroll.ScrollToHorizontalOffset(_pressOffset.X-delta.X); _scroll.ScrollToVerticalOffset(_pressOffset.Y-delta.Y);
+  _dragged=true; _hold=null; _scroll.ScrollToHorizontalOffset(_pressOffset.X-delta.X); _scroll.ScrollToVerticalOffset(_pressOffset.Y-delta.Y); UserView();
  }
  private void StageReleased(object sender,MouseButtonEventArgs e)
  {
@@ -234,7 +235,7 @@ internal sealed partial class ImageViewer : ContentControl
   _scroll.ScrollToHorizontalOffset(_scroll.HorizontalOffset+now.X-hold.At.X); _scroll.ScrollToVerticalOffset(_scroll.VerticalOffset+now.Y-hold.At.Y);
  }
  /// <summary>From the fitted picture to its pixels and back; <paramref name="at"/> is the place of the stage that stays.</summary>
- internal void ToggleZoom(Point? at=null) { if(_image.Source==null) return; if(_fit) OriginalSize(at); else Fit(); }
+ internal void ToggleZoom(Point? at=null) { if(_image.Source==null) return; if(_fit) OriginalSize(at); else { Fit(); UserView(); } }
 
  private static Button Symbol(string glyph,string tip)
  {
@@ -430,7 +431,7 @@ internal sealed partial class ImageViewer : ContentControl
   _image.Source=bitmap; _image.Width=bitmap.PixelWidth; _image.Height=bitmap.PixelHeight;
   if(_fit)Fit(); else { Apply(); Settle(); }
   _frameButtons.Visibility=_info?.FrameCount>1?Visibility.Visible:Visibility.Collapsed; _play.Visibility=_info?.IsAnimated==true?Visibility.Visible:Visibility.Collapsed; UpdatePlayButton();
-  UpdateInfo(); UpdateRawSwitch(); ScheduleFrame();
+  UpdateInfo(); UpdateRawSwitch(); ScheduleFrame(); FollowAfterLoad();
   if(SlideshowRunning) Transition();
   else if(_fadeNext) { _fadeNext=false; LastChangeFaded=true; _image.BeginAnimation(OpacityProperty,new DoubleAnimation(.15,1,TimeSpan.FromMilliseconds(280))); }
   else LastChangeFaded=false;
@@ -489,7 +490,7 @@ internal sealed partial class ImageViewer : ContentControl
  /// <param name="at">The place of the stage that stays where it is, as under the pointer; its middle otherwise.</param>
  internal void ChangeZoom(double multiplier,Point? at=null)
  {
-  Hold(at); _fit=false; _zoom=Math.Clamp(_zoom*multiplier,.02,16); Apply(); Settle(); _hold=null; DevelopWhenPreviewRunsOut(false);
+  Hold(at); _fit=false; _zoom=Math.Clamp(_zoom*multiplier,.02,16); Apply(); Settle(); _hold=null; DevelopWhenPreviewRunsOut(false); UserView();
  }
  /// <summary>One pixel of the image per pixel of the screen; for a RAW file with a smaller preview that is the sensor
  /// image. The picture on show is enlarged at once and replaced when all its pixels are read.</summary>
@@ -497,7 +498,7 @@ internal sealed partial class ImageViewer : ContentControl
  {
   // Not on the thumbnail that stands in while the image is read.
   if(_placeholder || _info==null) return;
-  Hold(at); _fit=false;
+  Hold(at); _fit=false; UserView();
   var plain=!_develop && _info is { IsRaw: false } && _image.Source is BitmapSource;
   if(plain && _image.Source is BitmapSource shown)
   {

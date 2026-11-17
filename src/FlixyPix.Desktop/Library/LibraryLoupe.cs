@@ -20,27 +20,21 @@ public partial class MainWindow
     /// <summary>The image viewer on show: the loupe or the one in a window.</summary>
     internal ImageViewer? ImageView => _loupe ?? (_viewer as ImageViewerWindow)?.View;
     /// <summary>The tiles are what is on show, so an image of them can take their place.</summary>
-    private bool LoupeFits => _startupReady && (_loupe != null || MediaList.IsVisible && MediaPane.IsVisible);
+    private bool LoupeFits => _startupReady && (_loupe != null || _survey != null || MediaList.IsVisible && MediaPane.IsVisible);
 
-    private void CloseImageViewers() { var window = _viewer; _viewer = null; window?.Close(); CloseLoupe(reselect: false); }
+    private void CloseImageViewers() { var window = _viewer; _viewer = null; window?.Close(); CloseLoupe(reselect: false); CloseSurvey(reselect: false); DropParkedSurvey(); }
 
     private void OpenLoupe(ImageViewer viewer)
     {
+        // An image opened from the survey: the survey waits behind the loupe and G leads back to it.
+        ParkSurvey();
         CloseLoupe(reselect: false);
-        if (_loupeHost == null)
-        {
-            _loupeHost = new Border { Visibility = Visibility.Collapsed };
-            _loupeHost.SetResourceReference(Border.BackgroundProperty, "WindowBackground");
-            Grid.SetColumn(_loupeHost, Grid.GetColumn(MediaPane)); Panel.SetZIndex(_loupeHost, 25);
-            ((Grid)MediaPane.Parent).Children.Add(_loupeHost);
-            _loupeDetails.Tick += (_, _) => { _loupeDetails.Stop(); if (_loupe != null) ShowDetails(); };
-            DetailsPane.PreviewMouseDown += (_, _) => FlushLoupeDetails();
-        }
-        _loupe = viewer;
+        var host = LoupeHost();
+        _loupe = viewer; viewer.CompareRequested = ToggleCompare;
         viewer.CurrentChanged += item => { if (ReferenceEquals(_loupe, viewer)) LoupeMoved(item); };
         viewer.Closed += (_, _) => LoupeClosed(viewer);
         if (QuickLook is { } quick) quick.Close();
-        _loupeHost.Child = viewer; _loupeHost.Visibility = Visibility.Visible;
+        host.Child = viewer; host.Visibility = Visibility.Visible;
         // Hidden, not gone: the tiles keep their place, so the way back needs no new layout.
         MediaPane.Visibility = Visibility.Hidden;
         Dispatcher.BeginInvoke(() => { if (ReferenceEquals(_loupe, viewer)) viewer.Focus(); }, DispatcherPriority.Loaded);
@@ -58,9 +52,12 @@ public partial class MainWindow
     private void LoupeClosed(ImageViewer viewer)
     {
         if (!ReferenceEquals(_loupe, viewer)) return;
+        EndCompare();
         var reselect = _loupeReselect; _loupeReselect = true;
         _loupe = null; _loupeDetails.Stop();
         if (_loupeHost != null) { _loupeHost.Child = null; _loupeHost.Visibility = Visibility.Collapsed; }
+        if (!_closing && reselect && ReturnToSurvey()) return;
+        DropParkedSurvey();
         MediaPane.Visibility = Visibility.Visible;
         if (_closing || !reselect) return;
         _ = BackToTileAsync(viewer.CurrentItem);
@@ -94,7 +91,8 @@ public partial class MainWindow
         try
         {
             var card = MediaList.Items.OfType<MediaCard>().FirstOrDefault(card => card.Item.Id == item.Id);
-            if (card != null) { MediaList.SelectedItem = card; _offWindowSelection = []; }
+            // Setting the item alone keeps the others of a multiple selection when it is already among them (survey).
+            if (card != null) { if (MediaList.SelectedItems.Count > 1) MediaList.SelectedItems.Clear(); MediaList.SelectedItem = card; _offWindowSelection = []; }
             else { MediaList.SelectedItems.Clear(); _offWindowSelection = [item]; }
         }
         finally { _refreshing = refreshing; }
@@ -154,6 +152,9 @@ public partial class MainWindow
                 case Key.F when SelectedMedia is { Count: > 0 } chosen: PinFavorite(chosen); return true;
                 case Key.B when SelectedMedia.Count > 0: ToggleTargetCollection(); return true;
                 case Key.Delete: RemoveSelected(); return true;
+                case Key.C: ToggleCompare(); return true;
+                // A comparison ends first; the loupe stays.
+                case Key.Escape or Key.G when _reference != null: EndCompare(); return true;
                 case Key.F2 when SelectedMedia.Count == 1: OpenDetailsAt("details"); EditTitle.Focus(); EditTitle.SelectAll(); return true;
             }
         return viewer.HandleKey(e);

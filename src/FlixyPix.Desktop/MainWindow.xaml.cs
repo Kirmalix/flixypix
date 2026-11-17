@@ -296,7 +296,7 @@ public partial class MainWindow : Window
                 _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
                 _imageQuery = imageQuery;
                 _imagePlaylist = playlist; _imageCollectionOrder = sort == 5;
-                LoupeListChanged();
+                LoupeListChanged(); SurveyListChanged();
                 _cardContext.QuickMembers = snapshot.Playlists.FirstOrDefault(p => p.Kind == PlaylistKind.Quick)?.MediaIds.ToHashSet() ?? [];
                 _cardContext.FinishedMembers = snapshot.Finished; _cardContext.Display = general; _cardContext.TargetMembers = snapshot.Target?.MediaIds.ToHashSet() ?? [];
                 Motion.TilesLift = general.HoverLift; _history.Capacity = general.HistoryLength;
@@ -660,6 +660,7 @@ public partial class MainWindow : Window
         }
         if (TagWorkKey(e.Key, Keyboard.Modifiers, TextEntry(e.OriginalSource)) is { } tagWork) { e.Handled = true; await tagWork; return; }
         if (LoupeTakesKeys(e.OriginalSource) && LoupeKey(e)) { e.Handled = true; return; }
+        if (SurveyTakesKeys(e.OriginalSource) && SurveyKey(e)) { e.Handled = true; return; }
         if (await HandleLibraryKeyboardAsync(e)) { e.Handled = true; return; }
         if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or Slider && e.Key is Key.Enter or Key.Space or Key.Left or Key.Right or Key.Up or Key.Down) return;
         // Back and forward like a browser; Alt arrives as a system key.
@@ -691,6 +692,8 @@ public partial class MainWindow : Window
                 if (e.Key == Key.Space && Selected is { } shown) { e.Handled = true; ShowQuickLook(shown); return; }
                 if (e.Key == Key.F && SelectedMedia is { Count: > 0 } chosen) { e.Handled = true; PinFavorite(chosen); return; }
                 if (e.Key == Key.B && SelectedMedia.Count > 0) { e.Handled = true; ToggleTargetCollection(); return; }
+                if (e.Key == Key.C && SelectedMedia.Count > 0) { e.Handled = true; CompareSelection(); return; }
+                if (e.Key == Key.N && SelectedMedia.Count > 0) { e.Handled = true; OpenSurvey(); return; }
             }
             if (e.Key == Key.Enter && MediaList.IsKeyboardFocusWithin && Selected is { } item) { e.Handled = true; StopSlideshow(); await Play(item); }
             if (e.Key == Key.Delete && MediaList.IsKeyboardFocusWithin) { e.Handled = true; RemoveSelected(); }
