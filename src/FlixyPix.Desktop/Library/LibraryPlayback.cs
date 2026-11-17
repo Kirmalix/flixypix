@@ -17,7 +17,7 @@ public partial class MainWindow
         window.HelpRequested = shortcuts => ShowHelp(shortcuts, window);
         window.Repeat = _settings.PlayerRepeat; window.Shuffle = _settings.PlayerShuffle;
         window.MarksChanged = () => _ = EnsureMarkPreviewsAsync(item);
-        window.MarkRenamed = () =>
+        window.MarksEdited = () =>
         {
             if (_detailsShown?.Id != item.Id) return;
             Scenes.ItemsSource = _repository.GetOrderedScenes(item.Id); Bookmarks.ItemsSource = _repository.GetOrderedBookmarks(item.Id); ShowMarkTagFilters();

@@ -105,6 +105,21 @@ public partial class MainWindow
   list.Focus(); window.BeginRenameSelectedMark(); InlineEdit.Current!.Text="   ";
   InlineEdit.Current.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice,PresentationSource.FromVisual(InlineEdit.Current)!,0,Key.Enter) { RoutedEvent=Keyboard.PreviewKeyDownEvent });
   Check(_repository.GetBookmarks(window.MediaId).Single(b=>b.Id==mark.SourceId).Title=="Renamed bookmark","A blank name replaced the saved title.");
+  // Removing from the list: once through the context menu, once with Del on the selected row.
+  var byMenu=_repository.UpsertBookmark(new FlixyPix.Core.Bookmark { MediaId=window.MediaId,Title="Remove by menu",PositionSeconds=.2 });
+  var byKey=_repository.UpsertBookmark(new FlixyPix.Core.Bookmark { MediaId=window.MediaId,Title="Remove by key",PositionSeconds=.3 });
+  window.RefreshMarks(); list.UpdateLayout();
+  var menuRow=list.Items[window.Marks.ToList().FindIndex(m=>m.SourceId==byMenu.Id)];
+  list.SelectedItem=menuRow; list.ScrollIntoView(menuRow); list.UpdateLayout();
+  ((System.Windows.Controls.ListBoxItem)list.ItemContainerGenerator.ContainerFromItem(menuRow)).RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice,0,MouseButton.Right) { RoutedEvent=Mouse.PreviewMouseUpEvent });
+  var remove=window.OpenMarkMenu!.Items.OfType<System.Windows.Controls.MenuItem>().ElementAtOrDefault(1); window.OpenMarkMenu.IsOpen=false;
+  Check(remove!=null,"The mark menu offers no way to remove a bookmark.");
+  remove!.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
+  Check(_repository.GetBookmarks(window.MediaId).All(b=>b.Id!=byMenu.Id) && window.Marks.All(m=>m.SourceId!=byMenu.Id),"The context menu did not remove the bookmark.");
+  list.UpdateLayout(); list.SelectedIndex=window.Marks.ToList().FindIndex(m=>m.SourceId==byKey.Id); list.Focus();
+  list.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice,PresentationSource.FromVisual(list)!,0,Key.Delete) { RoutedEvent=Keyboard.PreviewKeyDownEvent });
+  Check(_repository.GetBookmarks(window.MediaId).All(b=>b.Id!=byKey.Id) && window.Marks.All(m=>m.SourceId!=byKey.Id),"Del did not remove the selected bookmark.");
+  Check(_repository.GetBookmarks(window.MediaId).Any(b=>b.Id==mark.SourceId),"Removing one bookmark took another along.");
   Capture((FrameworkElement)window.Content, System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_settings.DataDirectory)!,"player-controls-renamed.png"));
   window.VolumeControl.Value=volume;
   if(!originalPause)await window.TogglePauseAsync();

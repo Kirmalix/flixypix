@@ -98,6 +98,7 @@ internal sealed partial class VideoPlayerWindow : Window
    if(markList.IsKeyboardFocusWithin && e.Key is Key.Up or Key.Down or Key.Left or Key.Right)return;
    if(markList.IsKeyboardFocusWithin && e.Key==Key.Enter && markList.SelectedItem is MarkRow markRow) {e.Handled=true;await SeekToMarkAsync(markRow.Mark);return;}
    if(e.Key==Key.F2 && markList.IsKeyboardFocusWithin) { e.Handled=BeginRenameSelectedMark(); if(e.Handled)return; }
+   if(e.Key==Key.Delete && Keyboard.Modifiers==ModifierKeys.None && markList.IsKeyboardFocusWithin) { e.Handled=RemoveSelectedBookmark(); if(e.Handled)return; }
    var key=e.Key==Key.System?e.SystemKey:e.Key;
    if(key==Key.Escape) { e.Handled=true; if(WindowStyle==WindowStyle.None)ToggleFullscreen(); else Close(); return; }
    if(key==Key.F11) { e.Handled=true; ToggleFullscreen(); return; }

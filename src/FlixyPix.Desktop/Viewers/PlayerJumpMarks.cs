@@ -79,7 +79,10 @@ internal sealed partial class VideoPlayerWindow
   {
    if((e.OriginalSource as FrameworkElement)?.DataContext is not MarkRow row)return;
    e.Handled=true; markList.SelectedItem=row;
-   var menu=Menus.Create([MenuSpec.Command(T("Rename"),()=>BeginRenameMark(row),shortcut:"F2")],(_,error)=>ShowMessage(error.Message));
+   // Scenes are kept on the detail page; bookmarks and scene thumbnails can go right here.
+   var entries=new List<MenuSpec> { MenuSpec.Command(T("Rename"),()=>BeginRenameMark(row),shortcut:"F2") };
+   if(row.Mark.Kind!=JumpMarkKind.Scene)entries.Add(MenuSpec.Command(T("Remove bookmark"),()=>RemoveBookmark(row),shortcut:T("Del")));
+   var menu=Menus.Create(entries,(_,error)=>ShowMessage(error.Message));
    OpenMarkMenu=menu; markMenuOpen=true; menu.Closed+=(_,_)=>{markMenuOpen=false;}; menu.IsOpen=true;
   };
   var range = BuildPanelRange();
@@ -164,7 +167,7 @@ internal sealed partial class VideoPlayerWindow
  internal ContextMenu? OpenMarkMenu { get; private set; }
  private bool editingMark,markMenuOpen;
  internal ListBox MarkList=>markList;
- internal Action? MarkRenamed { get; set; }
+ internal Action? MarksEdited { get; set; }
  private static bool IsRenameButton(DependencyObject? source)
  {
   for(var current=source;current!=null;current=current is Visual?VisualTreeHelper.GetParent(current):LogicalTreeHelper.GetParent(current))
@@ -199,9 +202,21 @@ internal sealed partial class VideoPlayerWindow
     if(source==null)throw new InvalidOperationException(T("The jump mark no longer exists."));
     repository.UpsertBookmark(source with { Title=name });
    }
-   RefreshMarks(); MarkRenamed?.Invoke();
+   RefreshMarks(); MarksEdited?.Invoke();
   }
   catch(Exception error) when(error is InvalidOperationException or ArgumentException or System.IO.IOException) { ShowMessage(error.Message); }
+ }
+ internal bool RemoveSelectedBookmark()=>markList.SelectedItem is MarkRow row && RemoveBookmark(row);
+ /// <summary>Removes the bookmark behind a list row; the selection moves on to the mark that took its place.</summary>
+ private bool RemoveBookmark(MarkRow row)
+ {
+  if(editingMark || closing || row.Mark.Kind==JumpMarkKind.Scene)return false;
+  var index=Array.IndexOf(markRows,row);
+  repository.DeleteBookmark(row.Mark.SourceId);
+  Notify(T("Bookmark removed · ")+row.Mark.TimeLabel);
+  RefreshMarks(); MarksEdited?.Invoke();
+  if(markRows.Length>0) { markList.SelectedItem=markRows[Math.Clamp(index,0,markRows.Length-1)]; markList.ScrollIntoView(markList.SelectedItem); (markList.ItemContainerGenerator.ContainerFromItem(markList.SelectedItem) as ListBoxItem)?.Focus(); }
+  return true;
  }
  private void NameBookmark(Bookmark bookmark)
  {
