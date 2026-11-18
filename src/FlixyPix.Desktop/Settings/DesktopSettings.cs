@@ -44,6 +44,8 @@ internal sealed partial record DesktopSettings
  public PrivacySettings Privacy { get; init; } = new();
  /// <summary>Volume of the last video, used when the library remembers the volume.</summary>
  public int PlayerVolume { get; init; } = 100;
+ /// <summary>Place and picture size of the player window as the user left it; null until a video was played.</summary>
+ public PlayerWindowPlace? PlayerWindow { get; init; }
  /// <summary>The library sidebar is folded to its rail of symbols (Strg+B).</summary>
  public bool SidebarCollapsed { get; init; }
  /// <summary>Width of the unfolded sidebar as the user dragged it.</summary>

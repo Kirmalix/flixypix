@@ -102,6 +102,9 @@ public sealed record PlaybackPreferences
     public int StartVolume { get; init; } = 100;
     /// <summary>The player window stays above other windows (original "ezfpplayertopmost").</summary>
     public bool AlwaysOnTop { get; init; }
+    /// <summary>Portrait videos (phone recordings) get a narrow window of their own shape; off, they keep the landscape
+    /// window with black bars at the sides.</summary>
+    public bool FitPortraitWindow { get; init; }
     /// <summary>A medium with several files plays its best version (most lines, then bit rate); off, it plays the main file.</summary>
     public bool PlayBestVersion { get; init; } = true;
     /// <summary>Notices in the player (original "ezfpplayermessages"): the play/pause symbol over the video and short notes

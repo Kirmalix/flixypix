@@ -90,6 +90,7 @@ public partial class MainWindow
                 await _player!.PauseAsync(true); await _videoWindow!.SeekToAsync(.35);
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Require(_videoWindow.Marks.Select(m => m.PositionSeconds).SequenceEqual([.2, .45, .7]) && _videoWindow.MarkPanelVisible && !_videoWindow.MarkStepsVisible && _videoWindow.RenderedMarkCount == 3, "Player jump marks were not listed and drawn in time order.");
+                await RequirePlayerWindowFollowsPictureAsync(_videoWindow);
                 await _videoWindow.SeekToMarkAsync(JumpMarks.Numbered(_videoWindow.Marks, 3)!);
                 Require(Math.Abs(_videoWindow.LastPositionSeconds - .7) < .01, "Jumping to a chosen mark failed.");
                 await _videoWindow.SeekToAsync(.35);

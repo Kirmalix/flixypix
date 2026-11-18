@@ -251,8 +251,7 @@ internal sealed partial class VideoPlayerWindow
   var dialog = new StillExportWindow(this, start, end, FrameRate, folder);
   if (ExportChoice != null) dialog.Result = ExportChoice(dialog); else if (dialog.ShowDialog() != true) return;
   if (dialog.Result is not { } range) return;
-  ShowMessage(T("Saving pictures …"));
-  ShowMessage(await StillsExportRequested(Source.Path, range, FrameRate, folder));
+  ShowMessage(await WhileBusyAsync(T("Saving pictures …"), () => StillsExportRequested(Source.Path, range, FrameRate, folder)));
  }
  /// <summary>Answers the export dialog instead of the user (smoke test).</summary>
  internal Func<StillExportWindow, StillRange?>? ExportChoice { get; set; }

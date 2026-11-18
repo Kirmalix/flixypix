@@ -164,7 +164,40 @@ internal sealed partial class VideoPlayerWindow
   status.Text = text; if (closing || host.ActualWidth <= 0) return;
   InterfaceScaling.Fit((FrameworkElement)messagePopup.Child);
   messagePopup.IsOpen = true;
-  messageTimer?.Stop(); messageTimer = new DispatcherTimerLike(TimeSpan.FromSeconds(4), () => messagePopup.IsOpen = false);
+  messageTimer?.Stop(); messageTimer = new DispatcherTimerLike(TimeSpan.FromSeconds(4), () => { if (busyText != null) ShowBusyMessage(); else messagePopup.IsOpen = false; });
+ }
+
+ private readonly ProgressBar busyBar = new() { IsIndeterminate = true, Height = 4, MinWidth = 160, Margin = new Thickness(0, 6, 0, 2), Visibility = Visibility.Collapsed };
+ private string? busyText;
+ internal bool BusyShown => busyBar.Visibility == Visibility.Visible && messagePopup.IsOpen;
+
+ /// <summary>Runs work the player gives no progress for (saving a large frame): if it is not done after a moment, a
+ /// running bar under the message shows that FlixyPix is waiting, until the work has ended.</summary>
+ private async Task<TResult> WhileBusyAsync<TResult>(string text, Func<Task<TResult>> work)
+ {
+  var task = work();
+  if (await Task.WhenAny(task, Task.Delay(BusyDelay)) != task && !closing) { busyText = text; ShowBusyMessage(); }
+  try { return await task; }
+  finally
+  {
+   if (busyText != null)
+   {
+    busyText = null; busyBar.Visibility = Visibility.Collapsed;
+    // The message following the work replaces it; without one the waiting ends visibly too.
+    messageTimer?.Stop(); messagePopup.IsOpen = false;
+   }
+  }
+ }
+ /// <summary>How long work may take before the bar appears; the smoke test sets it to zero.</summary>
+ internal TimeSpan BusyDelay { get; set; } = TimeSpan.FromMilliseconds(400);
+
+ private void ShowBusyMessage()
+ {
+  if (busyText == null) return;
+  busyBar.Visibility = Visibility.Visible; status.Text = busyText;
+  if (closing || host.ActualWidth <= 0) return;
+  InterfaceScaling.Fit((FrameworkElement)messagePopup.Child);
+  messageTimer?.Stop(); messagePopup.IsOpen = true;
  }
  private (int X, int Y) lastCursor; private DateTime lastMovement = DateTime.MinValue;
 
@@ -264,7 +297,8 @@ internal sealed partial class VideoPlayerWindow
   controlBar.Children.Add(BuildStillsStrip());
   controlBar.Children.Add(BuildRangeStrip());
   status.Margin = new Thickness(0); status.MaxWidth = 640; status.FontSize = 12; status.Foreground = Brushes.White;
-  messagePopup.Child = new Border { Background = new SolidColorBrush(Color.FromArgb(200, 10, 12, 16)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 5, 10, 5), Child = status };
+  var message = new StackPanel(); message.Children.Add(status); message.Children.Add(busyBar);
+  messagePopup.Child = new Border { Background = new SolidColorBrush(Color.FromArgb(200, 10, 12, 16)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 5, 10, 5), Child = message };
   messagePopup.PlacementTarget = host;
 
   flash.Child = new Border { Width = 96, Height = 96, CornerRadius = new CornerRadius(48), Background = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0)), Child = flashGlyph };
@@ -376,6 +410,9 @@ internal sealed partial class VideoPlayerWindow
   MenuSpec.Command(T("Edit view at time …"), () => _ = Command(EditTransformAsync)),
   MenuSpec.Command(T("Reset view"), () => { manualTransform = PlayerTransformTimeline.Identity; ApplyTransform(); }),
   MenuSpec.Command(T("Manage points in time …"), () => _ = Command(ManageTransformsAsync)),
+  MenuSpec.Separator,
+  MenuSpec.Command(T("Fit window to video"), FitWindowToVideo, enabled: !IsFullscreen && PictureAspect != null),
+  MenuSpec.Submenu(T("Window size"), [.. new[] { .5, 1, 2 }.Select(scale => MenuSpec.Command(T("{0:P0} of the video size", scale), () => ScaleWindow(scale), enabled: !IsFullscreen && PictureAspect != null))]),
  ];
 
  // Full screen: the bar moves into a popup over the video and shows while the mouse moves.

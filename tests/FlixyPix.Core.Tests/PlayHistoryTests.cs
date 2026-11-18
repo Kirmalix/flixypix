@@ -9,6 +9,16 @@ namespace FlixyPix.Core.Tests;
 public sealed class PlayHistoryTests : IDisposable
 {
     [Theory]
+    [InlineData(600.0, 240.0, 240.0)]
+    [InlineData(600.0, 594.9, 594.9)]
+    [InlineData(600.0, 595.0, 0.0)]
+    [InlineData(600.0, 600.0, 0.0)]
+    [InlineData(3.0, 1.0, 0.0)]
+    [InlineData(null, 590.0, 590.0)]
+    public void ResumeStartsFromTheBeginningWithinTheLastFiveSeconds(double? duration, double position, double expected) =>
+        Assert.Equal(expected, new MediaItem { Path = "x.mp4", Kind = MediaKind.Video, DurationSeconds = duration, PlaybackPositionSeconds = position }.ResumePositionSeconds());
+
+    [Theory]
     [InlineData("add")]
     [InlineData("undo")]
     [InlineData("finish")]

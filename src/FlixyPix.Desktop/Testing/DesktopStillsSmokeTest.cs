@@ -36,7 +36,11 @@ public partial class MainWindow
    window.RaiseEvent(right); for (var wait = 0; wait < 40 && !At(.3); wait++) await Task.Delay(25);
    Require(right.Handled && At(.3), $"The arrow key did not step one frame ({window.LastPositionSeconds}).");
 
-   var still = await window.SaveStillAsync();
+   // Saving shows a running bar while it lasts (at once here) and takes it away afterwards.
+   window.BusyDelay = TimeSpan.Zero; var saving = window.SaveStillAsync(); var busySeen = false;
+   for (var wait = 0; wait < 200 && !saving.IsCompleted && !busySeen; wait++) { busySeen = window.BusyShown && window.MessageText == T("Saving picture …"); await Task.Delay(5); }
+   var still = await saving; window.BusyDelay = TimeSpan.FromMilliseconds(400);
+   Require(busySeen && !window.BusyShown, "Saving the picture did not show the waiting bar, or kept it after saving.");
    Require(File.Exists(still) && Path.GetDirectoryName(still) == Path.Combine(shots, ScreenshotPreferences.FolderName(video.Title)) && Path.GetFileName(still).Contains("00-00-00-300", StringComparison.Ordinal),
     "The picture did not go into the folder of its video with its time: " + still);
    await Prepared();

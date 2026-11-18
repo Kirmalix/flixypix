@@ -42,6 +42,11 @@ public sealed record MediaItem
     public string? ThumbnailPath { get; init; }
     public ContactSheetMetadata? ContactSheet {get;init;}
     public double PlaybackPositionSeconds { get; init; }
+    /// <summary>Where playback resumes: the remembered position, but from the start when it lies within the last
+    /// <see cref="ResumeEndMarginSeconds"/> seconds, where only the end would be left to see.</summary>
+    public double ResumePositionSeconds() =>
+        DurationSeconds is > 0 and var length && PlaybackPositionSeconds >= length - ResumeEndMarginSeconds ? 0 : PlaybackPositionSeconds;
+    public const double ResumeEndMarginSeconds = 5;
     public MediaPlaybackSettings Playback { get; init; } = new();
     public AudioTrackPreference AudioTrack { get; init; } = new();
     /// <summary>Subtitle file chosen in the player and the subtitle offset in seconds; applied on the next playback.</summary>

@@ -61,14 +61,13 @@ internal sealed partial class VideoPlayerWindow : Window
    { e.Handled=true; host.Wheel(e.Delta,Keyboard.Modifiers); }
   };
   Width=1100; Height=760; MinWidth=650; MinHeight=460;
-  WindowStartupLocation=WindowStartupLocation.CenterOwner;
   var root=new DockPanel(); root.SizeChanged+=(_,_)=>AdaptMarkPanel(root.ActualWidth); var bar=BuildControlBar(); DockPanel.SetDock(bar,Dock.Bottom); root.Children.Add(bar);
   var panel=BuildMarkPanel(); DockPanel.SetDock(panel,Dock.Right); root.Children.Add(panel);
   // Track lists stay as the model of the track menu; the menu sets their selection.
   audio.SelectionChanged+=async (_,_)=>{ if(!syncing && audio.SelectedItem is TrackChoice track && player!=null)await TrackPreference(()=>SelectAudioAsync(track)); };
   subtitles.SelectionChanged+=async (_,_)=>{ if(!syncing && subtitles.SelectedItem is TrackChoice track && player!=null)await Command(()=>player.SelectSubtitleTrackAsync(track.Id)); };
   transforms.Checked+=(_,_)=>ApplyTransform(); transforms.Unchecked+=(_,_)=>ApplyTransform();
-  root.Children.Add(host); Content=root; InterfaceScaling.Prepare(this);
+  root.Children.Add(host); Content=root; InterfaceScaling.Prepare(this); SetUpWindowFit();
   // From pressing the time line until release the poll must not move it back: a click jumps to the clicked point
   // (IsMoveToPointEnabled), dragging from anywhere on the line follows the pointer, release seeks to where it ended.
   // The slider marks these events handled itself (IsMoveToPointEnabled), so they are subscribed with handledEventsToo.
@@ -79,7 +78,7 @@ internal sealed partial class VideoPlayerWindow : Window
   position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ position.ReleaseMouseCapture(); if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
   timer.Tick+=async (_,_)=>await PollAsync();
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
-   ready.TrySetResult(host.VideoHandle); if(player==null)ShowMessage(T("Starting the player …")); if(playback.AlwaysFullscreen && WindowStyle!=WindowStyle.None)ToggleFullscreen();
+   ready.TrySetResult(host.VideoHandle); if(player==null)ShowMessage(T("Starting the player …")); if((playback.AlwaysFullscreen || Place is { Fullscreen:true }) && WindowStyle!=WindowStyle.None)ToggleFullscreen();
    } catch(Exception error) { ready.TrySetException(error); ShowMessage(error.Message); } };
   Closed+=(_,_)=>{ closing=true;DisposeSeekPreview(); if(editingMark)InlineEdit.Cancel(); clickTimer?.Stop(); mouseInputs.Clear(); timer.Stop(); player=null; overlay.IsOpen=flash.IsOpen=messagePopup.IsOpen=false; ready.TrySetCanceled(); awake?.Dispose(); awake=null; };
   host.SizeChanged+=(_,_)=>{ ApplyTransform(); if(overlay.IsOpen)ShowOverlay(); KeepMessageInPlace(); };
@@ -121,7 +120,7 @@ internal sealed partial class VideoPlayerWindow : Window
   if(Source!=null)Source=Source with {DurationSeconds=durationSeconds};
   position.Maximum=Math.Max(1,durationSeconds??1); position.IsEnabled=durationSeconds>0; RenderMarkers();
   pause.Content=paused?"":"";
-  await Command(() => RestoreSubtitlesAsync(player)); await Command(RestorePlaybackSettingsAsync); await RefreshTracksAsync(); RefreshMarks();UpdateRangeControls(); await PollAsync(); timer.Start();
+  await Command(() => MeasurePictureAsync(player)); await Command(() => RestoreSubtitlesAsync(player)); await Command(RestorePlaybackSettingsAsync); await RefreshTracksAsync(); RefreshMarks();UpdateRangeControls(); await PollAsync(); timer.Start();
   if(status.Text==T("Starting the player …"))messagePopup.IsOpen=false;
  }
  /// <summary>Whether the left mouse button is down; the smoke test replaces it because it cannot press a real button.</summary>
@@ -164,7 +163,7 @@ internal sealed partial class VideoPlayerWindow : Window
  internal Task PollOnceAsync()=>PollAsync();
  internal bool PollingActive=>timer.IsEnabled;
  internal bool PollPending=>polling;
- private int unansweredPolls;
+ private int unansweredPolls, savingPicture;
  private async Task PollAsync()
  {
   if(polling || player==null || closing)return; polling=true;
@@ -176,9 +175,10 @@ internal sealed partial class VideoPlayerWindow : Window
    LastPositionSeconds=seconds.Value; if(!seeking)position.Value=Math.Clamp(seconds.Value,0,position.Maximum);
    if(!paused)Coverage.Observe(seconds.Value,speed.SelectedItem is double rate?rate:1);
    ApplyTransform(); UpdateCurrentMark(); UpdateControls(seconds.Value); PositionTick?.Invoke(seconds.Value);
+   if(!pictureMeasured)await MeasurePictureAsync(player);
   }
   // A busy mpv answers late (a slow seek, a drive waking up) and plays on; only a lost connection ends the polling.
-  catch(OperationCanceledException) { if(!closing && ++unansweredPolls==3)ShowMessage(T("The player is not responding.")); }
+  catch(OperationCanceledException) { if(!closing && savingPicture==0 && ++unansweredPolls==3)ShowMessage(T("The player is not responding.")); }
   catch(Exception error) when(error is IOException or InvalidOperationException or ObjectDisposedException) { timer.Stop(); if(!closing)ShowMessage(T("Playback finished · ")+error.Message); }
   finally { polling=false; }
  }
@@ -261,7 +261,10 @@ internal sealed partial class VideoPlayerWindow : Window
  {
   var folder=StillsFolder; FileAccessPolicy.Current.EnsureWritable(folder); Directory.CreateDirectory(folder);
   var seconds=LastPositionSeconds; var path=playback.Screenshots.NextPath(folder,media.Title,seconds,precise);
-  await RequirePlayer().ScreenshotAsync(path); Notify(T("Screenshot saved · ")+path);
+  // A large frame keeps mpv busy for seconds; polls waiting meanwhile are no sign of a hanging player.
+  var active=RequirePlayer();
+  savingPicture++; try { await WhileBusyAsync(T("Saving picture …"),async()=>{ await active.ScreenshotAsync(path); return true; }); } finally { savingPicture--; unansweredPolls=0; }
+  Notify(T("Screenshot saved · ")+path);
   if(StillSaved!=null && File.Exists(path))await StillSaved(new(path,seconds));
   return path;
  }
@@ -292,6 +295,7 @@ internal sealed partial class VideoPlayerWindow : Window
  {
   if(IsFullscreen) { WindowStyle=WindowStyle.SingleBorderWindow; WindowState=WindowState.Normal; LeaveOverlayMode(); }
   else { WindowStyle=WindowStyle.None; WindowState=WindowState.Maximized; Dispatcher.BeginInvoke(EnterOverlayMode,DispatcherPriority.Loaded); }
+  Remember(false);
  }
  private sealed class NativeVideoHost : HwndHost
  {

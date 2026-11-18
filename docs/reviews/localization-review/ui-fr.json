@@ -15262,6 +15262,38 @@
     "The name is taken in the target folder; a free name is used.": {
       "status": "unchanged",
       "digest": "c02c77394510995ae93bc235cadbb8a145c79c5aa0d1ebed3651647e1819c0c5"
+    },
+    "Saving picture …": {
+      "status": "unchanged",
+      "digest": "6fe948349b46d8bfb9bc009fb2aa052eaedc904952efe9357fcc544a43f31313"
+    },
+    "Fit the window to portrait videos": {
+      "status": "unchanged",
+      "digest": "a740d80b5bc812c3bce012417ea9a1500c19ddefcb4d799ae5745e8a308547fb"
+    },
+    "Fit window to video": {
+      "status": "unchanged",
+      "digest": "454e741e17fd0a3b41a890c522fc2f43d537eb9a4c32663efb18ba8c16eb5d54"
+    },
+    "Phone recordings and other portrait videos get a narrow, tall window. Off, they keep the landscape window with black bars at the sides.": {
+      "status": "unchanged",
+      "digest": "4063055886400f73c1f2ff8e4264e385d92ad0fb6d7dd7ae1121670f0daaa93e"
+    },
+    "Player window": {
+      "status": "unchanged",
+      "digest": "25658da6d6f26c14e65da5cfcc97d9ce9482e468d936f13385fc24d6a564393b"
+    },
+    "The window keeps the size and place you gave it. Its height follows landscape and square videos, so they show without black bars above and below; Shift while dragging an edge sizes it freely.": {
+      "status": "unchanged",
+      "digest": "5882385d6405962295af46922ae73b9f6505c426b6a8a9d4da5fc3971218ad7f"
+    },
+    "Window size": {
+      "status": "unchanged",
+      "digest": "b1e99a515f72cb79dd1cf5d269e553fc8c55c5a672a63efd31efb477746d5fdb"
+    },
+    "{0:P0} of the video size": {
+      "status": "unchanged",
+      "digest": "1739730f20f80837dffc14ce36dce3a0f943d028eac9a11478318f4d8c8e5474"
     }
   }
 }

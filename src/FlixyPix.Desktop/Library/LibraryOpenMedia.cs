@@ -43,8 +43,6 @@ public partial class MainWindow
                 await opened.ReadyTask;
                 return;
             }
-            // The next video opens where the previous one was, in the same window size or full screen.
-            (Rect Bounds, bool Fullscreen)? previous = _videoWindow is { IsLoaded: true } shown ? (shown.IsFullscreen ? shown.RestoreBounds : new Rect(shown.Left, shown.Top, shown.Width, shown.Height), shown.IsFullscreen) : null;
             await _playback.PrepareStartAsync(ReleasePlaybackAsync);
             if (!_playback.IsCurrentStart(request) || _closing) return;
             var source = PlaybackSource.Resolve(item, path);
@@ -53,11 +51,9 @@ public partial class MainWindow
             window.InitialVolume = playback.RememberVolume ? _settings.PlayerVolume : playback.StartVolume;
             window.Closing += (_, _) => { if (playback.RememberVolume) _settings = _settings with { PlayerVolume = (int)Math.Round(window.Volume) }; };
             ConnectPlayer(window, item);
-            if (previous is { } place && !place.Bounds.IsEmpty)
-            {
-                window.WindowStartupLocation = WindowStartupLocation.Manual; window.Left = place.Bounds.Left; window.Top = place.Bounds.Top; window.Width = place.Bounds.Width; window.Height = place.Bounds.Height;
-                if (place.Fullscreen) window.Loaded += (_, _) => { if (!window.IsFullscreen) window.ToggleFullscreen(); };
-            }
+            // The next video and the next start open where the user left the player, as large or in full screen.
+            window.Place = _settings.PlayerWindow;
+            window.PlaceChanged += place => _settings = _settings with { PlayerWindow = place };
             window.Closing += async (_, args) =>
          {
           if (_stoppingPlayer || !ReferenceEquals(_videoWindow, window)) return;
@@ -65,7 +61,7 @@ public partial class MainWindow
       };
             window.Show(); var handle = await window.ReadyTask;
             if (!window.IsLoaded) return;
-            var player = await _tools.PlayAsync(path, start ?? (playback.ResumePlayback ? item.PlaybackPositionSeconds : 0), handle, cancellationToken: libraryToken, hardwareDecoding: playback.HardwareDecoding, reportMouse: false);
+            var player = await _tools.PlayAsync(path, start ?? (playback.ResumePlayback ? item.ResumePositionSeconds() : 0), handle, cancellationToken: libraryToken, hardwareDecoding: playback.HardwareDecoding, reportMouse: false);
             if (!window.IsLoaded || !_playback.IsCurrentStart(request) || !ReferenceEquals(_videoWindow, window))
             {
                 await player.DisposeAsync();

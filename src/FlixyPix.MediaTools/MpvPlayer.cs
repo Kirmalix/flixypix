@@ -30,10 +30,12 @@ public sealed class MpvPlayer : IAsyncDisposable
         writer = new StreamWriter(pipe, new UTF8Encoding(false), leaveOpen: true) { AutoFlush = true, NewLine = "\n" };
     }
 
-    private async Task<JsonElement> SendAsync(params object[] command)
+    private Task<JsonElement> SendAsync(params object[] command) => SendAsync(TimeSpan.FromSeconds(5), command);
+
+    private async Task<JsonElement> SendAsync(TimeSpan limit, object[] command)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(limit);
         await gate.WaitAsync(timeout.Token);
         try
         {
@@ -68,8 +70,10 @@ public sealed class MpvPlayer : IAsyncDisposable
     /// <summary>Steps one frame forward or back; mpv pauses playback for this.</summary>
     /// <summary>Presses a key or mouse button as mpv's input does, so its bindings run (for tests of reported input).</summary>
     public async Task PressAsync(string key) => _ = await SendAsync("keypress", key);
-    /// <summary>Saves the current video frame (without subtitles or on-screen display) as an image file.</summary>
-    public async Task ScreenshotAsync(string path) => _ = await SendAsync("screenshot-to-file", path, "video");
+    /// <summary>Saves the current video frame (without subtitles or on-screen display) as an image file. mpv answers only
+    /// once the file is written: a 4K frame (10 bit gives a 16-bit PNG, hardware decoding first copies it back from the
+    /// graphics card) takes several seconds, so this request waits longer than the others.</summary>
+    public async Task ScreenshotAsync(string path) => _ = await SendAsync(TimeSpan.FromSeconds(60), ["screenshot-to-file", path, "video"]);
     public async Task FrameStepAsync(bool forward) => _ = await SendAsync(forward ? "frame-step" : "frame-back-step");
     /// <summary>Steps exactly this many frames forward (or back, when negative) by seeking; playback stays paused.</summary>
     public async Task FrameStepAsync(int frames)
@@ -141,6 +145,20 @@ public sealed class MpvPlayer : IAsyncDisposable
             JsonValueKind.Array => string.Join(',', result.EnumerateArray().Select(entry => entry.ToString())),
             _ => null,
         };
+    }
+
+    /// <summary>Size of the picture as it is shown: with the pixel aspect of the file (anamorphic DVD) and turned by the
+    /// rotation of phone recordings; null until the first frame was decoded.</summary>
+    public async Task<(int Width, int Height)?> GetDisplaySizeAsync()
+    {
+        JsonElement result;
+        try { result = await SendAsync("get_property", "video-out-params"); }
+        catch (InvalidOperationException) { return null; }
+        if (result.ValueKind != JsonValueKind.Object || !result.TryGetProperty("dw", out var w) || !result.TryGetProperty("dh", out var h)
+            || !w.TryGetInt32(out var width) || !h.TryGetInt32(out var height) || width <= 0 || height <= 0) return null;
+        // A rotation left to the output is reported beside the size; one a filter did is already in it.
+        var turned = result.TryGetProperty("rotate", out var rotate) && rotate.TryGetInt32(out var degrees) && Math.Abs(degrees) % 180 == 90;
+        return turned ? (height, width) : (width, height);
     }
 
     public async Task<double?> GetPositionAsync()

@@ -12,7 +12,7 @@ internal sealed class PlayerSeekSettings
  internal event Action? Changed;
  internal readonly NumberBox WheelStep = new(0.1, 3600, 1, "");
  internal readonly SegmentedChoice WheelUnit = Units();
- internal readonly CheckBox InvertWheel = SettingsUi.Switch(), Resume = SettingsUi.Switch(), RememberVolume = SettingsUi.Switch(), OnTop = SettingsUi.Switch();
+ internal readonly CheckBox InvertWheel = SettingsUi.Switch(), Resume = SettingsUi.Switch(), RememberVolume = SettingsUi.Switch(), OnTop = SettingsUi.Switch(), FitPortrait = SettingsUi.Switch();
  internal readonly NumberBox StartVolume = new(0, 100, 5, "%");
  private readonly Dictionary<WheelModifier, (ComboBox Action, NumberBox Step, SegmentedChoice Unit)> modifiers = [];
  private readonly StackPanel jumpRows = new();
@@ -32,7 +32,7 @@ internal sealed class PlayerSeekSettings
    modifiers[modifier] = (action, step, unit);
   }
   WheelStep.Changed += () => Changed?.Invoke(); WheelUnit.Changed += () => Changed?.Invoke(); StartVolume.Changed += () => Changed?.Invoke();
-  foreach (var check in new[] { InvertWheel, Resume, RememberVolume, OnTop }) { check.Checked += (_, _) => { UpdateEnabled(); Changed?.Invoke(); }; check.Unchecked += (_, _) => { UpdateEnabled(); Changed?.Invoke(); }; }
+  foreach (var check in new[] { InvertWheel, Resume, RememberVolume, OnTop, FitPortrait }) { check.Checked += (_, _) => { UpdateEnabled(); Changed?.Invoke(); }; check.Unchecked += (_, _) => { UpdateEnabled(); Changed?.Invoke(); }; }
  }
 
  private static SegmentedChoice Units() => new([((int)JumpUnit.Seconds, T("Seconds")), ((int)JumpUnit.Percent, T("% of the length"))]);
@@ -62,8 +62,10 @@ internal sealed class PlayerSeekSettings
    SettingsUi.Card(T("Volume and resume"), null,
     new SettingRow(T("Resume at the remembered position"), T("A video starts where it was last stopped."), Resume),
     new SettingRow(T("Remember volume"), T("Each video starts with the volume of the previous one."), RememberVolume),
-    new SettingRow(T("Initial volume"), T("Applies when the volume is not remembered."), StartVolume),
-    new SettingRow(T("Player always on top"), T("The player window stays above other windows."), OnTop)),
+    new SettingRow(T("Initial volume"), T("Applies when the volume is not remembered."), StartVolume)),
+   SettingsUi.Card(T("Player window"), T("The window keeps the size and place you gave it. Its height follows landscape and square videos, so they show without black bars above and below; Shift while dragging an edge sizes it freely."),
+    new SettingRow(T("Player always on top"), T("The player window stays above other windows."), OnTop),
+    new SettingRow(T("Fit the window to portrait videos"), T("Phone recordings and other portrait videos get a narrow, tall window. Off, they keep the landscape window with black bars at the sides."), FitPortrait)),
   ];
  }
 
@@ -102,7 +104,7 @@ internal sealed class PlayerSeekSettings
   }
   Jumps.Clear(); jumpRows.Children.Clear();
   foreach (var jump in playback.CustomJumps) AddJump(jump);
-  Resume.IsChecked = playback.ResumePlayback; RememberVolume.IsChecked = playback.RememberVolume; StartVolume.Value = playback.StartVolume; OnTop.IsChecked = playback.AlwaysOnTop;
+  Resume.IsChecked = playback.ResumePlayback; RememberVolume.IsChecked = playback.RememberVolume; StartVolume.Value = playback.StartVolume; OnTop.IsChecked = playback.AlwaysOnTop; FitPortrait.IsChecked = playback.FitPortraitWindow;
   UpdateEnabled();
  }
 
@@ -128,5 +130,6 @@ internal sealed class PlayerSeekSettings
   CustomJumps = Jumps.Select(j => new CustomJump(j.Key.Value, j.Amount.Value!.Value, (JumpUnit)j.Unit.Value)).ToList(),
   ResumePlayback = Resume.IsChecked == true, RememberVolume = RememberVolume.IsChecked == true,
   StartVolume = StartVolume.IsValid ? (int)Math.Round(StartVolume.Value!.Value) : playback.StartVolume, AlwaysOnTop = OnTop.IsChecked == true,
+  FitPortraitWindow = FitPortrait.IsChecked == true,
  };
 }
