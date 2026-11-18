@@ -35,7 +35,7 @@ public partial class MainWindow
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         if (key == Key.Escape)
         {
-            if (FilterFlyout.IsOpen) { FilterFlyout.IsOpen = false; return true; }
+            if (FilterFlyout.IsOpen) { _flyoutClosedByKey = true; FilterFlyout.IsOpen = false; return true; }
             if (ViewPopup.IsOpen) { ViewPopup.IsOpen = false; ViewButton.Focus(); return true; }
         }
         if (key == Key.F6 && Keyboard.Modifiers is ModifierKeys.None or ModifierKeys.Shift) { MoveKeyboardRegion(Keyboard.Modifiers == ModifierKeys.Shift); return true; }
@@ -120,7 +120,12 @@ public partial class MainWindow
             if (Logicals<TextBox>(FilterSectionHost).FirstOrDefault(box => box.Uid.StartsWith("find:", StringComparison.Ordinal)) is { } search) search.Focus();
             else { FilterFlyoutFrame.Focusable = true; FilterFlyoutFrame.FocusVisualStyle = null; FilterFlyoutFrame.Focus(); }
         };
-        FilterFlyout.Closed += (_, _) => { if (FilterFlyout.PlacementTarget is UIElement { IsVisible: true } anchor) anchor.Focus(); else FilterButton.Focus(); };
+        FilterFlyout.Closed += (_, _) =>
+        {
+            if (!_flyoutClosedByKey) return;
+            _flyoutClosedByKey = false;
+            if (FilterFlyout.PlacementTarget is UIElement { IsVisible: true } anchor) anchor.Focus(); else FilterButton.Focus();
+        };
         ViewPopup.Opened += (_, _) => { KeyboardNavigation.SetTabNavigation(ViewPopupFrame, KeyboardNavigationMode.Cycle); ViewPopupFrame.MoveFocus(new(FocusNavigationDirection.First)); }; ViewPopup.Closed += (_, _) => ViewButton.Focus();
         MediaList.PreviewMouseDown += (_, _) => { _keyboardIndex = null; _keyboardAnchor = null; };
     }

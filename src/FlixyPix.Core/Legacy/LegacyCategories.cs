@@ -13,8 +13,7 @@ public sealed partial class CatalogRepository
             .ToDictionary(x => x.Key, x => x.ToArray());
         var vocabulary = Rows("searchcriteria").Where(x => string.Equals(Text(x, "movie"), "SEARCHTAGINFO", StringComparison.Ordinal) &&
             !string.IsNullOrWhiteSpace(Text(x, "value1")) && !string.IsNullOrWhiteSpace(Text(x, "category")) &&
-            !string.Equals(Text(x, "category"), "Recent", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(Text(x, "category"), "Uncategorized", StringComparison.OrdinalIgnoreCase))
+            !TagRoles.IsPseudoCategory(Text(x, "category")))
             .GroupBy(x => Text(x, "value1")!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(x => x.Key, x => x.Select(v => Text(v, "category")!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(), StringComparer.OrdinalIgnoreCase);
         var watchLaterRows = Rows("videowatchlater").Where(x => Text(x, "videoid") is not null).ToArray();

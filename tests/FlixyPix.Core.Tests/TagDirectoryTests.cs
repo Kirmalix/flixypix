@@ -39,6 +39,14 @@ public sealed class TagDirectoryTests : IDisposable
     }
 
     [Fact]
+    public void PlaceholderListsOfTheOriginalAreNoCategories()
+    {
+        Assert.True(TagRoles.IsPseudoCategory("<Recently Used>")); Assert.True(TagRoles.IsPseudoCategory("Recently Used"));
+        Assert.True(TagRoles.IsPseudoCategory(" recent ")); Assert.True(TagRoles.IsPseudoCategory("Uncategorized"));
+        Assert.False(TagRoles.IsPseudoCategory("Genres")); Assert.False(TagRoles.IsPseudoCategory("<")); Assert.False(TagRoles.IsPseudoCategory(null));
+    }
+
+    [Fact]
     public void BookmarkEditAfterMergePreventsUndoWithoutLosingChanges()
     {
         var media = catalog.Search()[0];

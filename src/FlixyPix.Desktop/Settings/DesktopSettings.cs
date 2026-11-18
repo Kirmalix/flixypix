@@ -56,6 +56,8 @@ internal sealed partial record DesktopSettings
  public bool FilterBarHidden { get; init; }
  /// <summary>How often filter sections and values were used lately (decaying), so the bar puts them first.</summary>
  public IReadOnlyDictionary<string, double> FilterUsage { get; init; } = new Dictionary<string, double>();
+ /// <summary>Filter values pinned to the bar ("v:tag:Name", "v:performer:Name", "v:studio:Name", "v:stars:3").</summary>
+ public IReadOnlyList<string> FilterPins { get; init; } = [];
  /// <summary>The folder view shows its tree; the path and subfolders above the media stay either way.</summary>
  public bool FolderTreeHidden { get; init; }
  /// <summary>Width of the panel beside the media as the user dragged it.</summary>

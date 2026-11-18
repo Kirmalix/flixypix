@@ -25,6 +25,17 @@ public static class TagRoles
         "produktionsfirmen", "production company", "production companies", "producer", "producers", "sender", "verlag", "site", "sites", "website", "websites"],
         StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Lists of the original that look like tag categories but are none: "Recent"/"Recently Used" holds tags used
+    /// lately, "Uncategorized" those without a category; names in angle brackets such as "&lt;Recently Used&gt;" are its
+    /// placeholders. They are not offered as categories to browse or filter.</summary>
+    public static bool IsPseudoCategory(string? category)
+    {
+        var name = (category ?? "").Trim();
+        return name.Length > 1 && name[0] == '<' && name[^1] == '>'
+            || name.Equals("Recent", StringComparison.OrdinalIgnoreCase) || name.Equals("Recently Used", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("Uncategorized", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static TagRole Default(string category) =>
         PerformerNames.Contains(category.Trim()) ? TagRole.Performer : StudioNames.Contains(category.Trim()) ? TagRole.Studio : TagRole.Tag;
 

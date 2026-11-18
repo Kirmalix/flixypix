@@ -4422,26 +4422,6 @@
       "digest": "2eaae378fc26b90739c6d38647b5455b29a2736b2698a377586f8fe9a86400d6",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "up to 5 min": {
-      "status": "unchanged",
-      "digest": "b2ed57418aebb376f2f5f5740d59fe0c5e64cb9940714bd744e3f59077e5eadd",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "5–20 min": {
-      "status": "unchanged",
-      "digest": "9f41064792c7cf046655c2fef9ac1a473ce25a57a3f5a22f6889290e0a3d37e5",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "20–60 min": {
-      "status": "unchanged",
-      "digest": "5a436a5e19edf73f27038fe858dc5a7a0991689cdb03039c37b660ee2468bfef",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "over 1 h": {
-      "status": "unchanged",
-      "digest": "e16fd91adbdc1a49582bab7b9d5d2d194ffbdc5ff12a5c90d8e9d3bc8230ce83",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Minutes": {
       "status": "unchanged",
       "digest": "40f4254534fdada0fea0cb109148885911bdf46fc91f7972704ff79ab5b0a84e",
@@ -16238,14 +16218,6 @@
       "status": "unchanged",
       "digest": "b83e6f52867c858119bd712e2d6472366a2e8c477b59d4c2939cc57e7ccc57d2"
     },
-    "Used often lately": {
-      "status": "unchanged",
-      "digest": "102d2bb32f08a486bb035931f8a5412c8b5b8ee2fc0dc9d02ed6376c3ce4ec15"
-    },
-    "Used often lately; click to filter": {
-      "status": "unchanged",
-      "digest": "2c6f2950b4ee3dbec916c57d6dd9feae97ebd82f8e97d1062950568e498d520d"
-    },
     "without": {
       "status": "unchanged",
       "digest": "2ebbdd233e2ccb3e763f473eb9fde689b86747ed2fdec50bb7748e39c825bef0"
@@ -16277,6 +16249,26 @@
     "↑↓ choose · Enter filter · Esc close": {
       "status": "unchanged",
       "digest": "ce53cf3cd4df07587699817738827ef6ddeaaaa44022e22d7291192a28b50a04"
+    },
+    "Pin to the bar": {
+      "status": "unchanged",
+      "digest": "87ecb27fcbeffca56d0176527fab7f6dfec2a6e544f47d87727b8369cef54c04"
+    },
+    "Pinned to the bar · right-click: unpin": {
+      "status": "unchanged",
+      "digest": "a7ed90a3b4b4aea1fa84574f9f6a850a78688ad08e9efa88072887bc203cca7b"
+    },
+    "Shift+click: widen the range": {
+      "status": "unchanged",
+      "digest": "7fa966c591b0de210f01950ad3487c6c1bc141296f0c132b5d3fc8584bc6fa5d"
+    },
+    "Unpin from the bar": {
+      "status": "unchanged",
+      "digest": "fbf9a104efbb23a1d39ce33ca29020a69eb79949479809df5b40c9df35223ec2"
+    },
+    "Used often lately; click to filter · right-click: pin to the bar": {
+      "status": "unchanged",
+      "digest": "802097221fc2e6852cfe3294796103cbb8b2f7ea9252841ea96c70ef83b9a41e"
     }
   }
 }

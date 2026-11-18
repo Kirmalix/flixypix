@@ -315,16 +315,6 @@
       "status": "unchanged",
       "digest": "3fc93bf72c40b8f6e192c106beda8d8061f01a6f1c28337c6dc1a69822aca795"
     },
-    "20–60 min": {
-      "status": "corrected",
-      "digest": "5a436a5e19edf73f27038fe858dc5a7a0991689cdb03039c37b660ee2468bfef",
-      "previous_digest": "2aa3f8a76a7900f83cef3a1f3011390fe8ae49df18f1a1e484ef5c2f39bf8e79"
-    },
-    "5–20 min": {
-      "status": "corrected",
-      "digest": "9f41064792c7cf046655c2fef9ac1a473ce25a57a3f5a22f6889290e0a3d37e5",
-      "previous_digest": "dbfbba8c5d3afb6c34c2d2a74f72ea4de253d6efe9775dc0e9b5ad1ee560bc95"
-    },
     ": image not found · ": {
       "status": "unchanged",
       "digest": "aa8e74454b2d99f4b453f61cdcb0b181befea8b0cb8cdbb079aabe2858d739cd"
@@ -1707,11 +1697,6 @@
       "status": "corrected",
       "digest": "cbdf78e2c1de997e9dafd6576524a691506ba30009905159c4b10281542df139",
       "previous_digest": "99262dd4a91b204cc9e4e899969e1a44ceeb190aac051b2ffaabdf8007f6ebb5"
-    },
-    "up to 5 min": {
-      "status": "corrected",
-      "digest": "e7bcba08b47c536a1ccdb1cc07806709a31167d14f4970c2264da07cf261aed8",
-      "previous_digest": "8c40c94270177496b426beba6c3ea243f5066f95ad17426afda34c42a6634efd"
     },
     "To date": {
       "status": "corrected",
@@ -10763,11 +10748,6 @@
       "digest": "51e2200d31fe769e79d60c99cd536e50e377d09df6d0b1b88a927a70b718212e",
       "previous_digest": "e4bc2ba11604a997452874f38caa605862245d748a8f9d26465ac30d4deaabdd"
     },
-    "over 1 h": {
-      "status": "corrected",
-      "digest": "18da842cb9e342fc6adaae4c00e17411c5622481bbbba46f0272830058245502",
-      "previous_digest": "43d53f835e6c522020ba2e3ee37bd9b524beea334a1a484dea9c051dbc8a1e22"
-    },
     "About FlixyPix": {
       "status": "corrected",
       "digest": "7482da726e2eb840397f82ef79414f66ae6ad699d329f175024a7057ceccf88d",
@@ -15430,14 +15410,6 @@
       "status": "unchanged",
       "digest": "89701b5055a84a3627597faa68a00eb8b44bc9aa304fc391a428d1d8c9eed687"
     },
-    "Used often lately": {
-      "status": "unchanged",
-      "digest": "0810bf523c304af52f896ded81356f538c46141c78627371f105cbed5decb193"
-    },
-    "Used often lately; click to filter": {
-      "status": "unchanged",
-      "digest": "a22e6cb7212fd146e9b7139399bcc8b0e8d3452f3a2441647a461aa3b341b730"
-    },
     "without": {
       "status": "unchanged",
       "digest": "fc9decd72fb136b43d19a5d5be8b91ea061171037e5d93705d7f0c45bd0fd8fc"
@@ -15469,6 +15441,26 @@
     "↑↓ choose · Enter filter · Esc close": {
       "status": "unchanged",
       "digest": "3d68d9449e55527d5fe084e76b0500e1a19813ab0384cf975dee7575fc3b88ac"
+    },
+    "Pin to the bar": {
+      "status": "unchanged",
+      "digest": "f2e6b04fb777877a9a8e15f7cd1a6da8e3314789d568be69ff98f9b0c399e028"
+    },
+    "Pinned to the bar · right-click: unpin": {
+      "status": "unchanged",
+      "digest": "d677d8f7079a5f7b23156075cbcbd6c82a541b3afa28e43e13772efd3ff40253"
+    },
+    "Shift+click: widen the range": {
+      "status": "unchanged",
+      "digest": "aabb1b3ec17e3b82ca179d32ff00a20b9dc59cf76e67ba1c763acc9814b31de8"
+    },
+    "Unpin from the bar": {
+      "status": "unchanged",
+      "digest": "d6ca01b6af9ff502af87e2c34ad286fed72dbb54dd3997ae17dd345f2b97fbb7"
+    },
+    "Used often lately; click to filter · right-click: pin to the bar": {
+      "status": "unchanged",
+      "digest": "c5f664c2c4065501cbbd85c49cfceace75fa3ae8da9065688a7bbc8e922d4f53"
     }
   }
 }

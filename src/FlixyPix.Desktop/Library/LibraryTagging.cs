@@ -105,10 +105,10 @@ public partial class MainWindow
         if ((sender as ListBoxItem)?.DataContext is not TagRow row) return;
         e.Handled = true; OpenTagMenu(row, sender as UIElement);
     }
-    private void OpenTagMenu(TagRow row, UIElement? target)
+    private void OpenTagMenu(TagRow row, UIElement? target, IEnumerable<MenuSpec>? first = null)
     {
         var tag = row.Tag; var ids = SelectedMedia.Select(i => i.Id).ToArray();
-        var actions = new List<MenuSpec> { MenuSpec.Command(T("Filter (all chosen tags)"), () => ToggleTagFilter(tag, false)), MenuSpec.Command(T("Exclude"), () => ToggleTagFilter(tag, true)) };
+        var actions = new List<MenuSpec>(first ?? []) { MenuSpec.Command(T("Filter (all chosen tags)"), () => ToggleTagFilter(tag, false)), MenuSpec.Command(T("Exclude"), () => ToggleTagFilter(tag, true)) };
         if (ids.Length > 0) { actions.Add(MenuSpec.Command(T("Assign to selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [tag], []))); actions.Add(MenuSpec.Command(T("Remove from selected items ({0})", ids.Length), () => _ = ChangeTagsAsync(ids, [], [tag]))); }
         actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Submenu(T("Search in browser"), Specs(WebSearchEntries(tag)), "\uE774"));
         actions.Add(MenuSpec.Separator); actions.Add(MenuSpec.Command(T("Rename / merge …"), () => RenameGlobalTag(tag))); actions.Add(MenuSpec.Command(T("Remove from all items …"), () => DeleteGlobalTag(tag)));

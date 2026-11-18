@@ -145,12 +145,14 @@ public partial class MainWindow
         {
             _filterFlyoutReady = true;
             FilterFlyoutFrame.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 18, ShadowDepth = 4, Direction = 270, Opacity = Theme.IsDark ? .5 : .2 };
-            FilterFlyoutFrame.PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { FilterFlyout.IsOpen = false; e.Handled = true; } };
+            FilterFlyoutFrame.PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { _flyoutClosedByKey = true; FilterFlyout.IsOpen = false; e.Handled = true; } };
             FilterFlyout.Closed += (_, _) => { _filterSection = null; UpdateFilterBar(); };
         }
         FilterFlyout.IsOpen = true;
     }
     private bool _filterFlyoutReady;
+    /// <summary>Closed with Esc: the focus goes back to the section's button; after the mouse it stays where it was.</summary>
+    private bool _flyoutClosedByKey;
 
     private void MarkOpenSection()
     {
@@ -200,9 +202,47 @@ public partial class MainWindow
         }
         head.Children.Add(new TextBlock { Text = key == "more" ? T("More filters") : section.Label, FontWeight = FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
         panel.Children.Add(head);
+        _countRequests.Clear();
         panel.Children.Add(section.Build());
+        RequestOptionCounts(key);
         return panel;
     }
+
+    // ----- Counts of the choices within the hits -----
+
+    private readonly Dictionary<string, Func<ViewState, ViewState>> _countRequests = new(StringComparer.Ordinal);
+    private Dictionary<string, long> _optionCounts = new(StringComparer.Ordinal);
+    private string? _optionCountsKey;
+
+    /// <summary>How many items a choice would leave (counted after the section shows); null until counted.</summary>
+    private int? OptionCount(string uid, Func<ViewState, ViewState> with)
+    {
+        _countRequests[uid] = with;
+        return _optionCounts.TryGetValue(uid, out var count) ? (int)Math.Min(count, int.MaxValue) : null;
+    }
+
+    /// <summary>Counts the choices of the open section off the UI thread, each as the view would be with it. Until new counts
+    /// arrive, those of the step before stay, so the numbers do not flicker after every click.</summary>
+    private void RequestOptionCounts(string section)
+    {
+        if (_countRequests.Count == 0 || _playlist != null || !ShowsMediaGrid || _repository == null) return;
+        var state = CaptureViewState();
+        var key = FilterKey(state) + "|" + section + "|" + string.Join(",", _countRequests.Keys);
+        if (key == _optionCountsKey) return;
+        _optionCountsKey = key;
+        var requests = _countRequests.ToList();
+        _ = _libraryTasks.Run(async token =>
+        {
+            var now = DateTimeOffset.Now;
+            var counts = await Task.Run(() => requests.ToDictionary(r => r.Key, r => _repository.CountMedia(r.Value(state).ToQuery(now) with { Limit = 1 }, token), StringComparer.Ordinal), token);
+            if (_closing || _optionCountsKey != key) return;
+            foreach (var (uid, count) in counts) _optionCounts[uid] = count;
+            RefreshFilterSection();
+        });
+    }
+
+    /// <summary>The view with another filter value, for counting a choice.</summary>
+    private static Func<ViewState, ViewState> WithFilter(Func<MediaFilter, MediaFilter> change) => state => state with { Filter = change(state.Filter) };
 
     private FrameworkElement MoreSections(IReadOnlyList<FilterSection> hidden)
     {
@@ -383,9 +423,13 @@ public partial class MainWindow
     }
 
     /// <summary>A single choice as pills; clicking the chosen one again removes the filter.</summary>
-    private WrapPanel Choices<TValue>(string uid, IEnumerable<(string Label, TValue Value)> options, TValue current, TValue none, Action<TValue> apply) =>
-        Cloud(options.Select(option => (UIElement)FilterChip(uid + ":" + option.Label, option.Label, null, Equals(option.Value, current) ? 1 : 0,
-            () => apply(Equals(option.Value, current) ? none : option.Value))));
+    private WrapPanel Choices<TValue>(string uid, IEnumerable<(string Label, TValue Value)> options, TValue current, TValue none, Action<TValue> apply, Func<TValue, Func<ViewState, ViewState>>? count = null) =>
+        Cloud(options.Select(option =>
+        {
+            var on = Equals(option.Value, current);
+            var hits = count != null ? OptionCount(uid + ":" + option.Label, count(option.Value)) : null;
+            return (UIElement)FilterChip(uid + ":" + option.Label, option.Label, hits, on ? 1 : 0, () => apply(on ? none : option.Value), zero: hits == 0 && !on);
+        }));
 
     // ----- Usage -----
 
@@ -401,36 +445,83 @@ public partial class MainWindow
         SaveViewPreferences();
     }
 
-    /// <summary>Up to four values used often lately that are not chosen now, one click each.</summary>
+    /// <summary>What a quick value stands for now: its label, whether it filters, and how to set it.</summary>
+    private (string Label, int State, Action<int> Set)? QuickValue(string key, Dictionary<string, int> counts, Dictionary<string, RoleName> roles)
+    {
+        var parts = key.Split(':', 3); if (parts.Length < 3) return null;
+        var (kind, name) = (parts[1], parts[2]);
+        if (kind == "tag")
+        {
+            var state = _requiredTags.Contains(name, StringComparer.OrdinalIgnoreCase) ? 1 : _excludedTags.Contains(name, StringComparer.OrdinalIgnoreCase) ? -1 : 0;
+            return counts.ContainsKey(name) || state != 0 ? (name, state, value => SetTagValue(name, value)) : null;
+        }
+        if (kind is "performer" or "studio" && roles.TryGetValue(name, out var role))
+        {
+            var entry = new DirectoryEntry(role.Tag, role.Category, role.Role, 0);
+            return (role.Tag, State(entry), value => SetFacetValue(entry, value));
+        }
+        if (kind == "stars" && int.TryParse(name, out var stars) && stars is > 0 and <= 5)
+            return (RatingLabel(stars), RatingFilter.SelectedIndex == stars && !_filter.UnratedOnly ? 1 : 0, value => { _filter = _filter with { UnratedOnly = false }; RatingFilter.SelectedIndex = value == 1 ? stars : 0; });
+        return null;
+    }
+
+    /// <summary>Values pinned to the bar (always there, on and off with one click), then up to four values used often lately
+    /// that are not chosen now. A right click pins or unpins.</summary>
     private IEnumerable<UIElement> QuickChips()
     {
         var counts = TagCounts();
         var roles = _roleNames.GroupBy(n => n.Tag, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        var pins = _settings.FilterPins;
         var chips = new List<UIElement>();
-        foreach (var (key, weight) in _settings.FilterUsage.Where(p => p.Key.StartsWith("v:", StringComparison.Ordinal) && p.Value >= 1.5).OrderByDescending(p => p.Value))
+        var frequent = 0;
+        var keys = pins.Select(k => (Key: k, Pinned: true)).Concat(_settings.FilterUsage.Where(p => p.Key.StartsWith("v:", StringComparison.Ordinal) && p.Value >= 1.5 && !pins.Contains(p.Key))
+            .OrderByDescending(p => p.Value).Select(p => (Key: p.Key, Pinned: false)));
+        foreach (var (key, pinned) in keys)
         {
-            if (chips.Count >= 4) break;
-            var parts = key.Split(':', 3); if (parts.Length < 3) continue;
-            var (kind, name) = (parts[1], parts[2]);
-            Action? apply = null; string label = name;
-            if (kind == "tag" && counts.ContainsKey(name) && !_requiredTags.Contains(name, StringComparer.OrdinalIgnoreCase) && !_excludedTags.Contains(name, StringComparer.OrdinalIgnoreCase))
-                apply = () => SetTagValue(name, 1);
-            else if (kind is "performer" or "studio" && roles.TryGetValue(name, out var role) && State(new DirectoryEntry(role.Tag, role.Category, role.Role, 0)) == 0)
-                apply = () => SetFacetValue(new DirectoryEntry(role.Tag, role.Category, role.Role, 0), 1);
-            else if (kind == "stars" && int.TryParse(name, out var stars) && stars is > 0 and <= 5 && RatingFilter.SelectedIndex != stars)
-            { label = RatingLabel(stars); apply = () => { _filter = _filter with { UnratedOnly = false }; RatingFilter.SelectedIndex = stars; }; }
-            if (apply == null) continue;
-            var chip = FilterChip("quick:" + key, label, null, 0, apply, tooltip: T("Used often lately; click to filter"));
-            chip.Margin = new Thickness(0, 0, 5, 6); chip.Opacity = .9;
+            if (!pinned && frequent >= 4) break;
+            if (QuickValue(key, counts, roles) is not { } value || !pinned && value.State != 0) continue;
+            if (!pinned) frequent++;
+            var chip = FilterChip("quick:" + key, value.Label, null, value.State, () => value.Set(value.State == 1 ? 0 : 1),
+                tooltip: pinned ? T("Pinned to the bar · right-click: unpin") : T("Used often lately; click to filter · right-click: pin to the bar"));
+            chip.Margin = new Thickness(0, 0, 5, 6);
+            if (pinned)
+            {
+                if (value.State == 0) chip.SetResourceReference(BackgroundProperty, "CardBackground");
+                // A pin in front says that the chip stays; a chosen one keeps its check mark instead.
+                if (value.State != 1 && chip.Content is StackPanel content)
+                {
+                    var glyph = new TextBlock { Text = "\uE718", FontFamily = SettingsUi.Icons, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 6, 0) };
+                    glyph.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+                    content.Children.Insert(0, glyph);
+                }
+            }
+            var pinKey = key;
+            chip.MouseRightButtonUp += (_, e) => { e.Handled = true; Menus.Open(chip, [PinCommand(pinKey)], MenuFailed); };
             if (chips.Count == 0)
             {
-                var divider = new Border { Width = 1, Height = 18, Margin = new Thickness(4, 0, 10, 6), VerticalAlignment = VerticalAlignment.Center, ToolTip = T("Used often lately") };
+                var divider = new Border { Width = 1, Height = 18, Margin = new Thickness(4, 0, 10, 6), VerticalAlignment = VerticalAlignment.Center };
                 divider.SetResourceReference(Border.BackgroundProperty, "Divider");
                 chips.Add(divider);
             }
             chips.Add(chip);
         }
         return chips;
+    }
+
+    private bool IsPinned(string key) => _settings.FilterPins.Contains(key, StringComparer.Ordinal);
+
+    /// <summary>Pins a value to the bar or takes it off again.</summary>
+    private MenuSpec PinCommand(string key) => IsPinned(key)
+        ? MenuSpec.Command(T("Unpin from the bar"), () => SetPinned(key, false), "\uE77A")
+        : MenuSpec.Command(T("Pin to the bar"), () => SetPinned(key, true), "\uE718");
+
+    private void SetPinned(string key, bool pinned)
+    {
+        var pins = _settings.FilterPins.Where(k => k != key).ToList();
+        if (pinned) pins.Add(key);
+        _settings = _settings with { FilterPins = pins.Take(12).ToList() };
+        SaveViewPreferences();
+        UpdateFilterBar();
     }
 
     // ----- Counts within the hits -----
@@ -474,8 +565,10 @@ public partial class MainWindow
             var value = n;
             var glyph = new TextBlock { Text = n <= level ? "\uE735" : "\uE734", FontFamily = SettingsUi.Icons, FontSize = 20 };
             glyph.SetResourceReference(TextBlock.ForegroundProperty, n <= level ? "Gold" : "Muted");
-            var star = new Button { Content = glyph, Style = (Style)FindResource("Quiet"), Padding = new Thickness(3), Uid = "star:" + n, ToolTip = value == 5 ? RatingLabel(5) : RatingLabel(value) };
-            AutomationProperties.SetName(star, RatingLabel(value) + (value == level ? StateWord(1) : ""));
+            var hits = OptionCount("star:" + n, state => state with { MinimumStars = value, Filter = state.Filter with { UnratedOnly = false } });
+            var label = RatingLabel(value) + (hits is { } count ? " · " + T("{0:N0} hits", count) : "");
+            var star = new Button { Content = glyph, Style = (Style)FindResource("Quiet"), Padding = new Thickness(3), Uid = "star:" + n, ToolTip = label };
+            AutomationProperties.SetName(star, label + (value == level ? StateWord(1) : ""));
             star.Click += (_, _) => { var next = level == value ? 0 : value; _filter = _filter with { UnratedOnly = false }; RatingFilter.SelectedIndex = next; if (next > 0) NoteFilterUse("rating", "v:stars:" + next); };
             stars.Children.Add(star);
         }
@@ -483,7 +576,8 @@ public partial class MainWindow
         what.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         stars.Children.Add(what);
         panel.Children.Add(stars);
-        panel.Children.Add(Cloud([FilterChip("unrated", T("Unrated"), null, _filter.UnratedOnly ? 1 : 0, () =>
+        var unrated = OptionCount("unrated", state => state with { MinimumStars = 0, Filter = state.Filter with { UnratedOnly = true } });
+        panel.Children.Add(Cloud([FilterChip("unrated", T("Unrated"), unrated, _filter.UnratedOnly ? 1 : 0, () =>
         {
             var on = !_filter.UnratedOnly;
             if (on) { RatingFilter.SelectedIndex = 0; NoteFilterUse("rating"); }
@@ -499,13 +593,16 @@ public partial class MainWindow
         var kinds = new List<string> { "all", "Video", "Image" };
         if (AudioNav.Visibility == Visibility.Visible || current == "Audio") kinds.Add("Audio");
         var panel = new StackPanel();
-        panel.Children.Add(Cloud(kinds.Select(kind => (UIElement)FilterChip("kind:" + kind, ViewName(kind), null, current == kind ? 1 : 0, () => { ShowKind(kind); NoteFilterUse("kind"); UpdateFilterBar(); RenderTagFilterChips(); }))));
+        var folder = _view == FolderView;
+        panel.Children.Add(Cloud(kinds.Select(kind => (UIElement)FilterChip("kind:" + kind, ViewName(kind),
+            OptionCount("kind:" + kind, state => folder ? state with { KindFilter = Enum.TryParse<MediaKind>(kind, out var media) ? media : null } : state with { View = kind }), current == kind ? 1 : 0,
+            () => { ShowKind(kind); NoteFilterUse("kind"); UpdateFilterBar(); RenderTagFilterChips(); }))));
         if (_view != FolderView) panel.Children.Add(SettingsUi.Hint(T("The type is the same choice as videos, images and audio in the sidebar; the other filters stay.")));
         return panel;
     }
 
     private FrameworkElement CategorySection() =>
-        Cloud(CategoryFilter.Items.OfType<CategoryOption>().Select(option => (UIElement)FilterChip("category:" + (option.Value ?? ""), option.Value ?? T("All categories"), option.Count is { } count ? (int)Math.Min(int.MaxValue, count) : null,
+        Cloud(CategoryFilter.Items.OfType<CategoryOption>().Select(option => (UIElement)FilterChip("category:" + (option.Value ?? ""), option.Value ?? T("All categories"), OptionCount("category:" + (option.Value ?? ""), state => state with { Category = option.Value }),
             ReferenceEquals(CategoryFilter.SelectedItem, option) && option.Value != null ? 1 : option.Value == null && _category == null ? 1 : 0,
             () => { CategoryFilter.SelectedItem = option; if (option.Value != null) NoteFilterUse("category"); UpdateFilterBar(); })));
 
@@ -682,12 +779,15 @@ public partial class MainWindow
     /// <summary>Right click on a value: tags offer their full menu (rename, merge, pin, …), performers and studios include or exclude.</summary>
     private void ValueMenu(string key, FacetValue value, TagRole role, UIElement target)
     {
-        if (role == TagRole.Tag) { OpenTagMenu(new TagRow(value.Name, value.Name, "", TagBrush), target); return; }
+        var pin = PinCommand("v:" + UsageKind(role) + ":" + value.Name);
+        if (role == TagRole.Tag) { OpenTagMenu(new TagRow(value.Name, value.Name, "", TagBrush), target, [pin, MenuSpec.Separator]); return; }
         Menus.Open(target,
         [
             MenuSpec.Command(T("Include"), () => SetValue(key, value, role, 1), "\uE710", enabled: value.State != 1),
             MenuSpec.Command(T("Exclude"), () => SetValue(key, value, role, -1), "\uE738", enabled: value.State != -1),
             MenuSpec.Command(T("Remove filter"), () => SetValue(key, value, role, 0), "\uE711", enabled: value.State != 0),
+            MenuSpec.Separator,
+            pin,
         ], MenuFailed);
     }
 
@@ -729,6 +829,12 @@ public partial class MainWindow
         DateKind.Imported => _filter with { Imported = value },
         _ => _filter with { Released = value },
     };
+    private static MediaFilter DatedFilter(MediaFilter filter, DateKind kind, DateFilter value) => kind switch
+    {
+        DateKind.File => filter with { FileDate = value },
+        DateKind.Imported => filter with { Imported = value },
+        _ => filter with { Released = value },
+    };
     private static string DateKindLabel(DateKind kind) => kind switch { DateKind.File => T("File date"), DateKind.Imported => T("Import date"), _ => T("Release date") };
 
     private string TimeSummary() => string.Join(", ", new[] { DateKind.File, DateKind.Imported, DateKind.Released }.Where(k => DateOf(k).IsActive)
@@ -752,7 +858,8 @@ public partial class MainWindow
         panel.Children.Add(SubHeading(T("Period")));
         panel.Children.Add(Cloud(new[] { (T("last 7 days"), DateWindow.Last7Days), (T("last 30 days"), DateWindow.Last30Days), (T("last year"), DateWindow.LastYear),
             (T("older than 1 year"), DateWindow.OlderThanYear), (T("older than 2 years"), DateWindow.OlderThan2Years), (T("older than 5 years"), DateWindow.OlderThan5Years) }
-            .Select(option => (UIElement)FilterChip("window:" + option.Item2, option.Item1, null, current.Window == option.Item2 ? 1 : 0, () =>
+            .Select(option => (UIElement)FilterChip("window:" + _dateKind + ":" + option.Item2, option.Item1,
+                OptionCount("window:" + _dateKind + ":" + option.Item2, WithFilter(f => DatedFilter(f, _dateKind, new DateFilter(option.Item2)))), current.Window == option.Item2 ? 1 : 0, () =>
             {
                 var next = current.Window == option.Item2 ? new DateFilter() : new DateFilter(option.Item2);
                 if (next.IsActive) NoteFilterUse("time");
@@ -809,21 +916,15 @@ public partial class MainWindow
     {
         var panel = new StackPanel();
         panel.Children.Add(SubHeading(T("Duration"), 0));
-        var presets = new (string Label, double? Min, double? Max)[] { (T("up to 5 min"), null, 5), (T("5–20 min"), 5, 20), (T("20–60 min"), 20, 60), (T("over 1 h"), 60, null) };
-        panel.Children.Add(Cloud(presets.Select(p => (UIElement)FilterChip("duration:" + p.Label, p.Label, null, _filter.MinMinutes == p.Min && _filter.MaxMinutes == p.Max ? 1 : 0, () =>
-        {
-            var on = !(_filter.MinMinutes == p.Min && _filter.MaxMinutes == p.Max);
-            if (on) NoteFilterUse("file");
-            ApplyFilter(on ? _filter with { MinMinutes = p.Min, MaxMinutes = p.Max } : _filter with { MinMinutes = null, MaxMinutes = null });
-        }))));
+        panel.Children.Add(DurationHistogram());
         panel.Children.Add(RangeFields(T("Minutes"), _filter.MinMinutes, _filter.MaxMinutes, (min, max) => { NoteFilterUse("file"); ApplyFilter(_filter with { MinMinutes = min, MaxMinutes = max }); }, "minutes"));
         panel.Children.Add(SubHeading(T("Minimum resolution")));
         panel.Children.Add(Choices("resolution", [("HD", ResolutionClass.HD), (T("Full HD"), ResolutionClass.FullHD), ("4K", ResolutionClass.UHD), ("8K", ResolutionClass.EightK)], _filter.Resolution, ResolutionClass.Any,
-            value => { if (value != ResolutionClass.Any) NoteFilterUse("file"); ApplyFilter(_filter with { Resolution = value }); }));
+            value => { if (value != ResolutionClass.Any) NoteFilterUse("file"); ApplyFilter(_filter with { Resolution = value }); }, value => WithFilter(f => f with { Resolution = value })));
         panel.Children.Add(SubHeading(T("File size")));
         panel.Children.Add(RangeFields("MB", _filter.MinMegabytes, _filter.MaxMegabytes, (min, max) => { NoteFilterUse("file"); ApplyFilter(_filter with { MinMegabytes = min, MaxMegabytes = max }); }, "megabytes"));
         panel.Children.Add(SubHeading(T("Thumbnails")));
-        panel.Children.Add(Choices("thumbnail", [(T("With thumbnail"), (bool?)true), (T("Without thumbnail"), (bool?)false)], _filter.HasThumbnail, null, value => ApplyFilter(_filter with { HasThumbnail = value })));
+        panel.Children.Add(Choices("thumbnail", [(T("With thumbnail"), (bool?)true), (T("Without thumbnail"), (bool?)false)], _filter.HasThumbnail, null, value => ApplyFilter(_filter with { HasThumbnail = value }), value => WithFilter(f => f with { HasThumbnail = value })));
         var technical = _filter.VideoCodecs.Count > 0 || _filter.Hdr != null || _filter.MinFrameRate != null || _filter.MultipleFiles != null;
         var open = _technicalOpen || technical;
         var toggle = new Button { Style = (Style)FindResource("Quiet"), FontSize = 12, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(-6, 10, 0, 0), Uid = "technical" };
@@ -841,16 +942,61 @@ public partial class MainWindow
         else
         {
             panel.Children.Add(SubHeading(T("Video codec"), 6));
-            panel.Children.Add(Cloud(codecList.Select(item => (UIElement)FilterChip("codec:" + item.Codec, TechnicalLabels.Codec(item.Codec), item.Count > 0 ? (int)Math.Min(int.MaxValue, item.Count) : null, _filter.VideoCodecs.Contains(item.Codec) ? 1 : 0,
+            panel.Children.Add(Cloud(codecList.Select(item => (UIElement)FilterChip("codec:" + item.Codec, TechnicalLabels.Codec(item.Codec), OptionCount("codec:" + item.Codec, WithFilter(f => f with { VideoCodecs = f.VideoCodecs.Contains(item.Codec) ? f.VideoCodecs : [.. f.VideoCodecs, item.Codec] })), _filter.VideoCodecs.Contains(item.Codec) ? 1 : 0,
                 () => { var on = !_filter.VideoCodecs.Contains(item.Codec); if (on) NoteFilterUse("file"); ApplyFilter(_filter with { VideoCodecs = on ? [.. _filter.VideoCodecs, item.Codec] : _filter.VideoCodecs.Where(c => c != item.Codec).ToList() }); }))));
         }
         panel.Children.Add(SubHeading("HDR"));
-        panel.Children.Add(Choices("hdr", [("HDR", (bool?)true), (T("without HDR"), (bool?)false)], _filter.Hdr, null, value => ApplyFilter(_filter with { Hdr = value })));
+        panel.Children.Add(Choices("hdr", [("HDR", (bool?)true), (T("without HDR"), (bool?)false)], _filter.Hdr, null, value => ApplyFilter(_filter with { Hdr = value }), value => WithFilter(f => f with { Hdr = value })));
         panel.Children.Add(SubHeading(T("Frame rate")));
-        panel.Children.Add(Choices("fps", [(T("from 30 fps"), (double?)30d), (T("from 50 fps"), 50d), (T("from 60 fps"), 60d)], _filter.MinFrameRate, null, value => ApplyFilter(_filter with { MinFrameRate = value })));
+        panel.Children.Add(Choices("fps", [(T("from 30 fps"), (double?)30d), (T("from 50 fps"), 50d), (T("from 60 fps"), 60d)], _filter.MinFrameRate, null, value => ApplyFilter(_filter with { MinFrameRate = value }), value => WithFilter(f => f with { MinFrameRate = value })));
         panel.Children.Add(SubHeading(T("Files")));
-        panel.Children.Add(Choices("files", [(T("several versions"), (bool?)true), (T("one file"), (bool?)false)], _filter.MultipleFiles, null, value => ApplyFilter(_filter with { MultipleFiles = value })));
+        panel.Children.Add(Choices("files", [(T("several versions"), (bool?)true), (T("one file"), (bool?)false)], _filter.MultipleFiles, null, value => ApplyFilter(_filter with { MultipleFiles = value }), value => WithFilter(f => f with { MultipleFiles = value })));
         return panel;
+    }
+
+    /// <summary>How the durations of the hits spread, as bars to click: a bar chooses its range, Shift+click widens the chosen
+    /// range up to it, clicking the chosen range again removes it. Each bar counts the hits that range would leave.</summary>
+    private FrameworkElement DurationHistogram()
+    {
+        var bins = new (double? Min, double? Max, string Mark)[] { (null, 5, "5"), (5, 10, "10"), (10, 20, "20"), (20, 30, "30"), (30, 45, "45"), (45, 60, "60"), (60, 90, "90"), (90, null, "90+") };
+        var counts = bins.Select((bin, index) => OptionCount("bin:" + index, WithFilter(f => f with { MinMinutes = bin.Min, MaxMinutes = bin.Max }))).ToArray();
+        // Without any medium that has a duration (only images, say) the bars would say nothing; the fields stay.
+        if (counts.All(c => c == 0) && _filter.MinMinutes is null && _filter.MaxMinutes is null) return new Border();
+        var highest = Math.Max(1, counts.Max(c => c ?? 0));
+        var (min, max) = (_filter.MinMinutes, _filter.MaxMinutes);
+        var active = min is not null || max is not null;
+        bool Inside((double? Min, double? Max, string Mark) bin) => active && (bin.Min ?? 0) >= (min ?? 0) && (max is null || bin.Max is { } top && top <= max);
+        var grid = new Grid { Height = 66, Margin = new Thickness(0, 0, 0, 6) };
+        for (var index = 0; index < bins.Length; index++)
+        {
+            var bin = bins[index]; var count = counts[index]; var chosen = Inside(bin);
+            grid.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
+            var column = new DockPanel();
+            var mark = new TextBlock { Text = bin.Mark, FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 3, 0, 0) };
+            mark.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+            DockPanel.SetDock(mark, Dock.Bottom); column.Children.Add(mark);
+            var bar = new Border { CornerRadius = new CornerRadius(3, 3, 0, 0), VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(2, 0, 2, 0),
+                Height = count is { } n ? Math.Max(n > 0 ? 4 : 2, 44.0 * n / highest) : 2 };
+            bar.SetResourceReference(Border.BackgroundProperty, chosen ? "Accent" : count == 0 ? "Divider" : "ButtonHover");
+            column.Children.Add(bar);
+            var range = MinutesLabel(bin.Min, bin.Max);
+            var tip = count is { } hits ? range + " · " + T("{0:N0} hits", hits) : range;
+            var button = new Button { Content = column, Style = (Style)FindResource("FilterRow"), Padding = new Thickness(0, 2, 0, 0), Uid = "bin:" + index, ToolTip = tip + "\n" + T("Shift+click: widen the range") };
+            AutomationProperties.SetName(button, tip + (chosen ? StateWord(1) : ""));
+            button.Click += (_, _) =>
+            {
+                if (active && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+                {
+                    double? low = bin.Min is null || min is null ? null : Math.Min(bin.Min.Value, min.Value);
+                    double? high = bin.Max is null || max is null ? null : Math.Max(bin.Max.Value, max.Value);
+                    NoteFilterUse("file"); ApplyFilter(_filter with { MinMinutes = low, MaxMinutes = high });
+                }
+                else if (min == bin.Min && max == bin.Max) ApplyFilter(_filter with { MinMinutes = null, MaxMinutes = null });
+                else { NoteFilterUse("file"); ApplyFilter(_filter with { MinMinutes = bin.Min, MaxMinutes = bin.Max }); }
+            };
+            Grid.SetColumn(button, index); grid.Children.Add(button);
+        }
+        return grid;
     }
 
     // ----- Status -----
@@ -868,9 +1014,9 @@ public partial class MainWindow
     {
         var panel = new StackPanel();
         panel.Children.Add(SubHeading(T("Watched"), 0));
-        panel.Children.Add(Choices("watched", [(T("already watched"), (bool?)true), (T("never watched"), (bool?)false)], _filter.Watched, null, value => { if (value != null) NoteFilterUse("status"); ApplyFilter(_filter with { Watched = value }); }));
+        panel.Children.Add(Choices("watched", [(T("already watched"), (bool?)true), (T("never watched"), (bool?)false)], _filter.Watched, null, value => { if (value != null) NoteFilterUse("status"); ApplyFilter(_filter with { Watched = value }); }, value => WithFilter(f => f with { Watched = value })));
         panel.Children.Add(SubHeading(T("Review status")));
-        panel.Children.Add(Cloud(Enum.GetValues<ReviewState>().Select(state => (UIElement)FilterChip("review:" + state, ReviewLabel(state), null, _reviewStates.Contains(state) ? 1 : 0, () =>
+        panel.Children.Add(Cloud(Enum.GetValues<ReviewState>().Select(state => (UIElement)FilterChip("review:" + state, ReviewLabel(state), OptionCount("review:" + state, view => view with { ReviewStates = view.ReviewStates.Contains(state) ? view.ReviewStates : [.. view.ReviewStates, state] }), _reviewStates.Contains(state) ? 1 : 0, () =>
         {
             var on = !_reviewStates.Contains(state);
             if (on) NoteFilterUse("status");
@@ -883,7 +1029,7 @@ public partial class MainWindow
         if (markList.Count > 0)
         {
             panel.Children.Add(SubHeading(T("Jump mark with tag")));
-            panel.Children.Add(Cloud(markList.Select(mark => (UIElement)FilterChip("mark:" + mark.Tag, mark.Tag, mark.Count > 0 ? mark.Count : null, _filter.MarkTags.Contains(mark.Tag, StringComparer.OrdinalIgnoreCase) ? 1 : 0, () =>
+            panel.Children.Add(Cloud(markList.Select(mark => (UIElement)FilterChip("mark:" + mark.Tag, mark.Tag, OptionCount("mark:" + mark.Tag, WithFilter(f => f with { MarkTags = f.MarkTags.Contains(mark.Tag, StringComparer.OrdinalIgnoreCase) ? f.MarkTags : [.. f.MarkTags, mark.Tag] })), _filter.MarkTags.Contains(mark.Tag, StringComparer.OrdinalIgnoreCase) ? 1 : 0, () =>
             {
                 var on = !_filter.MarkTags.Contains(mark.Tag, StringComparer.OrdinalIgnoreCase);
                 if (on) NoteFilterUse("status");
