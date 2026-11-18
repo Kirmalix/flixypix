@@ -498,11 +498,6 @@
       "status": "unchanged",
       "digest": "a22f6f1bae1f69ab5c4b4ca60f5e07aff5f07b76ca28688cd9497e1c4ea64b45"
     },
-    "all": {
-      "status": "corrected",
-      "digest": "f6f3913449a87398d178cd9c58cbd4f56450728feb4796db9d1747869615eebd",
-      "previous_digest": "4ed99e6bde54d0b39b3ee81e5d5583afa9b5e8034eb564327be1cc64bc4a2b08"
-    },
     "Show all": {
       "status": "corrected",
       "digest": "3811179cef7c2060fb0ce98a47b026a8f931da80ef0ac159989db0b6ca272b08",
@@ -553,11 +548,6 @@
       "status": "corrected",
       "digest": "cad77c98b3792c589014509a88fb3bd8e491a0a79aa8bd9dd60e3378a4f3d978",
       "previous_digest": "a0ce465edb1d5373a25b7cffdce8e339191527b1b1bb4a6d6fe48b1497ab123a"
-    },
-    "Remove all tag and filter-bar filters": {
-      "status": "corrected",
-      "digest": "5c241b489be5d3ec7353602b7c155b90f144f63e2ed35b46ee1ea211b75e5407",
-      "previous_digest": "440f54a4cb02f6753c60392e8584170c9872fd93914afa6c5072a5a14afae5d8"
     },
     "All tags": {
       "status": "unchanged",
@@ -3163,11 +3153,6 @@
       "digest": "d7b409902179451eb54c7e163ac6e70dcd0f97334b20b786b4bc92f90a4b0f2e",
       "previous_digest": "024d46cf8bf7fc6396666e17436c0c77860e181443d3846b8e3d85e2a20c6ef4"
     },
-    "any": {
-      "status": "corrected",
-      "digest": "210c1e8b11bb51ae06ae5f0eb5bf4e5225aa40711ae35f2cc58ad51406a0192b",
-      "previous_digest": "92e5fc286b695356095202c2aca41c443f7bda4a22035d029cd72e05ca279706"
-    },
     "Custom artwork": {
       "status": "corrected",
       "digest": "0ed7182a6225145e4c93e6fd7d1ff0095fb170e1e1573b4c6d9499ee7e9a5669",
@@ -5037,11 +5022,6 @@
       "digest": "d30b4e6b421e47e3a7836292b9eed387ad62bf2a7eff723196b36ce5b7253f2c",
       "previous_digest": "15abb2c3dbd88b6d0c6e95d017b35d01833da9376e39cdc8bb782524f31b5e6b"
     },
-    "Click: include · again: exclude · again: off": {
-      "status": "corrected",
-      "digest": "5b2774484a09d55f199977979401ebf6e37c96f607ac06f3fcf486d637e80e4a",
-      "previous_digest": "44ab537c01e392448175efff04824794cfc114688399a4b47578713b664f4872"
-    },
     "Click: filter · Ctrl+click: exclude · right-click: more actions · drag items here: assign tag": {
       "status": "corrected",
       "digest": "8a171cf838c9687484e80e10a981e030b840f04d2c4881085a99ead2260fed2f",
@@ -5895,10 +5875,6 @@
       "digest": "d4dd99b70582d8fee3199fd422cba2043ef7a033beb5b1ccb4c549b1afc27779",
       "previous_digest": "0c9fb2663ffe3d0d8a6410e9e64ab66f496c07c747af5bdf3cc63bf29eab70ce"
     },
-    "Name or alias": {
-      "status": "unchanged",
-      "digest": "afafe63f8ae5eaedc0a7e445e217c326b3af4c84d6a4523e41302973f788ca71"
-    },
     "Name or alias; Enter adds it, a new name goes into “{0}”": {
       "status": "corrected",
       "digest": "87e7e73bdb79900d50f03a101848e1a921e75ff13e41659099a8fe0dccaff490",
@@ -6294,11 +6270,6 @@
     "No programs of your own yet.": {
       "status": "unchanged",
       "digest": "50662eb9d8dffe8c362d5990d6b9a8cd58faa3fad57a457dbf818baca58de7c5"
-    },
-    "No entries in this role yet (directory).": {
-      "status": "corrected",
-      "digest": "3e1aed64ec826e91c5bb10570e2277cf84a6e8b3fa8cdd3418559dd73f2135fb",
-      "previous_digest": "18adf771e6712e79dd34fd580144f061506b42fc26ff4444dc12351c06d8ffba"
     },
     "No bookmarks or scenes yet. “Set here”{0} adds a mark at the current position.": {
       "status": "corrected",
@@ -12326,10 +12297,6 @@
       "status": "unchanged",
       "digest": "8ed826838c052cb46be8a145a4d00a25c477727b58541cb58e42b490adb23347"
     },
-    "All filters: rating, type, category, performers, studios, tags, duration, dates and more": {
-      "status": "unchanged",
-      "digest": "876e8aede317385624d9c357333bbe0c633808ad369fbc518063a0beb66dc0f7"
-    },
     "Appearance, tile size and sorting": {
       "status": "unchanged",
       "digest": "3507d4dfb3199a8902abb912d0fae41992182de91a474b2f4b35950d34a53eec"
@@ -12377,10 +12344,6 @@
     "library\u0004View": {
       "status": "unchanged",
       "digest": "ac97938cf31d50baf12a42969451d075c99e92463e4627f1fd6cde11c7d4c784"
-    },
-    "Rating and type": {
-      "status": "unchanged",
-      "digest": "f6ce598bb88032dd7714631dcaca3fa64f616e8c9f525bddb4a626c4915056fb"
     },
     "Search titles, file paths and tags (Ctrl+F). Enter turns #tag, -#tag, ★4 and type:video into filters.": {
       "status": "unchanged",
@@ -12569,10 +12532,6 @@
     "New smart collection": {
       "status": "unchanged",
       "digest": "cbf104f5e029fc62e099a12a99d39efaf8cfbb129be2486aa55b7bddccd671b1"
-    },
-    "No bookmark or scene has a tag yet. Tags are given in the details, in the lists of bookmarks and scenes.": {
-      "status": "unchanged",
-      "digest": "e36e7fadd789f7ccb1870c7723e84d714d57ad1078566b06806bd7b09b813c12"
     },
     "Only with the tag “{0}”": {
       "status": "unchanged",
@@ -13093,10 +13052,6 @@
     "Technical data · {0} · {1}": {
       "status": "unchanged",
       "digest": "17dc79aa2ea7bd9ed53fcd8e90fe55a431620a2a180a4b03079b5b8b7c5a3198"
-    },
-    "Technology": {
-      "status": "unchanged",
-      "digest": "26518c3cf41cd76bdf2330e993a459437186c400669573baf72b58c84c77522e"
     },
     "The file belongs to another item: {0}": {
       "status": "unchanged",
@@ -14473,20 +14428,10 @@
       "status": "unchanged",
       "digest": "ee6dadf72d504098b4d75f0fd7097ffa1987b8d87b0ba7a0cc5d732911e90456"
     },
-    "All filters …": {
-      "status": "corrected",
-      "digest": "6fddc4caff7eb50c64b47bfdb9437621c5710636be7590fc45a872a230f7a947",
-      "previous_digest": "f457dc5d9802e447380691ae2150f4b820f95b57e91385772e3c75c5fcc3c9e5"
-    },
     "Folder tree": {
       "status": "corrected",
       "digest": "513dcfda9b13c0cfea7753f6baca972763f76dab107490df14328e9235b6740d",
       "previous_digest": "ea8ace6b79dc924fe037017b0585fb0f6d93d43c5670022ac9a75ac26d127926"
-    },
-    "Hide the filter panel": {
-      "status": "corrected",
-      "digest": "5ce2eee2453353f08a740f3cf2cd806817b799c331132ee8f5f87fcc9e03c476",
-      "previous_digest": "d2a6723485bcb83c53dfa6106b9f0b32c1fa30b73e191d2ba701fd07d961b2d4"
     },
     "Hide the folder tree": {
       "status": "corrected",
@@ -14517,11 +14462,6 @@
       "status": "corrected",
       "digest": "94bd303db7ff7d2b4b132422881267b206b77df62689ccea3f9b476cf3c3da43",
       "previous_digest": "aacb8baa681f9a6c23374a2e0e137b984f6057c4f4307351dd46938bc97b0644"
-    },
-    "Show or hide the filter panel": {
-      "status": "corrected",
-      "digest": "5e994c4ec1e45692276f31f2e3aa2aa8f18f1892e79d7af2c3e893b6fe21da10",
-      "previous_digest": "dedcbcc04cdb434aa5045e418e78cbf69ef388a8765a0fba9db2dc3c15a30127"
     },
     "Unpin": {
       "status": "corrected",
@@ -15294,6 +15234,186 @@
     "{0:P0} of the video size": {
       "status": "unchanged",
       "digest": "1739730f20f80837dffc14ce36dce3a0f943d028eac9a11478318f4d8c8e5474"
+    },
+    ", excluded": {
+      "status": "unchanged",
+      "digest": "eec27c7c82ae811d62492c2b6a5f580225a14f155377e3f6fa08d4e9e3d09b72"
+    },
+    ", included": {
+      "status": "unchanged",
+      "digest": "51a711379f3569bd3cb099cbec1fa90e0bb2b81f4188955aaa365276c18c9bda"
+    },
+    "all {0}": {
+      "status": "unchanged",
+      "digest": "46f63cf615090672b421af74ce8d599ebffe6f51085ce95b4f8686a2ace099cd"
+    },
+    "any rating": {
+      "status": "unchanged",
+      "digest": "473844753c1e9bf91da57855ad339326cdc33b74db99db53e7c1c8c413d612d9"
+    },
+    "Assign and manage tags": {
+      "status": "unchanged",
+      "digest": "e1d8d3739ee2780b0bcb03c735d7ce94f6034172036065fc2fb25208e08cc2ac"
+    },
+    "Click: include · Delete or right-click: exclude": {
+      "status": "unchanged",
+      "digest": "52895cf5cabeb6291b76322e877d9e19208a4c0b11ee8a48cf26d568d1c9b3b0"
+    },
+    "Click: include · Delete: exclude · right-click: more": {
+      "status": "unchanged",
+      "digest": "f3f333c09f9c35d23a35f73ca7109b569716ec043421d3ff5e69d55781b2c588"
+    },
+    "Drag items onto a tag to assign it · right-click: rename, merge, pin": {
+      "status": "unchanged",
+      "digest": "498c5d6fb90e90c840e912f2eccfb8be05db4f92de6c89a4e7008a5af3c952c3"
+    },
+    "Drag items onto tags; rename, merge and pin tags, unused ones too.": {
+      "status": "unchanged",
+      "digest": "8ff27eaa681bf12c038050d5a10f26beefdbb2f89ffd2fc6c898e18a63281061"
+    },
+    "Enter or click: include · Delete or “−”: exclude": {
+      "status": "unchanged",
+      "digest": "970c3c9c72303bc92fb7941d911159e1825546ff150fce5b821f50c4fa4d1365"
+    },
+    "Enter: include · Delete: exclude": {
+      "status": "unchanged",
+      "digest": "c8941cfa3ba741718fcbc006f2406a4eec80328d78c8e0321047aae5bac3213e"
+    },
+    "File and quality": {
+      "status": "unchanged",
+      "digest": "1567953e7c7c861008cb9eff3de6a2cb7c5d37699430880c870204befa4222c4"
+    },
+    "Filter by …": {
+      "status": "unchanged",
+      "digest": "96887d6d86dc20b61d7b1735e1a36c6661b72da8dfb0a77d981bdf0b9bd8c5f4"
+    },
+    "Filters": {
+      "status": "unchanged",
+      "digest": "431bd59a71954822e52515708981015be7ba83d8df1ebf08d9fc0b8e2bd243d6"
+    },
+    "From – to": {
+      "status": "unchanged",
+      "digest": "1218656247960f522afac12b4d3a85651216620d90d11833fdd533907dd2eb2f"
+    },
+    "Hide the tag panel": {
+      "status": "unchanged",
+      "digest": "caf3346657962cc9429ef35a0b06005fb10a9dfdbe492ad9be2066920585a75b"
+    },
+    "Include": {
+      "status": "unchanged",
+      "digest": "e5371b8ca48d3e1408e427eb2cb1d3ba51a7e0918956adbcb597bdd4815f6af3"
+    },
+    "Manage tags …": {
+      "status": "unchanged",
+      "digest": "bf17f6cf3cd58d9e1f9ea91da624011a0c3e93e1bb23d54663dc295e10e1727c"
+    },
+    "More filters": {
+      "status": "unchanged",
+      "digest": "599d1fd7abf742a9a345314132e22e8473654fe983e3f881e4a4ab9939a1f195"
+    },
+    "No entries yet.": {
+      "status": "unchanged",
+      "digest": "b78a0d5c25999712925e9d9bc681969752da686de54df3faa05a07395894fb15"
+    },
+    "Nothing chosen: every review status counts.": {
+      "status": "unchanged",
+      "digest": "60bc1644f20a54728e09a4d03d5cc737ee838b507ea4b8a94854b5641452651e"
+    },
+    "One filter less helps:": {
+      "status": "unchanged",
+      "digest": "4d94c49cd13996a3ef74cfd43eed44f1bfe4468d5c4063eb26db320b6296da1e"
+    },
+    "only unrated": {
+      "status": "unchanged",
+      "digest": "6072de3f541e55efdfb0d2682a097e7ee0ac4d3fd11bf2c8979838b320566955"
+    },
+    "Opens the tag panel: drag items onto tags, rename, merge, pin, unused tags": {
+      "status": "unchanged",
+      "digest": "883d26af8f7f5967537b6489c8e8d3920c63d75f214c4bf9a667a44bc59c51b7"
+    },
+    "Other tags": {
+      "status": "unchanged",
+      "digest": "d158f30263e5fb70cf92cb14ba8b93bde3b23a61457fb20e67286b2cc3838284"
+    },
+    "Reset": {
+      "status": "unchanged",
+      "digest": "dd4930e6a1062bf783c32f27b1903a15c7d0d8e966e63d4cfdfc0b5af909cc1c"
+    },
+    "Show all {0:N0} filters": {
+      "status": "unchanged",
+      "digest": "2c17906f770ae155de977a063679bdbcb9faf17a849cb04ffa8e11b0a4ce579b"
+    },
+    "Show fewer": {
+      "status": "unchanged",
+      "digest": "090a691f7094e93f9136c08866678b1aaaba331760caa0cd4f482176c831db11"
+    },
+    "Show or hide the filter bar": {
+      "status": "unchanged",
+      "digest": "50b00d9305bdb7558d9e42fba08cf62cbead0c840dbbac2c940c652a4eda2bf1"
+    },
+    "Show {0:N0} more": {
+      "status": "unchanged",
+      "digest": "9d08ea8b78e6d4b3380013ad7a830cecb12b7b7e66437fd9eede4ab8a3169f14"
+    },
+    "Status": {
+      "status": "unchanged",
+      "digest": "b75f6fc3ced948af88b43304f5e89add5e079ed3cced786a67e5ae863a295994"
+    },
+    "Technology: codec, HDR, frame rate, versions": {
+      "status": "unchanged",
+      "digest": "5f824ebf8eac3d60f7d5c91d2dd4cda6e5d9b1fea297e34e0d347957735f47ee"
+    },
+    "The review inbox shows unreviewed items and those that need attention.": {
+      "status": "unchanged",
+      "digest": "6cb0baa40b89cb7f368f383ac3e3a5c5fa0438ccf5e9d7e09a5fe83b6fd74c6d"
+    },
+    "This filter is not available here.": {
+      "status": "unchanged",
+      "digest": "59a532b6e1c256266cceda29c4d48eb86b9f67489f1627dc42e760cc9349e323"
+    },
+    "Time": {
+      "status": "unchanged",
+      "digest": "6b91162cd1d06c4e38f4d0fc9297e6658aeda58c965bb1985a06933a9e29ffd7"
+    },
+    "Used often lately": {
+      "status": "unchanged",
+      "digest": "f229a4a3719512370ddb29b5b5f6d2777c2a52691990964121b57615f2fb037a"
+    },
+    "Used often lately; click to filter": {
+      "status": "unchanged",
+      "digest": "3d251d22e7595bc7b99cdb500d0d65cb71181a97b5d25bc482ca1afd8cda93da"
+    },
+    "without": {
+      "status": "unchanged",
+      "digest": "5c9237a5f3648807d6f99ec8b432a053b12b7b20dd7c486b1a3a69110b9b6d90"
+    },
+    "without “{0}” → {1:N0}": {
+      "status": "unchanged",
+      "digest": "911240d6d1f42202495fb4cf651c5d929201220dab1682bb3c08e395327c287a"
+    },
+    "{0:N0} hits": {
+      "status": "unchanged",
+      "digest": "1c749f31eb37d490a7a451d3d0e1e2d5e66887e794dbc6cd861d1340655c7a7e"
+    },
+    "{0:N0} more; refine the search": {
+      "status": "unchanged",
+      "digest": "627016cdcd74427c4c42931d68f62d31ef7c5eb925e0247b5c1a3badd2382201"
+    },
+    "{0} from": {
+      "status": "unchanged",
+      "digest": "4c8a98156e5d258dd810da0592a45ae90c9b9fe9b07c58b22ae208c788fc7189"
+    },
+    "{0} to": {
+      "status": "unchanged",
+      "digest": "bbf884e58dff1626aead7ab54f2a317569f5c0be4479adae46ebd9479f95697b"
+    },
+    "“{0}” became a filter": {
+      "status": "unchanged",
+      "digest": "4f29ed77b84b55bd604c9a8fd2ac195a99c35ff11d8d190bf9852d565d196337"
+    },
+    "↑↓ choose · Enter filter · Esc close": {
+      "status": "unchanged",
+      "digest": "5db367ed518be40dec2d64a3d9055f3b8b42ad888b70c371790b998d9d56ec13"
     }
   }
 }

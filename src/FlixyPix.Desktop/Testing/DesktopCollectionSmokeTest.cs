@@ -54,8 +54,9 @@ public partial class MainWindow
   // The filter bar and the short form @tag find media by the tags of their jump marks.
   ApplyFilter(new MediaFilter { MarkTags = ["Smoke-Kuss"] }); await Settled();
   Require(_total == 1, "The jump mark filter did not find the video.");
-  OpenFilterPopup(FilterPills[T("Jump marks")].Button, MarkTagPanel(FilterPills[T("Jump marks")].Button)); await Settled();
-  Capture((FrameworkElement)_filterPopup!.Child, Path.Combine(directory, "filter-jump-marks.png")); _filterPopup.IsOpen = false;
+  Require(PillText(T("Status")).Contains("Smoke-Kuss", StringComparison.Ordinal), "The status section of the filter bar does not name the jump mark.");
+  OpenFilterSection("status"); await Settled();
+  Capture((FrameworkElement)FilterSectionHost.Child, Path.Combine(directory, "filter-jump-marks.png")); FilterFlyout.IsOpen = false;
   ApplyViewState(new ViewState { View = "Video" }); await Settled();
   SearchBox.Text = "@smoke-tanz"; SearchKeyDown(SearchBox, Press(SearchBox, Key.Enter, Keyboard.KeyDownEvent)); await Settled();
   Require(_filter.MarkTags.SequenceEqual(["smoke-tanz"]) && SearchBox.Text.Length == 0 && _total == 1, "The short form @tag did not become a jump mark filter.");

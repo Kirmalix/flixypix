@@ -50,9 +50,12 @@ internal sealed partial record DesktopSettings
  public bool SidebarCollapsed { get; init; }
  /// <summary>Width of the unfolded sidebar as the user dragged it.</summary>
  public int SidebarWidth { get; init; } = 232;
- /// <summary>The filter panel beside the media is open, and which of its tabs shows (tags or more).</summary>
- public bool FilterPanelOpen { get; init; }
- public string FilterPanelTab { get; init; } = "tags";
+ /// <summary>The tag panel beside the media is open (tag work from "Ordnen": drag items onto tags, manage them).</summary>
+ public bool TagPanelOpen { get; init; }
+ /// <summary>The filter bar above the tiles is hidden; the active filters stay as chips in the search field.</summary>
+ public bool FilterBarHidden { get; init; }
+ /// <summary>How often filter sections and values were used lately (decaying), so the bar puts them first.</summary>
+ public IReadOnlyDictionary<string, double> FilterUsage { get; init; } = new Dictionary<string, double>();
  /// <summary>The folder view shows its tree; the path and subfolders above the media stay either way.</summary>
  public bool FolderTreeHidden { get; init; }
  /// <summary>Width of the panel beside the media as the user dragged it.</summary>

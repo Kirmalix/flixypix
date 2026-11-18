@@ -12,7 +12,7 @@ public partial class MainWindow
     private readonly Dictionary<FrameworkElement, IInputElement> _regionFocus = [];
     private int? _keyboardIndex, _keyboardAnchor;
     private readonly SemaphoreSlim _keyboardNavigationGate = new(1);
-    private FrameworkElement[] KeyboardRegions() => new FrameworkElement[] { HeaderBar, Sidebar.IsVisible ? Sidebar : SidebarRail, FilterPane.IsVisible ? FilterPane : FolderPane, IsPageView && ActivePage != null ? ActivePage : IsPublicationGroupView && _publicationPage != null ? _publicationPage : IsImageSetView && _setPage != null ? _setPage : IsRoleView && _roleBrowser != null ? _roleBrowser : _view == "home" ? _home : MediaList, DetailsPane.IsVisible ? DetailsPane : DetailsRail }.Where(r => r != null && r.IsVisible).ToArray();
+    private FrameworkElement[] KeyboardRegions() => new FrameworkElement[] { HeaderBar, Sidebar.IsVisible ? Sidebar : SidebarRail, TagPane.IsVisible ? TagPane : FolderPane, FilterStrip, IsPageView && ActivePage != null ? ActivePage : IsPublicationGroupView && _publicationPage != null ? _publicationPage : IsImageSetView && _setPage != null ? _setPage : IsRoleView && _roleBrowser != null ? _roleBrowser : _view == "home" ? _home : MediaList, DetailsPane.IsVisible ? DetailsPane : DetailsRail }.Where(r => r != null && r.IsVisible).ToArray();
     private void MoveKeyboardRegion(bool backwards)
     {
         var regions = KeyboardRegions(); if (regions.Length == 0) return;
@@ -35,7 +35,7 @@ public partial class MainWindow
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         if (key == Key.Escape)
         {
-            if (FilterFlyout.IsOpen) { FilterFlyout.IsOpen = false; FilterButton.Focus(); return true; }
+            if (FilterFlyout.IsOpen) { FilterFlyout.IsOpen = false; return true; }
             if (ViewPopup.IsOpen) { ViewPopup.IsOpen = false; ViewButton.Focus(); return true; }
         }
         if (key == Key.F6 && Keyboard.Modifiers is ModifierKeys.None or ModifierKeys.Shift) { MoveKeyboardRegion(Keyboard.Modifiers == ModifierKeys.Shift); return true; }
@@ -112,8 +112,15 @@ public partial class MainWindow
     private void InitializeKeyboardAccess()
     {
         KeyboardNavigation.SetTabNavigation(MediaList, KeyboardNavigationMode.Once); KeyboardNavigation.SetTabNavigation(Tags, KeyboardNavigationMode.Once);
-        FilterFlyout.Opened += (_, _) => { KeyboardNavigation.SetTabNavigation(FilterFlyoutFrame, KeyboardNavigationMode.Cycle); FilterFlyoutFrame.MoveFocus(new(FocusNavigationDirection.First)); };
-        FilterFlyout.Closed += (_, _) => FilterButton.Focus();
+        // A section with a search starts in it; otherwise the window itself takes the focus, so no control shows a focus frame
+        // before the keyboard is used, and Tab leads into the section.
+        FilterFlyout.Opened += (_, _) =>
+        {
+            KeyboardNavigation.SetTabNavigation(FilterFlyoutFrame, KeyboardNavigationMode.Cycle);
+            if (Logicals<TextBox>(FilterSectionHost).FirstOrDefault(box => box.Uid.StartsWith("find:", StringComparison.Ordinal)) is { } search) search.Focus();
+            else { FilterFlyoutFrame.Focusable = true; FilterFlyoutFrame.FocusVisualStyle = null; FilterFlyoutFrame.Focus(); }
+        };
+        FilterFlyout.Closed += (_, _) => { if (FilterFlyout.PlacementTarget is UIElement { IsVisible: true } anchor) anchor.Focus(); else FilterButton.Focus(); };
         ViewPopup.Opened += (_, _) => { KeyboardNavigation.SetTabNavigation(ViewPopupFrame, KeyboardNavigationMode.Cycle); ViewPopupFrame.MoveFocus(new(FocusNavigationDirection.First)); }; ViewPopup.Closed += (_, _) => ViewButton.Focus();
         MediaList.PreviewMouseDown += (_, _) => { _keyboardIndex = null; _keyboardAnchor = null; };
     }

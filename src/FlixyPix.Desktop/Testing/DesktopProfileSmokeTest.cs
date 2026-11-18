@@ -32,13 +32,13 @@ public partial class MainWindow
             Require(_repository.GetMedia(reviewFixture.Id)!.ReviewState == ReviewState.Reviewed, "Inspector status selection did not save.");
             ApplyViewState(new ViewState { View = "inbox", ReviewStates = [ReviewState.Reviewed] }); await _lastRefresh; await Idle();
             Require(MediaList.Items.Cast<MediaCard>().Any(c => c.Item.Id == reviewFixture.Id), "Explicit reviewed filter did not override inbox defaults.");
-            var reviewPanel = new System.Windows.Controls.StackPanel(); AddReviewFilters(reviewPanel);
-            var reviewBoxes = reviewPanel.Children.OfType<System.Windows.Controls.CheckBox>().ToArray();
-            var attentionBox = reviewBoxes.Single(b => Equals(b.Content, T("Needs attention")));
-            attentionBox.IsChecked = true; attentionBox.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); await _lastRefresh;
-            Require(_reviewStates.Contains(ReviewState.Reviewed) && _reviewStates.Contains(ReviewState.NeedsAttention), "Status checkboxes did not combine choices.");
-            var allBox = reviewBoxes.Single(b => Equals(b.Content, T("All")));
-            allBox.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); await _lastRefresh;
+            var reviewChips = Logicals<System.Windows.Controls.Button>(StatusSection()).ToArray();
+            var attentionChip = reviewChips.Single(b => b.Uid == "review:" + ReviewState.NeedsAttention);
+            attentionChip.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); await _lastRefresh;
+            Require(_reviewStates.Contains(ReviewState.Reviewed) && _reviewStates.Contains(ReviewState.NeedsAttention), "Status chips did not combine choices.");
+            foreach (var state in Enum.GetValues<ReviewState>().Where(s => !_reviewStates.Contains(s)))
+                Logicals<System.Windows.Controls.Button>(StatusSection()).Single(b => b.Uid == "review:" + state).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            await _lastRefresh;
             Require(_reviewStates.Count == 4, "All review states did not clear inbox restriction.");
             var secondReview = _repository.Upsert(new MediaItem { Path = Path.Combine(directory, "review-ui-second.mp4"), Kind = MediaKind.Video, ReviewState = ReviewState.Unreviewed });
             try
@@ -244,8 +244,8 @@ public partial class MainWindow
             ApplyFilter(new MediaFilter { Profiles = [CatalogRepository.HasProfile(ProfileProperty.HairColor, SearchComparison.Equals, "blond").Condition!] });
             await _lastRefresh; await Idle();
             var found = MediaList.Items.Cast<MediaCard>().Select(c => c.Item.Id).ToList();
-            Require(found.SequenceEqual([medium.Id]) && FilterPills[T("Properties")].Text.Text.EndsWith(": 1", StringComparison.Ordinal),
-             "The filter by a property of performers did not find exactly the medium of the performer.");
+            Require(found.SequenceEqual([medium.Id]) && PillText(T("Properties")).EndsWith(": 1", StringComparison.Ordinal),
+             $"The filter by a property of performers did not find exactly the medium of the performer ({found.Count} found, pill {PillText(T("Properties"))}).");
             Capture(this, Path.Combine(directory, "filter-properties.png"));
             ApplyFilter(new MediaFilter()); await _lastRefresh;
             window.DeleteWithoutAsking(["Neues Studio"]);

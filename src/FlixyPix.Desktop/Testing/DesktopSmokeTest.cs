@@ -476,13 +476,13 @@ public partial class MainWindow
         Capture((FrameworkElement)review.Content, Path.Combine(directory, "tag-package.png")); review.Close(); directoryWindow.Close();
         await RunProfileSmokeTestAsync(directory);
         await RunSimilarSmokeTestAsync(directory);
-        // Filter flyout: thirteen sections; a date window that excludes everything empties the grid and its chip brings everything back.
+        // Filter bar: its sections above the tiles; a date window that excludes everything empties the grid and its chip brings everything back.
         async Task Settled() { await _lastRefresh; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); }
         Refresh(); await Settled(); var unfiltered = _total;
-        Require(FilterPills.Count == 13 && FilterBar.Children.Count == 13, "The filter flyout does not list its thirteen sections.");
+        Require(FilterBarShown && FilterPills.ContainsKey(T("Rating")) && FilterPills.ContainsKey(T("Time")) && FilterPills.ContainsKey(T("Performers")), "The filter bar lacks its sections.");
         ApplyFilter(_filter with { FileDate = new DateFilter(DateWindow.Custom, null, new DateTimeOffset(1990, 1, 1, 0, 0, 0, TimeSpan.Zero)) }); await Settled();
-        Require(_total == 0 && FilterPills[T("File date")].Text.Text.StartsWith(T("File date"), StringComparison.Ordinal) && CountLabel.Text.Contains(T("File {0}", _filter.FileDate.Describe()), StringComparison.Ordinal),
-         $"The file date filter did not apply ({_total} hits, pill {FilterPills[T("File date")].Text.Text}).");
+        Require(_total == 0 && PillText(T("Time")).StartsWith(T("Time") + ": ", StringComparison.Ordinal) && CountLabel.Text.Contains(T("File {0}", _filter.FileDate.Describe()), StringComparison.Ordinal),
+         $"The file date filter did not apply ({_total} hits, pill {PillText(T("Time"))}).");
         Require(EmptyTitle.Text == T("No matches") && EmptyReset.Visibility == Visibility.Visible && FirstRunActions.Visibility != Visibility.Visible,
          "An empty result in a filled library still invites the first import.");
         ApplyFilter(_filter with { FileDate = new(), Imported = new DateFilter(DateWindow.LastYear) }); await Settled(); var recent = _total;
@@ -499,9 +499,10 @@ public partial class MainWindow
         // A saved search keeps the whole view and brings it back; the sidebar counts its hits.
         ApplyFilter(_filter with { Watched = false, Include = [new("Darsteller", "Jane Doe", TagRole.Performer)] }); await Settled();
         Require(_total == 0, "A performer without media still matched.");
-        OpenFilterPopup(FilterPills[T("Performers")].Button, FacetPanel(FilterPills[T("Performers")].Button, TagRole.Performer)); await Task.Delay(500); await Settled();
-        Capture((FrameworkElement)_filterPopup!.Child, Path.Combine(directory, "filter-performers.png"));
-        _filterPopup.IsOpen = false;
+        OpenFilterSection("performers"); await Task.Delay(500); await Settled();
+        Require(_hitCounts != null && FilterSectionHost.Child != null, "The performers section did not count within the hits.");
+        Capture((FrameworkElement)FilterSectionHost.Child!, Path.Combine(directory, "filter-performers.png"));
+        FilterFlyout.IsOpen = false;
         Capture(RootContent, Path.Combine(directory, "desktop-filter-bar.png"));
         var savedView = _repository.UpsertSavedSearch(new SavedSearch { Name = "Ungesehen mit Jane", State = CaptureViewState() with { Position = 0, AnchorId = null, Selection = [] } });
         ApplyViewState(new ViewState()); await Settled();
@@ -744,9 +745,9 @@ public partial class MainWindow
         SetDetailsTabs(false);
         Require(!DetailsTabBar.IsVisible && DetailsTagsPart.Visibility == Visibility.Visible && DetailsFieldsPart.Visibility == Visibility.Visible && DetailsScenesPart.Visibility == Visibility.Visible,
          "Switching back did not show everything one below the other.");
-        // The filter flyout opens at a section; short forms in the search become filters and chips; the view menu opens.
-        AllFiltersClicked(AllFiltersButton, new RoutedEventArgs()); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-        Require(FilterFlyout.IsOpen && FilterSectionHost.Child != null, "The filter flyout did not open at a section.");
+        // A section of the filter bar opens under its button; short forms in the search become filters and chips; the view menu opens.
+        FilterPills.Values.First().Button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Require(FilterFlyout.IsOpen && FilterSectionHost.Child != null, "A section of the filter bar did not open.");
         Capture(FilterFlyoutFrame, Path.Combine(directory, "filter-flyout.png"));
         FilterFlyout.IsOpen = false;
         SearchBox.Text = "#kurzform -#ohne ★3";

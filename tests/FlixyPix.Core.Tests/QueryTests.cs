@@ -33,6 +33,21 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
     }
 
     [Fact]
+    public void TagCountsWithinCountOnlyTheHitsOnceEach()
+    {
+        using var catalog = Open();
+        catalog.Upsert(Item("a.jpg", "A") with { Tags = ["Rom"], Rating = 8, TagCategories = new() { ["Orte"] = ["Rom"], ["Personen"] = ["Anna"] } });
+        catalog.Upsert(Item("b.jpg", "B") with { Tags = ["rom", "Wien"], Rating = 2 });
+        catalog.Upsert(Item("c.jpg", "C") with { TagCategories = new() { ["Personen"] = ["Anna"] }, Rating = 8 });
+        var all = catalog.TagCountsWithin(new MediaQuery());
+        Assert.Equal(2, all["ROM"]); Assert.Equal(1, all["Wien"]); Assert.Equal(2, all["Anna"]);
+        var good = catalog.TagCountsWithin(new MediaQuery { MinimumRating = 6 });
+        Assert.Equal(1, good["Rom"]); Assert.Equal(2, good["Anna"]); Assert.False(good.ContainsKey("Wien"));
+        var withRome = catalog.TagCountsWithin(new MediaQuery { RequiredTags = ["Rom"], KeepIds = [catalog.Search().Single(i => i.Title == "C").Id] });
+        Assert.Equal(1, withRome["Anna"]); Assert.Equal(2, withRome["Rom"]);
+    }
+
+    [Fact]
     public void FacetsCountMediaPerFolderCategoryAndTagCategory()
     {
         using var catalog = Open();
@@ -183,6 +198,13 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
             samples.Add(("indexed", watch.Elapsed.TotalMilliseconds)); Assert.Equal(1, search.TotalCount);
         }
         var indexedP95 = P95(samples.Where(x => x.Kind == "indexed").Select(x => x.Milliseconds));
+        // The filter bar counts the tags of the current hits whenever a section opens: over everything and within a filter.
+        watch.Restart(); var allCounts = catalog.TagCountsWithin(new MediaQuery()); var tagCountsAllMs = watch.Elapsed.TotalMilliseconds;
+        Assert.Equal(100_000, allCounts["Natur"]); Assert.Equal(10_000, allCounts["Gruppe3"]);
+        watch.Restart(); var narrowCounts = catalog.TagCountsWithin(new MediaQuery { RequiredTags = ["Gruppe3"], MinimumRating = 6 }); var tagCountsNarrowMs = watch.Elapsed.TotalMilliseconds;
+        Assert.Equal(narrowCounts["Gruppe3"], narrowCounts["Natur"]); Assert.False(narrowCounts.ContainsKey("Gruppe4"));
+        output.WriteLine($"tag counts within hits: all {tagCountsAllMs:0} ms, narrow {tagCountsNarrowMs:0} ms");
+        Assert.True(tagCountsAllMs < 3000 && tagCountsNarrowMs < 3000, $"Tag counts within hits too slow: {tagCountsAllMs:0} / {tagCountsNarrowMs:0} ms");
         // Organizer edits at catalog scale must preserve the expensive browsing caches.
         var editFacets = catalog.GetFacets();
         _ = catalog.GetTagUsage();

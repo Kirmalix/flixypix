@@ -2,13 +2,14 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace FlixyPix.Desktop;
 
-/// <summary>The panel beside the media: the folder tree while browsing folders, or the filters on demand. The left bar
-/// stays for navigation only. Folders are a place to walk through (tree, path and subfolders), so inside this view the
-/// folder is not a filter chip.</summary>
+/// <summary>The panel beside the media: the folder tree while browsing folders, or the tag panel for tag work (opened from
+/// "Ordnen" or the tags of the filter bar). The left bar stays for navigation only, the filters live in the bar above the
+/// tiles. Folders are a place to walk through (tree, path and subfolders), so inside this view the folder is not a filter chip.</summary>
 public partial class MainWindow
 {
     private const double PanelMinimum = 200, PanelMaximum = 480;
@@ -18,92 +19,76 @@ public partial class MainWindow
 
     private bool ShowsMediaGrid => !(_view == "home" || IsRoleView || IsPageView || IsImageSetView || IsPublicationGroupView);
     private bool InFolderView => _view == FolderView && _playlist == null;
-    internal bool FilterPanelShown => FilterPane.Visibility == Visibility.Visible;
+    internal bool TagPanelShown => TagPane.Visibility == Visibility.Visible;
     internal bool FolderTreeShown => FolderPane.Visibility == Visibility.Visible;
+    internal bool FilterBarShown => FilterStrip.Visibility == Visibility.Visible;
 
     private void InitializeBrowsePanel()
     {
-        SearchFrame.SizeChanged += (_, e) => ActiveTagFilters.MaxWidth = Math.Max(120, e.NewSize.Width * .7);
-        ShowFilterTab(_settings.FilterPanelTab);
+        SearchFrame.SizeChanged += (_, e) => ActiveTagFilters.MaxWidth = Math.Max(120, e.NewSize.Width * .6);
         FillQueueKinds(QueueKindBar, "queueKindList");
+        InitializeSearchSuggestions();
         UpdateBrowsePanel();
     }
 
-    /// <summary>The filters take the place of the tree while they are open; closing them brings the tree back.</summary>
+    /// <summary>The tag panel takes the place of the tree while it is open; closing it brings the tree back.</summary>
     private void UpdateBrowsePanel()
     {
-        var filters = ShowsMediaGrid && _settings.FilterPanelOpen; var wasOpen = FilterPanelShown;
-        var tree = !filters && InFolderView && !_settings.FolderTreeHidden;
-        FilterPane.Visibility = filters ? Visibility.Visible : Visibility.Collapsed;
+        var tags = ShowsMediaGrid && _settings.TagPanelOpen;
+        var tree = !tags && InFolderView && !_settings.FolderTreeHidden;
+        TagPane.Visibility = tags ? Visibility.Visible : Visibility.Collapsed;
         FolderPane.Visibility = tree ? Visibility.Visible : Visibility.Collapsed;
-        PanelResizer.Visibility = filters || tree ? Visibility.Visible : Visibility.Collapsed;
-        BrowsePanelColumn.Width = new GridLength(filters || tree ? Math.Clamp(_settings.BrowsePanelWidth, PanelMinimum, PanelMaximum) : 0);
+        PanelResizer.Visibility = tags || tree ? Visibility.Visible : Visibility.Collapsed;
+        BrowsePanelColumn.Width = new GridLength(tags || tree ? Math.Clamp(_settings.BrowsePanelWidth, PanelMinimum, PanelMaximum) : 0);
         FolderTreeButton.Visibility = InFolderView && !tree ? Visibility.Visible : Visibility.Collapsed;
         IncludeFolderChildren.Visibility = InFolderView ? Visibility.Visible : Visibility.Collapsed;
         ViewButton.Visibility = ShowsMediaGrid ? Visibility.Visible : Visibility.Collapsed;
-        if (filters && !wasOpen && FilterMoreTab.Visibility == Visibility.Visible) RenderFilterMore();
+        FilterStrip.Visibility = ShowsMediaGrid && !_settings.FilterBarHidden ? Visibility.Visible : Visibility.Collapsed;
+        if (!ShowsMediaGrid && FilterFlyout.IsOpen) FilterFlyout.IsOpen = false;
     }
 
     private void PanelResizing(object sender, DragDeltaEventArgs e) =>
         BrowsePanelColumn.Width = new GridLength(Math.Clamp(BrowsePanelColumn.ActualWidth + e.HorizontalChange, PanelMinimum, PanelMaximum));
 
-    // ----- Filters -----
+    // ----- Filter bar and tag panel -----
 
-    private void FilterButtonClicked(object sender, RoutedEventArgs e) => _ = ToggleFilterPanelAsync();
-    /// <summary>Pages without media have nothing to filter; the button then opens the filters over all items.</summary>
-    internal async Task ToggleFilterPanelAsync()
+    private void FilterButtonClicked(object sender, RoutedEventArgs e) => _ = ToggleFilterBarAsync();
+    /// <summary>Shows or hides the filter bar; pages without media have nothing to filter, so the button then opens all items.</summary>
+    internal async Task ToggleFilterBarAsync()
     {
-        var open = !ShowsMediaGrid || !_settings.FilterPanelOpen;
-        _settings = _settings with { FilterPanelOpen = open };
+        if (!ShowsMediaGrid)
+        {
+            _settings = _settings with { FilterBarHidden = false }; SaveViewPreferences();
+            await NavigateAreaAsync("all"); UpdateBrowsePanel(); return;
+        }
+        _settings = _settings with { FilterBarHidden = !_settings.FilterBarHidden };
+        SaveViewPreferences();
+        UpdateBrowsePanel();
+        if (FilterBarShown) _ = Dispatcher.BeginInvoke(() => FilterStrip.MoveFocus(new(FocusNavigationDirection.First)), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    /// <summary>Opens the tag panel beside the media (tag work); on a page without media it opens over all items.</summary>
+    internal async Task OpenTagPanelAsync()
+    {
+        _settings = _settings with { TagPanelOpen = true };
         SaveViewPreferences();
         if (!ShowsMediaGrid) await NavigateAreaAsync("all");
         UpdateBrowsePanel();
     }
-
-    private void FilterTabClicked(object sender, RoutedEventArgs e)
+    private void TagPaneCloseClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: string tab }) return;
-        _settings = _settings with { FilterPanelTab = tab };
+        _settings = _settings with { TagPanelOpen = false };
         SaveViewPreferences();
-        ShowFilterTab(tab);
-    }
-
-    private void ShowFilterTab(string tab)
-    {
-        var more = tab == "more";
-        FilterTabTags.IsChecked = !more; FilterTabMore.IsChecked = more;
-        FilterTagsTab.Visibility = more ? Visibility.Collapsed : Visibility.Visible;
-        FilterMoreTab.Visibility = more ? Visibility.Visible : Visibility.Collapsed;
-        if (more) RenderFilterMore();
-    }
-
-    /// <summary>The common filters at hand. A control being used already shows its value; rebuilding it would take the focus away.</summary>
-    private void RenderFilterMore()
-    {
-        if (FilterMoreHost.IsKeyboardFocusWithin) return;
-        var panel = new StackPanel();
-        panel.Children.Add(RatingPanel(AllFiltersButton));
-        var duration = DurationPanel(AllFiltersButton);
-        duration.Margin = new Thickness(0, 14, 0, 0);
-        panel.Children.Add(duration);
-        FilterMoreHost.Child = panel;
-    }
-
-    /// <summary>Every filter section, for what the panel does not hold; opens at the section shown last.</summary>
-    private void AllFiltersClicked(object sender, RoutedEventArgs e)
-    {
-        if (FilterFlyout.IsOpen) { FilterFlyout.IsOpen = false; return; }
-        var label = _filterSection != null && _pills.ContainsKey(_filterSection) ? _filterSection : _pills.Keys.First();
-        _pills[label].Button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        UpdateBrowsePanel();
     }
 
     // ----- Folders -----
 
     private void FolderTreeToggleClicked(object sender, RoutedEventArgs e)
     {
-        // While the filters cover the tree, the button brings the tree back.
-        var hide = !_settings.FolderTreeHidden && !_settings.FilterPanelOpen;
-        _settings = _settings with { FolderTreeHidden = hide, FilterPanelOpen = false };
+        // While the tag panel covers the tree, the button brings the tree back.
+        var hide = !_settings.FolderTreeHidden && !_settings.TagPanelOpen;
+        _settings = _settings with { FolderTreeHidden = hide, TagPanelOpen = false };
         SaveViewPreferences();
         UpdateBrowsePanel();
     }

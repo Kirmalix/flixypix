@@ -32,21 +32,6 @@ public partial class MainWindow
         }
         finally { _syncReviewEditor = false; }
     }
-    private void AddReviewFilters(Panel panel)
-    {
-        panel.Children.Add(Heading(T("Review status")));
-        var choices = _reviewStates.Count > 0 ? _reviewStates : _view == "inbox" ? [ReviewState.Unreviewed, ReviewState.NeedsAttention] : [];
-        var all = new CheckBox { Content = T("All"), IsChecked = choices.Count == 0 || choices.Count == 4 };
-        panel.Children.Add(all);
-        var boxes = new List<(ReviewState State, CheckBox Box)>();
-        foreach (var state in Enum.GetValues<ReviewState>())
-        {
-            var box = new CheckBox { Content = ReviewLabel(state), IsChecked = choices.Count == 0 || choices.Contains(state) };
-            boxes.Add((state, box)); panel.Children.Add(box);
-            box.Click += (_, _) => { _reviewStates = boxes.Where(b => b.Box.IsChecked == true).Select(b => b.State).ToList(); if (_reviewStates.Count == 0) { box.IsChecked = true; _reviewStates = [state]; } all.IsChecked = _reviewStates.Count == 4; _anchor = 0; UpdateFilterBar(); Refresh(); };
-        }
-        all.Click += (_, _) => { _reviewStates = Enum.GetValues<ReviewState>().ToList(); foreach (var pair in boxes) pair.Box.IsChecked = true; all.IsChecked = true; _anchor = 0; UpdateFilterBar(); Refresh(); };
-    }
     private static string ReviewLabel(ReviewState state) => state switch
     { ReviewState.Unspecified => T("Review unspecified"), ReviewState.Unreviewed => T("Unreviewed"), ReviewState.NeedsAttention => T("Needs attention"), _ => T("Reviewed") };
 }

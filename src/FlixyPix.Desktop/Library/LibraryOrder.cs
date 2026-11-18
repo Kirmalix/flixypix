@@ -22,6 +22,7 @@ public partial class MainWindow
     [
         new("inbox", T("Review inbox"), T("New items to look through and approve."), 0xE9D5, () => QueueView(new(), [ReviewState.Unreviewed, ReviewState.NeedsAttention]), true),
         new("untagged", T("Without tags"), T("Tag them one by one in tag mode."), 0xE8EC, () => QueueView(new() { UntaggedOnly = true }), true),
+        new("tagwork", T("Assign and manage tags"), T("Drag items onto tags; rename, merge and pin tags, unused ones too."), 0xE8EC, null, false, () => _ = OpenTagPanelAsync()),
         new("unrated", T("Unrated"), T("Rate with 1–5; the next item follows by itself."), 0xE734, () => QueueView(new() { UnratedOnly = true }), false),
         .. QueueKindView == "Image" ? Array.Empty<WorkQueue>() : [new WorkQueue("thumbnails", T("Without thumbnail"), T("Create the missing thumbnails."), 0xE91B, () => QueueView(new() { HasThumbnail = false }), false)],
         new("duplicates", T("Find duplicates"), T("Compare pairs and decide what stays."), 0xE8C8, null, false, () => ShowDuplicates()),

@@ -80,8 +80,8 @@ public partial class MainWindow
   ClearTagFilters(); _anchor = 0; ApplyTagFilterChanges(); await _lastRefresh;
   // The folder filter is visible as a chip, counts as a filter and can be removed.
   var folderPath = Path.GetDirectoryName(others[0].Item.Path)!; _folder = folderPath; await RefreshAsync();
-  var folderChip = T("Folder: {0}", Path.GetFileName(folderPath)) + "  ×";
-  Require(ActiveTagFilters.Children.OfType<Button>().Any(b => b.Content as string == folderChip) && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The folder filter has no chip.");
+  var folderChip = T("Folder: {0}", Path.GetFileName(folderPath));
+  Require(ActiveTagFilters.Children.OfType<Button>().Any(b => ChipLabel(b) == folderChip) && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The folder filter has no chip.");
   ClearFolderFilter(); await _lastRefresh;
   Require(_folder == null && !ActiveTagFilters.Children.OfType<Button>().Any(), "The folder chip did not end the filter.");
   // Folders are a place: path and subfolders instead of a chip, the tree beside the media, filters keep the folder.
@@ -95,15 +95,18 @@ public partial class MainWindow
   Require(MediaList.Items.Cast<MediaCard>().Any(c => c.Item.Id == folderItem.Id), "The folder view does not show the folder's media.");
   await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-folder-view.png"));
   FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Idle();
-  Require(FilterPanelShown && !FolderTreeShown, "The filters did not take the place of the tree.");
-  ShowFilterTab("more"); await Idle();
+  Require(!FilterBarShown && FolderTreeShown, "The filter button did not hide the filter bar.");
+  FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Idle();
+  Require(FilterBarShown, "The filter button did not bring the filter bar back.");
+  await OpenTagPanelAsync(); await Idle();
+  Require(TagPanelShown && !FolderTreeShown, "The tag panel did not take the place of the tree.");
   ShowKind("Image"); await _lastRefresh;
   Require(_view == "folders" && _folder == folderLocation && _kindFilter == MediaKind.Image && FilterButtonText.Text == T("Filter · {0:N0}", 1), "The media kind left the folder view.");
   await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-filter-panel.png"));
   ResetFiltersClicked(this, new RoutedEventArgs()); await _lastRefresh;
   Require(_folder == folderLocation && _kindFilter == null, "Removing all filters did not keep the place.");
-  ShowFilterTab("tags"); FilterButtonClicked(FilterButton, new RoutedEventArgs()); await Idle();
-  Require(FolderTreeShown && !FilterPanelShown, "Closing the filters did not bring the tree back.");
+  TagPaneCloseClicked(this, new RoutedEventArgs()); await Idle();
+  Require(FolderTreeShown && !TagPanelShown, "Closing the tag panel did not bring the tree back.");
   await WalkHistoryAsync(-1); await _lastRefresh;
   OpenFolder(null); await _lastRefresh;
   ApplyViewState(new ViewState { View = "Video" }); await _lastRefresh; MediaList.SelectedItems.Clear();
@@ -128,7 +131,7 @@ public partial class MainWindow
   ChooseQueueKind("all"); await _lastRefresh; await Idle(); await Task.Delay(300); await Idle();
   await StartQueueAsync(WorkQueues().Single(q => q.Key == "untagged")); await Idle();
   var queued = Selected;
-  Require(_filter.UntaggedOnly && _tagWork && queued is { Tags.Count: 0 } && QueueProgress.Visibility == Visibility.Visible && ActiveTagFilters.Children.OfType<Button>().Any(b => (b.Content as string)?.Contains(T("Without tags")) == true), "The tag queue did not start at its medium.");
+  Require(_filter.UntaggedOnly && _tagWork && queued is { Tags.Count: 0 } && QueueProgress.Visibility == Visibility.Visible && ActiveTagFilters.Children.OfType<Button>().Any(b => ChipLabel(b)?.Contains(T("Without tags")) == true), "The tag queue did not start at its medium.");
   await ChangeTagsAsync([queued!.Id], ["queue-done"], []); await _lastRefresh; await Idle();
   Require(MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == queued.Id).IsFinished && QueueProgress.Value > 0, "A tagged medium did not stay in the queue as done.");
   await Idle(); Capture(RootContent, Path.Combine(directory, "desktop-queue.png"));

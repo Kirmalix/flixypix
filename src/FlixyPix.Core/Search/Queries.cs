@@ -327,6 +327,31 @@ public sealed partial class CatalogRepository
         return result;
     }
 
+    /// <summary>How many media of the result carry each tag, by tag name without regard to case and category; the filter bar
+    /// shows these counts so a value that would leave nothing is recognizable before it is chosen. Paging and
+    /// <see cref="MediaQuery.KeepIds"/> do not count.</summary>
+    public IReadOnlyDictionary<string, int> TagCountsWithin(MediaQuery query, CancellationToken cancellationToken = default)
+     => database.Run<IReadOnlyDictionary<string, int>>(cancellationToken, () =>
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        lock (gate)
+        {
+            ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
+            using var transaction = connection.BeginTransaction();
+            var (where, parameters) = BuildQuery(query with { KeepIds = [] }, transaction);
+            // Every tag has one row without category per medium, so these rows count each medium once.
+            var sql = where.Length == 0
+             ? "SELECT tag, count(DISTINCT media_id) FROM media_tags WHERE category = '' GROUP BY tag COLLATE NOCASE"
+             : $"SELECT t.tag, count(DISTINCT t.media_id) FROM media_tags t WHERE t.category = '' AND t.media_id IN (SELECT q.id FROM media_query q {where}) GROUP BY t.tag COLLATE NOCASE";
+            using (var command = Command(sql, transaction, parameters))
+            using (var reader = command.ExecuteReader())
+                while (reader.Read()) { cancellationToken.ThrowIfCancellationRequested(); counts[reader.GetString(0)] = reader.GetInt32(1); }
+            CommitAfterIndexing(transaction);
+        }
+        return counts;
+    });
+
     private (long Changes,long DataVersion) ChangeStamp() => database.ChangeStamp();
     public CatalogFacets GetFacets(CancellationToken cancellationToken=default) => facetsCache.Read(cancellationToken);
 

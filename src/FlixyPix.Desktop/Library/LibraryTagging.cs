@@ -131,26 +131,61 @@ public partial class MainWindow
         else if (_view == "all" && _tag == null && _folder == null) ViewTitle.Text = T("All items");
         RenderTagFilterChips(); RenderTagList(); UpdateFilterBar(); Refresh();
     }
+    /// <summary>The active filters as chips in the search field; each removes itself on click. Beyond three, "+N" stands for the
+    /// rest until it is clicked, so the search keeps room to type.</summary>
     private void RenderTagFilterChips()
     {
         ActiveTagFilters.Children.Clear();
         var folderIsFilter = _folder != null && _view != FolderView; var kindChip = _view == FolderView ? _kindFilter : null;
-        var active = (RatingFilter.SelectedIndex > 0 ? 1 : 0) + (_category != null ? 1 : 0) + (folderIsFilter ? 1 : 0) + (kindChip != null ? 1 : 0) + _requiredTags.Count + _excludedTags.Count + FilterChips().Count();
+        var chips = new List<(string Label, bool Excluded, string Tooltip, Action Remove)>();
+        if (RatingFilter.SelectedIndex > 0) chips.Add((RatingLabel(RatingFilter.SelectedIndex), false, T("Remove filter"), () => RatingFilter.SelectedIndex = 0));
+        if (kindChip is { } kind) chips.Add((ViewName(kind.ToString()), false, T("Remove filter"), () => { _kindFilter = null; _anchor = 0; ApplyTagFilterChanges(); }));
+        if (folderIsFilter && _folder is { } folder) chips.Add((T("Folder: {0}", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)) is { Length: > 0 } folderName ? folderName : folder), false, T("Remove folder filter"), ClearFolderFilter));
+        if (_category != null) chips.Add((_category, false, T("Remove filter"), () => CategoryFilter.SelectedIndex = 0));
+        foreach (var tag in _requiredTags.ToArray()) chips.Add((tag, false, T("Remove tag filter"), () => { _browse.RemoveIncludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
+        foreach (var tag in _excludedTags.ToArray()) chips.Add((T("without {0}", tag), true, T("Remove exclusion"), () => { _browse.RemoveExcludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
+        foreach (var state in _reviewStates.ToArray()) chips.Add((ReviewLabel(state), false, T("Remove filter"), () => { _reviewStates = _reviewStates.Where(s => s != state).ToList(); _anchor = 0; UpdateFilterBar(); RenderTagFilterChips(); Refresh(); }));
+        foreach (var (label, excluded, remove) in FilterChips().ToList()) chips.Add((label, excluded, T("Remove filter"), remove));
+        var active = chips.Count;
         FilterButtonText.Text = active > 0 ? T("Filter · {0:N0}", active) : T("Filter");
         FilterButton.SetResourceReference(BackgroundProperty, active > 0 ? "ChipFull" : "ButtonBackground");
-        Button Chip(string text, Brush background, string tooltip, Action remove) { var chip = new Button { Content = text, Background = background, Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 3, 4, 3), FontSize = 12, ToolTip = tooltip }; chip.Click += (_, _) => remove(); return chip; }
-        if (RatingFilter.SelectedIndex > 0) ActiveTagFilters.Children.Add(Chip(RatingLabel(RatingFilter.SelectedIndex) + "  ×", FullChipBrush, T("Remove filter"), () => RatingFilter.SelectedIndex = 0));
-        if (kindChip is { } kind) ActiveTagFilters.Children.Add(Chip(ViewName(kind.ToString()) + "  ×", FullChipBrush, T("Remove filter"), () => { _kindFilter = null; _anchor = 0; ApplyTagFilterChanges(); }));
-        if (folderIsFilter && _folder is { } folder) ActiveTagFilters.Children.Add(Chip(T("Folder: {0}", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)) is { Length: > 0 } folderName ? folderName : folder) + "  ×", FullChipBrush, T("Remove folder filter"), ClearFolderFilter));
-        if (_category != null) ActiveTagFilters.Children.Add(Chip(_category + "  ×", FullChipBrush, T("Remove filter"), () => CategoryFilter.SelectedIndex = 0));
-        foreach (var tag in _requiredTags.ToArray()) ActiveTagFilters.Children.Add(Chip(tag + "  ×", FullChipBrush, T("Remove tag filter"), () => { _browse.RemoveIncludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
-        foreach (var tag in _excludedTags.ToArray()) ActiveTagFilters.Children.Add(Chip(T("without {0}", tag) + "  ×", ExcludedChipBrush, T("Remove exclusion"), () => { _browse.RemoveExcludedTag(tag); _anchor = 0; ApplyTagFilterChanges(); }));
-        foreach (var (label, excluded, remove) in FilterChips().ToList()) ActiveTagFilters.Children.Add(Chip(label + "  ×", excluded ? ExcludedChipBrush : FullChipBrush, T("Remove filter"), remove));
-        if (_requiredTags.Count > 1 && _tagsMatchAny) ActiveTagFilters.Children.Insert(0, new TextBlock { Text = T("at least one:"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 6), Foreground = Theme.Brush("Muted"), FontSize = 12 });
+        if (active <= 3) _chipsUnfolded = false;
+        if (_requiredTags.Count > 1 && _tagsMatchAny) ActiveTagFilters.Children.Add(new TextBlock { Text = T("at least one:"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 6, 0), Foreground = Theme.Brush("Muted"), FontSize = 12 });
+        foreach (var (label, excluded, tooltip, remove) in _chipsUnfolded ? chips : chips.Take(3))
+        {
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            var text = new TextBlock { Text = label, MaxWidth = 180, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+            if (excluded) text.TextDecorations = TextDecorations.Strikethrough;
+            content.Children.Add(text);
+            var cross = new TextBlock { Text = "\uE711", FontFamily = SettingsUi.Icons, FontSize = 8, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(7, 1, 0, 0) };
+            cross.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+            content.Children.Add(cross);
+            var chip = new Button { Content = content, Style = (Style)FindResource("FilterChip"), Padding = new Thickness(9, 3, 8, 3), Margin = new Thickness(0, 2, 4, 2), ToolTip = label + " · " + tooltip };
+            chip.SetResourceReference(BackgroundProperty, excluded ? "ChipExcluded" : "ChipFull");
+            System.Windows.Automation.AutomationProperties.SetName(chip, tooltip + ": " + label);
+            chip.Click += (_, _) => remove();
+            ActiveTagFilters.Children.Add(chip);
+        }
+        if (!_chipsUnfolded && active > 3)
+        {
+            var rest = chips.Skip(3).Select(c => c.Label).ToList();
+            var more = new Button { Content = "+" + rest.Count.ToString(System.Globalization.CultureInfo.CurrentCulture), Style = (Style)FindResource("FilterChip"), Padding = new Thickness(9, 3, 9, 3), Margin = new Thickness(0, 2, 4, 2),
+                ToolTip = string.Join(", ", rest) };
+            System.Windows.Automation.AutomationProperties.SetName(more, T("Show all {0:N0} filters", active));
+            more.Click += (_, _) => { _chipsUnfolded = true; RenderTagFilterChips(); };
+            ActiveTagFilters.Children.Add(more);
+        }
         if (active > 1)
-            ActiveTagFilters.Children.Add(Chip(T("Remove all filters"), Brushes.Transparent, T("Remove all tag and filter-bar filters"), () => { _browse.ClearTags(); _filter = new(); _kindFilter = null; UpdateFilterBar(); ClearFolderFilter(); }));
-        if (FilterPanelShown && FilterMoreTab.Visibility == Visibility.Visible) RenderFilterMore();
+        {
+            var clear = new Button { Content = "\uE894", FontFamily = SettingsUi.Icons, FontSize = 12, Style = (Style)FindResource("IconButton"), Padding = new Thickness(6), Margin = new Thickness(0, 0, 2, 0), ToolTip = T("Remove all filters") };
+            System.Windows.Automation.AutomationProperties.SetName(clear, T("Remove all filters"));
+            clear.Click += (_, _) => { _browse.ClearTags(); _filter = new(); _kindFilter = null; _reviewStates = []; RatingFilter.SelectedIndex = 0; CategoryFilter.SelectedIndex = 0; UpdateFilterBar(); ClearFolderFilter(); };
+            ActiveTagFilters.Children.Add(clear);
+        }
     }
+    private bool _chipsUnfolded;
+    /// <summary>The label of a chip in the search field (its first text), for tests.</summary>
+    internal static string? ChipLabel(Button chip) => chip.Content is StackPanel { Children.Count: > 0 } panel && panel.Children[0] is TextBlock text ? text.Text : chip.Content as string;
     /// <summary>Ends the folder filter; the view shows its whole content again under its own name.</summary>
     private void ClearFolderFilter()
     {
