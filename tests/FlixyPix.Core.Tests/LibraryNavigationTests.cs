@@ -10,6 +10,20 @@ public sealed class LibraryNavigationTests
    Parallel.Invoke(()=> {for(int i=0;i<40;i++)catalog.Upsert(new(){Path=Path.Combine(directory,i+".mp4"),Kind=MediaKind.Video});},()=>{for(int i=0;i<40;i++)catalog.PlanFolderSync();});
   }finally {Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();Directory.Delete(directory,true);}
  }
+ [Fact] public void EverySortFieldRunsBothWaysAndTotalsSumTheHits()
+ {
+  var directory=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+  try {using var catalog=new CatalogRepository(Path.Combine(directory,"catalog.db"));
+   foreach(var (name,seconds,bytes) in new[]{("Alpha",30d,100L),("Bravo",90d,300L),("Charlie",60d,200L)})catalog.Upsert(new MediaItem{Path=Path.Combine(directory,name+".mp4"),Title=name,Kind=MediaKind.Video,DurationSeconds=seconds,FileSize=bytes});
+   string Order(int choice)=>string.Concat(catalog.QueryPage(new ViewState{SortOrder=choice}.ToQuery(DateTimeOffset.Now)).Items.Select(i=>i.Title[0]));
+   Assert.Equal("BCA",Order(3));Assert.Equal("ACB",Order(12));
+   // Each stored choice from 11 on is the reverse of an older one.
+   foreach(var (old,reverse) in new[]{(2,11),(3,12),(4,13),(8,14),(9,15),(10,16)})
+   {var (sort,descending)=ViewState.SortFor(old);Assert.Equal((sort,!descending),ViewState.SortFor(reverse));}
+   Assert.Equal(new MediaTotals(3,600,180),catalog.TotalsOf(new ViewState().ToQuery(DateTimeOffset.Now)));
+   Assert.Equal(new MediaTotals(1,300,90),catalog.TotalsOf(new ViewState{SearchText="Bravo"}.ToQuery(DateTimeOffset.Now)));
+  } finally {Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();Directory.Delete(directory,true);}
+ }
  [Fact] public void HealthFiltersAndPreferencesSurviveReopen()
  {
   var directory=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);var path=Path.Combine(directory,"catalog.db");Guid id;

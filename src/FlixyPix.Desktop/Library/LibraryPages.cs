@@ -71,7 +71,7 @@ public partial class MainWindow
 
     private void FinishPage(string title, string count = "")
     {
-        ViewTitle.Text = title; CountLabel.Text = count;
+        ViewTitle.Text = title; SetHeaderLine(count);
         AdaptToWidth(); UpdateNavigation(); RecordView();
     }
 

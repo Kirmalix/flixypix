@@ -42,7 +42,7 @@ public partial class MainWindow
         BrowsePanelColumn.Width = new GridLength(tags || tree ? Math.Clamp(_settings.BrowsePanelWidth, PanelMinimum, PanelMaximum) : 0);
         FolderTreeButton.Visibility = InFolderView && !tree ? Visibility.Visible : Visibility.Collapsed;
         IncludeFolderChildren.Visibility = InFolderView ? Visibility.Visible : Visibility.Collapsed;
-        ViewButton.Visibility = ShowsMediaGrid ? Visibility.Visible : Visibility.Collapsed;
+        ViewTools.Visibility = ShowsMediaGrid ? Visibility.Visible : Visibility.Collapsed;
         FilterStrip.Visibility = ShowsMediaGrid && !_settings.FilterBarHidden ? Visibility.Visible : Visibility.Collapsed;
         if (!ShowsMediaGrid && FilterFlyout.IsOpen) FilterFlyout.IsOpen = false;
     }

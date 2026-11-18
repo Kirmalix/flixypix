@@ -52,7 +52,7 @@ public partial class MainWindow
         _home.Visibility = Visibility.Visible;
         _ = _libraryTasks.Run(RefreshHomeTasksAsync);
         var hour = DateTime.Now.Hour;
-        CountLabel.Text = (hour < 11 ? T("Good morning") : hour < 18 ? T("Good afternoon") : T("Good evening")) + (total > 0 ? Tn(total, " · 1 item in your library", " · {0:N0} items in your library") : "");
+        SetHeaderLine((hour < 11 ? T("Good morning") : hour < 18 ? T("Good afternoon") : T("Good evening")) + (total > 0 ? Tn(total, " · 1 item in your library", " · {0:N0} items in your library") : ""));
         if (first && !catalogEmpty) _home.ShowLoading();
         var work = _libraryTasks.Track(_ => BuildHomeAsync(catalogEmpty));
         _lastHome = work;

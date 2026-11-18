@@ -71,7 +71,6 @@ public partial class MainWindow
         CategoryFilter.DisplayMemberPath = "Label";
         ViewChoice.SelectedIndex = Math.Clamp(_settings.ViewMode, 0, 2); SortChoice.SelectedIndex = Math.Clamp(_settings.SortOrder, 0, SortChoice.Items.Count - 1);
         SetSidebar(!_settings.SidebarCollapsed); SetDetails(!_settings.DetailsCollapsed); ApplyDetailsLayout();
-        ViewButtonText.Text = Tc("library", "View");
         ThumbnailFit.SelectedIndex = (preferences ?? _repository.GetPreferences()).General.CropThumbnails ? 1 : 0;
         _initializingBrowsing = false;
         InitializeSidebarState();

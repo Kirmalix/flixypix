@@ -53,7 +53,7 @@ public partial class MainWindow
             var repaired = MediaList.Items.Cast<MediaCard>().First().Item; MediaList.SelectedItem = MediaList.Items[0];
             _repository.Upsert(repaired with { ThumbnailPath = item.ThumbnailPath ?? item.Path }); Refresh(repaired.Id); await _lastRefresh;
             Check(MediaList.Items.Count == 2 && MediaList.Items.Cast<MediaCard>().Single(c => c.Item.Id == repaired.Id).IsFinished, "A repaired medium left the list instead of staying as done.");
-            Check(Selected?.Id == repaired.Id && UpdateListButton.Visibility == Visibility.Visible && CountLabel.Text.Contains(T(" · {0:N0} done", 1)), "The finished medium is not selected and announced.");
+            Check(Selected?.Id == repaired.Id && UpdateListButton.Visibility == Visibility.Visible && HeaderCount.Text.Contains(T(" · {0:N0} done", 1)), "The finished medium is not selected and announced.");
             UpdateListClicked(this, new()); await _lastRefresh;
             Check(MediaList.Items.Count == 1 && UpdateListButton.Visibility == Visibility.Collapsed, "Updating the list did not remove the finished medium.");
             Capture(RootContent, Path.Combine(directory, "desktop-navigation.png"));

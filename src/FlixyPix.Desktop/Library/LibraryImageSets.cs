@@ -62,7 +62,7 @@ public partial class MainWindow
         {
             var all = _repository.GetImageSets();
             _setList!.ItemsSource = all.Where(set => text.Length == 0 || set.Name.Contains(text, StringComparison.CurrentCultureIgnoreCase) || set.Description?.Contains(text, StringComparison.CurrentCultureIgnoreCase) == true).ToArray();
-            CountLabel.Text = T("{0:N0} of {1:N0} entries", _setList.Items.Count, all.Count);
+            SetHeaderCount(_setList.Items.Count, all.Count);
             _setList.SelectedItem = _setList.Items.Cast<ImageSet>().FirstOrDefault(set => set.Id == keep) ?? _setList.Items.Cast<ImageSet>().FirstOrDefault();
         }
         finally { _refreshingSets = false; }

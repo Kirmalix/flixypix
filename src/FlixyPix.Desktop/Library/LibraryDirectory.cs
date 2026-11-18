@@ -40,7 +40,7 @@ public partial class MainWindow
   if (SearchBox.Text != _roleBrowser.SearchText) { SearchBox.Text = _roleBrowser.SearchText; _searchTimer.Stop(); }
   if (_pendingDirectoryState != null) { _roleBrowser.RestoreDirectoryState(_pendingDirectoryState); _pendingDirectoryState = null; }
   AdaptToWidth(); UpdateNavigation(); ViewTitle.Text = ViewName(_view);
-  CountLabel.Text = T("{0:N0} of {1:N0} entries", _roleBrowser.RowCount, _roleBrowser.TotalEntries);
+  SetHeaderCount(_roleBrowser.RowCount, _roleBrowser.TotalEntries);
   RecordView();
  }
  private void OpenHierarchyEntry(TagKey key)

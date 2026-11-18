@@ -142,7 +142,8 @@ internal sealed class MediaCard : INotifyPropertyChanged
   < 1024 => $"{bytes} B",
   < 1024 * 1024 => $"{bytes / 1024d:0} KB",
   < 1024L * 1024 * 1024 => $"{bytes / 1048576d:0.#} MB",
-  _ => $"{bytes / 1073741824d:0.##} GB",
+  < 1024L * 1024 * 1024 * 1024 => $"{bytes / 1073741824d:0.##} GB",
+  _ => $"{bytes / 1099511627776d:0.##} TB",
  };
  internal static string QualityOf(int? width, int? height)
  {

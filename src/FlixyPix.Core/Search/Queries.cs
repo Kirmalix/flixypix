@@ -237,6 +237,7 @@ public sealed partial class CatalogRepository
     public MediaPage QueryPage(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryPage(query,cancellationToken);
     public IReadOnlyList<MediaItem> QueryItems(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryItems(query,cancellationToken);
     public long CountMedia(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.Count(query,cancellationToken);
+    public MediaTotals TotalsOf(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.Totals(query,cancellationToken);
     public bool IsAtPosition(MediaQuery query,int position,Guid id,CancellationToken cancellationToken=default) => mediaQueries.IsAt(query,position,id,cancellationToken);
 
     private CompiledMediaQuery BuildQuery(MediaQuery query, SqliteTransaction? transaction)

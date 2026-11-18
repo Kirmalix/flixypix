@@ -36,7 +36,7 @@ public partial class MainWindow
         var gallery = GalleryFor(_view);
         ShowPage(gallery);
         gallery.Show(shown, tile => LoadGalleryPictureAsync(tile, gallery));
-        FinishPage(ViewName(_view), T("{0:N0} of {1:N0} entries", shown.Count, all.Count));
+        FinishPage(ViewName(_view)); SetHeaderCount(shown.Count, all.Count);
     }
 
     private EntityGallery GalleryFor(string view)

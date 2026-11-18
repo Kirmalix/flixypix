@@ -11,6 +11,9 @@ internal sealed record CompiledMediaQuery(string Where, (string Name, object Val
     internal string Count => CountSql ?? "SELECT count(*) FROM media_query q " + Where;
 }
 
+/// <summary>How many media a query matches, their bytes and their playing time in seconds.</summary>
+public sealed record MediaTotals(long Count, long Bytes, double Seconds);
+
 /// <summary>Executes media projection queries; filter compilation remains shared with search and matching.</summary>
 internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, SqliteTransaction?, CompiledMediaQuery> compile, Action<SqliteTransaction> commit)
 {
@@ -78,6 +81,21 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
         var count = Convert.ToInt64(command.ExecuteScalar());
         commit(transaction);
         return count;
+    });
+
+    /// <summary>Count, file sizes and playing time of the matching media.</summary>
+    internal MediaTotals Totals(MediaQuery query, CancellationToken cancellationToken = default)
+     => database.Run(cancellationToken, () =>
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        database.ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
+        using var transaction = database.Connection.BeginTransaction();
+        var (where, parameters) = compile(query, transaction);
+        using var command = database.Command("SELECT count(*),total(q.file_size),total(q.duration) FROM media_query q " + where, transaction, parameters);
+        using var reader = command.ExecuteReader();
+        var totals = reader.Read() ? new MediaTotals(reader.GetInt64(0), (long)reader.GetDouble(1), reader.GetDouble(2)) : new MediaTotals(0, 0, 0);
+        reader.Close(); commit(transaction);
+        return totals;
     });
 
     internal IReadOnlyList<MediaItem> ReadItems(MediaQuery query, SqliteTransaction? transaction, CancellationToken cancellationToken,

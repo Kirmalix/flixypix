@@ -2202,39 +2202,9 @@
       "digest": "2aa7406789efe6026a87b4446c46584b7164a7380373309627e38011d73e4ef4",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
-    "Title A–Z": {
-      "status": "unchanged",
-      "digest": "e859e30eb1cb9d54d11b25d0543335937fdf86b50e59417745f253a2c67dc255",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Title Z–A": {
-      "status": "unchanged",
-      "digest": "431dff625252d79b6a8cdff8c57c71af2e64726ab05f7f7ace579ed44cc7c5a2",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Longest first": {
-      "status": "unchanged",
-      "digest": "804a6fe99fa525d48644abdb42cec9e90034612115b4178b4b9fc050d3af9dd7",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Best rated": {
-      "status": "unchanged",
-      "digest": "0ba87ee9f03b6232f59fb9cfa5e0e7ab5527c6cec575c24514f0cde8c27b0ce5",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
     "Collection order": {
       "status": "unchanged",
       "digest": "59439d57fe60c011d90dc0e27f87cc3cc4389a550c2502e243363815ede70864",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Oldest files first": {
-      "status": "unchanged",
-      "digest": "8058c1613f6064da71402f51e2c47dcc67ea21dfcfa68e3a222a50ab7621cc0f",
-      "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
-    },
-    "Newest files first": {
-      "status": "unchanged",
-      "digest": "0dcdfe090f7be6a330b4d0cd48dc072334e4d76f0ceee9f4be63256b5453b500",
       "note": "German source text; became a translation when English texts became the keys (2026-10-27)"
     },
     "Appearance": {
@@ -12584,10 +12554,6 @@
       "status": "unchanged",
       "digest": "f34b157a98bf28fce2a760b507e104a563a8baa45a9e9bfbe082e563a2d97ba5"
     },
-    "Highest O counter": {
-      "status": "unchanged",
-      "digest": "b3ded62b085e8b90d4dc3278f76f6f4a07deea36faaed62f9d248cd84ccba0ff"
-    },
     "HISTORY": {
       "status": "unchanged",
       "digest": "81b8910fbc95fc5cf130a8f280e28f63f5d06d683e8d2f102bc8b1336b25d4b7"
@@ -13792,14 +13758,6 @@
     "from {0} fps": {
       "status": "unchanged",
       "digest": "d4e9a0ff5051884d8ff3b6cb24880241a57db1997a9154e76df1e6bd0e9bac6e"
-    },
-    "Highest bit rate": {
-      "status": "unchanged",
-      "digest": "e9c79b5705f83b09da1f747a864e8ce1d616085c2a1fa2e8a8fe5831d23b5c87"
-    },
-    "Highest resolution": {
-      "status": "unchanged",
-      "digest": "2f4f121d967609cb74b0a73b6daa9e0b57437521a0d4583d45668a012cc8ecfb"
     },
     "Keeps all files as versions of one item, with the chosen one as main file. Videos only.": {
       "status": "unchanged",
@@ -16269,6 +16227,46 @@
     "Used often lately; click to filter · right-click: pin to the bar": {
       "status": "unchanged",
       "digest": "802097221fc2e6852cfe3294796103cbb8b2f7ea9252841ea96c70ef83b9a41e"
+    },
+    "Ascending": {
+      "status": "unchanged",
+      "digest": "1ab529f2224559b3c979a50b48209b55915381ba2b07f595b50b791f07292502"
+    },
+    "Click to reverse the order": {
+      "status": "unchanged",
+      "digest": "41e7fa92c06c5278f3f098eba592606bb74dc98556b9e0df8d7219b9817a0e1f"
+    },
+    "Date added": {
+      "status": "unchanged",
+      "digest": "249c349d5c930c16d267e97484409a767d8049686efe231b10978d9ec14a135f"
+    },
+    "Descending": {
+      "status": "unchanged",
+      "digest": "c09d5c4473ddd9cd193cf7b2730a8f09e5d1bfe35917edc66983b1c3a233f230"
+    },
+    "Playing time: {0}": {
+      "status": "unchanged",
+      "digest": "587b483b5e663a1a068cafc635932c204b3e6388630bc8585a0ecc3c8e8ab61a"
+    },
+    "Size: {0}": {
+      "status": "unchanged",
+      "digest": "b60623ff599bd93f5d336261e4c9e615a630a0232ff1de72822a9b4600fa338a"
+    },
+    "Sorting: {0}": {
+      "status": "unchanged",
+      "digest": "1597d1f395a705a0c6d440fa6aaf979ef3d456ae6ef28f0231ea2ef784809944"
+    },
+    "Tile size, spacing and thumbnails": {
+      "status": "unchanged",
+      "digest": "02896b3df6b16f087fef838e47f48aa59dc3e412a77deed7012f80e68d86a7a7"
+    },
+    "{0:N0} h {1} min": {
+      "status": "unchanged",
+      "digest": "dd9685a85adef0517e310465423b3e54197e031c4a070c4d3667c7991194056c"
+    },
+    "{0} min": {
+      "status": "unchanged",
+      "digest": "686700d5ab0eac617d8a93fe9d75d804eb64267b0d5db317ebf7c38e98deb4f4"
     }
   }
 }

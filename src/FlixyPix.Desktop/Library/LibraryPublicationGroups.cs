@@ -53,7 +53,7 @@ public partial class MainWindow
             var all = _repository.GetPublicationGroups();
             _publicationList!.ItemsSource = all.Where(g => text.Length == 0 || g.Name.Contains(text, StringComparison.CurrentCultureIgnoreCase) || g.Description?.Contains(text, StringComparison.CurrentCultureIgnoreCase) == true).ToArray();
             _publicationList.SelectedItem = _publicationList.Items.Cast<PublicationGroup>().FirstOrDefault(g => g.Id == keep) ?? _publicationList.Items.Cast<PublicationGroup>().FirstOrDefault();
-            CountLabel.Text = T("{0:N0} of {1:N0} entries", _publicationList.Items.Count, all.Count);
+            SetHeaderCount(_publicationList.Items.Count, all.Count);
         }
         finally { _refreshingPublications = false; }
         _selectedPublicationGroup = SelectedPublicationGroup?.Id; ShowPublicationMembers(SelectedPublicationGroup?.Id == keep ? member : null);

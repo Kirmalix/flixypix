@@ -20,6 +20,7 @@ public partial class MainWindow
   ViewPopup.Opened += (_, _) => SyncTileSlider();
   ViewPopup.Closed += (_, _) => SaveViewPreferences();
   MediaList.AddHandler(TileRating.RatedEvent, new RoutedEventHandler(TileRated));
+  InitializeHeader();
  }
 
  /// <summary>Opens a menu below <paramref name="sender"/> instead of at the mouse pointer.</summary>

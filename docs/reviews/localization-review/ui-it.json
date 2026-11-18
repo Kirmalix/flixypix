@@ -1301,11 +1301,6 @@
       "digest": "06ed25f64c408ed76e6268abcd77fdc0ac779020970b1e810621bce529ec7fe5",
       "previous_digest": "f6340e40fabcc7489e541e904b5fb74b10581bc74a3b745884a96ec6d8be3992"
     },
-    "Best rated": {
-      "status": "corrected",
-      "digest": "d59cfeddd42c164f490bf2c191bb7b1f99bc78e5c8205ccd1811ca324c4105de",
-      "previous_digest": "39ec71d6c2e91830740cabb37efb1430dc575b75beecaa4d624eda503c3ad06a"
-    },
     "Show affected entries": {
       "status": "unchanged",
       "digest": "bf65b9709ab7964752c559eb2a1dd8d4867524a90863fe131a264b33a32b9316"
@@ -5387,11 +5382,6 @@
       "status": "unchanged",
       "digest": "41aa64410256cabd77e142864bdabeca1f2610d6fdaa7b8ddd2cc519dffda6de"
     },
-    "Longest first": {
-      "status": "corrected",
-      "digest": "e87ba244d8eb1350bd4292cf3852ed01adf5843e1b68a49f32e71c9a66d88a22",
-      "previous_digest": "d9503e5f71dde3d4aa34cbc5093cd4a09c48e833b28ad0f83d52cfac4721deca"
-    },
     "Running": {
       "status": "corrected",
       "digest": "1ed909ecfbc690e914dda2e23aededbaa4588bc4c694abd088ad942be21003ce",
@@ -6143,10 +6133,6 @@
       "status": "corrected",
       "digest": "07eeac68c8f8f7243187deb52404038210c5a5b9d889027a80d3552dac33349c",
       "previous_digest": "421f84fbe44d844bf4b37731c7928b6f43c1befda45e3fd602f5080658c2304a"
-    },
-    "Newest files first": {
-      "status": "unchanged",
-      "digest": "d47152bf815e8c2fda5823074aedbb0d3d2d52622f7deb671d27ccf5c56a95ce"
     },
     "NFO / XML|*.nfo;*.xml": {
       "status": "unchanged",
@@ -8431,11 +8417,6 @@
       "digest": "afe57fa6b6c32b20de2409c8651e4e7637ea7c5c07176adcaa84b48200bafa81",
       "previous_digest": "44b450f1556cf5dc1de730df60d8b8e93b0eb6407c7a5555621e98aa04a54bda"
     },
-    "Title A–Z": {
-      "status": "corrected",
-      "digest": "3c62d53a932a0b65d3dac6f18b8a7e28815acfc86dc7e8b5d95d21e7030b5622",
-      "previous_digest": "1b8d7599df74f12fbcd936a10223cf6065d97b1bd0c1c727a0b1028a0a65e7e4"
-    },
     "Previous title": {
       "status": "unchanged",
       "digest": "70f605743936a04c64bc54cde8e491741b54d62fe9da7da4c69b436da0aa035e"
@@ -8461,11 +8442,6 @@
       "status": "corrected",
       "digest": "e53f0476c2fe112f8ef3660a0c8c3222f55f16862ea57b1f078bee1df22afdbe",
       "previous_digest": "f9687ac4c39a3d174c1011b46c0aaf5c4da832aea0ce8401cf3b8faf284444d0"
-    },
-    "Title Z–A": {
-      "status": "corrected",
-      "digest": "3e41051532b4a2cc5b70443324e8dd1a00d517e7877467582967a0ffff2927fc",
-      "previous_digest": "7482593eb517e083f2edcfb867f58e47b0886d085b84289396b900ee3aad32f5"
     },
     "Title · click to edit, Ctrl+S saves": {
       "status": "unchanged",
@@ -10731,10 +10707,6 @@
       "digest": "43a06c6e0c851f74cc6b5058668aa5cedf1ea325026d69afc9e0b416778d4324",
       "previous_digest": "69f67603c714ac4fa5ee9f448c0c0d04d0613b88f755829fe53088b99b8aa16a"
     },
-    "Oldest files first": {
-      "status": "unchanged",
-      "digest": "2e354f797db88c40474240c72c2451bef221aec127a94dd1808c60e7f63e77c2"
-    },
     "Change …": {
       "status": "unchanged",
       "digest": "baa7909d2c23843dcf99a8f363b2be575f627b928849f770f0623486b8a6fa4e"
@@ -11806,10 +11778,6 @@
     "Hidden, the counter keeps its values and its row on the home page disappears.": {
       "status": "unchanged",
       "digest": "6910115280e5e4a1e712ae29e198e180f1cec86b3d918ae08692558124af1664"
-    },
-    "Highest O counter": {
-      "status": "unchanged",
-      "digest": "d385871b887c4bcc84ad5cf22f1438119d2981f05fa362a87dfff26c8b756752"
     },
     "HISTORY": {
       "status": "unchanged",
@@ -13013,14 +12981,6 @@
     "from {0} fps": {
       "status": "unchanged",
       "digest": "9672e84715fe9037110bcead1f3f79072ef6dd21b1d72f3da5ac682c679ad1d9"
-    },
-    "Highest bit rate": {
-      "status": "unchanged",
-      "digest": "5f4dd8d17beaae61248b8abe6134a9c6608fd0a76ff535a1380ae55e3c95a248"
-    },
-    "Highest resolution": {
-      "status": "unchanged",
-      "digest": "95fa7fdec13a1c4fa5b4ffed121ab085b4269bf90d83f541fac9edb6f7c83831"
     },
     "Keeps all files as versions of one item, with the chosen one as main file. Videos only.": {
       "status": "unchanged",
@@ -15504,6 +15464,46 @@
     "Used often lately; click to filter · right-click: pin to the bar": {
       "status": "unchanged",
       "digest": "4eb9908d453a16f1333f7eb6f31fb3debf58ef619743547414d7ee6a49bcff57"
+    },
+    "Ascending": {
+      "status": "unchanged",
+      "digest": "549f75e6a15803d231fbb7c011e53c77721ad204abf7f7f76b804e53d40145db"
+    },
+    "Click to reverse the order": {
+      "status": "unchanged",
+      "digest": "5d31c579623a04c3eb4889ea31393c340b5eb575a6be65dd0f9edeb1964b6556"
+    },
+    "Date added": {
+      "status": "unchanged",
+      "digest": "e94cc90ae0b3ac730865063cafa07841b795302e90cea68cae36bb29a427073d"
+    },
+    "Descending": {
+      "status": "unchanged",
+      "digest": "51840d3ef0803179a926d38c074cf83bb340ed0fc535eba9c0cf48d2822c69d2"
+    },
+    "Playing time: {0}": {
+      "status": "unchanged",
+      "digest": "58a9f6c321dfefbebb665cda49cd7078238dc4eacff713b3d71299628663264f"
+    },
+    "Size: {0}": {
+      "status": "unchanged",
+      "digest": "bcf0e14ca2b9f568109b97027dce2dfb764cf54776c84f97ce8604944b086728"
+    },
+    "Sorting: {0}": {
+      "status": "unchanged",
+      "digest": "11d24aeceda5aa9eae0df11eebe38162f3573a96ad8c94ff5a8069ae71050a4d"
+    },
+    "Tile size, spacing and thumbnails": {
+      "status": "unchanged",
+      "digest": "37e4ec4414c388d1e06913a47fc6a91c005ddd000b7b2831a492d58ad46770de"
+    },
+    "{0:N0} h {1} min": {
+      "status": "unchanged",
+      "digest": "fe6031b2a0df7063472ffc943834934e7c5e38cf3fae4497eae56d6274f5cc12"
+    },
+    "{0} min": {
+      "status": "unchanged",
+      "digest": "0212fa6efcfd50130e035f8b2f631c45292731c7bd82455a80c2ba1aa597507c"
     }
   }
 }

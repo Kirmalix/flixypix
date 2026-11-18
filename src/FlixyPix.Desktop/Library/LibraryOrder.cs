@@ -112,7 +112,7 @@ public partial class MainWindow
         _queueCards!.Children.Clear();
         foreach (var queue in WorkQueues()) _queueCards.Children.Add(QueueCard(queue));
         var open = counts.Values.Sum();
-        CountLabel.Text = Tn(open, "1 item to work through", "{0:N0} items to work through");
+        SetHeaderLine(Tn(open, "1 item to work through", "{0:N0} items to work through"));
     }
 
     private Button QueueCard(WorkQueue queue)

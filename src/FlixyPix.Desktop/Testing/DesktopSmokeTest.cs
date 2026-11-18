@@ -481,7 +481,7 @@ public partial class MainWindow
         Refresh(); await Settled(); var unfiltered = _total;
         Require(FilterBarShown && FilterPills.ContainsKey(T("Rating")) && FilterPills.ContainsKey(T("Time")) && FilterPills.ContainsKey(T("Performers")), "The filter bar lacks its sections.");
         ApplyFilter(_filter with { FileDate = new DateFilter(DateWindow.Custom, null, new DateTimeOffset(1990, 1, 1, 0, 0, 0, TimeSpan.Zero)) }); await Settled();
-        Require(_total == 0 && PillText(T("Time")).StartsWith(T("Time") + ": ", StringComparison.Ordinal) && CountLabel.Text.Contains(T("File {0}", _filter.FileDate.Describe()), StringComparison.Ordinal),
+        Require(_total == 0 && PillText(T("Time")).StartsWith(T("Time") + ": ", StringComparison.Ordinal) && HeaderCountDetails.Text.Contains(T("File {0}", _filter.FileDate.Describe()), StringComparison.Ordinal),
          $"The file date filter did not apply ({_total} hits, pill {PillText(T("Time"))}).");
         Require(EmptyTitle.Text == T("No matches") && EmptyReset.Visibility == Visibility.Visible && FirstRunActions.Visibility != Visibility.Visible,
          "An empty result in a filled library still invites the first import.");
@@ -755,6 +755,9 @@ public partial class MainWindow
         await Settled();
         Require(SearchBox.Text.Length == 0 && _requiredTags.SequenceEqual(["kurzform"]) && _excludedTags.SequenceEqual(["ohne"]) && RatingFilter.SelectedIndex == 3
          && ActiveTagFilters.Children.Count >= 3 && FilterButtonText.Text == T("Filter · {0:N0}", 3), $"Short forms did not become filters ({FilterButtonText.Text}).");
+        var wholeView = _repository.CountMedia(new ViewState { View = _view }.ToQuery(DateTimeOffset.Now));
+        for (var wait = 0; wait < 50 && HeaderCount.Text != T("{0:N0} of {1:N0}", _total, wholeView); wait++) await Task.Delay(40);
+        Require(_total == wholeView || HeaderCount.Text == T("{0:N0} of {1:N0}", _total, wholeView), $"The count did not say how many of the whole view are shown ({HeaderCount.Text}).");
         ResetFiltersClicked(this, new RoutedEventArgs()); await Settled();
         Require(RatingFilter.SelectedIndex == 0 && _requiredTags.Count == 0 && FilterButtonText.Text == T("Filter"), "Removing all filters left some behind.");
         ViewMenuClicked(ViewButton, new RoutedEventArgs()); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -775,6 +778,29 @@ public partial class MainWindow
         SortChoice.SelectedIndex = 0; await RefreshAsync(first.Id);
         ViewChoice.SelectedIndex = 1; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture((FrameworkElement)RootContent, Path.Combine(directory, "desktop-list.png"));
         Require(_settings.ViewMode == 1, "View mode preference did not update."); ViewChoice.SelectedIndex = 0;
+        // The head: the count beside the title, the sort direction, and the steps in which the controls give way.
+        Require(HeaderCount.Text.Length > 0 && !CountLabel.IsVisible, $"The count did not move beside the title ({HeaderCount.Text} / {CountLabel.Text}).");
+        SortDirectionClicked(SortDirection, new RoutedEventArgs()); await RefreshAsync();
+        Require(SortChoice.SelectedIndex == 1 && (MediaList.Items[0] as MediaCard)?.Title == "Unterwegs nach Norden", "The sort direction did not reverse the title order.");
+        SortDirectionClicked(SortDirection, new RoutedEventArgs()); await RefreshAsync(first.Id);
+        Require(SortChoice.SelectedIndex == 0, "The sort direction did not turn back.");
+        var (headerWidth, headerState) = (Width, WindowState); WindowState = WindowState.Normal;
+        var steps = new List<int>();
+        foreach (var narrow in new[] { 1700d, 1250d, 1000d, 820d })
+        {
+            Width = narrow; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); FitHeader(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            steps.Add(_headerStep);
+            Require((_headerStep >= 4) == (ViewChoice.Parent == PopupViewHost) && (_headerStep >= 3) == (SortTools.Parent == PopupSortHost), $"The view controls are not where step {_headerStep} puts them.");
+            Capture((FrameworkElement)RootContent, Path.Combine(directory, $"desktop-header-{narrow:0}.png"));
+        }
+        // A page with many actions in the narrowest window: the actions go into "…" before the view controls give way.
+        Width = MinWidth; FolderTreeButton.Visibility = UpdateListButton.Visibility = CreateListThumbnailsButton.Visibility = Visibility.Visible;
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); FitHeader(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Capture((FrameworkElement)RootContent, Path.Combine(directory, "desktop-header-crowded.png"));
+        Require(_headerStep >= 2 && PageActionsMore.IsVisible && !PageActions.IsVisible, $"The actions of a crowded page did not fold away (step {_headerStep}).");
+        FolderTreeButton.Visibility = UpdateListButton.Visibility = CreateListThumbnailsButton.Visibility = Visibility.Collapsed;
+        Width = headerWidth; WindowState = headerState; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); FitHeader();
+        Require(steps.Zip(steps.Skip(1)).All(pair => pair.First <= pair.Second) && _headerStep <= steps[^1], $"The head did not give way step by step ({string.Join(",", steps)}).");
         await RunRawSmokeTestAsync(directory); await RefreshAsync(first.Id);
         await RunLoupeSmokeTestAsync(directory, first); await RefreshAsync(first.Id);
         await RunSelectionBandSmokeTestAsync(); await RefreshAsync(first.Id);

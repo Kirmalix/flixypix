@@ -79,7 +79,10 @@ public sealed record ViewState
     public static (MediaSort Sort, bool Descending) SortFor(int choice) => choice switch
     {
         1 => (MediaSort.Title, true), 2 => (MediaSort.AddedAt, true), 3 => (MediaSort.Duration, true), 4 => (MediaSort.Rating, true),
-        6 => (MediaSort.FileDate, false), 7 => (MediaSort.FileDate, true), 8 => (MediaSort.OCount, true), 9 => (MediaSort.Resolution, true), 10 => (MediaSort.Bitrate, true), _ => (MediaSort.Title, false),
+        6 => (MediaSort.FileDate, false), 7 => (MediaSort.FileDate, true), 8 => (MediaSort.OCount, true), 9 => (MediaSort.Resolution, true), 10 => (MediaSort.Bitrate, true),
+        // The reverse directions came later; they follow the first eleven so stored choices keep their meaning.
+        11 => (MediaSort.AddedAt, false), 12 => (MediaSort.Duration, false), 13 => (MediaSort.Rating, false), 14 => (MediaSort.OCount, false), 15 => (MediaSort.Resolution, false), 16 => (MediaSort.Bitrate, false),
+        _ => (MediaSort.Title, false),
     };
 
     /// <summary>The query this state shows (without paging); relative dates count from <paramref name="now"/>.</summary>

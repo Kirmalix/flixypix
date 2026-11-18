@@ -318,12 +318,11 @@ public partial class MainWindow : Window
                 if (_playlist != null) _playlist = playlists.FirstOrDefault(p => p.Id == _playlist.Id);
                 ShowCollections(playlists, snapshot.Sets, snapshot.Searches, snapshot.Target);
                 UpdateNavigation(); RenderTagFilterChips();
-                CountLabel.Text = Tn(snapshot.Page.TotalCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
+                var countDetails = Tn(snapshot.Page.TotalCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
         + (_folder != null && !InFolderView ? T(" · folder filter") : "") + (_playlist != null
-        ? $" · {(_playlist.Kind switch { PlaylistKind.Slideshow => T("Slideshow"), PlaylistKind.Quick => T("Quick collection"), _ => T("Playlist") })}" : "");
-                if (_advancedExpression != null) CountLabel.Text += T(" · Advanced search");
-                CountLabel.Text += FilterDescription();
-                if (snapshot.Finished.Count > 0) CountLabel.Text += T(" · {0:N0} done", snapshot.Finished.Count);
+        ? $" · {(_playlist.Kind switch { PlaylistKind.Slideshow => T("Slideshow"), PlaylistKind.Quick => T("Quick collection"), _ => T("Playlist") })}" : "")
+        + (_advancedExpression != null ? T(" · Advanced search") : "") + FilterDescription();
+                ShowMediaCount(state, snapshot.Page.TotalCount, snapshot.Finished.Count, countDetails, _playlist);
                 ShowWorklistActions(state, _total, snapshot.Finished.Count);
                 _pager = (-1, -1, -1); _ = Dispatcher.BeginInvoke(UpdatePager, System.Windows.Threading.DispatcherPriority.Loaded);
                 RecordView();
@@ -671,6 +670,7 @@ public partial class MainWindow : Window
         if (OpenWithHotkey(e) || MediaMenuKey(e)) return;
         // Bookmarks, scenes and the collection tree handle these keys themselves (rename, open or play, remove).
         if (e.Key is Key.F2 or Key.Enter or Key.Delete && (Scenes.IsKeyboardFocusWithin || Bookmarks.IsKeyboardFocusWithin || CollectionTree.IsKeyboardFocusWithin)) return;
+        if (ViewModeKey(e)) { e.Handled = true; return; }
         if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Alt) && e.Key is >= Key.D1 and <= Key.D9 && !TextEntry(e.OriginalSource)) { e.Handled = OpenSavedSearchByNumber(e.Key - Key.D0); return; }
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
         if (e.Key == Key.Escape && SearchBox.IsKeyboardFocused && SearchBox.Text.Length > 0) { SearchBox.Clear(); e.Handled = true; }

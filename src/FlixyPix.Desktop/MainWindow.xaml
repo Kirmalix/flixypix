@@ -149,40 +149,62 @@
    <Thumb x:Name="PanelResizer" Visibility="Collapsed" HorizontalAlignment="Right" Width="6" Margin="0,0,-3,0" Cursor="SizeWE" Panel.ZIndex="5" DragDelta="PanelResizing" DragCompleted="PaneResized" ToolTip="{local:T 'Drag to change the width'}"><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="Transparent"/></ControlTemplate></Thumb.Template></Thumb>
    <!-- Media -->
    <Grid x:Name="MediaPane" Grid.Column="1" Margin="24,20,20,8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <DockPanel Margin="0,0,0,14">
-     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-      <CheckBox x:Name="IncludeFolderChildren" Visibility="Collapsed" Content="{local:T 'Include subfolders'}" IsChecked="True" Click="FolderChildrenChanged" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{local:T 'Folders also show the items of their subfolders'}"/>
-      <Button x:Name="EntityEditButton" Visibility="Collapsed" Click="EntityEditClicked" Margin="0,0,10,0" Content="{local:T 'Edit …'}"/>
-      <Button x:Name="GalleryDirectoryButton" Visibility="Collapsed" Click="GalleryDirectoryClicked" Margin="0,0,0,0" Content="{local:T 'Open directory'}"/>
-      <Button x:Name="FolderTreeButton" Visibility="Collapsed" Click="FolderTreeToggleClicked" Margin="0,0,10,0" Content="{local:T 'Folder tree'}"/>
-      <StackPanel x:Name="QueueKindBar" Orientation="Horizontal" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,12,0"/>
-      <ProgressBar x:Name="QueueProgress" Visibility="Collapsed" Width="140" Height="6" Minimum="0" Maximum="1" IsIndeterminate="False" Margin="0,0,12,0" VerticalAlignment="Center"/>
-      <Button x:Name="UpdateListButton" Click="UpdateListClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Update list'}" ToolTip="{local:T 'Removes the finished items from this list.'}"/>
-      <Button x:Name="CreateListThumbnailsButton" Click="CreateListThumbnailsClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Create thumbnails for this list'}"/>
-      <Button x:Name="CollectionActions" Click="CollectionMenu" Visibility="Collapsed" Margin="0,0,10,0"><StackPanel Orientation="Horizontal"><TextBlock Text="{local:T 'Collection'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
-      <Button x:Name="ViewButton" Click="ViewMenuClicked" VerticalAlignment="Center" Margin="0" Padding="11,6" FontSize="12" ToolTip="{local:T 'Appearance, tile size and sorting'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xF0E2;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,7,0"/><TextBlock x:Name="ViewButtonText"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
+    <DockPanel x:Name="MediaHeader" Margin="0,0,0,14" SizeChanged="MediaHeaderSizeChanged">
+     <StackPanel x:Name="HeaderTools" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+      <!-- Actions of the page first; the view controls stay at the right edge on every page. -->
+      <StackPanel x:Name="PageActions" Orientation="Horizontal" VerticalAlignment="Center">
+       <CheckBox x:Name="IncludeFolderChildren" Visibility="Collapsed" Content="{local:T 'Include subfolders'}" IsChecked="True" Click="FolderChildrenChanged" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{local:T 'Folders also show the items of their subfolders'}"/>
+       <Button x:Name="EntityEditButton" Visibility="Collapsed" Click="EntityEditClicked" Margin="0,0,10,0" Content="{local:T 'Edit …'}"/>
+       <Button x:Name="GalleryDirectoryButton" Visibility="Collapsed" Click="GalleryDirectoryClicked" Margin="0,0,0,0" Content="{local:T 'Open directory'}"/>
+       <Button x:Name="FolderTreeButton" Visibility="Collapsed" Click="FolderTreeToggleClicked" Margin="0,0,10,0" Content="{local:T 'Folder tree'}"/>
+       <StackPanel x:Name="QueueKindBar" Orientation="Horizontal" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,12,0"/>
+       <ProgressBar x:Name="QueueProgress" Visibility="Collapsed" Width="140" Height="6" Minimum="0" Maximum="1" IsIndeterminate="False" Margin="0,0,12,0" VerticalAlignment="Center"/>
+       <Button x:Name="UpdateListButton" Click="UpdateListClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Update list'}" ToolTip="{local:T 'Removes the finished items from this list.'}"/>
+       <Button x:Name="CreateListThumbnailsButton" Click="CreateListThumbnailsClicked" Visibility="Collapsed" Margin="0,0,10,0" Content="{local:T 'Create thumbnails for this list'}"/>
+       <Button x:Name="CollectionActions" Click="CollectionMenu" Visibility="Collapsed" Margin="0,0,10,0"><StackPanel Orientation="Horizontal"><TextBlock Text="{local:T 'Collection'}"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
+      </StackPanel>
+      <Button x:Name="PageActionsMore" Visibility="Collapsed" Click="PageActionsMoreClicked" Content="&#xE712;" Style="{StaticResource IconButton}" Padding="8" FontSize="13" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{local:T 'More actions'}" AutomationProperties.Name="{local:T 'More actions'}"/>
+      <StackPanel x:Name="ViewTools" Orientation="Horizontal" VerticalAlignment="Center">
+       <Border x:Name="ViewToolsDivider" Width="1" Height="22" Background="{DynamicResource DividerSoft}" Margin="2,0,12,0" VerticalAlignment="Center"/>
+       <Border x:Name="ViewChoiceHost" Margin="0,0,10,0" VerticalAlignment="Center">
+        <ListBox x:Name="ViewChoice" HorizontalAlignment="Left" Style="{StaticResource SegmentList}" SelectedIndex="0" SelectionChanged="ViewChanged" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Appearance'}">
+         <ListBoxItem ToolTip="{local:T 'Tiles'}" AutomationProperties.Name="{local:T 'Tiles'}"><TextBlock Text="&#xF0E2;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
+         <ListBoxItem ToolTip="{local:T 'List'}" AutomationProperties.Name="{local:T 'List'}"><TextBlock Text="&#xE8FD;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
+         <ListBoxItem ToolTip="{local:T 'Video wall: the preview clips in view play by themselves'}" AutomationProperties.Name="{local:T 'Video wall'}"><TextBlock Text="&#xE8B2;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
+        </ListBox>
+       </Border>
+       <Border x:Name="SortHost" Margin="0,0,6,0" VerticalAlignment="Center">
+        <StackPanel x:Name="SortTools" Orientation="Horizontal" VerticalAlignment="Center">
+         <Button x:Name="SortButton" Click="SortButtonClicked" Padding="10,6" FontSize="12" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Sorting'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8CB;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,0,0"/><TextBlock x:Name="SortButtonText" Margin="7,0,0,0"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
+         <Button x:Name="SortDirection" Click="SortDirectionClicked" Style="{StaticResource IconButton}" Padding="7" FontSize="13" Margin="2,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+       </Border>
+       <Button x:Name="ViewButton" Click="ViewMenuClicked" VerticalAlignment="Center" Margin="0" Padding="10,6" FontSize="12" ToolTip="{local:T 'Tile size, spacing and thumbnails'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9E9;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,0,0"/><TextBlock x:Name="ViewButtonText" Margin="7,0,0,0"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
+      </StackPanel>
      </StackPanel>
      <Ellipse x:Name="EntityPortrait" DockPanel.Dock="Left" Visibility="Collapsed" Width="64" Height="64" Margin="0,0,14,0" local:Privacy.Blur="True"/>
-     <StackPanel><WrapPanel x:Name="FolderCrumbs" Visibility="Collapsed" Margin="-5,0,0,2"/><TextBlock x:Name="ViewTitle" Text="{local:T 'All items'}" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="CountLabel" Text="{local:T 'Your library is waiting for its first import'}" Foreground="{DynamicResource Muted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+     <StackPanel><WrapPanel x:Name="FolderCrumbs" Visibility="Collapsed" Margin="-5,0,0,2"/>
+      <!-- The count follows the title; a long title gives way first. -->
+      <Grid x:Name="TitleRow" HorizontalAlignment="Left"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <TextBlock x:Name="ViewTitle" Text="{local:T 'All items'}" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+       <TextBlock x:Name="HeaderCount" Grid.Column="1" Foreground="{DynamicResource Muted}" FontSize="14" Margin="10,0,0,4" VerticalAlignment="Bottom" ToolTipService.ShowDuration="30000" ToolTipOpening="HeaderCountToolTipOpening"><TextBlock.ToolTip><ToolTip><TextBlock x:Name="HeaderCountDetails" TextWrapping="Wrap" MaxWidth="420"/></ToolTip></TextBlock.ToolTip></TextBlock>
+      </Grid>
+      <TextBlock x:Name="CountLabel" Text="{local:T 'Your library is waiting for its first import'}" Foreground="{DynamicResource Muted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel>
     </DockPanel>
      <WrapPanel x:Name="FilterStrip" Grid.Row="1" Margin="0,0,0,10" Visibility="Collapsed" AutomationProperties.Name="{local:T 'Filters'}"/>
      <StackPanel x:Name="FilterBackingControls" Grid.Row="1" Visibility="Collapsed">
       <ComboBox x:Name="RatingFilter" SelectedIndex="0" SelectionChanged="FilterChanged" ToolTip="{local:T 'Minimum rating'}"><ComboBoxItem Content="{local:T 'All ratings'}"/><ComboBoxItem Content="{local:T '★ and up'}"/><ComboBoxItem Content="{local:T '★★ and up'}"/><ComboBoxItem Content="{local:T '★★★ and up'}"/><ComboBoxItem Content="{local:T '★★★★ and up'}"/><ComboBoxItem Content="★★★★★"/></ComboBox>
       <ComboBox x:Name="CategoryFilter" SelectionChanged="CategoryChanged" ToolTip="{local:T 'Media category'}"/>
+      <!-- Index of the sort order as stored in views and settings; the sort button and its direction show it. -->
+      <ComboBox x:Name="SortChoice" SelectedIndex="0" SelectionChanged="SortChanged"><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/><ComboBoxItem/></ComboBox>
      </StackPanel>
     <Popup x:Name="ViewPopup" Grid.Row="1" PlacementTarget="{Binding ElementName=ViewButton}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
      <Border x:Name="ViewPopupFrame" Margin="0,4,12,12" Padding="16,14" CornerRadius="8" BorderThickness="1" Background="{DynamicResource PopupBackground}" BorderBrush="{DynamicResource PopupBorder}" Width="260"><StackPanel>
-      <TextBlock Text="{local:T 'Appearance'}" Style="{StaticResource Section}" Margin="0,0,0,6"/>
-      <ListBox x:Name="ViewChoice" HorizontalAlignment="Left" Style="{StaticResource SegmentList}" SelectedIndex="0" SelectionChanged="ViewChanged" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Appearance'}">
-       <ListBoxItem ToolTip="{local:T 'Tiles'}" AutomationProperties.Name="{local:T 'Tiles'}"><TextBlock Text="&#xF0E2;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
-       <ListBoxItem ToolTip="{local:T 'List'}" AutomationProperties.Name="{local:T 'List'}"><TextBlock Text="&#xE8FD;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
-       <ListBoxItem ToolTip="{local:T 'Video wall: the preview clips in view play by themselves'}" AutomationProperties.Name="{local:T 'Video wall'}"><TextBlock Text="&#xE8B2;" Style="{StaticResource Icon}" FontSize="13"/></ListBoxItem>
-      </ListBox>
-      <DockPanel x:Name="TileSizePanel" Margin="0,14,0,0" VerticalAlignment="Center" ToolTip="{local:T 'Tile size'}"><TextBlock Text="&#xE71E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock x:Name="TileColumnsLabel" DockPanel.Dock="Right" Foreground="{DynamicResource Muted}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/><Slider x:Name="TileSize" Minimum="0" Maximum="1" SmallChange="1" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="TileSizeChanged" LostMouseCapture="TileSizeCommitted" KeyUp="TileSizeCommitted" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Tile size'}"/></DockPanel>
+      <StackPanel x:Name="PopupViewSection" Visibility="Collapsed" Margin="0,0,0,14"><TextBlock Text="{local:T 'Appearance'}" Style="{StaticResource Section}" Margin="0,0,0,6"/><Border x:Name="PopupViewHost"/></StackPanel>
+      <DockPanel x:Name="TileSizePanel" Margin="0,0,0,0" VerticalAlignment="Center" ToolTip="{local:T 'Tile size'}"><TextBlock Text="&#xE71E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock x:Name="TileColumnsLabel" DockPanel.Dock="Right" Foreground="{DynamicResource Muted}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/><Slider x:Name="TileSize" Minimum="0" Maximum="1" SmallChange="1" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="TileSizeChanged" LostMouseCapture="TileSizeCommitted" KeyUp="TileSizeCommitted" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Tile size'}"/></DockPanel>
       <StackPanel x:Name="TileSpacingPanel"><TextBlock Text="{local:T 'Spacing'}" Style="{StaticResource Section}" Margin="0,12,0,5"/><ListBox x:Name="TileSpacing" HorizontalAlignment="Left" Style="{StaticResource SegmentList}" SelectionChanged="TileSpacingChanged" AutomationProperties.Name="{local:T 'Spacing'}"><ListBoxItem Content="{local:T 'Narrow'}"/><ListBoxItem Content="{local:T 'Normal'}"/><ListBoxItem Content="{local:T 'Wide'}"/></ListBox></StackPanel>
       <TextBlock Text="{local:T 'Thumbnail display'}" Style="{StaticResource Section}" Margin="0,12,0,5"/><ComboBox x:Name="ThumbnailFit" SelectionChanged="ThumbnailFitChanged"><ComboBoxItem Content="{local:T 'Fit whole image'}"/><ComboBoxItem Content="{local:T 'Fill and crop'}"/></ComboBox>
-      <TextBlock Text="{local:T 'Sorting'}" Style="{StaticResource Section}" Margin="0,14,0,6"/>
-      <ComboBox x:Name="SortChoice" SelectedIndex="0" SelectionChanged="SortChanged" ToolTip="{local:T 'Sorting'}"><ComboBoxItem Content="{local:T 'Title A–Z'}"/><ComboBoxItem Content="{local:T 'Title Z–A'}"/><ComboBoxItem Content="{local:T 'Recently added'}"/><ComboBoxItem Content="{local:T 'Longest first'}"/><ComboBoxItem Content="{local:T 'Best rated'}"/><ComboBoxItem Content="{local:T 'Collection order'}"/><ComboBoxItem Content="{local:T 'Oldest files first'}"/><ComboBoxItem Content="{local:T 'Newest files first'}"/><ComboBoxItem Content="{local:T 'Highest O counter'}"/><ComboBoxItem Content="{local:T 'Highest resolution'}"/><ComboBoxItem Content="{local:T 'Highest bit rate'}"/></ComboBox>
+      <StackPanel x:Name="PopupSortSection" Visibility="Collapsed"><TextBlock Text="{local:T 'Sorting'}" Style="{StaticResource Section}" Margin="0,14,0,6"/><Border x:Name="PopupSortHost"/></StackPanel>
      </StackPanel></Border>
     </Popup>
     <Popup x:Name="FilterFlyout" Grid.Row="1" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">

@@ -1287,10 +1287,6 @@
       "digest": "9dedbbbc30e03eecdd37274e2fd65301ee396cfd5438aaed680844d9ae3f508d",
       "previous_digest": "69563612d126049bae5e45a238bcbb01eb5d79b47a1f1a75e5a48a3cd500c11a"
     },
-    "Best rated": {
-      "status": "unchanged",
-      "digest": "8439492424bd16098fb8f0fa3f07f0a99a92f912ce31625a03b241fcfbc517b1"
-    },
     "Show affected entries": {
       "status": "unchanged",
       "digest": "896233e1b314fe31e7e75558ca672df1a6ca294b39add74bdb128e7105f5b6cb"
@@ -5337,11 +5333,6 @@
       "status": "unchanged",
       "digest": "e24aed092ab3e1c34757116bbe3956a251876fcf0c428cd7f8253d644a30a1bc"
     },
-    "Longest first": {
-      "status": "corrected",
-      "digest": "9c64c9c7717211cd0fb20b0916370ddab922b2ef4e761c14a12fdb52966c3586",
-      "previous_digest": "b2a0de16f83fce6d12e18b18e33dbce5f5853a26e65a630cbb16fe64dc52ca51"
-    },
     "Running": {
       "status": "corrected",
       "digest": "3d4cab6d262c6b5ae48b797a3b959d236ba84794e67056eebf82013bea1afb8b",
@@ -6084,10 +6075,6 @@
     "Repeat new password": {
       "status": "unchanged",
       "digest": "e29f462bb7cbea63814e7c1d2acf753b7df645720bd13ed05a7cd04ddf2256d6"
-    },
-    "Newest files first": {
-      "status": "unchanged",
-      "digest": "d4f11e432982badebff52d22262cc77e57b6e64a6a3001fcc08b25b471654264"
     },
     "NFO / XML|*.nfo;*.xml": {
       "status": "unchanged",
@@ -8347,11 +8334,6 @@
       "digest": "9cab09c71c0646793e1da7db0f0690f57c0299edb1c30c2f4e2b4d94eeb20e3a",
       "previous_digest": "6cec6b34a2303aeea340509c6e158ec9e4e59f16bfba260c46db1e5955dd9570"
     },
-    "Title A–Z": {
-      "status": "corrected",
-      "digest": "170a8ef315919a662b731fe9065d4c6721dde24b3ac1b0c4684449fb4c747de0",
-      "previous_digest": "d120809a539effd6e2006e471a418b39c5097cec6ca2daf840e73fccfdb174fc"
-    },
     "Previous title": {
       "status": "unchanged",
       "digest": "fd544b0d1ada3fa6143d275ee67f2cdc56a8004067400eda2d55b9f5c5d15702"
@@ -8378,11 +8360,6 @@
       "status": "corrected",
       "digest": "d1cf18116fb6e25db6367c90a6c6007bc7d1de7592cd23af822ce74be944d684",
       "previous_digest": "4b5b48db287553cf6db7d73d8d6b8dc599076830d8beec98bdae1611676e1d5e"
-    },
-    "Title Z–A": {
-      "status": "corrected",
-      "digest": "1541f3e3f31fa61d4cfa870098ff0872515f4d351d6ac8b40295b161281b421a",
-      "previous_digest": "b06077010a845c46f0ee9c3dd1938f5f88d22683c9600273ca47c2f72e745534"
     },
     "Title · click to edit, Ctrl+S saves": {
       "status": "unchanged",
@@ -10634,10 +10611,6 @@
       "digest": "a42e2390ade8ec83cf390c425d8a4ea7ef87a7141372a44ae62f54525a0633c9",
       "previous_digest": "0a7f62e00ea6e51adc161afa62835087fb7be50c86b233f66dbc5ca2cc021ac9"
     },
-    "Oldest files first": {
-      "status": "unchanged",
-      "digest": "e50ad4767fd232838e3cf7282a0b5d3239501e1109a764651029a0a045b7838b"
-    },
     "Change …": {
       "status": "unchanged",
       "digest": "48d655cd7050dba9bcc1e0bf6215cc9a22fa3bbc0618f37c0c01b1f7dd6e6b36"
@@ -11706,10 +11679,6 @@
     "Hidden, the counter keeps its values and its row on the home page disappears.": {
       "status": "unchanged",
       "digest": "18698843f8abf039d144485bd97127280212026f1f0a6dfa7e81c2011de70b59"
-    },
-    "Highest O counter": {
-      "status": "unchanged",
-      "digest": "77032e052d5cf81562e17df59cf0281685e5a84055ef01f0fcdcb7df53f89552"
     },
     "HISTORY": {
       "status": "unchanged",
@@ -12913,14 +12882,6 @@
     "from {0} fps": {
       "status": "unchanged",
       "digest": "be358580c70e6f9522db16689f4ab240f1fb35e26b80b11981b3d2909a7ccc35"
-    },
-    "Highest bit rate": {
-      "status": "unchanged",
-      "digest": "057b2113e1128ecdb4c2461ac5188bcd489b9282f2b1d88c15058a873c4808e3"
-    },
-    "Highest resolution": {
-      "status": "unchanged",
-      "digest": "2fd13a262eaa0ce01b43f5bd6ce183636c09fffd1f7f829fded73e057890a1ad"
     },
     "Keeps all files as versions of one item, with the chosen one as main file. Videos only.": {
       "status": "unchanged",
@@ -15392,6 +15353,46 @@
     "Used often lately; click to filter · right-click: pin to the bar": {
       "status": "unchanged",
       "digest": "62bad61eeea90c0648af31fe81a132b03973048a3df18adb8307d68f13be6247"
+    },
+    "Ascending": {
+      "status": "unchanged",
+      "digest": "a437feee7fb4004c92621ffdf657eeb93b1ecc7a5db4e26d78f968c58f536db8"
+    },
+    "Click to reverse the order": {
+      "status": "unchanged",
+      "digest": "918209c02f383d475e27032b9ae23e786710dc63883a7a0e248af60a86ba61c4"
+    },
+    "Date added": {
+      "status": "unchanged",
+      "digest": "a18ea879db6676ab5465f73ced1d63846da183b8478ca91b62d3e5c5ef4f9e68"
+    },
+    "Descending": {
+      "status": "unchanged",
+      "digest": "ae4a60c50eff174626d151ede41aef3ed9906036322fb4110b0c6c4540d5962e"
+    },
+    "Playing time: {0}": {
+      "status": "unchanged",
+      "digest": "5f88a3fce8712f08a0bbd8a7360fa7c2ead54017ffb349593ba9111fe77afe41"
+    },
+    "Size: {0}": {
+      "status": "unchanged",
+      "digest": "3d784ac8b797da0b812040dcb62741b6dc9c205e117e521cdf951dbbaade7f90"
+    },
+    "Sorting: {0}": {
+      "status": "unchanged",
+      "digest": "d909229dba498d90b934ab2af5a3bcf24fc025291b5d3f74ea18f25df2f7b0b4"
+    },
+    "Tile size, spacing and thumbnails": {
+      "status": "unchanged",
+      "digest": "be7738397459cc1797673c0010f8b6cdd8d1fa3a1ce7f6121c3c4e1b8181fc21"
+    },
+    "{0:N0} h {1} min": {
+      "status": "unchanged",
+      "digest": "fbaa287d949e111f8a235d94627333ee19b6decc88188c2c76743c2f795bb2ed"
+    },
+    "{0} min": {
+      "status": "unchanged",
+      "digest": "0212fa6efcfd50130e035f8b2f631c45292731c7bd82455a80c2ba1aa597507c"
     }
   }
 }
