@@ -260,15 +260,28 @@ internal sealed partial class VideoPlayerWindow : Window
  internal async Task<string> SaveScreenshotAsync(bool precise)
  {
   var folder=StillsFolder; FileAccessPolicy.Current.EnsureWritable(folder); Directory.CreateDirectory(folder);
+  var active=RequirePlayer(); if(await active.GetPositionAsync() is { } now)LastPositionSeconds=now;
   var seconds=LastPositionSeconds; var path=playback.Screenshots.NextPath(folder,media.Title,seconds,precise);
-  // A large frame keeps mpv busy for seconds; polls waiting meanwhile are no sign of a hanging player.
-  var active=RequirePlayer();
-  savingPicture++; try { await WhileBusyAsync(T("Saving picture …"),async()=>{ await active.ScreenshotAsync(path); return true; }); } finally { savingPicture--; unansweredPolls=0; }
+  await WhileBusyAsync(T("Saving picture …"),async()=>
+  {
+   // FFmpeg takes the frame from the file as a range of pictures does: much faster for 4K and 10-bit video than a
+   // screenshot of the running player, which first copies the picture back from the graphics card.
+   if(StillRenderer!=null && Source!=null)
+   {
+    try { await StillRenderer(Source.Path,seconds,FrameRate,path); return true; }
+    catch(Exception error) when(error is not OperationCanceledException) { ErrorLog.Write("Stills",error); }
+   }
+   // A large frame keeps mpv busy for seconds; polls waiting meanwhile are no sign of a hanging player.
+   savingPicture++; try { await active.ScreenshotAsync(path); } finally { savingPicture--; unansweredPolls=0; }
+   return true;
+  });
   Notify(T("Screenshot saved · ")+path);
   if(StillSaved!=null && File.Exists(path))await StillSaved(new(path,seconds));
   return path;
  }
  internal Task<string> SaveScreenshotAsync()=>SaveScreenshotAsync(false);
+ /// <summary>Saves the frame at a time of this file into a picture file (FFmpeg); null leaves it to the player.</summary>
+ internal Func<string,double,double,string,Task>? StillRenderer { get; set; }
  private void Notify(string text) { if(playback.ShowMessages)ShowMessage(text); }
  private double speedBeforeSlowMotion=1;
  internal bool SlowMotion=>speed.SelectedItem is double value && value<=.25;

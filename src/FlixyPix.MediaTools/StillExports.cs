@@ -5,6 +5,31 @@ namespace FlixyPix.MediaTools;
 
 public sealed partial class MediaToolService
 {
+    /// <summary>Saves the single frame at this time in full resolution, as a range of pictures does: FFmpeg seeks to half a
+    /// frame before it, so the first frame it decodes is the one shown there. Unlike a screenshot of the running player it
+    /// needs no picture copied back from the graphics card and leaves playback alone. The file is written beside its
+    /// target and moved into place when complete.</summary>
+    /// <param name="framesPerSecond">Frame rate of the video, for the half frame of room before the time.</param>
+    public async Task SaveStillAsync(string input, double seconds, double framesPerSecond, string path, CancellationToken cancellationToken = default)
+    {
+        ValidateTime(seconds, nameof(seconds));
+        if (!double.IsFinite(framesPerSecond) || framesPerSecond <= 0) throw new ArgumentOutOfRangeException(nameof(framesPerSecond));
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        if (extension is not (".png" or ".jpg")) throw new ArgumentOutOfRangeException(nameof(path));
+        var target = Path.GetFullPath(path); var folder = Path.GetDirectoryName(target)!;
+        FileAccessPolicy.Current.EnsureWritable(folder); Directory.CreateDirectory(folder);
+        var work = Path.Combine(folder, ".flixypix-still-" + Guid.NewGuid().ToString("N") + extension);
+        try
+        {
+            string[] quality = extension == ".jpg" ? ["-q:v", "2"] : [];
+            await RunAsync(Resolve(paths.Ffmpeg, "ffmpeg"), ["-hide_banner", "-loglevel", "error", "-nostdin", "-ss", F(Math.Max(0, seconds - .5 / framesPerSecond)), "-i", Input(input),
+                "-map", "0:v:0", "-an", "-sn", "-frames:v", "1", ..quality, "-update", "1", work], cancellationToken, TimeSpan.FromMinutes(2));
+            if (!File.Exists(work) || new FileInfo(work).Length == 0) throw new NoRenderedMediaException();
+            File.Move(work, target);
+        }
+        finally { try { if (File.Exists(work)) File.Delete(work); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { } }
+    }
+
     /// <summary>Saves the frames of a marked range as single pictures in full resolution: every frame, every n-th or one
     /// every so many seconds. FFmpeg seeks exactly, so the first picture is the frame at the start mark and the frame at
     /// the end mark is the last one that can be included. The pictures are written beside their target and moved into

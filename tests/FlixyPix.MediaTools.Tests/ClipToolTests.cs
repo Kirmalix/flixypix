@@ -154,6 +154,12 @@ public sealed class ClipToolTests : IDisposable
         Assert.Equal(File.ReadAllBytes(all[3].Path), File.ReadAllBytes(third[1].Path));
         var timed = await service.ExportStillsAsync(source, Path.Combine(folder, "jpg"), "Film", range with { Spacing = StillSpacing.EverySeconds, Amount = .2 }, 15, ".jpg");
         Assert.Equal(3, timed.Count); Assert.All(timed, still => Assert.EndsWith(".jpg", still.Path));
+        // A single picture is the same frame a range gives at that time, and nothing of its work stays beside it.
+        var single = Path.Combine(folder, "Film single.png");
+        await service.SaveStillAsync(source, .4, 15, single);
+        Assert.Equal(File.ReadAllBytes(all[3].Path), File.ReadAllBytes(single));
+        Assert.Empty(Directory.GetFiles(folder, ".flixypix-still-*"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.SaveStillAsync(source, .4, 15, Path.Combine(folder, "Film.gif")));
         // Nothing but the pictures stays, and the video is untouched.
         Assert.Equal(new[] { Path.Combine(folder, "jpg") }, Directory.GetDirectories(folder)); Assert.Empty(Directory.GetDirectories(Path.Combine(folder, "jpg")));
         Assert.Equal(before, File.ReadAllBytes(source));

@@ -48,6 +48,12 @@ public partial class MainWindow
    Require(image is { Kind: MediaKind.Image } && Stills.SourceOf(image) is { } origin && origin.VideoId == video.Id && Math.Abs(origin.Seconds - .3) < .011, "The picture did not join the library with its video and time.");
    added.Add(image!.Id);
    Require(MediaMenu([image]).OfType<MenuCommand>().Any(command => command.Label == T("Show this moment in the video")), "The picture does not lead back to its video.");
+   // The same frame once more from the running player, which saves it when FFmpeg is missing or fails.
+   var renderer = window.StillRenderer; Require(renderer != null, "Single pictures are not taken from the file by FFmpeg.");
+   window.StillRenderer = null; string playerStill;
+   try { playerStill = await window.SaveStillAsync(); } finally { window.StillRenderer = renderer; }
+   await Prepared(); if (_repository.GetMediaByPath(playerStill) is { } fromPlayer) added.Add(fromPlayer.Id);
+   Require(File.Exists(playerStill) && playerStill != still, "The player did not save the picture itself: " + playerStill);
 
    // A range from the frame at 0.2 s to the frame at 0.5 s holds four frames; every second one makes two.
    await window.SeekToAsync(.2); window.Act(PlayerActions.ClipStart); await window.SeekToAsync(.5); window.Act(PlayerActions.ClipEnd);
@@ -64,8 +70,9 @@ public partial class MainWindow
    // Frame exact: the picture the player saved at 0.3 s is the range's second frame, not one of its neighbours. Player and
    // FFmpeg convert colours a little differently, so only the pixels that move from frame to frame are compared.
    var moving = Moving(frames[0], frames[2]);
-   long same = Difference(still, frames[1], moving), before = Difference(still, frames[0], moving), after = Difference(still, frames[2], moving);
+   long same = Difference(playerStill, frames[1], moving), before = Difference(playerStill, frames[0], moving), after = Difference(playerStill, frames[2], moving);
    Require(moving.Count > 200 && same * 2 < before && same * 2 < after, $"The frames of the range are not the ones the player showed ({before}, {same}, {after} on {moving.Count} pixels).");
+   Require(Difference(still, frames[1], moving) == 0, "The single picture from the file is not the frame the player showed.");
    window.ExportChoice = dialog => dialog.Choose(StillSpacing.EveryNthFrame, 2);
    await window.ExportRangeAsync(); await Prepared();
    var all = Directory.GetFiles(rangeFolder);

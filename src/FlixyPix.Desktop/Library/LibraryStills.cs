@@ -11,7 +11,9 @@ public partial class MainWindow
  private void ConnectStills(VideoPlayerWindow window, MediaItem item)
  {
   window.StillSaved = still => { ImportStills(item, [still]); return Task.CompletedTask; };
-  if (ToolExists(_settings.Ffmpeg, "ffmpeg")) window.StillsExportRequested = (source, range, rate, folder) => ExportStillsAsync(item, source, range, rate, folder);
+  if (!ToolExists(_settings.Ffmpeg, "ffmpeg")) return;
+  window.StillsExportRequested = (source, range, rate, folder) => ExportStillsAsync(item, source, range, rate, folder);
+  window.StillRenderer = (source, seconds, rate, path) => _tools.SaveStillAsync(source, seconds, rate, path);
  }
 
  /// <summary>Takes saved pictures into the library (setting "Add pictures to the library") and prepares them like any
