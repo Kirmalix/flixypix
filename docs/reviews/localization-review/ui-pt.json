@@ -15406,21 +15406,9 @@
       "status": "unchanged",
       "digest": "3151fd664c9f86b7d0ac4ae2f9d293f387badfd19f8fe9cd83325423a5593636"
     },
-    "Ascending": {
-      "status": "unchanged",
-      "digest": "549f75e6a15803d231fbb7c011e53c77721ad204abf7f7f76b804e53d40145db"
-    },
-    "Click to reverse the order": {
-      "status": "unchanged",
-      "digest": "e1480c9612564b7c94f80009fd061c3721c658e76c720c2911c3980d4318f65b"
-    },
     "Date added": {
       "status": "unchanged",
       "digest": "7d32c1a65921beb1e4f88c8a30cabf421fa8964ccd04304b70102c80189680ea"
-    },
-    "Descending": {
-      "status": "unchanged",
-      "digest": "51840d3ef0803179a926d38c074cf83bb340ed0fc535eba9c0cf48d2822c69d2"
     },
     "Playing time: {0}": {
       "status": "unchanged",
@@ -15445,6 +15433,74 @@
     "{0} min": {
       "status": "unchanged",
       "digest": "0212fa6efcfd50130e035f8b2f631c45292731c7bd82455a80c2ba1aa597507c"
+    },
+    "Best": {
+      "status": "unchanged",
+      "digest": "e8f744ea5a7197fffddd64193252eff70761a899138a4c1e4879461c62a75896"
+    },
+    "Best first": {
+      "status": "unchanged",
+      "digest": "b2e239d96f86f665da4d4193ed38e571154f1f64dd431f79f97de7650af6de31"
+    },
+    "Click: {0}": {
+      "status": "unchanged",
+      "digest": "9a26e492f5c7bd86ba84b9ce47b8b1d73e17289f9384eefcaaa0eeaa68ab78ee"
+    },
+    "Highest": {
+      "status": "unchanged",
+      "digest": "df401a055c735327cb8d47445cf125d103022205a6afcf0e2fc2951e3d7e709e"
+    },
+    "Highest first": {
+      "status": "unchanged",
+      "digest": "5ef83227b52496ef20470ee0703c381ef77a849e174f2151ab508102f18fe6c6"
+    },
+    "Longest": {
+      "status": "unchanged",
+      "digest": "65d76732f0fd1117419d3e1f2a7f863cc5b4dfc482389cd6c232422fb114cc6f"
+    },
+    "Longest first": {
+      "status": "unchanged",
+      "digest": "fa145d0caa74b4e8922116aa1d48a4749ebc03ec2c66c219e07da5d4a4b70a87"
+    },
+    "Lowest": {
+      "status": "unchanged",
+      "digest": "4f316947bbca8116cf1dc88d91e6f5d0c3b82fc0868f916e0922ebcc8dbcb891"
+    },
+    "Lowest first": {
+      "status": "unchanged",
+      "digest": "d5f601637cfe0eb7c439f274b2eb1435559f4da56575f8cb7033831ef1ab3523"
+    },
+    "Newest": {
+      "status": "unchanged",
+      "digest": "a7f7e1155c8881ffbc178e26af712c6b4149b4a396f11d2039ac12950c66a68f"
+    },
+    "Newest first": {
+      "status": "unchanged",
+      "digest": "ca67fe05d092756fad523998b06743d69a4adbebd438c2177ac0ab654a29ab1b"
+    },
+    "Oldest": {
+      "status": "unchanged",
+      "digest": "1f3026ef493f33dfc1288a050ba1277c321e5eeeb0415a37fc7268cddc91fea3"
+    },
+    "Oldest first": {
+      "status": "unchanged",
+      "digest": "bb7d0a2fc9d4e43b6a7aef89ae432ba398bade59cc8ee4f1e8e23d9cdff0aa58"
+    },
+    "Shortest": {
+      "status": "unchanged",
+      "digest": "a7611d59c8ec0c798514edac62034c78fed4cf92761019e4c731218baeeae57a"
+    },
+    "Shortest first": {
+      "status": "unchanged",
+      "digest": "58130e71b79430e4c48ac83d2b4dffb2701f2415444b0fbf73e0a58d1804bf70"
+    },
+    "Worst": {
+      "status": "unchanged",
+      "digest": "7734e16a1f120a23f0fcf2ea3638182382c6a1e07f979b8f1456078c713c35e1"
+    },
+    "Worst first": {
+      "status": "unchanged",
+      "digest": "fc24d8e1524f804763b3d735e14c605ba51fbe7bbb3e9989e6f8053ccfc3db91"
     }
   }
 }

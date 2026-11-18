@@ -174,10 +174,14 @@
         </ListBox>
        </Border>
        <Border x:Name="SortHost" Margin="0,0,6,0" VerticalAlignment="Center">
-        <StackPanel x:Name="SortTools" Orientation="Horizontal" VerticalAlignment="Center">
-         <Button x:Name="SortButton" Click="SortButtonClicked" Padding="10,6" FontSize="12" VerticalAlignment="Center" AutomationProperties.Name="{local:T 'Sorting'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8CB;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,0,0"/><TextBlock x:Name="SortButtonText" Margin="7,0,0,0"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
-         <Button x:Name="SortDirection" Click="SortDirectionClicked" Style="{StaticResource IconButton}" Padding="7" FontSize="13" Margin="2,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
+        <!-- Field and direction are one control: the field opens its list, the direction says in words where it sorts and turns it round. -->
+        <Border x:Name="SortTools" Background="{DynamicResource ButtonBackground}" CornerRadius="6" VerticalAlignment="Center" HorizontalAlignment="Left">
+         <StackPanel Orientation="Horizontal">
+          <Button x:Name="SortButton" Click="SortButtonClicked" Background="Transparent" Margin="0" Padding="10,6" FontSize="12" VerticalAlignment="Stretch" AutomationProperties.Name="{local:T 'Sorting'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8CB;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,0,0"/><TextBlock x:Name="SortButtonText" Margin="7,0,0,0"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
+          <Border x:Name="SortDivider" Width="1" Margin="0,7" Background="{DynamicResource Subtle}" Opacity="0.45"/>
+          <Button x:Name="SortDirection" Click="SortDirectionClicked" Background="Transparent" Margin="0" Padding="10,6" FontSize="12" VerticalAlignment="Stretch"><TextBlock x:Name="SortDirectionText" Foreground="{DynamicResource TextSoft}"/></Button>
+         </StackPanel>
+        </Border>
        </Border>
        <Button x:Name="ViewButton" Click="ViewMenuClicked" VerticalAlignment="Center" Margin="0" Padding="10,6" FontSize="12" ToolTip="{local:T 'Tile size, spacing and thumbnails'}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9E9;" Style="{StaticResource Icon}" FontSize="12" Margin="0,1,0,0"/><TextBlock x:Name="ViewButtonText" Margin="7,0,0,0"/><TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="9" Margin="8,1,0,0"/></StackPanel></Button>
       </StackPanel>

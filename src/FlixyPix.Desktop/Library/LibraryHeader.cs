@@ -144,48 +144,66 @@ public partial class MainWindow
 
     // ----- Sorting: a field and its direction -----
 
-    /// <summary>One sort field with the stored sort choices of its two directions (see <see cref="ViewState.SortFor"/>);
-    /// the first direction is the one a field starts with.</summary>
-    private sealed record SortField(string Label, int First, int Reverse);
+    /// <summary>One sort field with the stored sort choices of its two directions (see <see cref="ViewState.SortFor"/>),
+    /// each direction in a short word for the button and a phrase for the menu; the first is the one a field starts with.</summary>
+    private sealed record SortField(string Label, int First, int Reverse, string FirstWord = "", string ReverseWord = "", string FirstPhrase = "", string ReversePhrase = "")
+    {
+        internal bool HasDirection => First != Reverse;
+    }
 
-    private SortField[] SortFields() =>
-    [
-        new(T("Title"), 0, 1), new(T("Date added"), 2, 11), new(T("File date"), 7, 6), new(T("Duration"), 3, 12),
-        new(T("Rating"), 4, 13), new(T("O counter"), 8, 14), new(T("Resolution"), 9, 15), new(T("Bit rate"), 10, 16),
-        new(T("Collection order"), 5, 5),
-    ];
+    private SortField[] SortFields()
+    {
+        var newest = (T("Newest"), T("Oldest"), T("Newest first"), T("Oldest first"));
+        var highest = (T("Highest"), T("Lowest"), T("Highest first"), T("Lowest first"));
+        SortField Field(string label, int first, int reverse, (string, string, string, string) words) => new(label, first, reverse, words.Item1, words.Item2, words.Item3, words.Item4);
+        return
+        [
+            Field(T("Title"), 0, 1, ("A–Z", "Z–A", "A–Z", "Z–A")), Field(T("Date added"), 2, 11, newest), Field(T("File date"), 7, 6, newest),
+            Field(T("Duration"), 3, 12, (T("Longest"), T("Shortest"), T("Longest first"), T("Shortest first"))),
+            Field(T("Rating"), 4, 13, (T("Best"), T("Worst"), T("Best first"), T("Worst first"))),
+            Field(T("O counter"), 8, 14, highest), Field(T("Resolution"), 9, 15, highest), Field(T("Bit rate"), 10, 16, highest),
+            new(T("Collection order"), 5, 5),
+        ];
+    }
 
     private SortField CurrentSortField(out bool reversed)
     {
         var choice = Math.Max(0, SortChoice.SelectedIndex);
-        var field = SortFields().FirstOrDefault(f => f.First == choice || f.Reverse == choice) ?? SortFields()[0];
+        var fields = SortFields();
+        var field = fields.FirstOrDefault(f => f.First == choice || f.Reverse == choice) ?? fields[0];
         reversed = field.First != choice;
         return field;
     }
 
     private void UpdateSortButton()
     {
-        var field = CurrentSortField(out _);
-        var (_, descending) = ViewState.SortFor(Math.Max(0, SortChoice.SelectedIndex));
-        var ordered = field.First != field.Reverse;
+        var field = CurrentSortField(out var reversed);
         SortButtonText.Text = field.Label;
-        SortButton.ToolTip = T("Sorting: {0}", field.Label);
-        SortDirection.Content = descending ? "" : "";
-        SortDirection.Visibility = ordered ? Visibility.Visible : Visibility.Collapsed;
-        var direction = descending ? T("Descending") : T("Ascending");
-        SortDirection.ToolTip = direction + " · " + T("Click to reverse the order");
-        System.Windows.Automation.AutomationProperties.SetName(SortDirection, direction);
+        SortDirectionText.Text = reversed ? field.ReverseWord : field.FirstWord;
+        SortDirection.Visibility = SortDivider.Visibility = field.HasDirection ? Visibility.Visible : Visibility.Collapsed;
+        // Without its label (narrow head) the field still shows in the direction's tooltip.
+        var phrase = reversed ? field.ReversePhrase : field.FirstPhrase;
+        SortButton.ToolTip = T("Sorting: {0}", field.HasDirection ? $"{field.Label} · {phrase}" : field.Label);
+        SortDirection.ToolTip = SortButton.ToolTip + "\n" + T("Click: {0}", reversed ? field.FirstPhrase : field.ReversePhrase);
+        System.Windows.Automation.AutomationProperties.SetName(SortDirection, phrase);
     }
 
+    /// <summary>The fields, and below them the two directions of the current field in words.</summary>
     private void SortButtonClicked(object sender, RoutedEventArgs e)
     {
-        var current = CurrentSortField(out _);
+        var current = CurrentSortField(out var reversed);
         // In the view menu the sort list would close the menu under it; it opens below the menu's button instead.
-        var below = ViewPopup.IsOpen ? (UIElement)ViewButton : SortButton;
+        var below = ViewPopup.IsOpen ? (UIElement)ViewButton : SortTools;
         if (ViewPopup.IsOpen) ViewPopup.IsOpen = false;
         var collection = _playlist != null || current.First == 5;
         var items = SortFields().Where(field => field.First != 5 || collection)
-            .Select(field => (MenuSpec)new MenuCommand(field.Label, () => SortChoice.SelectedIndex = field == current ? SortChoice.SelectedIndex : field.First) { Checked = field == current });
+            .Select(field => (MenuSpec)new MenuCommand(field.Label, () => { if (field != current) SortChoice.SelectedIndex = field.First; }) { Checked = field == current }).ToList();
+        if (current.HasDirection)
+        {
+            items.Add(MenuSpec.Separator);
+            items.Add(new MenuCommand(current.FirstPhrase, () => SortChoice.SelectedIndex = current.First) { Checked = !reversed });
+            items.Add(new MenuCommand(current.ReversePhrase, () => SortChoice.SelectedIndex = current.Reverse) { Checked = reversed });
+        }
         MenuBelow(below, items);
     }
 
