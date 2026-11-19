@@ -19,18 +19,19 @@ public sealed partial class ImageArchiveService
     {
         ValidateRarHeaders(source); source.Position = 0;
         var hash = Convert.ToHexStringLower(SHA256.HashData(source)); source.Position = 0;
-        using var rar = RarArchive.Open(source,new ReaderOptions { LeaveStreamOpen = true, LookForHeader = false });
+        using var rar = RarArchive.OpenArchive(source,new ReaderOptions { LeaveStreamOpen = true, LookForHeader = false });
         var images = new List<ArchiveImageEntry>(); var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long total = 0; var count = 0;
         foreach (var member in rar.Entries)
         {
             if (++count > MaximumEntryCount) throw new InvalidDataException("RAR entry count exceeded.");
-            ValidateRarMember(member,names); total = checked(total + member.Size);
+            if (member is not RarEntry rarMember) throw new InvalidDataException("Unsupported RAR entry type.");
+            ValidateRarMember(rarMember,names); total = checked(total + member.Size);
             if (total > MaximumTotalSize || !member.IsComplete) throw new InvalidDataException("Incomplete or oversized RAR archive.");
             if (!member.IsDirectory && Extensions.Contains(Path.GetExtension(member.Key!)))
                 images.Add(new(Path.GetFullPath(path),member.Key!,member.Size) { ArchiveSha256 = hash });
         }
-        if (rar.Volumes.Any(volume => volume.IsMultiVolume)) throw new InvalidDataException("Multi-volume RAR is unsupported.");
+        if (rar.Volumes.Any(volume => volume is not RarVolume rarVolume || rarVolume.IsMultiVolume)) throw new InvalidDataException("Multi-volume RAR is unsupported.");
         return images;
     }
 
@@ -43,7 +44,7 @@ public sealed partial class ImageArchiveService
             throw new InvalidDataException("The RAR changed after inspection.");
         token.ThrowIfCancellationRequested(); source.Position = 0;
         // Always stream in archive order: solid RAR decoding depends on the preceding members.
-        using var reader = RarReader.Open(source,new ReaderOptions { LeaveStreamOpen = true, LookForHeader = false });
+        using var reader = RarReader.OpenReader(source,new ReaderOptions { LeaveStreamOpen = true, LookForHeader = false });
         while (reader.MoveToNextEntry())
         {
             token.ThrowIfCancellationRequested();

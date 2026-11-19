@@ -56,9 +56,9 @@ try {
         if (!$ffmpeg) { throw 'Media tools absent. Run bootstrap.ps1 or select -NoMediaTools.' }
         Copy-Item -LiteralPath $ffmpeg.FullName -Destination $tools -Force
         Copy-Item -LiteralPath (Join-Path $ffmpeg.DirectoryName 'ffprobe.exe') -Destination $tools -Force
-        # mpv needs its libraries beside it; the FFmpeg programs are self-contained and do not use them.
+        # Carry companion DLLs and Blu-ray JARs when present; the full mpv build is otherwise static.
         Copy-Item -LiteralPath '.tools\media\mpv\mpv.exe' -Destination $tools -Force
-        Copy-Item -Path '.tools\media\mpv\*.dll' -Destination $tools -Force
+        Get-ChildItem -LiteralPath '.tools\media\mpv' -File | Where-Object { $_.Extension -in '.dll', '.jar' } | Copy-Item -Destination $tools -Force
         $notices = Join-Path $tools 'notices'
         New-Item -ItemType Directory -Path $notices -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $ffmpeg.Directory.Parent.FullName 'LICENSE') -Destination (Join-Path $notices 'FFmpeg-LICENSE.txt') -Force

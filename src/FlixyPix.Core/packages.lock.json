@@ -4,21 +4,21 @@
     "net10.0": {
       "Microsoft.Data.Sqlite.Core": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "1p9rO3Q2X/L/9YrYog3vaDzi8u+WZfJCOkDYoHqmofqYP0DLPLPyZcS2Rnh/79JXAodgbs1AgsaNwLpIvC3Xew==",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "mjDz/zleAF78J1KRN9FludN2bzbsMWoXYSLVcawADle7RBhZYpFZYivGRvbvlH/RtXT/gjO0yhG99tzdFiET+A==",
         "dependencies": {
           "SQLitePCLRaw.core": "2.1.13"
         }
       },
       "SQLite3MC.PCLRaw.bundle": {
         "type": "Direct",
-        "requested": "[2.6.1, )",
-        "resolved": "2.6.1",
-        "contentHash": "ideIAAaHiy9OX0u2A+UFvDUPFm2BGERax3EXEhKHrLQJDuGA+pGicarhNjIoohM0a0YjFi8MdlKIZuv3ftp7Vw==",
+        "requested": "[2.7.1, )",
+        "resolved": "2.7.1",
+        "contentHash": "U2HdC1I4Ow/olKc3eqNTGHNS+rxHD0voa6qpD6Nl54mRkRbyRQHwFEXxbOMMEZek90CIjDaQQwThJ8vd1HqiEg==",
         "dependencies": {
-          "SQLite3MC.PCLRaw.lib": "2.6.1",
-          "SQLite3MC.PCLRaw.provider": "2.6.1"
+          "SQLite3MC.PCLRaw.lib": "2.7.1",
+          "SQLite3MC.PCLRaw.provider": "2.7.1"
         }
       },
       "SQLitePCLRaw.core": {
@@ -29,22 +29,29 @@
       },
       "System.Formats.Nrbf": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "pl9R3NfEKEYnU9Dj74AKRpe3tFQEA4tcLepHLOUQVT2vAyTW6E+WeKS3+JydxYnig4hXtLOrLNDcBkUNzm+9FA=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "uINCdDG2QEJHJm6c1O15G2w3iJ+JewMm/kTgtD6sFOqWB/doa0+/YNebFCoCaj6jMBzMxatS0/EPuFrK8KdZVA=="
       },
       "SQLite3MC.PCLRaw.lib": {
         "type": "Transitive",
-        "resolved": "2.6.1",
-        "contentHash": "X1XqnN35+/53ZryMSR/ogqSBcHJ+iUwCTkXP6GDHoxWZbbGz31j1Xi1HSvfsjS5V2iRuloUBDrdev0gvhqQGJg=="
+        "resolved": "2.7.1",
+        "contentHash": "2qAVDsPXpkjnyWed+WXpCGhL/0Jryx900B7J7ikGTWWZ5YGFGGig0JHz5N8SAB9/7Al+9hmzUU1ivAQxMIU/3A=="
       },
       "SQLite3MC.PCLRaw.provider": {
         "type": "Transitive",
-        "resolved": "2.6.1",
-        "contentHash": "JKfx7q5Gha9LGZShmB3N+4rcr816MssWR4ZGrortYTDx9G+RbWzJGItT6ZUJlDnd8ElQXjYcjXF0zNWmeTUs6g==",
+        "resolved": "2.7.1",
+        "contentHash": "LPRdFKVGz4xG4X5ILmTSVeJa6CdNtHYkpj4RRC75CmZRmHnK+/EAbz94PLmO/uF5tfq7fQb5uuVfQxgScpVpvQ==",
         "dependencies": {
           "SQLitePCLRaw.core": "3.0.2"
         }
+      }
+    },
+    "net10.0/win-x64": {
+      "SQLite3MC.PCLRaw.lib": {
+        "type": "Transitive",
+        "resolved": "2.7.1",
+        "contentHash": "2qAVDsPXpkjnyWed+WXpCGhL/0Jryx900B7J7ikGTWWZ5YGFGGig0JHz5N8SAB9/7Al+9hmzUU1ivAQxMIU/3A=="
       }
     }
   }

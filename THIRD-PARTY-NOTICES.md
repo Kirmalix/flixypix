@@ -31,7 +31,7 @@ separate processes. Their versions and SHA-256 hashes are pinned in
 | Program | License | Binary source | Source code |
 |---|---|---|---|
 | FFmpeg and ffprobe (essentials build by Gyan Doshi) | GPL-3.0 (build configured with `--enable-gpl --enable-version3`) | https://www.gyan.dev/ffmpeg/builds/ | https://ffmpeg.org/download.html; the build configuration and the versions of all included libraries are listed in `tools/notices/FFmpeg-build.txt` |
-| mpv 0.41.0 with its libraries | GPL-2.0-or-later (this build) | https://github.com/mpv-player/mpv/releases/tag/v0.41.0 | https://github.com/mpv-player/mpv/tree/v0.41.0 |
+| mpv 0.42.0 with its libraries | GPL-2.0-or-later (this build) | https://github.com/mpv-player/mpv/releases/tag/v0.42.0 | https://github.com/mpv-player/mpv/tree/v0.42.0 |
 
 ## Not bundled
 
