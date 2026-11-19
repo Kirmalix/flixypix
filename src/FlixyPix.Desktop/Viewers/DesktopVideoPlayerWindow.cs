@@ -36,6 +36,9 @@ internal sealed partial class VideoPlayerWindow : Window
  private PlayerTransformTimeline timeline=new();
  private PlayerTransform? manualTransform;
  private bool polling,closing,paused,seeking,syncing,keyboardSeeking;
+ private bool ended, suppressEndResume;
+ private readonly SemaphoreSlim stateGate=new(1,1);
+ private long stateRevision;
  private IDisposable? awake;
  internal bool KeepsAwake=>awake!=null;
  internal Task<nint> ReadyTask=>ready.Task;
@@ -75,7 +78,7 @@ internal sealed partial class VideoPlayerWindow : Window
   position.ValueChanged+=(_,_)=>{ if(seeking && PointerPressed())Scrub(position.Value); };
   position.PreviewKeyDown+=(_,e)=>{if(e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.PageUp or Key.PageDown or Key.Home or Key.End)keyboardSeeking=seeking=true;};
   position.PreviewKeyUp+=async(_,e)=>{if(keyboardSeeking){keyboardSeeking=seeking=false;if(player!=null)await Command(()=>SeekToAsync(position.Value));}};
-  position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ position.ReleaseMouseCapture(); if(!seeking)return; seeking=false; if(player!=null)await Command(()=>SeekToAsync(position.Value)); }),true);
+  position.AddHandler(PreviewMouseLeftButtonUpEvent,new MouseButtonEventHandler(async (_,_)=>{ position.ReleaseMouseCapture(); if(!seeking)return; seeking=false; if(player!=null)await Command(()=>FinishScrubAsync(position.Value)); }),true);
   timer.Tick+=async (_,_)=>await PollAsync();
   Loaded+=(_,_)=>{ try { timeline=repository.GetPlayerTransforms(media.Id); transforms.IsChecked=timeline.Enabled; RefreshMarks();
    ready.TrySetResult(host.VideoHandle); if(player==null)ShowMessage(T("Starting the player …")); if((playback.AlwaysFullscreen || Place is { Fullscreen:true }) && WindowStyle!=WindowStyle.None)ToggleFullscreen();
@@ -126,6 +129,13 @@ internal sealed partial class VideoPlayerWindow : Window
  /// <summary>Whether the left mouse button is down; the smoke test replaces it because it cannot press a real button.</summary>
  internal Func<bool> PointerPressed { get; set; } = ()=>Mouse.LeftButton==MouseButtonState.Pressed;
  private bool scrubbing; private double? scrubTarget;
+ private async Task FinishScrubAsync(double seconds)
+ {
+  scrubTarget=null;
+  while(scrubbing && !closing) await Task.Delay(10);
+  if(!closing) await SeekToAsync(seconds);
+ }
+
  /// <summary>Seeks along while the time line is dragged; requests during a running seek collapse into the latest one.</summary>
  private async void Scrub(double seconds)
  {
@@ -136,12 +146,29 @@ internal sealed partial class VideoPlayerWindow : Window
  /// <summary>While dragging, the next key frame is enough and answers at once; the release seeks exactly.</summary>
  private async Task SeekNearAsync(double seconds)
  {
-  await RequirePlayer().SeekNearAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
+  await stateGate.WaitAsync();
+  try
+  {
+   var active = RequirePlayer();
+   if (!stillsMode && await active.GetEofReachedAsync()) ended=true;
+   ++stateRevision;
+   await active.SeekNearAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
+  }
+  finally { stateGate.Release(); }
  }
  internal async Task SeekToAsync(double seconds)
  {
-  if(durationSeconds is >0 and var duration)seconds=Math.Min(seconds,duration);
-  await RequirePlayer().SeekAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
+  await stateGate.WaitAsync();
+  try
+  {
+   if(durationSeconds is >0 and var duration)seconds=Math.Min(seconds,duration);
+   var active = RequirePlayer();
+   var resume = !suppressEndResume && !stillsMode && (ended || await active.GetEofReachedAsync()) && seconds < (durationSeconds ?? double.MaxValue);
+   ++stateRevision;
+   await active.SeekAsync(Math.Max(0,seconds)); LastPositionSeconds=seconds; ApplyTransform();
+   if (resume) { await active.PauseAsync(false); ended=false; paused=false; pause.Content="\uE769"; }
+  }
+  finally { stateGate.Release(); }
  }
  internal void SetManualTransform(PlayerTransform transform) { PlayerTransformTimeline.Validate(new() { Steps=[transform] }); manualTransform=transform; ApplyTransform(); }
  internal (int X,int Y,int Width,int Height) VideoBounds=>host.LastBounds;
@@ -166,21 +193,32 @@ internal sealed partial class VideoPlayerWindow : Window
  private int unansweredPolls, savingPicture;
  private async Task PollAsync()
  {
-  if(polling || player==null || closing)return; polling=true;
+  if(polling || player==null || closing || !stateGate.Wait(0))return; polling=true;
+  var active=player;
   try
   {
-   var seconds=await ReadPosition(player); unansweredPolls=0; if(closing || seconds==null || processingMouse)return;
+   var revision=stateRevision;
+   var seconds=await ReadPosition(active); unansweredPolls=0; if(closing || seconds==null || processingMouse)return;
    // A release outside the time line does not reach it: the poll ends the press and seeks where it was left.
-   if(seeking && !keyboardSeeking && !PointerPressed()) { seeking=false; _=Command(()=>SeekToAsync(position.Value)); }
+   if(seeking && !keyboardSeeking && !PointerPressed()) { seeking=false; _=Command(()=>FinishScrubAsync(position.Value)); }
+   if (!seeking && !stillsMode && !shuttling)
+   {
+    var eof=await active.GetEofReachedAsync();
+    var actualPause=await active.GetPausedAsync();
+    if (closing || revision!=stateRevision) return;
+    if (eof && !ended) { ended=true; if (IsVisible && IsActive && !suppressEndResume) ShowOverlay(); }
+    if (actualPause is { } actual) paused=actual;
+    pause.Content=paused || eof ? "\uE768" : "\uE769";
+   }
    LastPositionSeconds=seconds.Value; if(!seeking)position.Value=Math.Clamp(seconds.Value,0,position.Maximum);
    if(!paused)Coverage.Observe(seconds.Value,speed.SelectedItem is double rate?rate:1);
    ApplyTransform(); UpdateCurrentMark(); UpdateControls(seconds.Value); PositionTick?.Invoke(seconds.Value);
-   if(!pictureMeasured)await MeasurePictureAsync(player);
+   if(!pictureMeasured)await MeasurePictureAsync(active);
   }
   // A busy mpv answers late (a slow seek, a drive waking up) and plays on; only a lost connection ends the polling.
   catch(OperationCanceledException) { if(!closing && savingPicture==0 && ++unansweredPolls==3)ShowMessage(T("The player is not responding.")); }
   catch(Exception error) when(error is IOException or InvalidOperationException or ObjectDisposedException) { timer.Stop(); if(!closing)ShowMessage(T("Playback finished · ")+error.Message); }
-  finally { polling=false; }
+  finally { polling=false; stateGate.Release(); }
  }
  private void ApplyTransform() { if(host.VideoHandle!=0)host.Apply(transforms.IsChecked==true?(manualTransform??timeline.At(LastPositionSeconds)):PlayerTransformTimeline.Identity); }
  private Task SaveTransformsEnabledAsync()=>Command(()=>
@@ -195,9 +233,31 @@ internal sealed partial class VideoPlayerWindow : Window
   catch(Exception error) when(error is IOException or InvalidDataException or InvalidOperationException or ArgumentException or ObjectDisposedException or Microsoft.Data.Sqlite.SqliteException)
   { if(!closing)ShowMessage(error.Message); }
  }
- internal async Task TogglePauseAsync() { paused=!paused; await RequirePlayer().PauseAsync(paused); ShowPlayState(); }
+ internal async Task TogglePauseAsync()
+ {
+  await stateGate.WaitAsync();
+  try
+  {
+   var active=RequirePlayer(); ++stateRevision;
+   var eof=await active.GetEofReachedAsync();
+   var next=eof ? false : !(await active.GetPausedAsync() ?? paused);
+   if(eof) await active.SeekAsync(0);
+   await active.PauseAsync(next); ended=false; suppressEndResume=next; paused=next; ShowPlayState();
+  }
+  finally { stateGate.Release(); }
+ }
  /// <summary>Pauses for the boss key or the lock; the play button then shows the pause.</summary>
- internal async Task PauseForPrivacyAsync() { ClearSeekPreview();if(!paused&&player!=null)await TogglePauseAsync(); }
+ internal async Task PauseForPrivacyAsync()
+ {
+  ClearSeekPreview(); suppressEndResume=true; ++stateRevision;
+  await stateGate.WaitAsync();
+  try
+  {
+   suppressEndResume=true; ended=false;
+   if(player!=null) { await player.PauseAsync(true); paused=true; pause.Content="\uE768"; }
+  }
+  finally { stateGate.Release(); }
+ }
  private Task JumpAsync(double seconds)=>SeekToAsync(Math.Max(0,LastPositionSeconds+seconds));
  private async Task RunActionAsync(string action)
  {
@@ -212,7 +272,7 @@ internal sealed partial class VideoPlayerWindow : Window
    case PlayerActions.SpeedUp: speed.SelectedIndex=Math.Min(speed.SelectedIndex+1,speed.Items.Count-1); break;
    case PlayerActions.SpeedDown: speed.SelectedIndex=Math.Max(speed.SelectedIndex-1,0); break;
    case PlayerActions.FrameForward or PlayerActions.FrameBackward:
-    await RequirePlayer().FrameStepAsync(action==PlayerActions.FrameForward); paused=true; pause.Content=""; break;
+    await RequirePlayer().FrameStepAsync(action==PlayerActions.FrameForward); ended=false; suppressEndResume=true; paused=true; pause.Content=""; break;
    case PlayerActions.CreateBookmark:
     var created=repository.UpsertBookmark(new Bookmark { MediaId=media.Id,Title=T("Bookmark ")+TimeSpan.FromSeconds(LastPositionSeconds).ToString(@"h\:mm\:ss"),PositionSeconds=LastPositionSeconds });
     Notify(T("Bookmark set · ")+TimeSpan.FromSeconds(LastPositionSeconds).ToString(@"h\:mm\:ss")); RefreshMarks();

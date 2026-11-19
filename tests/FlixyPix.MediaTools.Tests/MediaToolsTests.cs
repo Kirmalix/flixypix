@@ -121,6 +121,13 @@ public sealed class MediaToolsTests : IDisposable
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await player.WaitForEndAsync(timeout.Token);
         Assert.True((await player.GetPositionAsync()) >= 1.5);
+        Assert.True(await player.GetEofReachedAsync());
+        Assert.True(await player.GetPausedAsync());
+        await player.SeekAsync(0);
+        await player.PauseAsync(false);
+        await player.WaitForSeekAsync();
+        Assert.False(await player.GetEofReachedAsync());
+        Assert.False(await player.GetPausedAsync());
     }
 
     [Fact]

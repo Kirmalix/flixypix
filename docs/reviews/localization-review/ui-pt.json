@@ -15501,6 +15501,11 @@
     "Worst first": {
       "status": "unchanged",
       "digest": "fc24d8e1524f804763b3d735e14c605ba51fbe7bbb3e9989e6f8053ccfc3db91"
+    },
+    "Alt+drag: draw a selection rectangle on selected items. Ctrl adds to the selection.": {
+      "status": "unchanged",
+      "digest": "0b2bcd207b36278c0440524d8b71690941f27412e4d4f784ad0eace41c6d98f3",
+      "note": "Reviewed selection gesture help."
     }
   }
 }

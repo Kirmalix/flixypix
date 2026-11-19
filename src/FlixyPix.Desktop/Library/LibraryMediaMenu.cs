@@ -245,7 +245,7 @@ public partial class MainWindow
  /// <summary>Deletes the files after one question (recycle bin or for good, as the library says) and their catalog entries.</summary>
  internal void DeleteMedia(IReadOnlyList<MediaItem> items)
  {
-  if (items.Count == 1) { if (DeleteWithQuestion(items[0])) return; }
+  if (items.Count == 1) { DeleteWithQuestion(items[0]); return; }
   if (items.Count == 0) return;
   foreach (var item in items) FileAccessPolicy.Current.EnsureWritable(item.Path);
   var recycle = _repository.GetPreferences().General.DeleteToRecycleBin;

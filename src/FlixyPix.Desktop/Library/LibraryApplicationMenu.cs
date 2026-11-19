@@ -52,7 +52,7 @@ public partial class MainWindow
   var sections=HelpWindow.Guide().ToList();if(shortcuts)sections.Clear();
   sections.Add((T("Keyboard shortcuts"),string.Join("\n",AppActions().Select(a=>a.Gesture+"   "+a.Label))));
   sections.Add((T("Navigation"),"F6 / Shift+F6 · Tab / Shift+Tab · ↑ ↓ ← → · Page↑ / Page↓ · Home / End · Shift+F10"));
-  sections.Add((T("Selection"),"Shift+↑/↓/←/→ · Ctrl+↑/↓/←/→ · Ctrl+Space · Ctrl+A"));
+  sections.Add((T("Selection"),"Shift+↑/↓/←/→ · Ctrl+↑/↓/←/→ · Ctrl+Space · Ctrl+A"+"\n"+T("Alt+drag: draw a selection rectangle on selected items. Ctrl adds to the selection.")));
   sections.Add((T("Media"),string.Join("\n", "Enter   "+T("Open"),"Space   "+T("Large view"),"F2   "+T("Rename"),"Delete   "+T("Remove from catalog"),"Shift+Delete   "+T("Delete files"),"0–5   "+T("Rating"),"F   "+T("Favorite"),"B   "+T("Target collection for B"))));
   sections.Add((T("Tags"),string.Join("\n",QuickTags.Select((tag,i)=>(i+1)+"   "+tag).Prepend("T   "+T("Tag mode")))));
   var playback=_repository.GetPreferences().Playback;

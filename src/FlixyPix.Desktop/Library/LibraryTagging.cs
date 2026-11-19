@@ -324,12 +324,14 @@ public partial class MainWindow
 
     private void MediaListMouseDown(object sender, MouseButtonEventArgs e)
     {
-        _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null; _bandOrigin = null;
+        _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null; _bandOrigin = null; _bandKept=null;
         // The stars of a tile rate; they neither select nor drag it.
-        if (e.OriginalSource is TileRating) return;
+        if (OnTileControl(e.OriginalSource as DependencyObject)) return;
         // Free space starts a selection rectangle, and so does a tile that is not selected; a selected tile drags the selection.
         if (ItemsControl.ContainerFromElement(MediaList, (DependencyObject)e.OriginalSource) is not ListBoxItem item) { OfferBand(e); return; }
-        if (item.IsSelected || !OfferBand(e)) _dragStart = e.GetPosition(MediaList);
+        var forceBand=Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
+        if ((!forceBand && item.IsSelected) || !OfferBand(e)) _dragStart = e.GetPosition(MediaList);
+        if (_bandOrigin != null && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) e.Handled=true;
         // "Klick auf das Bild spielt ab": a plain click on the picture (not on its buttons) plays once the button is released without dragging.
         if (_cardContext.Display.ClickPlays && Keyboard.Modifiers == ModifierKeys.None && e.ClickCount <= 1 && item.DataContext is MediaCard card && OnPicture((DependencyObject)e.OriginalSource, item)) _clickToPlay = card;
         // Keep a multi-selection alive so it can be dragged; a plain click without drag still selects only this item.
@@ -351,7 +353,7 @@ public partial class MainWindow
         if (_pendingSingleSelection is { } item) { MediaList.SelectedItems.Clear(); item.IsSelected = true; }
         // A click that neither dragged nor drew a rectangle may play the tile.
         var play = _dragStart != null || _bandOrigin != null ? _clickToPlay : null;
-        _pendingSingleSelection = null; _dragStart = null; _clickToPlay = null; _bandOrigin = null;
+        _pendingSingleSelection = null; _dragStart = null; _clickToPlay = null; _bandOrigin = null; _bandKept=null;
         if (play != null) { StopSlideshow(); _ = Play(play.Item); }
     }
     private MediaCard? _clickToPlay;

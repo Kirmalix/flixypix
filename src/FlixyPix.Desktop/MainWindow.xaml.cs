@@ -52,6 +52,8 @@ public partial class MainWindow : Window
     {
         _persistPreferences = persistPreferences;
         InitializeComponent();
+        Deactivated += (_, _) => CancelBand();
+        MediaArea.LostMouseCapture += (_, e) => { if (ReferenceEquals(e.OriginalSource, MediaArea) && !MediaArea.IsMouseCaptured) CancelBand(); };
         _settings = settings;
         _tools = CreateTools();
         Privacy.Prepare(_settings.Privacy);
@@ -164,6 +166,7 @@ public partial class MainWindow : Window
     private Task RefreshAsync(Guid? selectId = null, bool includePreviews = true, Func<bool>? publicationGuard = null)
     {
         if (_closing) return Task.CompletedTask;
+        CancelBand();
         var requested = CaptureViewState();
         var resolved = LibraryBrowseController.ResolveTransition(requested);
         if (_roleBrowser?.IsVisible == true && resolved.View != _roleBrowserView && !LeaveRoleView())

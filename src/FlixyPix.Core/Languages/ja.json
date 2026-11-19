@@ -3773,5 +3773,6 @@
   "＋ MP4": "＋ MP4",
   "＋ New library …": "＋ 新しいライブラリ…",
   "＋ Random clips …": "＋ ランダム クリップ…",
-  "＋ Set here": "＋ ここに設定"
+  "＋ Set here": "＋ ここに設定",
+  "Alt+drag: draw a selection rectangle on selected items. Ctrl adds to the selection.": "Alt+ドラッグ：選択済みの項目上で範囲選択します。Ctrlで選択に追加します。"
 }

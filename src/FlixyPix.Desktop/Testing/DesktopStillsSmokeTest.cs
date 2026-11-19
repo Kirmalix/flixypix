@@ -19,6 +19,14 @@ public partial class MainWindow
   var window = _videoWindow!; var shots = Path.Combine(directory, "stills"); window.ScreenshotFolder = shots;
   bool At(double seconds) => Math.Abs(window.LastPositionSeconds - seconds) < .011;
   async Task Prepared() { for (var wait = 0; wait < 400 && (MediaPreparation.Running || _operation != null); wait++) await Task.Delay(50); await _lastRefresh; }
+  // Synthetic shortcuts must not inherit a modifier held on the interactive desktop.
+  void Press(KeyEventArgs key)
+  {
+   var saved=new byte[256]; GetKeyboardState(saved); var neutral=(byte[])saved.Clone();
+   foreach(var code in new[] {0x10,0x11,0x12,0xA0,0xA1,0xA2,0xA3,0xA4,0xA5}) neutral[code]=0;
+   try { SetKeyboardState(neutral); window.RaiseEvent(key); }
+   finally { SetKeyboardState(saved); }
+  }
   var added = new List<Guid>();
   try
   {
@@ -33,7 +41,7 @@ public partial class MainWindow
    await window.StepFramesAsync(-4); Require(At(.2), $"Four frames back landed at {window.LastPositionSeconds}.");
    // The arrow key steps, although it is the shortcut of the small jump otherwise.
    var right = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, Key.Right) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
-   window.RaiseEvent(right); for (var wait = 0; wait < 40 && !At(.3); wait++) await Task.Delay(25);
+   Press(right); for (var wait = 0; wait < 40 && !At(.3); wait++) await Task.Delay(25);
    Require(right.Handled && At(.3), $"The arrow key did not step one frame ({window.LastPositionSeconds}).");
 
    // Saving shows a running bar while it lasts (at once here) and takes it away afterwards.
@@ -83,10 +91,10 @@ public partial class MainWindow
    // J plays backward, K stops. In a clip that is one group of pictures the player does not get going by itself, so
    // this is the way through single steps back.
    await window.SeekToAsync(.8);
-   window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, Key.J) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+   Press(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, Key.J) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
    for (var wait = 0; wait < 240 && window.LastPositionSeconds > .7; wait++) await Task.Delay(25);
    var reached = window.LastPositionSeconds;
-   window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, Key.K) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+   Press(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, Key.K) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
    for (var wait = 0; wait < 40 && !window.IsPaused; wait++) await Task.Delay(25);
    await Task.Delay(200);
    Require(reached <= .7 && window.IsPaused, $"J did not play backward or K did not stop ({reached}, paused {window.IsPaused}) · " + window.MessageText);

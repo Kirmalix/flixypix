@@ -57,7 +57,24 @@ public partial class MainWindow
             window.Closing += async (_, args) =>
          {
           if (_stoppingPlayer || !ReferenceEquals(_videoWindow, window)) return;
-          args.Cancel = true; await StopPlayer();
+          args.Cancel = true;
+          var viewRevision = _browse.Revision;
+          var playbackRevision=_playback.Revision+1;
+          await StopPlayer();
+          await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+          if (_closing || _playback.Revision!=playbackRevision || _videoWindow != null || !MediaList.IsVisible) return;
+          var card = MediaList.Items.OfType<MediaCard>().FirstOrDefault(c => c.Item.Id == window.MediaId);
+          if (viewRevision == _browse.Revision && card == null && _window is { } browseWindow)
+          {
+           var position=await Task.Run(()=>PositionInView(browseWindow,window.MediaId).Position);
+           if (_closing || _playback.Revision!=playbackRevision || viewRevision!=_browse.Revision) return;
+           if (position is { } index) await SelectIndexAsync(index);
+           if (_closing || _playback.Revision!=playbackRevision || viewRevision!=_browse.Revision) return;
+           card=MediaList.Items.OfType<MediaCard>().FirstOrDefault(c=>c.Item.Id==window.MediaId);
+          }
+          if (viewRevision == _browse.Revision && card != null) { MediaList.SelectedItems.Clear(); _offWindowSelection=[]; MediaList.SelectedItem=card; MediaList.ScrollIntoView(card); MediaList.UpdateLayout(); }
+          if (MediaList.SelectedItem is { } selected && MediaList.ItemContainerGenerator.ContainerFromItem(selected) is ListBoxItem tile) tile.Focus();
+          else MediaList.Focus();
       };
             window.Show(); var handle = await window.ReadyTask;
             if (!window.IsLoaded) return;

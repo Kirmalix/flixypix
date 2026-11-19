@@ -166,6 +166,8 @@ public sealed class MpvPlayer : IAsyncDisposable
         var result = await SendAsync("get_property", "time-pos");
         return result.ValueKind == JsonValueKind.Number && result.TryGetDouble(out var value) ? value : null;
     }
+    public async Task<bool> GetEofReachedAsync() => (await SendAsync("get_property", "eof-reached")).ValueKind == JsonValueKind.True;
+
     public async Task<bool?> GetPausedAsync()
     {
         var result=await SendAsync("get_property","pause");return result.ValueKind is JsonValueKind.True or JsonValueKind.False?result.GetBoolean():null;

@@ -22,6 +22,7 @@ internal sealed class PlaybackCoordinator
     internal PlaybackSession? Current { get; private set; }
     internal VideoPlayerWindow? Window => Current?.Window ?? pendingWindow;
     internal bool IsStopping => !stopping.IsCompleted;
+    internal long Revision => revision;
     internal long BeginStart() => ++revision;
     internal bool IsCurrentStart(long request) => request == revision;
 

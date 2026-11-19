@@ -31,9 +31,11 @@ public partial class MainWindow
   if(SendMessage(window.VideoHandle,0x0084,0,0)!=1)
    throw new InvalidOperationException("The native video input surface is not hit-testable.");
   var before=window.IsPaused;
-  NativePlayerMessage(0x0201); NativePlayerMessage(0x0202); await Task.Delay(1100);
+  NativePlayerMessage(0x0201); NativePlayerMessage(0x0202);
+  for(var wait=0;wait<60 && window.IsPaused==before;wait++) await Task.Delay(25);
   if(window.IsPaused==before)throw new InvalidOperationException("A native single click did not toggle pause.");
-  NativePlayerMessage(0x0201); NativePlayerMessage(0x0202); await Task.Delay(1100);
+  NativePlayerMessage(0x0201); NativePlayerMessage(0x0202);
+  for(var wait=0;wait<60 && window.IsPaused!=before;wait++) await Task.Delay(25);
   if(window.IsPaused!=before)throw new InvalidOperationException("A second native single click did not restore pause.");
   var volume=window.Volume;
   await NativePlayerWheelAsync(-60,ModifierKeys.Control);

@@ -18,6 +18,11 @@ public partial class MainWindow
     /// <summary>Where the button went down, in content coordinates of the tile panel; null when no rectangle can start.</summary>
     private Point? _bandOrigin;
     private SelectionBand? _band;
+    // Synthetic input uses the same routed handlers without moving the user's pointer.
+    internal Func<MouseEventArgs, IInputElement, Point> BandPosition { get; set; } = (e, relative) => e.GetPosition(relative);
+    internal Func<MouseEventArgs, bool> BandPressed { get; set; } = e => e.LeftButton == MouseButtonState.Pressed;
+    private bool _bandAdd;
+    private IReadOnlyList<MediaItem>? _bandKept;
     /// <summary>Gap at the tile edges that the frame must pass before it takes the tile.</summary>
     private const double BandGap = 6;
     private const double BandScrollEdge = 32;
@@ -33,15 +38,28 @@ public partial class MainWindow
         public List<int> Indexes { get; set; } = [];
     }
 
-    /// <summary>Remembers where a rectangle could start; called from the list's mouse down when no media drag can start there.</summary>
+    /// <summary>Releases a gesture when its view or capture disappears.</summary>
+    private void CancelBand()
+    {
+        _bandOrigin=null; _bandKept=null;
+        _dragStart=null; _clickToPlay=null; _pendingSingleSelection=null;
+        if (_band is not { } band) return;
+        _band=null; band.Scroll.Stop();
+        AdornerLayer.GetAdornerLayer(MediaArea)?.Remove(band.Adorner);
+        if (MediaArea.IsMouseCaptured) MediaArea.ReleaseMouseCapture();
+    }
+
     private bool OfferBand(MouseButtonEventArgs e)
     {
         _bandOrigin = null;
-        if (e.ClickCount != 1 || Keyboard.Modifiers is not (ModifierKeys.None or ModifierKeys.Control) || Tiles is not { } panel || _total == 0) return false;
+        if (!MediaList.IsVisible || e.ClickCount != 1 || (Keyboard.Modifiers & ~(ModifierKeys.Control | ModifierKeys.Alt)) != 0 || Tiles is not { } panel || _total == 0) return false;
         for (var node = e.OriginalSource as DependencyObject; node != null && node != MediaList; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
             if (node is ScrollBar or ButtonBase or TileRating) return false;
-        var point = e.GetPosition(panel);
-        if (point.X < 0 || point.Y < 0 || point.X > panel.ActualWidth || point.Y > panel.ActualHeight) return false;
+        var point = BandPosition(e,panel);
+        var areaPoint=BandPosition(e,MediaArea);
+        if (areaPoint.X<0 || areaPoint.Y<0 || areaPoint.X>MediaArea.ActualWidth || areaPoint.Y>MediaArea.ActualHeight) return false;
+        _bandAdd=Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
+        _bandKept=SelectedMedia.ToArray();
         _bandOrigin = new Point(point.X, point.Y + panel.VerticalOffset);
         return true;
     }
@@ -50,10 +68,10 @@ public partial class MainWindow
     private bool MoveBand(MouseEventArgs e)
     {
         if (_band != null) { UpdateBand(); return true; }
-        if (_bandOrigin is not { } origin || e.LeftButton != MouseButtonState.Pressed || Tiles is not { } panel) return false;
-        var point = e.GetPosition(panel);
+        if (_bandOrigin is not { } origin || !BandPressed(e) || Tiles is not { } panel) return false;
+        var point = BandPosition(e,panel);
         if (Math.Abs(point.X - origin.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(point.Y + panel.VerticalOffset - origin.Y) < SystemParameters.MinimumVerticalDragDistance) return true;
-        return StartBand(origin, Keyboard.Modifiers == ModifierKeys.Control, follow: true) && UpdateBand(point);
+        return StartBand(origin, _bandAdd, follow: true) && UpdateBand(point);
     }
 
     /// <param name="origin">Where the frame starts, in content coordinates of the tile panel.</param>
@@ -62,14 +80,16 @@ public partial class MainWindow
     private bool StartBand(Point origin, bool add, bool follow)
     {
         _bandOrigin = null; _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null;
-        if (Tiles is not { } panel || AdornerLayer.GetAdornerLayer(panel) is not { } layer) return false;
-        var kept = add ? SelectedMedia.Select(item => item.Id).ToHashSet() : [];
-        var keptOutside = add ? _offWindowSelection.ToList() : [];
-        var adorner = new BandAdorner(panel, (TryFindResource("SelectionBorder") as SolidColorBrush)?.Color ?? SystemColors.HighlightColor);
+        if (Tiles is not { } panel || AdornerLayer.GetAdornerLayer(MediaArea) is not { } layer) return false;
+        var kept = add ? (_bandKept ?? SelectedMedia).Select(item => item.Id).ToHashSet() : [];
+        var loadedIds=MediaList.Items.Cast<MediaCard>().Select(card=>card.Item.Id).ToHashSet();
+        var keptOutside = add ? (_bandKept ?? _offWindowSelection).Where(item => !loadedIds.Contains(item.Id)).ToList() : [];
+        _bandKept=null;
+        var adorner = new BandAdorner(MediaArea, (TryFindResource("SelectionBorder") as SolidColorBrush)?.Color ?? SystemColors.HighlightColor);
         layer.Add(adorner);
         var scroll = new DispatcherTimer(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(30) };
         _band = new SelectionBand(panel, origin, kept, keptOutside, adorner, scroll);
-        if (follow) { scroll.Tick += (_, _) => ScrollBand(); scroll.Start(); MediaList.CaptureMouse(); }
+        if (follow) { scroll.Tick += (_, _) => ScrollBand(); scroll.Start(); MediaArea.CaptureMouse(); }
         if (!MediaList.IsKeyboardFocusWithin) MediaList.Focus();
         return true;
     }
@@ -92,10 +112,11 @@ public partial class MainWindow
     {
         if (_band is not { } band) return false;
         var panel = band.Panel; var point = to ?? Mouse.GetPosition(panel);
-        point = new Point(Math.Clamp(point.X, 0, panel.ActualWidth), Math.Clamp(point.Y, 0, panel.ActualHeight) + panel.VerticalOffset);
+        var left=MediaArea.TranslatePoint(new Point(0,0),panel).X;
+        point = new Point(Math.Clamp(point.X, left, left+MediaArea.ActualWidth), Math.Clamp(point.Y, 0, panel.ActualHeight) + panel.VerticalOffset);
         var content = new Rect(band.Origin, point);
         band.Indexes = panel.IndexesIn(content, BandGap);
-        band.Adorner.Show(new Rect(content.X, content.Y - panel.VerticalOffset, content.Width, content.Height));
+        band.Adorner.Show(new Rect(panel.TranslatePoint(new Point(content.X, content.Y-panel.VerticalOffset), MediaArea), content.Size));
         var wanted = band.Indexes.Where(index => index >= _windowStart && index < _windowStart + MediaList.Items.Count)
             .Select(index => ((MediaCard)MediaList.Items[index - _windowStart]).Item.Id).ToHashSet();
         wanted.UnionWith(band.Kept);
@@ -118,8 +139,8 @@ public partial class MainWindow
         if (_band is not { } band) return;
         _band = null;
         band.Scroll.Stop();
-        AdornerLayer.GetAdornerLayer(band.Panel)?.Remove(band.Adorner);
-        if (MediaList.IsMouseCaptured) MediaList.ReleaseMouseCapture();
+        AdornerLayer.GetAdornerLayer(MediaArea)?.Remove(band.Adorner);
+        if (MediaArea.IsMouseCaptured) MediaArea.ReleaseMouseCapture();
         var outside = band.Indexes.Where(index => index < _windowStart || index >= _windowStart + MediaList.Items.Count).ToHashSet();
         if (outside.Count > 0 && _window is { } window)
         {

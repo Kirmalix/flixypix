@@ -82,6 +82,7 @@ internal sealed partial class VideoPlayerWindow
   UpdateRangeControls();
   if (overlay.IsOpen) ShowOverlay();
   if (!stillsMode) { await EndShuttleAsync(); return; }
+  ended=false; suppressEndResume=true;
   if (!paused) { paused = true; await active.PauseAsync(true); ShowPlayState(); }
   await RefreshFrameAsync();
   Focus(); Keyboard.Focus(this);
