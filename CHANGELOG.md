@@ -3,6 +3,40 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
+## 0.9.0
+
+**Upgrading from 0.8.0:** the catalog format stays the same (schema 27); no catalog conversion is needed.
+Back up your catalog and media files as always. Older versions do not understand the new reverse sort choices.
+
+- Filters live in one bar above the tiles. Each section opens below its button: stars, performers, studios, tag
+  categories, dates, file quality and status. Each choice shows how many items it would leave, and empty choices
+  appear pale. Duration bars show the spread of the results; click a bar to filter, or Shift-click to widen the range.
+- Pin tags, performers, studios and star ratings to the filter bar with a right click, then switch them on and off
+  with one click. Typing part of a tag, performer or studio in the search field offers it as a filter. When nothing
+  matches, the empty view offers to remove the filter that would bring back the most items.
+- The media count sits beside the title, with the filtered and total counts together. Appearance and sorting are in
+  the same header; every sort field can run in either direction, named in words. In a narrow window, controls move
+  into menus. Ctrl+1, Ctrl+2 and Ctrl+3 switch between tiles, list and video wall.
+- Compare two images in the loupe with C: the reference stays on the left while the arrow keys leaf through candidates
+  on the right, with zoom and position linked. C on two selected tiles compares those images. C, G or Esc ends the
+  comparison. N shows a survey of selected images; X removes an image from the survey while keeping it in the library,
+  and Enter opens it in the loupe. G returns to the survey.
+- Drag a selection rectangle across tiles, with Ctrl to add to the selection. The view scrolls at its edges, and items
+  beyond the loaded tiles join the selection on release. Shift+Delete deletes selected files after confirmation;
+  Delete continues to remove entries from the catalog.
+- Moving and copying files automatically choose a free name when the target name is taken; the preview lists these
+  changes before proceeding. Quick access destinations no longer ask for an unnecessary rename template.
+- The player window fits landscape and square videos, remembers its size and position, and offers 50%, 100% and 200%
+  video sizes. An optional setting fits the window to portrait videos too. Dragging an edge keeps the video shape;
+  hold Shift to resize freely. Opening the mark list or strips grows the window instead of shrinking the picture.
+- Saving a still uses FFmpeg to extract the frame from the file, as ranges of pictures already do, keeping playback
+  responsive with large and 10-bit videos. The player's screenshot is the fallback, with enough time to write a large
+  PNG. A progress bar shows while a picture or range is being saved.
+- Videos remembered within five seconds of their end start from the beginning. Bookmarks can be removed directly
+  from the player's mark list through its menu or Delete.
+- The Stash import wizard shows the existing local target of a previously imported record as selected, including
+  when that target has been renamed.
+
 ## 0.8.0
 
 **Upgrading from 0.7.0:** the catalog format stays the same (schema 27); a library opens without conversion,
