@@ -42,6 +42,7 @@ public partial class MainWindow
   entries.Add(new MenuCommand(T("In the target collection"), () => ToggleTargetCollection()) { Icon = "\uE710", Shortcut = outside ? null : "B", Checked = items.All(i => _cardContext.TargetMembers.Contains(i.Id)), Enabled = !outside });
   if (items.All(item => item.Kind == MediaKind.Image)) entries.Add(MenuSpec.Submenu(T("Image sets"), _repository.GetImageSets().Select(set => MenuSpec.Command(set.Name, () => AddImagesToSet(set, items)))));
   if(items.All(item=>item.Kind==MediaKind.Video))entries.Add(MenuSpec.Submenu(T("Publication groups"),_repository.GetPublicationGroups().Select(group=>MenuSpec.Command(group.Name,()=>AddVideosToPublicationGroup(group,items)))));
+  if(items.All(i=>i.Kind==MediaKind.Video))entries.Add(MenuSpec.Submenu(T("Video stacks"),VideoStackEntries(items)));
   entries.Add(MenuSpec.Submenu(T("Add to collection"), CollectionChoices(items), ""));
   entries.Add(MenuSpec.Separator);
   entries.Add(MenuSpec.Submenu(T("Preview"), PreviewEntries(items, Here), ""));
@@ -189,7 +190,7 @@ public partial class MainWindow
   yield return MenuSpec.Command(T("Export NFO metadata …"), here(ExportNfo));
  }
 
- private int ViewTotal() => _window is { } window ? PositionInView(window, Guid.Empty).Total : 0;
+ private int ViewTotal() => _window is { } window ? window.Playlist==null ? checked((int)_repository.CountMedia(window.Query with{GroupVideoStacks=false})) : PositionInView(window, Guid.Empty).Total : 0;
 
  /// <summary>Stars for every medium (0 removes the rating), as the keys 0–5 do.</summary>
  internal void RateMedia(IReadOnlyList<MediaItem> items, int stars)

@@ -3,6 +3,15 @@
 FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor version
 (0.x) may change formats and behavior; the release notes say when.
 
+## Unreleased
+
+- Videos can be grouped into named, expandable stacks in the media grid, with a chosen master video. Search and filters
+  show only matching members; collections keep their own order. Stack commands are in the video context menu and Appearance.
+- Stack expansion and collapse move the surrounding tiles smoothly. Removing media also animates the remaining tiles
+  into place. Windows animation preferences are respected.
+- The catalog upgrades to schema 28 with a safety copy. Portable catalog exports use format 6 and include video stacks;
+  imports continue to accept formats 1?5. Older app versions cannot open the upgraded catalog or import format 6.
+
 ## 0.9.0
 
 **Upgrading from 0.8.0:** the catalog format stays the same (schema 27); no catalog conversion is needed.

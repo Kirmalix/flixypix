@@ -27,11 +27,13 @@ public partial class MainWindow
     {
         MediaList.AddHandler(VirtualizingTilePanel.VisibleRangeChangedEvent, new EventHandler<VisibleRangeEventArgs>(VisibleRangeChanged));
         MediaList.PreviewMouseWheel += ZoomTiles;
+        MediaList.SizeChanged += (_,_)=>_gridTransition?.Clear();
     }
 
     /// <summary>Ctrl+wheel over the tiles changes their size by one column, as in Explorer: up makes them larger.</summary>
     private void ZoomTiles(object sender, System.Windows.Input.MouseWheelEventArgs e)
     {
+        _gridTransition?.Clear();
         if (System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.Control || ViewChoice.SelectedIndex == 1) return;
         e.Handled = true;
         SetTileColumns(CurrentTileColumns - Math.Sign(e.Delta));
@@ -68,7 +70,7 @@ public partial class MainWindow
                 var result = _repository.QueryPlaylistPage(window.Playlist, window.Query with { Offset = start }, window.CollectionOrder, null, token);
                 return (result.Page.Items, Offset: result.Offset);
             });
-            var preparedCards = await Task.Run(() => loaded.Items.Select(i => new MediaCard(i, true, general.ShowExtension, general.MarkMissingFiles, context: _cardContext)).ToList());
+            var preparedCards = await Task.Run(() => {var cards=loaded.Items.Select(i => new MediaCard(i, true, general.ShowExtension, general.MarkMissingFiles, context: _cardContext)).ToList();DecorateVideoStacks(cards,window.Query);return cards;});
             if (_closing) return;
             if (!_browse.TryPublish(request.Complete((Page: loaded, Cards: preparedCards)), result =>
             {

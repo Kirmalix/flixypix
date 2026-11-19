@@ -324,6 +324,7 @@ public partial class MainWindow
 
     private void MediaListMouseDown(object sender, MouseButtonEventArgs e)
     {
+        _gridTransition?.Clear();
         _dragStart = null; _pendingSingleSelection = null; _clickToPlay = null; _bandOrigin = null; _bandKept=null;
         // The stars of a tile rate; they neither select nor drag it.
         if (OnTileControl(e.OriginalSource as DependencyObject)) return;

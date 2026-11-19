@@ -169,7 +169,8 @@ public sealed record ScanProgress(string Path, int Processed, int Imported);
 public sealed record CatalogDocument
 {
     public string Format { get; init; } = "flixypix-catalog";
-    public int Version { get; init; } = 5;
+    public int Version { get; init; } = 6;
+    public List<VideoStack> VideoStacks { get; init; } = [];
     public List<ImageSet> ImageSets { get; init; } = [];
     public List<PublicationGroup> PublicationGroups { get; init; } = [];
     public List<TagHierarchy> TagHierarchies { get; init; } = [];

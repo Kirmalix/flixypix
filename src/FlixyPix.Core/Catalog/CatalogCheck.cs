@@ -40,6 +40,7 @@ public enum CatalogFindingKind
     PublicationGroupDocuments,
     PublicationGroupMembership,
     TagHierarchyDocuments,
+    VideoStacks,
 }
 
 /// <summary>One kind of finding. <paramref name="Examples"/> are raw paths or SQLite messages, at most
@@ -48,7 +49,7 @@ public sealed record CatalogFinding(CatalogFindingKind Kind, int Count, IReadOnl
 {
     /// <summary>Whether the check repairs it itself; the others need the user (backup, path mapping, preparing media).</summary>
     public bool Repairable => Kind is CatalogFindingKind.OrphanRows or CatalogFindingKind.QueryTable or CatalogFindingKind.SearchIndex
-        or CatalogFindingKind.PathKeys or CatalogFindingKind.SamePath or CatalogFindingKind.MissingFiles or CatalogFindingKind.OrphanFiles or CatalogFindingKind.ImageSetMembership or CatalogFindingKind.PublicationGroupMembership;
+        or CatalogFindingKind.PathKeys or CatalogFindingKind.SamePath or CatalogFindingKind.MissingFiles or CatalogFindingKind.OrphanFiles or CatalogFindingKind.ImageSetMembership or CatalogFindingKind.PublicationGroupMembership or CatalogFindingKind.VideoStacks;
     /// <summary>Offline drives are expected; everything else counts as a problem.</summary>
     public bool IsProblem => Kind != CatalogFindingKind.OfflineFiles && Count > 0;
 }
@@ -184,6 +185,7 @@ public sealed partial class CatalogRepository
             Add(CatalogFindingKind.PublicationGroupMembership, audit.MembershipProblems, audit.Rebuild.Select(g => g.Name).Concat(audit.OrphanGroups));
         }
 
+        Add(CatalogFindingKind.VideoStacks,(int)Scalar(VideoStackProblems),[]);
         progress?.Report(new(CatalogFindingKind.TagHierarchyDocuments, 0, 1));
         lock (gate)
         {
@@ -414,6 +416,7 @@ public sealed partial class CatalogRepository
                     + Execute("DELETE FROM wall_media WHERE NOT EXISTS(SELECT 1 FROM media m WHERE m.id=wall_media.id)")
                     + Execute("DELETE FROM image_set_members WHERE NOT EXISTS(SELECT 1 FROM image_sets s WHERE s.id=image_set_members.set_id) OR NOT EXISTS(SELECT 1 FROM media m WHERE m.id=image_set_members.media_id)")
                     + Execute("DELETE FROM publication_group_members WHERE NOT EXISTS(SELECT 1 FROM publication_groups g WHERE g.id=publication_group_members.group_id) OR (video_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM media m WHERE m.id=publication_group_members.video_id)) OR (image_set_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM image_sets s WHERE s.id=publication_group_members.image_set_id))")
+                    + Execute("DELETE FROM video_stack_members WHERE NOT EXISTS(SELECT 1 FROM video_stacks v WHERE v.id=stack_id) OR NOT EXISTS(SELECT 1 FROM media m WHERE m.id=media_id)")
                     + Execute("DELETE FROM wall_tags WHERE NOT EXISTS(SELECT 1 FROM wall_marks w WHERE w.kind=wall_tags.kind AND w.id=wall_tags.id)");
             if (kinds.Contains(CatalogFindingKind.PathKeys))
             {
@@ -437,6 +440,7 @@ public sealed partial class CatalogRepository
                 DeleteMediaCore(gone, transaction);
                 repaired[CatalogFindingKind.MissingFiles] = gone.Length;
             }
+            if(kinds.Contains(CatalogFindingKind.VideoStacks))repaired[CatalogFindingKind.VideoStacks]=RepairVideoStacks(transaction);
             var rebuild = kinds.Contains(CatalogFindingKind.QueryTable) || kinds.Contains(CatalogFindingKind.SearchIndex);
             if (kinds.Contains(CatalogFindingKind.ImageSetMembership)) repaired[CatalogFindingKind.ImageSetMembership] = RepairImageSetMembers(transaction, token);
             if (kinds.Contains(CatalogFindingKind.PublicationGroupMembership)) repaired[CatalogFindingKind.PublicationGroupMembership] = RepairPublicationGroupMembers(transaction, token);
@@ -567,6 +571,7 @@ public sealed partial class CatalogRepository
         }
         var removed = others.Select(item => item.Id).ToHashSet();
         MoveImageSetMedia(removed, keep.Id, transaction);
+        RedirectVideoStackMembers(removed,keep.Id,transaction);
         RedirectPublicationGroupVideos(removed, keep.Id, transaction);
         foreach (var playlist in ReadDocuments<Playlist>("playlists", transaction))
             if (playlist.MediaIds.Any(removed.Contains) || playlist.Entries.Any(entry => removed.Contains(entry.MediaId)))

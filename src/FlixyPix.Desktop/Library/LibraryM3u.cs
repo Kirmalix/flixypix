@@ -14,6 +14,7 @@ public partial class MainWindow
  private IReadOnlyList<MediaItem> ViewItems((MediaQuery Query, Playlist? Playlist, bool CollectionOrder)? view)
  {
   if (view is not { } window) return [];
+  window.Query=window.Query with{GroupVideoStacks=false,ExpandedVideoStacks=[]};
   var items = new List<MediaItem>();
   for (var offset = 0; items.Count < M3uLimit; offset += 1000)
   {

@@ -8,7 +8,7 @@ namespace FlixyPix.Core;
 public sealed partial class CatalogRepository
 {
     private static readonly HashSet<string> PortableArrays = new(StringComparer.Ordinal)
-    { "items", "playlists", "scenes", "savedsearches", "filenametagrules", "bookmarks", "mediaassets", "collectionsets", "legacyrecords", "migrationstate",
+    { "videostacks", "items", "playlists", "scenes", "savedsearches", "filenametagrules", "bookmarks", "mediaassets", "collectionsets", "legacyrecords", "migrationstate",
      "legacyblobs", "tagpresets", "legacysearchdrafts", "legacyjobdrafts", "legacyparserdrafts", "tagassets", "historicalparserdefinitions",
      "legacycombinelists", "historicalcontentfolders", "imagesets", "publicationgroups", "taghierarchies", "stashsources", "stashidentities", "stashprovenance", "stashprovenancechunks", "stashbindings" };
 
@@ -54,7 +54,12 @@ public sealed partial class CatalogRepository
             }
         }
         input.RequireEnd();
-        if (!ProductIdentity.IsFormat(format!,"flixypix-catalog") || version is not (1 or 2 or 3 or 4 or 5)) throw new InvalidDataException("Unsupported or missing portable catalog format/version (expected version 1, 2, 3, 4 or 5).");
+        if (!ProductIdentity.IsFormat(format!,"flixypix-catalog") || version is not (1 or 2 or 3 or 4 or 5 or 6)) throw new InvalidDataException("Unsupported or missing portable catalog format/version (expected version 1, 2, 3, 4, 5 or 6).");
+        if(version<6)
+        {
+            using var stacks=Command("SELECT 1 FROM temp.portable_stage WHERE section='videostacks' LIMIT 1",transaction);
+            if(stacks.ExecuteScalar()!=null)throw new InvalidDataException("Video stacks require catalog format 6.");
+        }
         if(version<5)
         {
             using var check=Command("SELECT 1 FROM temp.portable_stage WHERE section IN ('imagesets','publicationgroups','taghierarchies','stashsources','stashidentities','stashprovenance','stashprovenancechunks','stashbindings') LIMIT 1",transaction);

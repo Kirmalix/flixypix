@@ -52,7 +52,7 @@ public partial class MainWindow : Window
     {
         _persistPreferences = persistPreferences;
         InitializeComponent();
-        Deactivated += (_, _) => CancelBand();
+        Deactivated += (_, _) => { CancelBand(); _gridTransition?.Clear(); };
         MediaArea.LostMouseCapture += (_, e) => { if (ReferenceEquals(e.OriginalSource, MediaArea) && !MediaArea.IsMouseCaptured) CancelBand(); };
         _settings = settings;
         _tools = CreateTools();
@@ -141,7 +141,7 @@ public partial class MainWindow : Window
         if (repair.DamagedCopy is { } copy) ShowToast(repair.Summary, MessageBoxImage.Warning, T("Show damaged file"), () => { var info = new System.Diagnostics.ProcessStartInfo("explorer.exe"); info.ArgumentList.Add("/select,"); info.ArgumentList.Add(copy); System.Diagnostics.Process.Start(info); }, seconds: 12);
         else ShowToast(repair.Summary, MessageBoxImage.Warning, seconds: 12);
     }
-    private void PauseOnHide() { if (_videoWindow is { HasPlayer: true } window) _ = window.PauseForPrivacyAsync(); else if (_player != null) _ = _player.PauseAsync(true); }
+    private void PauseOnHide() { _gridTransition?.Clear(); if (_videoWindow is { HasPlayer: true } window) _ = window.PauseForPrivacyAsync(); else if (_player != null) _ = _player.PauseAsync(true); }
     private void MuteOnHide(bool muted) { if (_player != null) _ = _player.SetMuteAsync(muted); }
     private readonly LibraryInstance _instance;
 
@@ -244,7 +244,7 @@ public partial class MainWindow : Window
             if (!_browse.IsCurrent(request) || _closing) return;
             UpdateThumbnailCheck(state);
             var kept = _keptMedia.ToArray();
-            var query = matches with { Limit = WindowSize, Offset = WindowStartFor(_anchor), KeepIds = kept };
+            var query = WithVideoStacks(matches with { Limit = WindowSize, Offset = WindowStartFor(_anchor), KeepIds = kept },selectId);
             // A requested medium outside the view becomes the new top; one in view keeps the scroll position.
             var anchor = _anchor; var visibleFirst = _visibleFirst; var visibleLast = _visibleLast;
             // The first view of a start shows tiles; the lists and the folder tree follow right after. A view that names a tag needs them now.
@@ -284,9 +284,9 @@ public partial class MainWindow : Window
             });
             if (!_browse.IsCurrent(request) || _closing) return;
             var pageItems = read.Page.Items;
-            var imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1 };
+            var imageQuery = query with { Kind = MediaKind.Image, Offset = 0, Limit = 1, GroupVideoStacks=false, ExpandedVideoStacks=[] };
             var general = read.Preferences.General;
-            var preparedCards = await Task.Run(() => pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList());
+            var preparedCards = await Task.Run(() => {var cards=pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList();DecorateVideoStacks(cards,query);return cards;});
             StartupMark("cards prepared");
             if (!_browse.IsCurrent(request) || _closing) return;
             if (publicationGuard is not null && (!publicationGuard() || !_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)))) return;
@@ -294,6 +294,7 @@ public partial class MainWindow : Window
             {
                 var snapshot = result.Snapshot; var cards = result.Cards;
                 var selectionNow = selectId is null ? SelectedMedia.ToArray() : [];
+                if(query.GroupVideoStacks && selectionNow.Length>0){var visibleSelection=_repository.VisibleVideoStackMedia(query,selectionNow.Select(m=>m.Id).ToArray(),token);selectionNow=selectionNow.Where(m=>visibleSelection.Contains(m.Id)).ToArray();}
                 var keepSelection = selectionNow.Select(item => item.Id).ToHashSet();
                 _windowStart = query.Offset; _total = checked((int)snapshot.Page.TotalCount); _window = (query, playlist, sort == 5);
                 _currentImages = pageItems.Where(i => i.Kind == MediaKind.Image).ToArray();
@@ -310,7 +311,12 @@ public partial class MainWindow : Window
                 VirtualizingTilePanel.SetTotalCount(MediaList, _total); VirtualizingTilePanel.SetWindowStart(MediaList, _windowStart);
                 // Other filters, a search or another order show new results; an edit or a scroll keeps them in place.
                 if (_startupReady && _shownView is { } shown && !shown.SameView(state)) _resultsChanged = true;
+                var animateGrid = _startupReady && _shownView is {} previous && previous.SameView(state);
+                _gridTransition ??= new MediaGridTransition(MediaList);
+                if(animateGrid)_gridTransition.Capture();else _gridTransition.Clear();
+                _cardContext.ExpandedStacks=query.GroupVideoStacks?query.ExpandedVideoStacks.ToHashSet():null;
                 MediaList.ItemsSource = cards; _shownView = state;
+                if(animateGrid)_gridTransition.Apply();
                 if (anchor < visibleFirst || anchor > visibleLast) { MediaList.UpdateLayout(); Tiles?.ScrollToIndex(anchor); }
                 if (selectId is null && keepSelection.Count > 0) foreach (var card in cards.Where(c => keepSelection.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
                 else if (selectId.HasValue && cards.FirstOrDefault(c => c.Item.Id == selectId) is { } selectedCard) { MediaList.SelectedItem = selectedCard; MediaList.ScrollIntoView(selectedCard); }
@@ -321,11 +327,11 @@ public partial class MainWindow : Window
                 if (_playlist != null) _playlist = playlists.FirstOrDefault(p => p.Id == _playlist.Id);
                 ShowCollections(playlists, snapshot.Sets, snapshot.Searches, snapshot.Target);
                 UpdateNavigation(); RenderTagFilterChips();
-                var countDetails = Tn(snapshot.Page.TotalCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
+                var countDetails = Tn(snapshot.Page.MatchingMediaCount, "1 item", "{0:N0} items") + TagFilterDescription() + (_category != null ? $" · {_category}" : "")
         + (_folder != null && !InFolderView ? T(" · folder filter") : "") + (_playlist != null
         ? $" · {(_playlist.Kind switch { PlaylistKind.Slideshow => T("Slideshow"), PlaylistKind.Quick => T("Quick collection"), _ => T("Playlist") })}" : "")
         + (_advancedExpression != null ? T(" · Advanced search") : "") + FilterDescription();
-                ShowMediaCount(state, snapshot.Page.TotalCount, snapshot.Finished.Count, countDetails, _playlist);
+                ShowMediaCount(state, snapshot.Page.MatchingMediaCount, snapshot.Finished.Count, countDetails, _playlist);
                 ShowWorklistActions(state, _total, snapshot.Finished.Count);
                 _pager = (-1, -1, -1); _ = Dispatcher.BeginInvoke(UpdatePager, System.Windows.Threading.DispatcherPriority.Loaded);
                 RecordView();

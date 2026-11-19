@@ -175,6 +175,7 @@ public sealed partial class CatalogRepository
             ThrowIfDisposed();
             using var transaction = connection.BeginTransaction();
             var main = ReadMediaDocument(mainId, transaction) ?? throw new ArgumentException(T("The item no longer exists."));
+            CheckVideoStackMerge(others.Append(mainId),transaction);
             var merged = main;
             static long? Sum(long? a, long? b) => a is null && b is null ? null : (a ?? 0) + (b ?? 0);
             foreach (var otherId in others)
@@ -216,6 +217,7 @@ public sealed partial class CatalogRepository
                         MediaIds = playlist.MediaIds.Select(id => id == otherId ? mainId : id).Distinct().ToList(),
                         Entries = playlist.Entries.Select(e => e.MediaId == otherId ? e with { MediaId = mainId } : e).Distinct().ToList(),
                     }, transaction);
+                RedirectVideoStackMembers(new HashSet<Guid> { otherId },mainId,transaction);
                 RedirectPublicationGroupVideos(new HashSet<Guid> { otherId }, mainId, transaction);
                 using var delete = Command("DELETE FROM media WHERE id=$other", transaction, ("$other", otherId.ToString()));
                 delete.ExecuteNonQuery();

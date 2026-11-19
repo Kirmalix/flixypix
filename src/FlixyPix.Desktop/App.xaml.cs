@@ -17,7 +17,7 @@ public partial class App : Application
             var portable = e.Args.Contains("--portable"); var profile = e.Args.Contains("--profile");
             if (portable && profile) throw new ArgumentException("Choose only one storage mode.");
             var args = e.Args.Where(a => a is not ("--portable" or "--profile")).ToArray();
-            var test = Array.FindIndex(args, a => a is "--draft-crash-test" or "--folder-sync-test" or "--storage-crash-test" or "--storage-test" or "--smoke-test" or "--selection-band-test" or "--playback-state-test" or "--lifetime-test" or "--localization-test" or "--perf-probe" or "--player-input-test");
+            var test = Array.FindIndex(args, a => a is "--draft-crash-test" or "--folder-sync-test" or "--storage-crash-test" or "--storage-test" or "--smoke-test" or "--video-stack-test" or "--selection-band-test" or "--playback-state-test" or "--lifetime-test" or "--localization-test" or "--perf-probe" or "--player-input-test");
             Motion.Steady = test >= 0;
             var inputTest = Array.IndexOf(args, "--player-input-test");
             if (inputTest >= 0)
@@ -151,13 +151,13 @@ public partial class App : Application
                 };
                 window.Show();
             }
-            else if (arguments.Length == 2 && arguments[0] is "--selection-band-test" or "--playback-state-test")
+            else if (arguments.Length == 2 && arguments[0] is "--video-stack-test" or "--selection-band-test" or "--playback-state-test")
             {
                 var directory=Path.GetFullPath(arguments[1]); Directory.CreateDirectory(directory);
                 var window=new MainWindow(new DesktopSettings { DataDirectory=Path.Combine(directory,"catalog"), AutoGeneratePreviews=false },persistPreferences:false);
                 window.Loaded+=async (_,_)=>
                 {
-                    try { await window.Startup; if(arguments[0]=="--selection-band-test") await window.RunSelectionBandProbeAsync(directory); else await window.RunPlaybackStateProbeAsync(directory); File.WriteAllText(Path.Combine(directory,"result.txt"),"PASS: targeted interaction regression checks."); window.Close(); }
+                    try { await window.Startup; if(arguments[0]=="--video-stack-test") await window.RunVideoStackSmokeAsync(directory); else if(arguments[0]=="--selection-band-test") await window.RunSelectionBandProbeAsync(directory); else await window.RunPlaybackStateProbeAsync(directory); File.WriteAllText(Path.Combine(directory,"result.txt"),"PASS: targeted interaction regression checks."); window.Close(); }
                     catch(Exception error) { File.WriteAllText(Path.Combine(directory,"result.txt"),error.ToString()); Shutdown(1); }
                 };
                 window.Show();

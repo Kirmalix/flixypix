@@ -114,7 +114,7 @@ public sealed class PortableStagingTests : IDisposable
         var malformed = variant switch
         {
             "entity" => JsonSerializer.Serialize(new CatalogDocument { Items = [item with { Description = new string('x', 5000) }] }, Options),
-            "truncated" => valid[..^2], "trailing" => valid + "[]", "versiontype" => valid.Replace("\"version\":5", "\"version\":\"5\""),
+            "truncated" => valid[..^2], "trailing" => valid + "[]", "versiontype" => valid.Replace("\"version\":6", "\"version\":\"6\""),
             _ => "{\"format\":\"flixypix-catalog\",\"version\":2,\"bookmarks\":null}"
         };
         var result = catalog.ImportJson(Write(malformed), 2048); Assert.NotEmpty(result.Errors);

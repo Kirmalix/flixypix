@@ -11,6 +11,7 @@ public partial class MainWindow
     {
         try
         {
+            _gridTransition?.Clear();
             _backupTimer.Stop(); StopFolderSync();
             _draftTimer.Stop();
             _operation?.Cancel(); _positionTimer.Stop(); StopSlideshow(); _searchIndexStop.Cancel();

@@ -66,6 +66,10 @@ public partial class MainWindow
           var card = MediaList.Items.OfType<MediaCard>().FirstOrDefault(c => c.Item.Id == window.MediaId);
           if (viewRevision == _browse.Revision && card == null && _window is { } browseWindow)
           {
+           if(browseWindow.Query.GroupVideoStacks && _repository.GetVideoStacks().FirstOrDefault(s=>s.MediaIds.Contains(window.MediaId)) is {} stack && !_expandedVideoStacks.Contains(stack.Id))
+           {
+            _expandedVideoStacks.Add(stack.Id);SaveStackPresentation();var expanding=RefreshAsync(window.MediaId);var expansionRevision=_browse.Revision;await expanding;if(_browse.Revision!=expansionRevision)return;viewRevision=expansionRevision;browseWindow=_window!.Value;
+           }
            var position=await Task.Run(()=>PositionInView(browseWindow,window.MediaId).Position);
            if (_closing || _playback.Revision!=playbackRevision || viewRevision!=_browse.Revision) return;
            if (position is { } index) await SelectIndexAsync(index);

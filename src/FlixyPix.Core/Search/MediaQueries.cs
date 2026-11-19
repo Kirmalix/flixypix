@@ -149,7 +149,7 @@ internal sealed class MediaQueries(CatalogDatabase database, Func<MediaQuery, Sq
     });
 
     /// <summary>What the order needs, nothing more: an index holding it answers without touching the table.</summary>
-    private static string OrderColumns(MediaQuery query) => "q.id,q.title,q.path" + query.Sort switch
+    internal static string OrderColumns(MediaQuery query) => "q.id,q.title,q.path" + query.Sort switch
     {
         MediaSort.AddedAt => ",q.imported", MediaSort.Rating => ",q.rating", MediaSort.Duration => ",q.duration", MediaSort.FileSize => ",q.file_size",
         MediaSort.FileDate => ",q.file_date", MediaSort.OCount => ",q.o_count", MediaSort.Resolution => ",q.lines", MediaSort.Bitrate => ",q.bit_rate",

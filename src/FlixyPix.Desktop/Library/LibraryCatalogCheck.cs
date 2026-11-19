@@ -45,11 +45,13 @@ public partial class MainWindow
   CatalogFindingKind.PublicationGroupDocuments => T("Invalid publication groups"),
   CatalogFindingKind.PublicationGroupMembership => T("Publication-group membership"),
   CatalogFindingKind.TagHierarchyDocuments => T("Tag hierarchy"),
+  CatalogFindingKind.VideoStacks => T("Video stacks"),
   _ => T("Videos without thumbnail"),
  };
 
  private static string FindingExplanation(CatalogFindingKind kind) => kind switch
  {
+  CatalogFindingKind.VideoStacks => T("Video stack references are invalid. Fixing removes invalid memberships and chooses a new master."),
   CatalogFindingKind.Integrity => T("SQLite checks the catalog file for damaged pages and indexes. Such damage can only be fixed with a backup."),
   CatalogFindingKind.OrphanRows => T("Scenes, bookmarks, graphics or tag rows of items that are no longer in the catalog. Fixing removes them."),
   CatalogFindingKind.UnreadableEntries => T("Entries whose stored details cannot be read. They stay unchanged; a backup restores them."),
@@ -73,6 +75,7 @@ public partial class MainWindow
  {
   CatalogFindingKind.Integrity => T("Checking the catalog file …"),
   CatalogFindingKind.TagHierarchyDocuments => T("Tag hierarchy"),
+  CatalogFindingKind.VideoStacks => T("Video stacks"),
   CatalogFindingKind.UnreadableEntries => T("Reading item entries … {0:N0} of {1:N0}", step.Done, step.Total),
   CatalogFindingKind.QueryTable => T("Comparing the table for sorting, filters and tags …"),
   CatalogFindingKind.ImageSetDocuments or CatalogFindingKind.ImageSetMembership => T("Image-set membership"),

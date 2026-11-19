@@ -26,7 +26,7 @@ public sealed class PortableOrganizationTests:IDisposable
  public void Format5RoundtripIncludesTypedOrganizationPlayerAndReviewWithFreshReopen(bool encrypted)
  {
   var source=PathOf("source.db");using var key=Prepare(source,encrypted);using var db=new CatalogRepository(source,key);var fixture=Populate(db);var export=PathOf("portable.json");db.Export(export);
-  if(!encrypted){using var document=JsonDocument.Parse(File.ReadAllBytes(export));Assert.Equal(5,document.RootElement.GetProperty("version").GetInt32());Assert.Single(document.RootElement.GetProperty("imageSets").EnumerateArray());}
+  if(!encrypted){using var document=JsonDocument.Parse(File.ReadAllBytes(export));Assert.Equal(6,document.RootElement.GetProperty("version").GetInt32());Assert.Single(document.RootElement.GetProperty("imageSets").EnumerateArray());}
   var target=PathOf("target.db");using var targetKey=Prepare(target,encrypted);
   using(var destination=new CatalogRepository(target,targetKey))
   {
@@ -116,7 +116,7 @@ public sealed class PortableOrganizationTests:IDisposable
    File.WriteAllText(input,JsonSerializer.Serialize(payload,CatalogRepository.Json));var result=db.ImportJson(input);
    Assert.Contains(result.Errors,error=>error=="Organizer sections require catalog format5.");Assert.Equal("Keep",db.GetMedia(retained.Id)!.Title);Assert.Single(db.Search());Assert.Empty(db.GetImageSets());Assert.Empty(db.GetPublicationGroups());Assert.Empty(db.GetTagHierarchy());Assert.Empty(db.GetStashSources());
   }
-  File.WriteAllText(input,JsonSerializer.Serialize(new{format="flixypix-catalog",version=6,items=Array.Empty<MediaItem>()},CatalogRepository.Json));
+  File.WriteAllText(input,JsonSerializer.Serialize(new{format="flixypix-catalog",version=7,items=Array.Empty<MediaItem>()},CatalogRepository.Json));
   Assert.Contains(db.ImportJson(input).Errors,error=>error.StartsWith("Unsupported or missing portable catalog format/version",StringComparison.Ordinal));Assert.Equal("Keep",db.GetMedia(retained.Id)!.Title);
  }
 }

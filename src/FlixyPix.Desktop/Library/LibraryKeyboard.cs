@@ -32,6 +32,7 @@ public partial class MainWindow
     private static bool ContextKey(KeyEventArgs e) => e.Key == Key.Apps || ((e.Key == Key.F10 || e.Key == Key.System && e.SystemKey == Key.F10) && Keyboard.Modifiers == ModifierKeys.Shift);
     private async Task<bool> HandleLibraryKeyboardAsync(KeyEventArgs e)
     {
+        _gridTransition?.Clear();
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         if (key == Key.Escape)
         {

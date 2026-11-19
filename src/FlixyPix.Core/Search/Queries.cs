@@ -8,6 +8,8 @@ public enum MediaSort { Title, Path, AddedAt, Rating, Duration, FileSize, FileDa
 /// <summary>Database-side search. Text consists of whitespace-separated AND terms, compared with OrdinalIgnoreCase.</summary>
 public sealed record MediaQuery
 {
+    public bool GroupVideoStacks { get; init; }
+    public IReadOnlyList<Guid> ExpandedVideoStacks { get; init; } = [];
     public SearchExpression? Expression { get; init; }
     public string? Text { get; init; }
     public string? Tag { get; init; }
@@ -32,7 +34,7 @@ public sealed record MediaQuery
     public IReadOnlyCollection<Guid> KeepIds { get; init; } = [];
 }
 
-public sealed record MediaPage(IReadOnlyList<MediaItem> Items, long TotalCount);
+public sealed record MediaPage(IReadOnlyList<MediaItem> Items, long TotalCount) { public long MatchingMediaCount {get;init;}=TotalCount; }
 /// <param name="FolderCounts">Media directly in each folder (not in its subfolders).</param>
 /// <param name="CategoryCounts">Media per category.</param>
 /// <param name="TagCategoryCounts">Media with at least one tag of each tag category.</param>
@@ -234,11 +236,11 @@ public sealed partial class CatalogRepository
         }
     }
 
-    public MediaPage QueryPage(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryPage(query,cancellationToken);
-    public IReadOnlyList<MediaItem> QueryItems(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.QueryItems(query,cancellationToken);
+    public MediaPage QueryPage(MediaQuery query,CancellationToken cancellationToken=default) => query.GroupVideoStacks && HasVideoStacks() ? QueryStackPage(query,cancellationToken) : mediaQueries.QueryPage(query,cancellationToken);
+    public IReadOnlyList<MediaItem> QueryItems(MediaQuery query,CancellationToken cancellationToken=default) => query.GroupVideoStacks && HasVideoStacks() ? QueryStackPage(query,cancellationToken,false).Items : mediaQueries.QueryItems(query,cancellationToken);
     public long CountMedia(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.Count(query,cancellationToken);
     public MediaTotals TotalsOf(MediaQuery query,CancellationToken cancellationToken=default) => mediaQueries.Totals(query,cancellationToken);
-    public bool IsAtPosition(MediaQuery query,int position,Guid id,CancellationToken cancellationToken=default) => mediaQueries.IsAt(query,position,id,cancellationToken);
+    public bool IsAtPosition(MediaQuery query,int position,Guid id,CancellationToken cancellationToken=default) => query.GroupVideoStacks && HasVideoStacks() ? StackPosition(query,id,cancellationToken)==position : mediaQueries.IsAt(query,position,id,cancellationToken);
 
     private CompiledMediaQuery BuildQuery(MediaQuery query, SqliteTransaction? transaction)
     {

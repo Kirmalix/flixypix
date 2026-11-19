@@ -15565,6 +15565,98 @@
       "status": "unchanged",
       "digest": "988844c8fb9f603be7b7f7dcbb8bbe6e47d20def225ebf0a4a1a293e1e52438b",
       "note": "Reviewed selection gesture help."
+    },
+    "Video stacks": {
+      "status": "unchanged",
+      "digest": "9bc63604baea66a6416f7d15ce2596f02b88215de3b210cbf4bfd48ab16f5d76"
+    },
+    "Video stack": {
+      "status": "unchanged",
+      "digest": "c0cbbee42b0ce86bf82a2aea339c54373fdc4602c7a4f0b8b1fec5e2cb077d79"
+    },
+    "Master video": {
+      "status": "unchanged",
+      "digest": "5cc97d9503a3a52c09c1191c500190418ea88db691496d8d6337ea2df6a89d22"
+    },
+    "Move the selected videos from their existing stacks?": {
+      "status": "unchanged",
+      "digest": "c196a6a1e2e7c8b3e8044d69b38345390fc0c074f51cd4a8b636847e346527b8"
+    },
+    "Expand or collapse stack": {
+      "status": "unchanged",
+      "digest": "167bf2f14e9bf27a5d6d3f031ee365f08c8a25f530f6681e5abf5f1e7294df30"
+    },
+    "Select stack videos": {
+      "status": "unchanged",
+      "digest": "2e847d121b31d47982036a23d8a45c2e283425bcfdf2a50518277b9513781483"
+    },
+    "Set as stack master": {
+      "status": "unchanged",
+      "digest": "736fa2aec275a8328aa65001ce2f7a84f52da70ad949c1762045133a1863524f"
+    },
+    "Remove from stack": {
+      "status": "unchanged",
+      "digest": "755766ac9ffed9884fe7faf34fb83b5dacd4b5f3efadccddbaca11347938f170"
+    },
+    "Dissolve stack": {
+      "status": "unchanged",
+      "digest": "bc35bd30616c49210adc75138b5ee157ab69391eee903bd9c385e77fc8e1d2fc"
+    },
+    "Add to video stack": {
+      "status": "unchanged",
+      "digest": "2fb36be8c3c7c5862be602c5eaa8aa565c113e1ccf58ee51a34f69955fc62457"
+    },
+    "Expand all stacks": {
+      "status": "unchanged",
+      "digest": "1299aad573cebb7b5054457bca9128b800cafdf29e6efeedca22623edf43c003"
+    },
+    "Collapse all stacks": {
+      "status": "unchanged",
+      "digest": "1475eabcb192779de139551a6a3591b97f06ab56d8661c82da25bd272c6a172d"
+    },
+    "Show video stacks": {
+      "status": "unchanged",
+      "digest": "8b686b31b0bb14b4c4559c4be0759c7b334a54f99539e81a46f60d41e734f297"
+    },
+    "{0} of {1}": {
+      "status": "unchanged",
+      "digest": "b680153636476044db4bfd56ac606fc68ba0227760cd5a2f90bd7f7914de0626"
+    },
+    "Group into video stack …": {
+      "status": "unchanged",
+      "digest": "c794e830d223125c4d483c0923f0f697de138f4ba5e44a14cf4a5b70edacf84a"
+    },
+    "Rename stack …": {
+      "status": "unchanged",
+      "digest": "9d7fcc440c3180123b821e100c7fa3127a1d0ad3cdd983c9338f601eb775d2f9"
+    },
+    "Invalid video stack.": {
+      "status": "unchanged",
+      "digest": "3d7dddce26dfa73fe02a583a5e0832366aea07be58d42f830c028bfe3100456e"
+    },
+    "Stacks require existing videos.": {
+      "status": "unchanged",
+      "digest": "131e900dc72b76fb437cf5035ecf6aa5a4c18fcb08df73ac4cae3d1c02257ccd"
+    },
+    "A video already belongs to another stack. Remove it from that stack first.": {
+      "status": "unchanged",
+      "digest": "391fb1174b6dc44b7aca26b9d9b8fae98d18f99969d392ca6ac104dcc7181bba"
+    },
+    "The stack changed. Refresh before editing it again.": {
+      "status": "unchanged",
+      "digest": "e8feb04b0843cfe9f6b3264abdc5ac92ba079d33444abd876642a1c60e97a101"
+    },
+    "Choose one video stack for these videos before combining their files.": {
+      "status": "unchanged",
+      "digest": "a889360eb48dae399b738ca11cb3db93a57bd344cdea94ad29addacb3bf43d43"
+    },
+    "Remove the video from its stack before changing its media kind.": {
+      "status": "unchanged",
+      "digest": "150d5b21b2831a0ed951f9ca2560554111e4a299afa85d0a3b530f1a3b29b540"
+    },
+    "Video stack references are invalid. Fixing removes invalid memberships and chooses a new master.": {
+      "status": "unchanged",
+      "digest": "e5962246b4b4972154f6d22719b70e7f398c1fbe772d8812cc3f35b7ec73510c"
     }
   }
 }

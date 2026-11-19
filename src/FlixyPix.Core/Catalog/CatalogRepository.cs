@@ -27,7 +27,7 @@ public sealed partial class CatalogRepository : IDisposable
     internal static readonly JsonSerializerOptions MediaJson = new(Json) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     /// <summary>18 adds indexed scene-wall projections; later versions add tables that are created when missing.</summary>
-    internal const long SchemaVersion = 27;
+    internal const long SchemaVersion = 28;
     /// <summary>The schema of 0.5.0, the first public release. Older catalogs only came from test versions before it; their
     /// conversion steps are gone, so they are refused instead of being converted halfway.</summary>
     internal const long OldestUpgradableSchema = 17;
@@ -105,6 +105,7 @@ public sealed partial class CatalogRepository : IDisposable
                 InitializeStashProvenance(transaction);
                 InitializeStashBindings(transaction);
                 InitializeQuerySchema(transaction, schemaVersion == 0);
+                InitializeVideoStacks(transaction);
                 InitializeBrowsingLists(transaction);
                 wallQueries.InitializeSchema(transaction, schemaVersion < 18);
                 using (var health = Command("CREATE TABLE IF NOT EXISTS media_thumbnail_state(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE, signature TEXT NOT NULL, available INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS thumbnail_available ON media_thumbnail_state(available,media_id); " +
@@ -330,7 +331,8 @@ public sealed partial class CatalogRepository : IDisposable
                     using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
                     {
                         writer.WriteStartObject();
-                        writer.WriteString("format", "flixypix-catalog"); writer.WriteNumber("version", 5);
+                        writer.WriteString("format", "flixypix-catalog"); writer.WriteNumber("version", 6);
+                        writer.WritePropertyName("videoStacks"); JsonSerializer.Serialize(writer, GetVideoStacksCore(transaction), Json);
                         WriteDocuments("imageSets", "image_sets"); WriteDocuments("publicationGroups", "publication_groups"); WriteDocuments("tagHierarchies", TagHierarchyTable);
                         WriteDocuments("stashSources", "stash_sources");
                         WriteDocuments("stashIdentities", "stash_identities");
@@ -378,6 +380,7 @@ public sealed partial class CatalogRepository : IDisposable
         {
             ThrowIfDisposed(); cancellationToken.ThrowIfCancellationRequested();
             using (var configure = Command("PRAGMA temp_store=FILE", null)) configure.ExecuteNonQuery();
+            stackCacheKey=null;
             InitializeAssetSchema(null); // changing temp_store drops the temporary tables and triggers
             using var transaction = connection.BeginTransaction();
             var errors = new List<string>();
@@ -479,6 +482,11 @@ public sealed partial class CatalogRepository : IDisposable
                     catch (ArgumentException ex) { AddPortableError(errors, $"Preferences: {ex.Message}"); skipped++; }
                 }
                 ImportPortableOrganization(transaction, cancellationToken);
+                foreach(var stack in ReadStagedPortable<VideoStack>("videostacks", transaction, cancellationToken))
+                {
+                    try { if(stack?.MediaIds is null)throw new InvalidDataException(T("Invalid video stack.")); SaveVideoStackCore(stack with { MasterId=MapPortableId(stack.MasterId,transaction), MediaIds=stack.MediaIds.Select(id=>MapPortableId(id,transaction)).ToArray(), Revision=0 },transaction); }
+                    catch(InvalidOperationException conflict){AddPortableError(errors,conflict.Message);}
+                }
                 if (errors.Count != 0)
                 {
                     transaction.Rollback();
@@ -556,6 +564,8 @@ public sealed partial class CatalogRepository : IDisposable
         }
         if (saved.Kind != MediaKind.Video)
         {
+            using(var stack=Command("SELECT 1 FROM video_stack_members WHERE media_id=$id",transaction,("$id",saved.Id.ToString())))
+                if(stack.ExecuteScalar()!=null)throw new ArgumentException(T("Remove the video from its stack before changing its media kind."));
             using var membership = Command("SELECT 1 FROM publication_group_members WHERE video_id=$id LIMIT 1", transaction, ("$id", saved.Id.ToString()));
             if (membership.ExecuteScalar() != null) throw new ArgumentException("A publication-group video must remain a video.");
         }

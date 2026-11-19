@@ -288,7 +288,7 @@ public sealed class QueryTests(ITestOutputHelper output) : IDisposable
         using var catalog = Open();
         catalog.Upsert(Item("portable.jpg", "Portable"));
         var export = Path.Combine(directory, "catalog.json"); catalog.Export(export);
-        var content = File.ReadAllText(export); Assert.Contains("\"version\": 5", content);
+        var content = File.ReadAllText(export); Assert.Contains("\"version\": 6", content);
         var document=System.Text.Json.Nodes.JsonNode.Parse(content)!.AsObject();document["version"]=version;
         if(version<5){document.Remove("imageSets");document.Remove("publicationGroups");document.Remove("tagHierarchies");document.Remove("stashSources");document.Remove("stashIdentities");document.Remove("stashProvenance");document.Remove("stashProvenanceChunks");document.Remove("stashBindings");}
         File.WriteAllText(export,document.ToJsonString());
