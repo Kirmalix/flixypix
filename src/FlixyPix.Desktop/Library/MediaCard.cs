@@ -15,7 +15,6 @@ internal sealed class MediaCardContext
 {
  internal int DecodeWidth { get; set; } = 390;
  internal GeneralPreferences Display { get; set; } = new();
- internal IReadOnlySet<Guid>? ExpandedStacks {get;set;}
  internal HashSet<Guid> TargetMembers { get; set; } = [];
  internal HashSet<Guid> FinishedMembers { get; set; } = [];
  internal HashSet<Guid> QuickMembers { get; set; } = [];
@@ -27,7 +26,6 @@ internal sealed class MediaCard : INotifyPropertyChanged
  private int DecodeWidth => context.DecodeWidth;
  public MediaItem Item { get; private set; }
  public VideoStack? Stack {get;private set;}
- public double PreviousStackAngle {get;private set;}
  public double StackAngle=>StackExpanded?90:0;
  public string StackName=>Stack?.Name??"";
  public string StackCountLabel=>Stack is {} stack ? StackMatches==stack.MediaIds.Count?stack.MediaIds.Count.ToString():T("{0} of {1}",StackMatches,stack.MediaIds.Count) : "";
@@ -38,10 +36,21 @@ internal sealed class MediaCard : INotifyPropertyChanged
  public Visibility StackMemberVisibility=>Stack is not null && Item.Id!=StackRepresentative?Visibility.Visible:Visibility.Collapsed;
  public Visibility StackVisibility => Stack is null || Item.Id!=StackRepresentative ? Visibility.Collapsed : Visibility.Visible;
  public string StackLabel => Stack is {} stack ? (StackExpanded ? "▾ " : "▸ ") + (stack.Name is {Length:>0} ? stack.Name+" \u00b7 " : "") + (StackMatches==stack.MediaIds.Count ? stack.MediaIds.Count.ToString() : T("{0} of {1}",StackMatches,stack.MediaIds.Count)) : "";
- internal void SetStack(VideoStack stack,bool expanded,Guid representative,int matches){PreviousStackAngle=context.ExpandedStacks is {} prior ? prior.Contains(stack.Id)?90:0 : expanded?90:0;Stack=stack;StackExpanded=expanded;StackRepresentative=representative;StackMatches=matches;PropertyChanged?.Invoke(this,new(string.Empty));}
+ internal void SetStack(VideoStack stack,bool expanded,Guid representative,int matches){Stack=stack;StackExpanded=expanded;StackRepresentative=representative;StackMatches=matches;PropertyChanged?.Invoke(this,new(string.Empty));}
 
  /// <summary>New data for the same medium and file (for example after a tag edit); thumbnail and file check stay.</summary>
  internal void Replace(MediaItem item) { Item = item; PropertyChanged?.Invoke(this, new(string.Empty)); }
+ /// <summary>Keep the loaded picture and container when a refreshed page still contains the same file.</summary>
+ internal bool CanReuse(MediaCard next) => Item.Id==next.Item.Id && Item.Path==next.Item.Path &&
+  Item.Kind==next.Item.Kind && Item.FileModifiedAtUtc==next.Item.FileModifiedAtUtc && Item.FileSize==next.Item.FileSize &&
+  Item.ThumbnailPath==next.Item.ThumbnailPath && showExtension==next.showExtension &&
+  loadThumbnail==next.loadThumbnail && markMissing==next.markMissing;
+ internal void UpdateFrom(MediaCard next)
+ {
+  Item=next.Item;Stack=next.Stack;StackExpanded=next.StackExpanded;
+  StackRepresentative=next.StackRepresentative;StackMatches=next.StackMatches;
+  PropertyChanged?.Invoke(this,new(string.Empty));
+ }
  private readonly bool showExtension;
  /// <summary>What tiles show (title or file name, wrapping, progress); set by the main window before it makes tiles.</summary>
  private GeneralPreferences Display => context.Display;

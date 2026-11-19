@@ -9,6 +9,9 @@ FlixyPix follows [semantic versioning](https://semver.org/). Before 1.0, a minor
   show only matching members; collections keep their own order. Stack commands are in the video context menu and Appearance.
 - Stack expansion and collapse move the surrounding tiles smoothly. Removing media also animates the remaining tiles
   into place. Windows animation preferences are respected.
+- Stack changes preserve the current viewport and unrelated selections. Grid updates retain existing tiles and thumbnails;
+  row wraps use short fades instead of crossing the grid, and lightweight reflow also works without hardware acceleration.
+- Closing the video player restores focus without briefly hiding and reopening the expanded inspector or its collapsed rail.
 - The catalog upgrades to schema 28 with a safety copy. Portable catalog exports use format 6 and include video stacks;
   imports continue to accept formats 1?5. Older app versions cannot open the upgraded catalog or import format 6.
 

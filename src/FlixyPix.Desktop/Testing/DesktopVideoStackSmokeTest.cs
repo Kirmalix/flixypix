@@ -46,11 +46,11 @@ public partial class MainWindow
             await SetVideoStackExpandedAsync(stack,ids[1]);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             Check(_gridTransition.HasMotion,"layout transition did not start");
             Check(_gridTransition.MovingDistance>0,"layout transition has no intermediate movement");
-            await Task.Delay(280);Check(!_gridTransition.HasMotion,"layout transition did not clean up");
+            await Task.Delay(340);Check(!_gridTransition.HasMotion,"layout transition did not clean up");
             _gridTransition.Capture();_gridTransition.Apply();_gridTransition.Capture();_gridTransition.Apply();
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-            Check(_gridTransition.HasMotion,"an outdated callback cancelled the newest transition");
-            await Task.Delay(280);Check(!_gridTransition.HasMotion,"replaced transition retained visuals");
+            Check(!_gridTransition.HasMotion,"an unchanged grid should not animate every tile");
+            await Task.Delay(340);Check(!_gridTransition.HasMotion,"replaced transition retained visuals");
             await SetVideoStackExpandedAsync(stack,ids[1]);
             var member=MediaList.Items.OfType<MediaCard>().Single(c=>c.Item.Id==ids[0]);MediaList.SelectedItem=member;
             await SetVideoStackExpandedAsync(stack,ids[1]);
@@ -67,6 +67,7 @@ public partial class MainWindow
             RemoveMedia([_repository.GetMedia(ids[1])!],false);await _lastRefresh;
             Check(_total==2 && _repository.GetVideoStacks().All(s=>s.Id!=stack.Id),"master removal did not dissolve pair");
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            await RunStackViewportRegressionAsync(directory,ids);
             File.WriteAllText(Path.Combine(directory,"video-stacks-result.txt"),"PASS: button expansion, collapse selection, filtered representative, master preservation, catalog removal and dissolution.");
         }
         finally

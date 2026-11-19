@@ -33,6 +33,7 @@ public partial class MainWindow
 
     private async Task RunPlaybackLifetimeSmokeAsync(MediaItem original, string directory)
     {
+        var detailsCollapsedBefore=_settings.DetailsCollapsed;
         await StopPlayer();
         var copy = Path.Combine(directory, "fixtures", "playback-lifetime-copy.mp4");
         File.Copy(original.Path, copy);
@@ -74,11 +75,29 @@ public partial class MainWindow
             await Task.WhenAll(firstStop, repeatedStop);
             if (_player is not null || _videoWindow is not null || _repository.GetHistory(second.Id).Count(h => h.Kind == HistoryKind.Play) != 1)
                 throw new InvalidOperationException("Playback cleanup lost resources or finalized history more than once.");
-            await Play(second, 0);
-            _videoWindow!.Close();
-            for (var attempt=0; attempt<100 && (_videoWindow!=null || !MediaList.IsKeyboardFocusWithin); attempt++) await Task.Delay(50);
-            if (_videoWindow!=null || !MediaList.IsKeyboardFocusWithin || Selected?.Id!=second.Id)
-                throw new InvalidOperationException("Closing the player did not return focus to its tile.");
+            foreach(var collapsed in new[]{false,true})
+            {
+                await Play(second, 0);
+                _settings=_settings with{DetailsCollapsed=collapsed};_detailsAutoFolded=false;SetDetails(!collapsed);
+                await Dispatcher.InvokeAsync(()=>{},System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                var pane=DetailsPane.IsVisible;var rail=DetailsRail.IsVisible;var width=DetailsColumn.Width;
+                var flickered=false;
+                System.Windows.DependencyPropertyChangedEventHandler visibility=(_,_)=>flickered=true;
+                EventHandler resized=(_,_)=>{if(DetailsColumn.Width!=width)flickered=true;};
+                var descriptor=System.ComponentModel.DependencyPropertyDescriptor.FromProperty(System.Windows.Controls.ColumnDefinition.WidthProperty,typeof(System.Windows.Controls.ColumnDefinition));
+                DetailsPane.IsVisibleChanged+=visibility;DetailsRail.IsVisibleChanged+=visibility;descriptor.AddValueChanged(DetailsColumn,resized);
+                try
+                {
+                    _videoWindow!.Close();
+                    for (var attempt=0; attempt<100 && (_videoWindow!=null || !MediaList.IsKeyboardFocusWithin); attempt++) await Task.Delay(50);
+                    await Task.Delay(350);
+                    if (_videoWindow!=null || !MediaList.IsKeyboardFocusWithin || Selected?.Id!=second.Id)
+                        throw new InvalidOperationException("Closing the player did not return focus to its tile.");
+                    if(flickered || DetailsPane.IsVisible!=pane || DetailsRail.IsVisible!=rail || DetailsColumn.Width!=width)
+                        throw new InvalidOperationException($"Closing the player rebuilt the {(collapsed?"collapsed":"expanded")} inspector.");
+                }
+                finally{DetailsPane.IsVisibleChanged-=visibility;DetailsRail.IsVisibleChanged-=visibility;descriptor.RemoveValueChanged(DetailsColumn,resized);}
+            }
             var asked=false;
             var cancel=Dispatcher.BeginInvoke(() =>
             {
@@ -94,8 +113,8 @@ public partial class MainWindow
             }
             finally { SetKeyboardState(keyboard); cancel.Abort(); }
             if(!asked || !File.Exists(second.Path)) throw new InvalidOperationException("Shift+Delete after closing did not ask, or cancelling removed the file.");
-            File.WriteAllText(Path.Combine(directory, "playback-lifetime-result.txt"), "PASS: overlapping native starts, shared stop and single history finalization.");
+            File.WriteAllText(Path.Combine(directory, "playback-lifetime-result.txt"), "PASS: overlapping native starts, shared stop, single history finalization, focus/hotkey return, and stable expanded/collapsed inspector on player close.");
         }
-        finally { await StopPlayer(); _repository.Delete(second.Id); File.Delete(copy); }
+        finally { await StopPlayer();_settings=_settings with{DetailsCollapsed=detailsCollapsedBefore}; _repository.Delete(second.Id); File.Delete(copy); }
     }
 }

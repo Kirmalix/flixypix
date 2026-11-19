@@ -46,7 +46,8 @@ public partial class MainWindow
     {
         // The grid behind stays loaded for a quick way back, but does not realise tiles or load pictures while hidden.
         MediaList.Visibility = _view == "home" ? Visibility.Collapsed : Visibility.Visible;
-        AdaptToWidth();
+        // A removed selection may hide the inspector. Finish the tile reflow before changing its available width.
+        if(_gridTransition?.IsActive!=true)AdaptToWidth();
         if (_view != "home") { _home.Visibility = Visibility.Collapsed; return; }
         var first = _home.Visibility != Visibility.Visible || _home.RowCount == 0;
         _home.Visibility = Visibility.Visible;

@@ -76,7 +76,20 @@ public partial class MainWindow
            if (_closing || _playback.Revision!=playbackRevision || viewRevision!=_browse.Revision) return;
            card=MediaList.Items.OfType<MediaCard>().FirstOrDefault(c=>c.Item.Id==window.MediaId);
           }
-          if (viewRevision == _browse.Revision && card != null) { MediaList.SelectedItems.Clear(); _offWindowSelection=[]; MediaList.SelectedItem=card; MediaList.ScrollIntoView(card); MediaList.UpdateLayout(); }
+          if (viewRevision == _browse.Revision && card != null)
+          {
+           // Returning focus is one selection change. An empty intermediate selection would hide the inspector and its rail.
+           var refreshing=_refreshing;_refreshing=true;
+           try
+           {
+            _offWindowSelection=[];
+            foreach(var other in MediaList.SelectedItems.Cast<MediaCard>().Where(c=>!ReferenceEquals(c,card)).ToArray())MediaList.SelectedItems.Remove(other);
+            if(!MediaList.SelectedItems.Contains(card))MediaList.SelectedItems.Add(card);
+           }
+           finally{_refreshing=refreshing;}
+           if(!refreshing)ShowDetails();
+           MediaList.ScrollIntoView(card); MediaList.UpdateLayout();
+          }
           if (MediaList.SelectedItem is { } selected && MediaList.ItemContainerGenerator.ContainerFromItem(selected) is ListBoxItem tile) tile.Focus();
           else MediaList.Focus();
       };

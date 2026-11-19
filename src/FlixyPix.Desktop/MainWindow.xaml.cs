@@ -289,6 +289,16 @@ public partial class MainWindow : Window
             var preparedCards = await Task.Run(() => {var cards=pageItems.Select(i => new MediaCard(i, includePreviews, general.ShowExtension, general.MarkMissingFiles && includePreviews, context: _cardContext)).ToList();DecorateVideoStacks(cards,query);return cards;});
             StartupMark("cards prepared");
             if (!_browse.IsCurrent(request) || _closing) return;
+            // Warm only newly visible thumbnails. Retained cards keep their existing image; a slow file never stalls a refresh.
+            if (_startupReady && _shownView is {} warmView && warmView.SameView(state) && includePreviews)
+            {
+                var loaded=MediaList.Items.Cast<MediaCard>().ToLookup(c=>c.Item.Id);
+                var newcomers=preparedCards.Where((c,i)=>query.Offset+i>=visibleFirst && query.Offset+i<=visibleLast &&
+                    !loaded[c.Item.Id].Any(old=>old.CanReuse(c))).ToArray();
+                try{await Task.WhenAll(newcomers.Select(c=>c.EnsureLoaded())).WaitAsync(TimeSpan.FromMilliseconds(80),superseded);}
+                catch(TimeoutException){ }
+                if (!_browse.IsCurrent(request) || _closing) return;
+            }
             if (publicationGuard is not null && (!publicationGuard() || !_browse.IsCurrentSelection(request, SelectedMedia.Select(i => i.Id)))) return;
             if (!_browse.TryPublish(request.Complete((Snapshot: read, Cards: preparedCards)), result =>
             {
@@ -311,15 +321,15 @@ public partial class MainWindow : Window
                 VirtualizingTilePanel.SetTotalCount(MediaList, _total); VirtualizingTilePanel.SetWindowStart(MediaList, _windowStart);
                 // Other filters, a search or another order show new results; an edit or a scroll keeps them in place.
                 if (_startupReady && _shownView is { } shown && !shown.SameView(state)) _resultsChanged = true;
-                var animateGrid = _startupReady && _shownView is {} previous && previous.SameView(state);
+                var retainGrid = _startupReady && _shownView is {} previous && previous.SameView(state);
+                var animateGrid = retainGrid && !MediaList.Items.Cast<MediaCard>().Select(c=>c.Item.Id).SequenceEqual(cards.Select(c=>c.Item.Id));
                 _gridTransition ??= new MediaGridTransition(MediaList);
                 if(animateGrid)_gridTransition.Capture();else _gridTransition.Clear();
-                _cardContext.ExpandedStacks=query.GroupVideoStacks?query.ExpandedVideoStacks.ToHashSet():null;
-                MediaList.ItemsSource = cards; _shownView = state;
-                if(animateGrid)_gridTransition.Apply();
+                foreach(var old in MediaList.SelectedItems.Cast<MediaCard>().Where(c=>selectId.HasValue || !keepSelection.Contains(c.Item.Id)).ToArray())MediaList.SelectedItems.Remove(old);
+                MediaGridItems.Publish(MediaList,cards,retainGrid); _shownView = state;
                 if (anchor < visibleFirst || anchor > visibleLast) { MediaList.UpdateLayout(); Tiles?.ScrollToIndex(anchor); }
-                if (selectId is null && keepSelection.Count > 0) foreach (var card in cards.Where(c => keepSelection.Contains(c.Item.Id))) MediaList.SelectedItems.Add(card);
-                else if (selectId.HasValue && cards.FirstOrDefault(c => c.Item.Id == selectId) is { } selectedCard) { MediaList.SelectedItem = selectedCard; MediaList.ScrollIntoView(selectedCard); }
+                if (selectId is null && keepSelection.Count > 0) foreach (var card in MediaList.Items.Cast<MediaCard>().Where(c => keepSelection.Contains(c.Item.Id))) { if(!MediaList.SelectedItems.Contains(card))MediaList.SelectedItems.Add(card); }
+                else if (selectId.HasValue && MediaList.Items.Cast<MediaCard>().FirstOrDefault(c => c.Item.Id == selectId) is { } selectedCard) { MediaList.SelectedItem = selectedCard; MediaList.ScrollIntoView(selectedCard); }
                 var loadedIds = cards.Select(c => c.Item.Id).ToHashSet();
                 _offWindowSelection = selectionNow.Where(item => !loadedIds.Contains(item.Id)).ToArray();
                 UpdateSelectionBar();
@@ -340,6 +350,7 @@ public partial class MainWindow : Window
                 FirstRunActions.Visibility = snapshot.CatalogEmpty ? Visibility.Visible : Visibility.Collapsed;
                 CollectionActions.Visibility = _playlist != null ? Visibility.Visible : Visibility.Collapsed;
                 UpdateHome(snapshot.CatalogEmpty, snapshot.Page.TotalCount);
+                if(animateGrid)_gridTransition.Apply();
             })) return;
             if (fillLists && _browsingFilled is not { Task.IsCompleted: false }) { _browsingFilled = new(TaskCreationOptions.RunContinuationsAsynchronously); FillBrowsingAfterStart(); }
         }

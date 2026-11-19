@@ -100,6 +100,10 @@ public partial class MainWindow
  }
  private void ShowDetailsNeed(bool clicked)
  {
+  if(_gridTransition is {IsActive:true} transition)
+  {
+   transition.WhenSettled(()=>{if(!_closing)ShowDetailsNeed(clicked);});return;
+  }
   var first = _visibleFirst;
   AdaptToWidth(glideDetails: true);
   // The columns changed: a clicked tile stays in sight, otherwise the view keeps its place. Both wait for the final width.

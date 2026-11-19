@@ -24,13 +24,6 @@ public partial class MainWindow
         return query with {GroupVideoStacks=eligible&&_showVideoStacks,ExpandedVideoStacks=_expandedVideoStacks.ToArray()};
     }
     private void SaveStackPresentation()=>_repository.SaveVideoStackPresentation(_showVideoStacks,_expandedVideoStacks.ToArray());
-    private void StackArrowLoaded(object sender,RoutedEventArgs e)
-    {
-        if(sender is not TextBlock arrow || arrow.DataContext is not MediaCard card)return;
-        var turn=new System.Windows.Media.RotateTransform(card.StackAngle);arrow.RenderTransform=turn;
-        if(Motion.Smooth && card.PreviousStackAngle!=card.StackAngle)
-            turn.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty,new System.Windows.Media.Animation.DoubleAnimation(card.PreviousStackAngle,card.StackAngle,TimeSpan.FromMilliseconds(140)){EasingFunction=new System.Windows.Media.Animation.CubicEase{EasingMode=System.Windows.Media.Animation.EasingMode.EaseOut},FillBehavior=System.Windows.Media.Animation.FillBehavior.Stop});
-    }
     private void ToggleVideoStack(object sender,RoutedEventArgs e)
     {
         if(CardOf(sender)?.Stack is not {} stack)return;
@@ -42,14 +35,26 @@ public partial class MainWindow
         CancelBand();var expanded=_expandedVideoStacks.Add(stack.Id);
         if(!expanded)_expandedVideoStacks.Remove(stack.Id);
         var retained=SelectedMedia.Where(m=>expanded || !stack.MediaIds.Contains(m.Id)).ToList();
-        if(!expanded && _repository.GetMedia(representative) is {} visible)retained.Add(visible);
+        if(!expanded && retained.Count==0 && SelectedMedia.Count>0 && _repository.GetMedia(representative) is {} visible)retained.Add(visible);
         var retainedIds=retained.Select(m=>m.Id).ToHashSet();
-        MediaList.SelectedItems.Clear();var loaded=MediaList.Items.Cast<MediaCard>().Select(c=>c.Item.Id).ToHashSet();
-        foreach(var card in MediaList.Items.Cast<MediaCard>().Where(c=>retainedIds.Contains(c.Item.Id)))MediaList.SelectedItems.Add(card);
+        var focused=(Keyboard.FocusedElement as FrameworkElement)?.DataContext as MediaCard;
+        var restoreFocus=!expanded && focused!=null && stack.MediaIds.Contains(focused.Item.Id) && !retainedIds.Contains(focused.Item.Id) && retainedIds.Contains(representative);
+        // Never temporarily clear an unrelated selection: that closes/reopens the inspector and brings it into view.
+        var refreshing=_refreshing;_refreshing=true;
+        try
+        {
+            foreach(var card in MediaList.SelectedItems.Cast<MediaCard>().Where(c=>!retainedIds.Contains(c.Item.Id)).ToArray())MediaList.SelectedItems.Remove(card);
+            foreach(var card in MediaList.Items.Cast<MediaCard>().Where(c=>retainedIds.Contains(c.Item.Id)))if(!MediaList.SelectedItems.Contains(card))MediaList.SelectedItems.Add(card);
+        }
+        finally{_refreshing=refreshing;}
+        var loaded=MediaList.Items.Cast<MediaCard>().Select(c=>c.Item.Id).ToHashSet();
         _offWindowSelection=retained.Where(m=>!loaded.Contains(m.Id)).ToArray();
-        SaveStackPresentation();await RefreshAsync();
-        var focused=MediaList.Items.OfType<MediaCard>().FirstOrDefault(c=>c.Item.Id==representative);
-        if(focused!=null){MediaList.UpdateLayout();if(MediaList.ItemContainerGenerator.ContainerFromItem(focused) is ListBoxItem tile)tile.Focus();}
+        SaveStackPresentation();var refresh=RefreshAsync();var revision=_browse.Revision;await refresh;
+        if(restoreFocus && revision==_browse.Revision)
+        {
+            var representativeCard=MediaList.Items.Cast<MediaCard>().FirstOrDefault(c=>c.Item.Id==representative);
+            if(representativeCard!=null && MediaList.ItemContainerGenerator.ContainerFromItem(representativeCard) is ListBoxItem tile)tile.Focus();
+        }
     }
     private VideoStack? EditStack(IReadOnlyList<MediaItem> items)
     {

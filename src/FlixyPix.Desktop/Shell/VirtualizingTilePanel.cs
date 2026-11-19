@@ -238,8 +238,8 @@ public sealed class VirtualizingTilePanel : VirtualizingPanel, IScrollInfo
  protected override void OnItemsChanged(object sender, ItemsChangedEventArgs args)
  {
   // A new window keeps the scroll position: tiles are placed by their index in the whole result.
-  if (args.Action is NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Replace or NotifyCollectionChangedAction.Move)
-   RemoveInternalChildRange(args.Position.Index, args.ItemUICount);
+  if ((args.Action is NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Replace or NotifyCollectionChangedAction.Move) && args.ItemUICount>0)
+   RemoveInternalChildRange(args.Action==NotifyCollectionChangedAction.Move?args.OldPosition.Index:args.Position.Index, args.ItemUICount);
   base.OnItemsChanged(sender, args);
  }
 

@@ -331,6 +331,7 @@ public static class Motion
  public static bool GetFadeIn(DependencyObject d) => (bool)d.GetValue(FadeInProperty);
  public static void SetFadeIn(DependencyObject d, bool value) => d.SetValue(FadeInProperty, value);
  private static readonly DependencyProperty ShownForProperty = DependencyProperty.RegisterAttached("ShownFor", typeof(object), typeof(Motion));
+ private static readonly DependencyProperty ShownSourceProperty = DependencyProperty.RegisterAttached("ShownSource", typeof(ImageSource), typeof(Motion));
 
  /// <summary>Lifts in px; the shadow is stronger on the dark scheme, where a light shadow would vanish.</summary>
  internal const double LiftHeight = 3;
@@ -406,7 +407,10 @@ public static class Motion
  {
   if (sender is not Image image || e.Property != Image.SourceProperty) return;
   var same = ReferenceEquals(image.GetValue(ShownForProperty), image.DataContext);
+  var sameSource = ReferenceEquals(image.GetValue(ShownSourceProperty),image.Source);
   image.SetValue(ShownForProperty, image.DataContext);
+  image.SetValue(ShownSourceProperty,image.Source);
+  if(same && sameSource)return;
   if (!same || image.Source == null || !Enabled) { image.BeginAnimation(UIElement.OpacityProperty, null); image.Opacity = 1; return; }
   image.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Soft) { EasingFunction = EaseOut });
  }
